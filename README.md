@@ -531,7 +531,7 @@
 </details>
 
 ### 250314
-</details>
+<details>
   <summary>진행 내용</summary>
 **작업 목록**
 - ERD 작성
