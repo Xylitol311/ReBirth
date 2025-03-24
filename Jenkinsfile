@@ -14,22 +14,38 @@ pipeline {
         }
         stage('Build') {
             steps {
-                echo 'Gradle 빌드 (테스트 생략)'
-                sh './gradlew clean build -x test'
+                echo 'Rebirth 모듈 빌드 (테스트 생략)'
+                // rebirth 모듈 빌드
+                dir('BE/rebirth') {
+                    sh 'chmod +x gradlew'
+                    sh './gradlew clean build -x test'
+                }
+                echo 'Cardissuer 모듈 빌드 (테스트 생략)'
+                // cardissuer 모듈 빌드
+                dir('BE/cardissuer') {
+                    sh 'chmod +x gradlew'
+                    sh './gradlew clean build -x test'
+                }
             }
         }
         stage('Docker Image Build') {
             steps {
                 echo 'Docker 이미지 빌드 중...'
-                // rebirth라는 이름으로 이미지를 빌드
-                sh 'docker build -t rebirth-image -f Dockerfile .'
+                // rebirth 이미지 빌드
+                dir('BE/rebirth') {
+                    sh 'docker build -t rebirth-image .'
+                }
+                // cardissuer 이미지 빌드
+                dir('BE/cardissuer') {
+                    sh 'docker build -t cardissuer-image .'
+                }
             }
         }
         stage('Deploy') {
             steps {
-                echo 'Rebirth 컨테이너 재배포 중...'
-                // --no-deps로 다른 서비스(nginx)는 건드리지 않고 rebirth만 재시작
-                sh 'docker-compose up -d --no-deps --build rebirth'
+                echo '컨테이너 재배포 중...'
+                // rebirth, cardissuer 서비스를 모두 재시작
+                sh 'docker-compose up -d --no-deps --build rebirth cardissuer'
             }
         }
     }
