@@ -31,6 +31,9 @@ public class UserEntity {
 	@Column(name = "consumption_pattern_id")
 	private Byte consumptionPatternId;
 
+	@Column(name = "user_email")
+	private String userEmail;
+
 	@Column(name = "user_name", nullable = false, length = 10)
 	private String userName;
 
