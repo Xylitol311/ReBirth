@@ -10,6 +10,12 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Check Files') {
+            steps {
+                sh 'ls -l'
+                sh 'ls -l docker-init-scripts'
+            }
+        }
         stage('Set Script Permissions') {
             steps {
                 sh 'chmod +x docker-init-scripts/init-multiple-dbs.sh'
