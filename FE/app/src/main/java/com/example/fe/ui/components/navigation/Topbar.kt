@@ -2,10 +2,13 @@ package com.example.fe.ui.components.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +28,7 @@ fun TopBar(onProfileClick: () -> Unit = {}) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.statusBars)
             .height(60.dp),
         color = Color.Black
     ) {
@@ -47,11 +51,11 @@ fun TopBar(onProfileClick: () -> Unit = {}) {
             )
             
             Box(
-                modifier = Modifier.padding(top = 0.dp, bottom = 16.dp),
+                modifier = Modifier.padding(top = 0.dp, bottom = 4.dp),
                 contentAlignment = Alignment.TopCenter
             ) {
                 Icon(
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(36.dp),
                     painter = painterResource(id = R.drawable.ic_person),
                     contentDescription = "프로필",
                     tint = Color.White
