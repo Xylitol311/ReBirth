@@ -7,11 +7,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kkulmoo.rebirth.common.ApiResponseDTO;
+import com.kkulmoo.rebirth.common.APIResponseDTO.ApiResponseDTO;
 import com.kkulmoo.rebirth.common.annotation.UserId;
 import com.kkulmoo.rebirth.user.application.command.CreateUserCommand;
 import com.kkulmoo.rebirth.user.application.service.AuthService;
-import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.presentation.requestDTO.UserSignupRequest;
 
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,5 @@
 package com.kkulmoo.rebirth.user.presentation.requestDTO;
 
-import org.springframework.stereotype.Component;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

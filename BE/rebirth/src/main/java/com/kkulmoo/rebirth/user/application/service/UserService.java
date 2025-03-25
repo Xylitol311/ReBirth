@@ -1,10 +1,13 @@
 package com.kkulmoo.rebirth.user.application.service;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kkulmoo.rebirth.common.exception.UserAlreadyDeletedException;
 import com.kkulmoo.rebirth.common.exception.UserDeletionException;
 import com.kkulmoo.rebirth.common.exception.UserNotFoundException;
+import com.kkulmoo.rebirth.user.application.eventDTO.MyDataEvent;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.domain.UserRepository;
@@ -15,8 +18,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
 
+	private final ApplicationEventPublisher eventPublisher;
 	private final UserRepository userRepository;
 
+	@Transactional
+	public void loadMyData(Integer userId) {
+		User user = userRepository.findByUserId(new UserId(userId));
+		eventPublisher.publishEvent(new MyDataEvent(user));
+
+
+
+	}
 
 	public void deleteUser(Integer userId) {
 		UserId userIdObj = new UserId(userId);
