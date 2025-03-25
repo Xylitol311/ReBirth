@@ -10,6 +10,11 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Set Script Permissions') {
+            steps {
+                sh 'chmod +x docker-init-scripts/init-multiple-dbs.sh'
+            }
+        }
         stage('Deploy Common Services') {
             steps {
                 echo '기존 컨테이너 종료 및 제거...'
