@@ -44,8 +44,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '애플리케이션 서비스 배포 중...'
-                // rebirth, cardissuer 서비스를 모두 재시작
-                sh 'docker-compose -f docker-compose.app.yml up -d --no-deps --build rebirth cardissuer'
+                echo '기존 애플리케이션 컨테이너 종료 및 제거...'
+                sh 'docker-compose -f docker-compose.app.yml down'
+                echo '변경된 설정으로 컨테이너 생성...'
+                sh 'docker-compose -f docker-compose.app.yml up -d'
             }
         }
     }
