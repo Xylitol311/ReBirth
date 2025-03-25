@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "api.first.base-url",
+      "type": "java.lang.String",
+      "description": "Description for api.first.base-url."
+  }
+]
+}
