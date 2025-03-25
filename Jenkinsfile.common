@@ -12,7 +12,9 @@ pipeline {
         }
         stage('Deploy Common Services') {
             steps {
-                echo '공통 인프라 서비스 배포 중...'
+                echo '기존 컨테이너 종료 및 제거...'
+                sh 'docker-compose -f docker-compose.common.yml down'
+                echo '변경된 설정으로 컨테이너 생성...'
                 sh 'docker-compose -f docker-compose.common.yml up -d'
             }
         }
