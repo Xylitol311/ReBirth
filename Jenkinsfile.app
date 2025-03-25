@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        COMPOSE_FILE = 'docker-compose.yml'
+        COMPOSE_FILE = 'docker-compose.app.yml'
     }
 
     stages {
@@ -43,9 +43,9 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                echo '컨테이너 재배포 중...'
+                echo '애플리케이션 서비스 배포 중...'
                 // rebirth, cardissuer 서비스를 모두 재시작
-                sh 'docker-compose up -d --no-deps --build rebirth cardissuer'
+                sh 'docker-compose -f docker-compose.app.yml up -d --no-deps --build rebirth cardissuer'
             }
         }
     }
