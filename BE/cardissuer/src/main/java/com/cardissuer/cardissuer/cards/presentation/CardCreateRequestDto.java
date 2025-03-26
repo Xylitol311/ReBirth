@@ -1,4 +1,4 @@
-package com.cardissuer.cardissuer.cards;
+package com.cardissuer.cardissuer.cards.presentation;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

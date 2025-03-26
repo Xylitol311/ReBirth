@@ -1,4 +1,4 @@
-package com.cardissuer.cardissuer.cards;
+package com.cardissuer.cardissuer.cards.infrastructure;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -24,15 +24,17 @@ import lombok.NoArgsConstructor;
 public class CardEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "card_unique_number")
-	private Long cardUniqueNumber;
+	@Column(name = "card_unique_number", length = 36)
+	private String cardUniqueNumber;  // UUID를 String으로 처리
 
-	@Column(name = "user_id")
+	@Column(name = "user_id", nullable = false)
 	private Integer userId;
 
 	@Column(name = "card_number")
 	private String cardNumber;
+
+	@Column(name = "card_name")
+	private String cardName;
 
 	@Column(name = "expiry_date")
 	private Date expiryDate;
@@ -40,12 +42,12 @@ public class CardEntity {
 	@Column(name = "cvc")
 	private String cvc;
 
-	@Column(name = "created_at")
+	@Column(name = "card_password")
+	private String cardPassword;
+
+	@Column(name = "created_at", nullable = false, updatable = false)
 	private Timestamp createdAt;
 
 	@Column(name = "deleted_at")
 	private Timestamp deletedAt;
-
-	@Column(name = "annual_fee")
-	private Integer annualFee;
 }
