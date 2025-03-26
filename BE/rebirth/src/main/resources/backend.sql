@@ -137,7 +137,7 @@ CREATE TABLE bank_transactions
 CREATE TABLE users
 (
     user_id                SERIAL      NOT NULL,
-    consumption_pattern_id SMALLINT,
+    consumption_pattern_id VARCHAR(3),  -- 수정: SMALLINT → VARCHAR(3)
     user_name              VARCHAR(10) NOT NULL,
     user_email             VARCHAR(100),
     hashed_pin_number      VARCHAR(64) NOT NULL,
@@ -266,15 +266,15 @@ CREATE TABLE category
 /* 사전 혜택 테이블 */
 CREATE TABLE pre_benefits
 (
-    user_id             INT NOT NULL,
-    card_id             INT NOT NULL,
-    card_template_id    INT NOT NULL,
-    amount              INT NOT NULL,
-    if_benefit_type     VARCHAR(10), -- ENUM('할인','적립') 대신
-    if_benefit_amount   INT,
-    real_benefit_type   VARCHAR(10), -- ENUM('할인','적립') 대신
+    user_id          INT NOT NULL,
+    card_id          INT NOT NULL,
+    card_template_id INT NOT NULL,
+    amount           INT NOT NULL,
+    if_benefit_type  VARCHAR(10), -- ENUM('할인','적립') 대신
+    if_benefit_amount INT,
+    real_benefit_type VARCHAR(10), -- ENUM('할인','적립') 대신
     real_benefit_amount INT,
-    merchant_name       VARCHAR(100),
+    merchant_name    VARCHAR(100),
     CONSTRAINT PK_PRE_BENEFITS PRIMARY KEY (user_id)
 );
 
