@@ -26,6 +26,8 @@ import com.example.fe.ui.components.navigation.TopBar
 import com.example.fe.ui.screens.calendar.CalendarScreen
 import com.example.fe.ui.screens.recCard.recCard
 import com.example.fe.ui.screens.mycard.MyCardScreen
+import com.example.fe.ui.screens.onboard.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
 import com.example.fe.ui.screens.payment.PaymentScreen
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -49,6 +51,7 @@ object NavRoutes {
 
 @Composable
 fun AppNavigation() {
+    val context = LocalContext.current
     val navController = rememberNavController()
     
     // 현재 경로 추적
@@ -57,16 +60,16 @@ fun AppNavigation() {
     
     // 공유 스크롤 오프셋 상태
     var scrollOffset by remember { mutableStateOf(0f) }
-    
+
     // 누적 가로 오프셋 (별들의 전체 이동 거리)
     var cumulativeOffset by remember { mutableStateOf(0f) }
-    
+
     // 화면 전환 방향 (-1: 왼쪽으로, 1: 오른쪽으로)
     var transitionDirection by remember { mutableStateOf(0) }
-    
+
     // 애니메이션 트리거를 위한 카운터
     var animationCounter by remember { mutableStateOf(0) }
-    
+
     // 현재 선택된 탭 인덱스 추적
     var currentTabIndex by remember { mutableStateOf(0) }
     var previousTabIndex by remember { mutableStateOf(0) }
@@ -85,7 +88,7 @@ fun AppNavigation() {
         BottomNavItem.Calendar.route to 3,
         BottomNavItem.CardRecommend.route to 4
     )
-    
+
     // 애니메이션 적용된 가로 오프셋
     val animatedHorizontalOffset by animateFloatAsState(
         // 누적 오프셋 + 현재 전환에 의한 오프셋
@@ -218,9 +221,9 @@ fun AppNavigation() {
                         enterTransition = {
                             // 왼쪽에서 들어오는 애니메이션 + 페이드인
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(700, easing = EaseInOut)
                             ) + fadeIn(
@@ -230,9 +233,9 @@ fun AppNavigation() {
                         exitTransition = {
                             // 나가는 애니메이션 + 페이드아웃
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(700, easing = EaseInOut)
                             ) + fadeOut(
@@ -263,18 +266,18 @@ fun AppNavigation() {
                         route = BottomNavItem.MyCard.route,
                         enterTransition = {
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
@@ -291,18 +294,18 @@ fun AppNavigation() {
                         route = BottomNavItem.Payment.route,
                         enterTransition = {
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
@@ -314,23 +317,23 @@ fun AppNavigation() {
                             }
                         )
                     }
-                    
+
                     composable(
                         route = BottomNavItem.Calendar.route,
                         enterTransition = {
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
@@ -342,23 +345,23 @@ fun AppNavigation() {
                             }
                         )
                     }
-                    
+
                     composable(
                         route = BottomNavItem.CardRecommend.route,
                         enterTransition = {
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
