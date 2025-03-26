@@ -1,14 +1,19 @@
 package com.example.fe.ui.components.navigation
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -24,7 +29,10 @@ import androidx.compose.ui.unit.sp
 import com.example.fe.R
 
 @Composable
-fun TopBar(onProfileClick: () -> Unit = {}) {
+fun TopBar(
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -44,18 +52,32 @@ fun TopBar(onProfileClick: () -> Unit = {}) {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Box(
                 modifier = Modifier
                     .weight(1f)
             )
-            
+
+            // 로그아웃 버튼
+            Icon(
+                imageVector = Icons.Default.ExitToApp,
+                contentDescription = "로그아웃",
+                tint = Color.White,
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable { onLogoutClick() }
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
             Box(
                 modifier = Modifier.padding(top = 0.dp, bottom = 4.dp),
                 contentAlignment = Alignment.TopCenter
             ) {
                 Icon(
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clickable { onProfileClick() },
                     painter = painterResource(id = R.drawable.ic_person),
                     contentDescription = "프로필",
                     tint = Color.White
@@ -68,6 +90,8 @@ fun TopBar(onProfileClick: () -> Unit = {}) {
 @Preview(showBackground = true)
 @Composable
 fun TopBarPreview() {
-    TopBar()
+    TopBar(
+        onProfileClick = {},
+        onLogoutClick = {}
+    )
 }
-
