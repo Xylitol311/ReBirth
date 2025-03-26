@@ -3,6 +3,8 @@ package com.example.fe.ui.screens.onboard
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -10,9 +12,11 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.*
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,10 +28,11 @@ enum class Step {
     NAME, SSN, TELECOM, PHONE, CODE, AGREEMENT
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
     val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var currentStep by remember { mutableStateOf(Step.NAME) }
     var name by remember { mutableStateOf("") }
@@ -38,6 +43,40 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
     var code by remember { mutableStateOf("") }
     var showTelcoSheet by remember { mutableStateOf(false) }
     var showAgreement by remember { mutableStateOf(false) }
+
+    // 각 단계별 포커스 요청을 위한 FocusRequester 객체들
+    val nameFocusRequester = remember { FocusRequester() }
+    val ssnFrontFocusRequester = remember { FocusRequester() }
+    val ssnBackFocusRequester = remember { FocusRequester() }
+    val phoneFocusRequester = remember { FocusRequester() }
+    val codeFocusRequester = remember { FocusRequester() }
+
+    // 단계 변경 시 포커스 및 키보드 자동 표시 또는 바텀시트 표시
+    LaunchedEffect(currentStep) {
+        when(currentStep) {
+            Step.NAME -> {
+                nameFocusRequester.requestFocus()
+                keyboardController?.show()
+            }
+            Step.SSN -> {
+                ssnFrontFocusRequester.requestFocus()
+                keyboardController?.show()
+            }
+            Step.TELECOM -> {
+                // 통신사 선택 단계로 이동하면 자동으로 바텀시트 표시
+                showTelcoSheet = true
+            }
+            Step.PHONE -> {
+                phoneFocusRequester.requestFocus()
+                keyboardController?.show()
+            }
+            Step.CODE -> {
+                codeFocusRequester.requestFocus()
+                keyboardController?.show()
+            }
+            else -> {}
+        }
+    }
 
     val telcos = listOf("SKT", "KT", "LGU+", "SKT 알뜰폰", "KT 알뜰폰", "LGU+ 알뜰폰")
     val agreementItems = listOf(
@@ -52,14 +91,13 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    IconButton(onClick = {
-                        if (currentStep != Step.NAME) {
+                    // 이름 입력 화면(첫 화면)에서는 뒤로가기 버튼 숨김
+                    if (currentStep != Step.NAME) {
+                        IconButton(onClick = {
                             currentStep = Step.values()[currentStep.ordinal - 1]
-                        } else {
-                            navController.popBackStack()
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
                         }
-                    }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
                     }
                 }
             )
@@ -106,7 +144,10 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                     UnderlineTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = "이름"
+                        label = "이름",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(nameFocusRequester)
                     )
                 }
                 Step.SSN -> {
@@ -125,7 +166,9 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                                 }
                             },
                             label = "주민등록번호",
-                            modifier = Modifier.weight(1.2f),
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .focusRequester(ssnFrontFocusRequester),
                             keyboardType = KeyboardType.Number
                         )
 
@@ -139,7 +182,9 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                             value = ssnBack,
                             onValueChange = { if (it.length <= 1) ssnBack = it },
                             label = "", // 라벨 없애기
-                            modifier = Modifier.width(48.dp),
+                            modifier = Modifier
+                                .width(48.dp)
+                                .focusRequester(ssnBackFocusRequester),
                             keyboardType = KeyboardType.Number
                         )
 
@@ -175,6 +220,9 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                             if (it.length <= 11) phone = it
                         },
                         label = "휴대폰 번호",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(phoneFocusRequester),
                         keyboardType = KeyboardType.Phone
                     )
                     DisplayInfo("이름", name)
@@ -187,6 +235,9 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                         value = code,
                         onValueChange = { if (it.length <= 6) code = it },
                         label = "인증번호",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(codeFocusRequester),
                         keyboardType = KeyboardType.Number
                     )
                     DisplayInfo("이름", name)
@@ -201,7 +252,15 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
 
     if (showTelcoSheet) {
         Log.d("TELCO_SHOW", "바텀시트 표시됨")
-        ModalBottomSheet(onDismissRequest = { showTelcoSheet = false }) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showTelcoSheet = false
+                // 만약 통신사를 선택하지 않고 닫을 경우 이전 단계로 돌아감
+                if (telco.isBlank() && currentStep == Step.TELECOM) {
+                    currentStep = Step.SSN
+                }
+            }
+        ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("통신사를 선택해주세요", style = MaterialTheme.typography.titleMedium)
                 telcos.forEach {
@@ -229,19 +288,27 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                if (checkedItems.contains(item)) checkedItems.remove(item)
-                                else checkedItems.add(item)
-                            }
                             .padding(vertical = 8.dp)
                     ) {
-                        // 커스텀 체크박스처럼 보이는 텍스트
-                        Text(
-                            text = "✔",
-                            color = if (checkedItems.contains(item)) Color(0xFF1976D2) else Color.Gray, // 파란색/회색
-                            fontSize = 20.sp,
-                            modifier = Modifier.padding(end = 12.dp)
-                        )
+                        // 체크박스 부분만 클릭 가능하도록 수정 + 리플 효과 제거
+                        Box(
+                            modifier = Modifier
+                                .clickable(
+                                    indication = null, // 리플 효과 제거
+                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                ) {
+                                    if (checkedItems.contains(item)) checkedItems.remove(item)
+                                    else checkedItems.add(item)
+                                }
+                                .padding(end = 12.dp)
+                        ) {
+                            Text(
+                                text = "✔",
+                                color = if (checkedItems.contains(item)) Color(0xFF1976D2) else Color.Gray,
+                                fontSize = 20.sp
+                            )
+                        }
+                        // 텍스트 부분 (클릭 불가)
                         Text(item)
                     }
                 }

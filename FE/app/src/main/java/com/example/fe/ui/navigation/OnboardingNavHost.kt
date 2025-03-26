@@ -9,6 +9,7 @@ import com.example.fe.ui.screens.onboard.OnboardingScreen
 import com.example.fe.ui.screens.onboard.AuthScreen
 import com.example.fe.ui.screens.onboard.CardSelectScreen
 import com.example.fe.ui.screens.onboard.SecuritySetupScreen
+import com.example.fe.ui.screens.onboard.RegistrationCompleteScreen
 
 @Composable
 fun OnboardingNavHost(viewModel: OnboardingViewModel) {
@@ -19,10 +20,6 @@ fun OnboardingNavHost(viewModel: OnboardingViewModel) {
         composable("auth") { AuthScreen(navController, viewModel) }
         composable("card_select") { CardSelectScreen(navController, viewModel) }
         composable("security_setup") { SecuritySetupScreen(navController, viewModel) }
-//        composable("register_complete") {
-//            CompleteScreen {
-//                viewModel.setLoggedIn(true)
-//            }
-//        }
+        composable("registration_complete") { RegistrationCompleteScreen(navController, viewModel) }
     }
 }
