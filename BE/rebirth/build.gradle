@@ -32,9 +32,6 @@ dependencies {
 
     compileOnly 'org.projectlombok:lombok'                    // Lombok
     annotationProcessor 'org.projectlombok:lombok'
-
-
-
 }
 
 tasks.named('test') {
