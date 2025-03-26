@@ -37,12 +37,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fe.ui.screens.home.HomeScreenContent
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalLayoutDirection
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
@@ -53,11 +55,16 @@ object NavRoutes {
 fun AppNavigation() {
     val context = LocalContext.current
     val navController = rememberNavController()
-    
+
+    // 로그아웃을 위한 ViewModel
+    val viewModel: OnboardingViewModel = viewModel(
+        factory = OnboardingViewModelFactory(context)
+    )
+
     // 현재 경로 추적
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: BottomNavItem.Home.route
-    
+
     // 공유 스크롤 오프셋 상태
     var scrollOffset by remember { mutableStateOf(0f) }
 
@@ -73,13 +80,13 @@ fun AppNavigation() {
     // 현재 선택된 탭 인덱스 추적
     var currentTabIndex by remember { mutableStateOf(0) }
     var previousTabIndex by remember { mutableStateOf(0) }
-    
+
     // 코루틴 스코프
     val coroutineScope = rememberCoroutineScope()
-    
+
     // 화면 전환 애니메이션을 위한 상태
     val isNavigatingBack = remember { mutableStateOf(false) }
-    
+
     // 탭 인덱스 맵
     val tabIndices = mapOf(
         BottomNavItem.Home.route to 0,
@@ -100,36 +107,36 @@ fun AppNavigation() {
             transitionDirection = 0
         }
     )
-    
+
     // 네비게이션 바 애니메이션을 위한 상태
     val bottomBarVisible = currentRoute != NavRoutes.HOME_DETAIL
-    
+
     // 네비게이션 바 애니메이션 값
     val bottomBarAlpha by animateFloatAsState(
         targetValue = if (bottomBarVisible) 1f else 0f,
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomBarAlpha"
     )
-    
+
     // 네비게이션 바 슬라이드 애니메이션 값
     val bottomBarOffset by animateFloatAsState(
         targetValue = if (bottomBarVisible) 0f else 100f,
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomBarOffset"
     )
-    
+
     // 네비게이션 바 높이 (일반적으로 80dp)
     val bottomBarHeight = 80.dp
-    
+
     // 패딩 애니메이션 값 (네비게이션 바가 사라질 때 패딩도 0으로)
     val bottomPadding by animateDpAsState(
         targetValue = if (bottomBarVisible) bottomBarHeight else 0.dp,
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomPadding"
     )
-    
+
     Scaffold(
-        topBar = { 
+        topBar = {
             // 현재 경로에 따라 TopBar 내용 변경
             when (currentRoute) {
                 NavRoutes.HOME_DETAIL -> {
@@ -149,15 +156,25 @@ fun AppNavigation() {
                                 animationCounter++
                                 navController.popBackStack()
                             }
+                        },
+                        onLogoutClick = {
+                            // 로그아웃 처리
+                            viewModel.logout()
                         }
                     )
                 }
                 else -> {
-                    TopBar() // 기본 TopBar
+                    TopBar(
+                        onProfileClick = { /* 프로필 화면으로 이동 */ },
+                        onLogoutClick = {
+                            // 로그아웃 처리
+                            viewModel.logout()
+                        }
+                    ) // 기본 TopBar
                 }
             }
         },
-        bottomBar = { 
+        bottomBar = {
             // 상세 화면에서도 BottomBar 유지하되 투명도와 위치 애니메이션 적용
             Box(
                 modifier = Modifier
@@ -175,13 +192,13 @@ fun AppNavigation() {
                             val newIndex = tabIndices[item.route] ?: 0
                             previousTabIndex = currentTabIndex
                             currentTabIndex = newIndex
-                            
+
                             // 방향 계산 및 애니메이션 트리거
                             transitionDirection = if (newIndex > previousTabIndex) 1 else -1
-                            
+
                             // 누적 오프셋 업데이트
                             cumulativeOffset += transitionDirection * 300f
-                            
+
                             animationCounter++ // 애니메이션 트리거
                         }
                     }
@@ -198,7 +215,7 @@ fun AppNavigation() {
             start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
             end = paddingValues.calculateEndPadding(LocalLayoutDirection.current)
         )
-        
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -260,7 +277,7 @@ fun AppNavigation() {
                             }
                         )
                     }
-                    
+
                     // 다른 화면들도 동일하게 수정
                     composable(
                         route = BottomNavItem.MyCard.route,
@@ -289,7 +306,7 @@ fun AppNavigation() {
                             }
                         )
                     }
-                    
+
                     composable(
                         route = BottomNavItem.Payment.route,
                         enterTransition = {
@@ -373,7 +390,7 @@ fun AppNavigation() {
                             }
                         )
                     }
-                    
+
                     // 홈 상세 화면 추가
                     composable(
                         route = NavRoutes.HOME_DETAIL,

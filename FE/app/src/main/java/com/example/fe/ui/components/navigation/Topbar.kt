@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,10 +31,11 @@ import com.example.fe.R
 
 @Composable
 fun TopBar(
-    title: String = "",
+    title: String = "RE",
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -50,40 +50,45 @@ fun TopBar(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
             if (showBackButton) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_arrow_left),
-                        contentDescription = "뒤로 가기",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            } else {
-                Text(
-                    text = "RE",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable { onBackClick() }
                 )
+                Spacer(modifier = Modifier.width(16.dp))
             }
-            
-            if (title.isNotEmpty()) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                Box(modifier = Modifier.weight(1f))
-            }
-            
+
+            // 제목 (기본값은 "RE")
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+            )
+
+            // 로그아웃 버튼
+            Icon(
+                imageVector = Icons.Default.ExitToApp,
+                contentDescription = "로그아웃",
+                tint = Color.White,
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable { onLogoutClick() }
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // 프로필 아이콘
             Box(
                 modifier = Modifier.padding(top = 0.dp, bottom = 4.dp),
                 contentAlignment = Alignment.TopCenter
@@ -109,7 +114,7 @@ fun TopBarPreview() {
 
 @Preview(showBackground = true)
 @Composable
-fun TopBarWithTitleAndBackButtonPreview() {
+fun TopBarWithBackButtonPreview() {
     TopBar(
         title = "이번 달 사용 내역",
         showBackButton = true
