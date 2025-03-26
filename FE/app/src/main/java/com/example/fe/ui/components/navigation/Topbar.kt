@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,8 +32,10 @@ import com.example.fe.R
 
 @Composable
 fun TopBar(
-    onProfileClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    title: String = "",
+    showBackButton: Boolean = false,
+    onBackClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -46,30 +50,40 @@ fun TopBar(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "RE",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-            )
-
-            // 로그아웃 버튼
-            Icon(
-                imageVector = Icons.Default.ExitToApp,
-                contentDescription = "로그아웃",
-                tint = Color.White,
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { onLogoutClick() }
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
+            if (showBackButton) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_arrow_left),
+                        contentDescription = "뒤로 가기",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            } else {
+                Text(
+                    text = "RE",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            if (title.isNotEmpty()) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Box(modifier = Modifier.weight(1f))
+            }
+            
             Box(
                 modifier = Modifier.padding(top = 0.dp, bottom = 4.dp),
                 contentAlignment = Alignment.TopCenter
@@ -90,8 +104,14 @@ fun TopBar(
 @Preview(showBackground = true)
 @Composable
 fun TopBarPreview() {
+    TopBar()
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TopBarWithTitleAndBackButtonPreview() {
     TopBar(
-        onProfileClick = {},
-        onLogoutClick = {}
+        title = "이번 달 사용 내역",
+        showBackButton = true
     )
 }
