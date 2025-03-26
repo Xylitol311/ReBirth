@@ -62,7 +62,10 @@ fun BottomNavBarPreview() {
 }
 
 @Composable
-fun BottomNavBar(navController: NavController) {
+fun BottomNavBar(
+    navController: NavController,
+    onTabSelected: (BottomNavItem) -> Unit = {}
+) {
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.MyCard,
@@ -118,6 +121,7 @@ fun BottomNavBar(navController: NavController) {
                 label = null,
                 selected = currentRoute == item.route,
                 onClick = {
+                    onTabSelected(item)
                     navController.navigate(item.route) {
                         navController.graph.startDestinationRoute?.let { route ->
                             popUpTo(route) {
