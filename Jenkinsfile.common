@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+    environment {
+        COMPOSE_FILE = 'docker-compose.common.yml'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '코드 체크아웃 중...'
+                checkout scm
+            }
+        }
+        stage('Deploy Common Services') {
+            steps {
+                echo '기존 컨테이너 종료 및 제거...'
+                sh 'docker-compose -f docker-compose.common.yml down'
+                echo '변경된 설정으로 컨테이너 생성...'
+                sh 'docker-compose -f docker-compose.common.yml up -d'
+            }
+        }
+    }
+    post {
+        success {
+            echo '공통 인프라 배포 성공'
+        }
+        failure {
+            echo '공통 인프라 배포 실패'
+        }
+    }
+}
