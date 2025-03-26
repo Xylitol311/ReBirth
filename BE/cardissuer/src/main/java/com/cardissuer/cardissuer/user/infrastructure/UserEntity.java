@@ -1,4 +1,4 @@
-package com.cardissuer.cardissuer.user;
+package com.cardissuer.cardissuer.user.infrastructure;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "cardsa_users")
+@Table(name = "users")
 public class UserEntity {
 
 	@Id
