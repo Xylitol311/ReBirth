@@ -1,4 +1,4 @@
-package com.kkulmoo.rebirth.payment.domain;
+package com.kkulmoo.rebirth.payment.domain.repository;
 
 public interface DisposableTokenRepository {
     String findByToken(String token);

@@ -2,7 +2,7 @@ package com.kkulmoo.rebirth.payment.infrastructure.repository;
 
 
 import com.kkulmoo.rebirth.payment.domain.Cards;
-import com.kkulmoo.rebirth.payment.domain.CardsRepository;
+import com.kkulmoo.rebirth.payment.domain.repository.CardsRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
 import com.kkulmoo.rebirth.payment.infrastructure.mapper.CardsEntityMapper;
 import org.springframework.stereotype.Repository;

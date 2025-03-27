@@ -1,13 +1,14 @@
 package com.kkulmoo.rebirth.payment.infrastructure.repository;
 
 
-import com.kkulmoo.rebirth.payment.domain.DisposableTokenRepository;
+import com.kkulmoo.rebirth.payment.domain.repository.DisposableTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.concurrent.TimeUnit;
 
+// 일회용 토큰 redis 저장용도
 @Repository
 public class DisposableTokenRepositoryImpl implements DisposableTokenRepository {
 

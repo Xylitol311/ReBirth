@@ -3,27 +3,28 @@ package com.cardissuer.cardissuer.cards;
 
 import com.cardissuer.cardissuer.user.CardTransactionDTO;
 import com.cardissuer.cardissuer.user.CreateTransactionRequestDTO;
-import lombok.Data;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/cards")
-@RequiredArgsConstructor
+@RequestMapping("/api/cards")@RequiredArgsConstructor
 public class CardController {
 
-    @GetMapping("/test")
-    public ResponseEntity<?> test(@RequestParam CreateTransactionRequestDTO createTransactionRequestDTO){
+    @PostMapping("/test")
+    public ResponseEntity<?> test(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO){
 
+        System.out.println("여기 도착을 했나?");
+
+        String now = "2023-04-09 02:36:30.0";
+        Timestamp ts = Timestamp.valueOf(now);
         System.out.println(createTransactionRequestDTO);
-        CardTransactionDTO cardTransactionDTO = CardTransactionDTO.builder().createdAt("2025-03-26").response("yes").build();
+        CardTransactionDTO cardTransactionDTO = CardTransactionDTO.builder().createdAt(ts).approvalCode("승인완료").build();
         return ResponseEntity.ok(cardTransactionDTO);
     }
 

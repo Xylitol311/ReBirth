@@ -1,8 +1,10 @@
-package com.kkulmoo.rebirth.payment.presentation;
+package com.kkulmoo.rebirth.payment.presentation.response;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
+
+// 클라이언트에게 전달할 객체 형식
 
 @Getter
 public class ApiResponseDTO {

@@ -1,4 +1,6 @@
-package com.kkulmoo.rebirth.payment.domain;
+package com.kkulmoo.rebirth.payment.domain.repository;
+
+import com.kkulmoo.rebirth.payment.domain.Cards;
 
 import java.util.List;
 

@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 
+//일회용 토큰 생성 및 디코드
 @Service
 public class PaymentEncryption {
 

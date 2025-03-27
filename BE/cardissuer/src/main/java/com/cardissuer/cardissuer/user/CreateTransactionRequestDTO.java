@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class CreateTransactionRequestDTO {
-    String Token;
+    String token;
     int amount;
     String merchantName;
 }

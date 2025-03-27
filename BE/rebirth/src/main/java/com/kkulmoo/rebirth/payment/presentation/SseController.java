@@ -21,13 +21,5 @@ public class SseController {
         return sseService.subscribe(userId);
     }
 
-    //밑에거는 왜 필요한거지?
-//    // 특정 유저에게 메시지 전송
-//    //user.Id를 어디서 받지? 헤더에 담아서 주나? 아니면 그냥 넘겨주나?
-//    @PostMapping("/send/{userId}")
-//    public String sendMessage(@RequestBody RequestDTO request) {
-//        sseService.sendToUser(request.userId, request.message);
-//        return "Message sent to user " + request.userId;
-//    }
 
 }
