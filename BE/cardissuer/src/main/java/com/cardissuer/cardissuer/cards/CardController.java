@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @RestController
@@ -17,14 +18,17 @@ import java.time.LocalDateTime;
 public class CardController {
 
     @PostMapping("/test")
-    public ResponseEntity<?> test(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO){
+    public ResponseEntity<?> test(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) {
 
-        System.out.println("여기 도착을 했나?");
 
-        String now = "2023-04-09 02:36:30.0";
-        Timestamp ts = Timestamp.valueOf(now);
-        System.out.println(createTransactionRequestDTO);
-        CardTransactionDTO cardTransactionDTO = CardTransactionDTO.builder().createdAt(ts).approvalCode("승인완료").build();
+        // 현재 시간으로 Timestamp 생성
+        Timestamp ts = Timestamp.from(Instant.now());
+
+        CardTransactionDTO cardTransactionDTO = CardTransactionDTO.builder()
+                .createdAt(ts)
+                .approvalCode("승인완료")
+                .build();
+
         return ResponseEntity.ok(cardTransactionDTO);
     }
 
