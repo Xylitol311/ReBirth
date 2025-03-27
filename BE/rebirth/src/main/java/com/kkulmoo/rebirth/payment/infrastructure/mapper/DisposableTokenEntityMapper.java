@@ -4,7 +4,9 @@ import com.kkulmoo.rebirth.payment.domain.Cards;
 import com.kkulmoo.rebirth.payment.domain.DisposableToken;
 import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
 import com.kkulmoo.rebirth.payment.infrastructure.entity.DisposableTokenEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DisposableTokenEntityMapper {
 
     public DisposableToken toDisposableToken(DisposableTokenEntity disposableTokenEntity){

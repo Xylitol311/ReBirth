@@ -43,6 +43,7 @@ public class PaymentEncryption {
     }
 
     public String[] validateOneTimeToken(String token) throws Exception {
+
         String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
         String[] parts = decoded.split("\\|");
 
@@ -53,10 +54,12 @@ public class PaymentEncryption {
         long expiration = Long.parseLong(parts[2]);
         String signature = parts[3];
 
+
         if (System.currentTimeMillis() > expiration) return null;
 
         String data = encryptedData + "|" + iv + "|" + expiration;
         String expectedSignature = generateHMAC(data, secretKey);
+
 
         if (!expectedSignature.equals(signature)) return null;
 
@@ -65,6 +68,7 @@ public class PaymentEncryption {
         String[] decryptedParts = decryptedData.split("\\|");
 
         if (decryptedParts.length != 2) return null;
+
 
 
         return decryptedParts;

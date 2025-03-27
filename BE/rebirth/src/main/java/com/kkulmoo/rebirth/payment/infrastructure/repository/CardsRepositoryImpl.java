@@ -5,18 +5,21 @@ import com.kkulmoo.rebirth.payment.domain.Cards;
 import com.kkulmoo.rebirth.payment.domain.CardsRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
 import com.kkulmoo.rebirth.payment.infrastructure.mapper.CardsEntityMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Repository
-@RequiredArgsConstructor
-public class CardsRespositoryImpl implements CardsRepository {
+public class CardsRepositoryImpl implements CardsRepository{
 
     private final CardsJpaRepository cardsJpaRepository;
     private final CardsEntityMapper cardsEntityMapper;
+
+    public CardsRepositoryImpl(CardsJpaRepository cardsJpaRepository, CardsEntityMapper cardsEntityMapper) {
+        this.cardsJpaRepository = cardsJpaRepository;
+        this.cardsEntityMapper = cardsEntityMapper;
+    }
 
 
     //사용자 보유 카드 리스트 가져오기

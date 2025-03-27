@@ -4,7 +4,9 @@ import com.kkulmoo.rebirth.payment.domain.CardTemplate;
 import com.kkulmoo.rebirth.payment.domain.Cards;
 import com.kkulmoo.rebirth.payment.infrastructure.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CardTemplateEntityMapper {
 
     public CardTemplate toCardTemplate(CardTemplateEntity cardTemplateEntity){

@@ -25,41 +25,49 @@ public class PaymentService {
     }
 
 
-    public List<String> getAllUsersPermanentToken(int userId){
+    public List<String[]> getAllUsersPermanentToken(int userId){
 
         List<Cards> userCards = cardsRepository.findByUserId(userId);
 
         if(userCards.isEmpty()) return null;
 
-        List<String> userPTs = new ArrayList<>();
+        List<String[]> userPTs = new ArrayList<>();
         for(Cards cards : userCards){
-            userPTs.add(cards.getPermanentToken());
+
+            String[] tokenAndCUN = {cards.getCardUniqueNumber(), cards.getPermanentToken()};
+            userPTs.add(tokenAndCUN);
         }
 
         return userPTs;
 
     }
 
-    public List<String> createDisposableToken(List<String> permanentToken, int userId) throws Exception {
+
+    public List<String[]> createDisposableToken(List<String[]> PTandUCN, int userId) throws Exception {
 
         // 사용자 정보로 부터 영구 토큰 받아서 옴
         // 일회용 토큰 : 복호화 가능한 key, 영구토큰, 만료시간, 서명(HMAC)
 
-        if(permanentToken.isEmpty()) return null;
+        if(PTandUCN.isEmpty()) return null;
 
-        List<String> disposableTokens = new ArrayList<>();
-        for(String pt : permanentToken) {
-            disposableTokens.add(paymentEncryption.generateOneTimeToken(pt,userId));
+        // PTandUCN -> 0 : 고유번호 1: 영구토큰
+        // disposableTokens -> 0: 고유번호 1:일회용 토큰
+        List<String[]> disposableTokensResponse = new ArrayList<>();
+        for(String[] pt : PTandUCN) {
+            disposableTokensResponse.add(new String[]{pt[0],paymentEncryption.generateOneTimeToken(pt[1],userId)});
+
         }
 
-        disposableTokens.add(paymentEncryption.generateOneTimeToken("rebirth", userId));
+        // 추천카드의 고유번호는 000으로
+        disposableTokensResponse.add(new String[]{"000",paymentEncryption.generateOneTimeToken("rebirth", userId)});
 
-        // 각각 하나씩 결제 uuid 생성하기
-        // 넘겨주면서 동시에 redis에 저장하기
-        saveDisposableToken(disposableTokens);
+        //redis 저장 제외
+//        // 각각 하나씩 결제 uuid 생성하기
+//        // 넘겨주면서 동시에 redis에 저장하기
+//        saveDisposableToken(disposableTokens);
 
 
-        return disposableTokens;
+        return disposableTokensResponse;
     }
 
 

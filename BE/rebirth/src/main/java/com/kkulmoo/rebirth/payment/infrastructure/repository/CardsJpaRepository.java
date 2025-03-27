@@ -11,10 +11,8 @@ import java.util.Optional;
 public interface CardsJpaRepository extends JpaRepository<CardsEntity, Integer>{
 
     List<CardsEntity> findByUserId(int userId);
-
     Optional<CardsEntity> findByPermanentToken(String permanentToken);
-
-    @Query("SELECT c.cardTemplateId FROM cards c WHERE c.permanentToken = :permanentToken")
+    @Query("SELECT c.cardTemplateId FROM CardsEntity c WHERE c.permanentToken = :permanentToken")
     Optional<Integer> findCardTemplateIdByPermanentToken(@Param("permanentToken") String permanentToken);
 
 }
