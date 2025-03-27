@@ -1,10 +1,15 @@
 package com.kkulmoo.rebirth.analysis.application.service;
 
 import com.kkulmoo.rebirth.analysis.application.scheduler.MonthlyTransactionScheduler;
+import com.kkulmoo.rebirth.analysis.domain.dto.response.CardCategoryDTO;
+import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCardDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportWithPatternDTO;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.*;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.*;
 import com.kkulmoo.rebirth.card.CardEntity;
+import com.kkulmoo.rebirth.payment.infrastructure.entity.CardTemplateEntity;
+import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
+import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -382,4 +388,38 @@ public class ReportService {
     }
 
 
+    public List<ReportCardDTO> getReportCards(Integer userId, int year, int month) {
+        List<ReportCardDTO> result = new ArrayList<ReportCardDTO>();
+        MonthlyTransactionSummaryEntity monthlyTransactionSummary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(userId, year, month);
+        List<ReportCardsEntity> reportCards = reportCardsJpaRepository.getByReportId(monthlyTransactionSummary.getReportId());
+        for (ReportCardsEntity reportCard : reportCards) {
+            List<CardCategoryDTO> cardCategories = new ArrayList<>();
+            int totalCount = 0;
+            List<ReportCardCategoriesEntity> reportCardCategories = reportCardCategoriesJpaRepository.getByReportCardId(reportCard.getReportCardId());
+            for(ReportCardCategoriesEntity reportCardCategory : reportCardCategories) {
+                CategoryEntity category = categoryJpaRepository.getById(reportCardCategory.getCategoryId());
+                CardCategoryDTO cardCategory = CardCategoryDTO
+                        .builder()
+                        .category(category.getCategoryName())
+                        .amount(reportCardCategory.getAmount())
+                        .benefit(reportCardCategory.getReceivedBenefitAmount())
+                        .count(reportCardCategory.getCount())
+                        .build();
+                totalCount += reportCardCategory.getCount();
+                cardCategories.add(cardCategory);
+            }
+
+            CardTemplateEntity card = cardsJpaRepository.findCardNameByCardId(reportCard.getCardId());
+            ReportCardDTO reportCardDTO = ReportCardDTO
+                    .builder()
+                    .name(card.getCardName())
+                    .totalCount(totalCount)
+                    .totalAmount(reportCard.getMonthSpendingAmount())
+                    .totalBenefit(reportCard.getMonthBenefitAmount())
+                    .categories(cardCategories)
+                    .build();
+            result.add(reportCardDTO);
+        }
+        return result;
+    }
 }

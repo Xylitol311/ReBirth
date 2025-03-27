@@ -28,4 +28,6 @@ public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportC
     );
 
     ReportCardCategoriesEntity getByReportCardIdAndCategoryId(int reportCardId, int categoryId);
+
+    List<ReportCardCategoriesEntity> getByReportCardId(int reportCardId);
 }

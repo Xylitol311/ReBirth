@@ -11,6 +11,7 @@ import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyTransaction
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardsJpaRepository;
 import com.kkulmoo.rebirth.card.CardEntity;
+import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.repository.UserJpaRepository;
 import dev.langchain4j.model.openai.OpenAiChatModel;
