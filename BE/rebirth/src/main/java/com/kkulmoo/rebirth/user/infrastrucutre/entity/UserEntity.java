@@ -29,7 +29,7 @@ public class UserEntity {
 	private Long userId;
 
 	@Column(name = "consumption_pattern_id")
-	private Byte consumptionPatternId;
+	private Short consumptionPatternId;
 
 	@Column(name = "user_name", nullable = false, length = 10)
 	private String userName;
