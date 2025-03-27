@@ -14,7 +14,7 @@ public class BankAPI {
 
 	public BankTransactionResponseDTO createTransaction(bankTransactionCreateDTO dto) {
 		return bankAPIClient.post()
-			.uri("/transactions")
+			.uri("/api/transactions")
 			.bodyValue(dto)
 			.retrieve()
 			.bodyToMono(BankTransactionResponseDTO.class)
