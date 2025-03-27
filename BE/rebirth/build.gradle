@@ -24,7 +24,6 @@ dependencies {
     implementation 'org.postgresql:postgresql'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     // 개발 편의성 향상을 위한 추가 의존성

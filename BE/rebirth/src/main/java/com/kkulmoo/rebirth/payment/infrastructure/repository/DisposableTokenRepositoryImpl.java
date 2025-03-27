@@ -16,14 +16,14 @@ public class DisposableTokenRepositoryImpl implements DisposableTokenRepository 
     private RedisTemplate<String, String> redisTemplate;
 
     @Override
-    public String findByToken(String token) {
+    public String findById(String id) {
         // 토큰을 key로 사용하여 id 조회
-        return redisTemplate.opsForValue().get(token);
+        return redisTemplate.opsForValue().get(id);
     }
 
     @Override
-    public void saveToken(String token, String id) {
+    public void saveToken(String id, String token) {
         // 토큰을 key로, id를 value로 저장 (30분 후 자동 삭제)
-        redisTemplate.opsForValue().set(token, id, 5, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(id, token,5, TimeUnit.MINUTES);
     }
 }

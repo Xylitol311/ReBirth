@@ -1,3 +1,4 @@
+
 package com.kkulmoo.rebirth.payment.infrastructure.entity;
 
 import jakarta.persistence.*;
@@ -5,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "card_templates")
@@ -28,21 +31,38 @@ public class CardTemplateEntity {
     @Column(name = "card_img_url", length = 255, nullable = false)
     private String cardImgUrl;
 
-    @Column(name = "god_name", length = 10)
-    private String godName;
+    @Column(name = "card_deity_name", length = 50)
+    private String cardDeityName;
 
-    @Column(name = "god_img_url", length = 255)
-    private String godImgUrl;
+    @Column(name = "card_deity_img_url", length = 255)
+    private String cardDeityImgUrl;
 
     @Column(name = "annual_fee", nullable = false)
-    private int annualFee = 0;
+    private int annualFee;
 
     @Column(name = "card_type", length = 10, nullable = false)
     private String cardType;
 
-    @Column(name = "spending_max_tier", nullable = false)
-    private Short spendingMaxTier;
+    @Column(name = "card_detail_info", columnDefinition = "TEXT")
+    private String cardDetailInfo;
 
-    @Column(name = "max_performance_amount", nullable = false)
-    private int maxPerformanceAmount;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "card_constellation_info", columnDefinition = "jsonb")
+    private String cardConstellationInfo;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "benefit_conditions", columnDefinition = "jsonb")
+    private String benefitConditions;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "last_month_usage_ranges", columnDefinition = "jsonb")
+    private String lastMonthUsageRanges;
+
+    @Column(name = "god_img_url", length = 255)
+    private String godImgUrl;
+
+    @Column(name = "god_name", length = 10)
+    private String godName;
+
 }
+
