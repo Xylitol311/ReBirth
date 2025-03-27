@@ -7,11 +7,13 @@ import com.kkulmoo.rebirth.payment.application.service.WebClientService;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.ApiResponseDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
+import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/payment")
 public class PaymentController {
@@ -30,28 +32,29 @@ public class PaymentController {
     }
 
     @GetMapping("/disposabletoken")
-    public ResponseEntity<?> getTemporaryPaymentToken(@RequestParam(value="userId") int userId) throws Exception {
+    public ResponseEntity<?> getDisposableToken(@RequestParam(value="userId") int userId) throws Exception {
     //1. 사용자 받아온 걸로 영구토큰 전부다 가져오기
     List<String[]> PTandUCN = paymentService.getAllUsersPermanentToken(userId);
 
 
     //2. 영구 토큰 싹다 일회용 토큰 처리
-    List<String[]> disposableTokens = paymentService.createDisposableToken(PTandUCN,userId);
+    List<PaymentTokenResponseDTO> disposableTokens = paymentService.createDisposableToken(PTandUCN,userId);
     ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"일회용 토큰 생성",disposableTokens);
 
+
     //3. 토큰 전달
-    return ResponseEntity.ok(apiResponseDTO);
+    //3-1. sse 열기
+        sseService.subscribe(userId);
+
+        return ResponseEntity.ok(apiResponseDTO);
 
     }
 
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
-        System.out.println("이건 그냥 받은 토큰 " + createTransactionRequestDTO.getToken());
-
         //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
         String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
-        System.out.println("redis에서 겁색해서 받은 토큰" + realToken);
         String[] tokenInfo = paymentEncryption.validateOneTimeToken(realToken);
 
         String permanentToken = tokenInfo[0];

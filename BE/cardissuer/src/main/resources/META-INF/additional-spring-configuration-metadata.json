@@ -1,0 +1,13 @@
+{
+  "properties": [
+    {
+      "name": "api.rebirth.base-url",
+      "type": "java.lang.String",
+      "description": "Description for api.rebirth.base-url."
+    },
+    {
+      "name": "api.bank.base-url",
+      "type": "java.lang.String",
+      "description": "Description for api.bank.base-url."
+    }
+  ] }
