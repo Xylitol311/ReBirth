@@ -16,10 +16,11 @@ public class UserRepositoryImpl implements UserRepository {
 	private final UserJpaRepository userJpaRepository;
 
 	@Override
-	public Optional<User> findByUserApiKey(String userApiKey) {
-		return userJpaRepository.findByUserApiKey(userApiKey)
+	public Optional<User> findByUserApiKey(String userCI) {
+		return userJpaRepository.findByUserCI(userCI)
 			.map(userEntityMapper::toDomain);
 	}
+
 
 	@Override
 	public User save(User user) {

@@ -1,5 +1,6 @@
 package com.cardissuer.cardissuer.user.infrastructure;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -23,24 +24,16 @@ import lombok.NoArgsConstructor;
 public class UserEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "user_id")
-	private Integer userId;
+	@Column(name = "user_ci", length = 40)
+	private String userCI;
 
 	@Column(name = "user_name", length = 10, nullable = false)
 	private String userName;
 
-	@Column(name = "user_api_key", length = 40)
-	private String userApiKey;
-
 	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
+	private Timestamp createdAt;
 
 	@Column(name = "deleted_at")
-	private LocalDateTime deletedAt;
+	private Timestamp deletedAt;
 
-	@PrePersist
-	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-	}
 }

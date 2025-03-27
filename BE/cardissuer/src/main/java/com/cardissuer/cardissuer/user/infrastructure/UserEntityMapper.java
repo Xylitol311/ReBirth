@@ -26,9 +26,8 @@ public class UserEntityMapper {
 		}
 
 		return User.builder()
-			.userId(entity.getUserId())
+			.userCI(entity.getUserCI())
 			.userName(entity.getUserName())
-			.userApiKey(entity.getUserApiKey())
 			.createdAt(entity.getCreatedAt())
 			.build();
 	}
@@ -43,21 +42,9 @@ public class UserEntityMapper {
 		if (domain == null) {
 			return null;
 		}
-
-		Integer userId = null;
-		if (domain.getUserId() != null) {
-			try {
-				userId = Integer.valueOf(domain.getUserId());
-			} catch (NumberFormatException e) {
-				// userId가 Integer로 변환될 수 없는 경우 처리
-				// 로깅 또는 예외 처리 가능
-			}
-		}
-
 		return UserEntity.builder()
-			.userId(userId)
+			.userCI(domain.getUserCI())
 			.userName(domain.getUserName())
-			.userApiKey(domain.getUserApiKey())
 			.createdAt(domain.getCreatedAt())
 			.build();
 	}

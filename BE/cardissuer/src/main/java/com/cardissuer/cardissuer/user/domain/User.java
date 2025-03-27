@@ -1,5 +1,6 @@
 package com.cardissuer.cardissuer.user.domain;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.GeneratedValue;
@@ -9,9 +10,8 @@ import lombok.Getter;
 @Builder
 @Getter
 public class User {
-	Integer userId;
+	String userCI;
 	String userName;
-	String userApiKey;
-    LocalDateTime createdAt; // 선택적으로 추가
-
+	Timestamp createdAt;
+	Timestamp deletedAt;
 }

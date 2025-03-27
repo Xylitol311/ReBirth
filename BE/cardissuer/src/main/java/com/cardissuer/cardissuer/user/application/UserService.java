@@ -19,7 +19,8 @@ public class UserService {
 	public User createUser(UserRegistrationDto registrationDto) {
 		return userRepository.save(User.builder()
 			.userName(registrationDto.getUserName())
-			.userApiKey(registrationDto.getSsafyApiKey())
+			.userCI(registrationDto.getUserCI())
+			.createdAt(registrationDto.getCreatedAt())
 			.build());
 	}
 
