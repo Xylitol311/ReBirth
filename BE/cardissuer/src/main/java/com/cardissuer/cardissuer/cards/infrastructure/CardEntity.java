@@ -3,6 +3,8 @@ package com.cardissuer.cardissuer.cards.infrastructure;
 import java.sql.Timestamp;
 import java.util.Date;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,8 +29,11 @@ public class CardEntity {
 	@Column(name = "card_unique_number", length = 36)
 	private String cardUniqueNumber;  // UUID를 String으로 처리
 
-	@Column(name = "user_id", nullable = false)
-	private Integer userId;
+	@Column(name = "user_ci", nullable = false)
+	private String userCI;
+
+	@Column(name = "account_number" , nullable = false)
+	private String accountNumber;
 
 	@Column(name = "card_number")
 	private String cardNumber;
@@ -46,6 +51,7 @@ public class CardEntity {
 	private String cardPassword;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
+	@CreationTimestamp
 	private Timestamp createdAt;
 
 	@Column(name = "deleted_at")

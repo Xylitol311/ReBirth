@@ -12,7 +12,7 @@ import com.cardissuer.cardissuer.cards.domain.Card;
 public interface CardRepository {
 
 	// 사용자 ID로 카드 목록 조회 (삭제되지 않은 카드만)
-	List<Card> findByUserIdAndDeletedAtIsNull(Integer userId);
+	List<Card> findByUserCIAndDeletedAtIsNull(String userId);
 
 	Optional<Card> findByCardUniqueNumber(CardUniqueNumber cardUniqueNumber);
 
@@ -23,4 +23,6 @@ public interface CardRepository {
 	Optional<PermanentToken> findTokenByToken(String token);
 
 	void updateToken(PermanentToken permanentToken);
+
+	Card save(Card card);
 }

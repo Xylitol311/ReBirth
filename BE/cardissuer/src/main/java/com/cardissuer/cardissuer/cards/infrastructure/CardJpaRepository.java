@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CardJpaRepository extends JpaRepository<CardEntity, String> {
-	List<CardEntity> findByUserIdAndDeletedAtIsNull(Integer userId);
+	List<CardEntity> findByUserCIAndDeletedAtIsNull(String userCI);
 }

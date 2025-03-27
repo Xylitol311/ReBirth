@@ -25,7 +25,8 @@ public class CardEntityMapper {
 
 		return Card.builder()
 			.cardUniqueNumber(CardUniqueNumber.of(entity.getCardUniqueNumber()))
-			.userId(entity.getUserId())
+			.userCI(entity.getUserCI())
+			.accountNumber(entity.getAccountNumber())
 			.cardNumber(entity.getCardNumber())
 			.cardName(entity.getCardName())
 			.expiryDate(entity.getExpiryDate())
@@ -49,7 +50,8 @@ public class CardEntityMapper {
 
 		return CardEntity.builder()
 			.cardUniqueNumber(domain.getCardUniqueNumber().getValue())
-			.userId(domain.getUserId())
+			.userCI(domain.getUserCI())
+			.accountNumber(domain.getAccountNumber())
 			.cardNumber(domain.getCardNumber())
 			.cardName(domain.getCardName())
 			.expiryDate(domain.getExpiryDate())

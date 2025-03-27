@@ -17,7 +17,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Card {
 	private CardUniqueNumber cardUniqueNumber;
-	private Integer userId;
+	private String userCI;
+	private String accountNumber;
 	private String cardNumber;
 	private String cardName;
 	private Date expiryDate;
@@ -30,7 +31,8 @@ public class Card {
 	public Card updateCard(PermanentTokenRequest request) {
 		return Card.builder()
 			.cardUniqueNumber(this.cardUniqueNumber) // 기존 값 유지
-			.userId(this.userId) // 기존 값 유지
+			.accountNumber(this.accountNumber)
+			.userCI(this.userCI) // 기존 값 유지
 			.cardNumber(request.getCardNumber() != null ? request.getCardNumber() : this.cardNumber) // 새 값이 있으면 업데이트, 없으면 기존 값 유지
 			.cardName(this.cardName) // 기존 값 유지
 			.expiryDate(this.expiryDate) // 기존 값 유지

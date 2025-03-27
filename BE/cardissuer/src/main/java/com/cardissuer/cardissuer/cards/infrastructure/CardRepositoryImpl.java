@@ -23,11 +23,9 @@ public class CardRepositoryImpl implements CardRepository {
 	private final TokenJpaRepository tokenJpaRepository;
 	private final PermanentTokenEntityMapper permanentTokenEntityMapper;
 
-
-	@Override
-	public List<Card> findByUserIdAndDeletedAtIsNull(Integer userId) {
+	public List<Card> findByUserCIAndDeletedAtIsNull(String userCI) {
 		// JPA 레포지토리를 통해 CardEntity 목록을 가져옵니다
-		List<CardEntity> cardEntities = cardJpaRepository.findByUserIdAndDeletedAtIsNull(userId);
+		List<CardEntity> cardEntities = cardJpaRepository.findByUserCIAndDeletedAtIsNull(userCI);
 
 		return cardEntities.stream()
 			.map(cardEntityMapper::toDomain)
@@ -36,6 +34,8 @@ public class CardRepositoryImpl implements CardRepository {
 
 	@Override
 	public Optional<Card> findByCardUniqueNumber(CardUniqueNumber cardUniqueNumber) {
+		System.out.println(cardUniqueNumber.getValue());
+		System.out.println("다들어오고 있어요");
 		Optional<CardEntity> cardEntity = cardJpaRepository.findById(cardUniqueNumber.getValue());
 		return cardEntity.map(cardEntityMapper::toDomain);
 	}
@@ -54,6 +54,7 @@ public class CardRepositoryImpl implements CardRepository {
 
 	@Override
 	public Optional<PermanentToken> findTokenByToken(String token) {
+		System.out.println(token);
 		Optional<PermanentTokenEntity> entity = tokenJpaRepository.findById(token);
 		return entity.map(permanentTokenEntityMapper::toDomain); // Mapper를 사용하여 변환
 	}
@@ -64,4 +65,13 @@ public class CardRepositoryImpl implements CardRepository {
 		tokenJpaRepository.save(permanentTokenEntity);
 	}
 
+	@Override
+	public Card save(Card card) {
+		// Card 도메인 객체를 CardEntity로 변환
+		// JPA 레포지토리를 통해 엔티티 저장
+		// 저장된 엔티티를 다시 도메인 객체로 변환하여 반환
+		System.out.println(card.getAccountNumber());
+		return cardEntityMapper.toDomain(cardJpaRepository.save(cardEntityMapper.toEntity(card)));
+	}
 }
+

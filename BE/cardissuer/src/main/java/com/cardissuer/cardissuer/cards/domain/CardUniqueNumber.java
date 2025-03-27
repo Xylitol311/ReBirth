@@ -1,8 +1,8 @@
 package com.cardissuer.cardissuer.cards.domain;
 
-import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
+
 import lombok.Value;
 
 @Value
