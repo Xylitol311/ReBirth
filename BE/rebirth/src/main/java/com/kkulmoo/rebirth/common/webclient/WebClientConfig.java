@@ -9,10 +9,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 
     // backend -> 카드사 (User의 카드 정보주세요)
-    @Value("${api.first.base-url}")
+    @Value("${api.cardissuer.base-url}")
     private String firstApiBaseUrl;
 
-    @Value("${api.second.base-url}")
+    @Value("${api.bank.base-url}")
     private String secondApiBaseUrl;
 
     @Bean(name = "cardIssuerAPIClient")
