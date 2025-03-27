@@ -9,12 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Repository
 @RequiredArgsConstructor
 public class CardsRespositoryImpl implements CardsRepository {
 
-    private final CardsRepository cardsRepository;
     private final CardsJpaRepository cardsJpaRepository;
     private final CardsEntityMapper cardsEntityMapper;
 
@@ -29,4 +29,11 @@ public class CardsRespositoryImpl implements CardsRepository {
         List<Cards> cards = cardsEntityMapper.toCardsList(cardsEntity);
         return cards;
     }
+
+    @Override
+    public int findCardTemplateIdByToken(String permanentToken) {
+        return cardsJpaRepository.findCardTemplateIdByPermanentToken(permanentToken)
+                .orElseThrow(() -> new NoSuchElementException("해당 permanentToken을 가진 카드가 없습니다."));
+    }
+
 }

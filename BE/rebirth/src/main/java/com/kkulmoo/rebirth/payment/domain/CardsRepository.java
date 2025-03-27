@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface CardsRepository {
     List<Cards> findByUserId(int userId);
-
+    int findCardTemplateIdByToken(String permanentToken);
 }

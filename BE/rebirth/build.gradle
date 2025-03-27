@@ -30,11 +30,10 @@ dependencies {
     // 개발 편의성 향상을 위한 추가 의존성
     implementation 'org.springframework.boot:spring-boot-starter-validation'  // 유효성 검증
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'  // Swagger UI
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     compileOnly 'org.projectlombok:lombok'                    // Lombok
     annotationProcessor 'org.projectlombok:lombok'
-
-
 
 }
 

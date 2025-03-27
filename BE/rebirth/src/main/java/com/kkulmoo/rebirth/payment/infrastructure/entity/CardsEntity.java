@@ -23,7 +23,6 @@ public class CardsEntity {
     @Column(name = "card_id")
     private int cardId;
 
-
     @Column(name="user_id", nullable = false, updatable = false)
     private int userId;
 
@@ -65,6 +64,5 @@ public class CardsEntity {
 
     @Column(name = "payment_created_at")
     private LocalDateTime paymentCreatedAt;
-
 
 }

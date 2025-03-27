@@ -14,13 +14,6 @@ import java.util.Base64;
 @Service
 public class PaymentEncryption {
 
-    public PaymentEncryption(){
-
-    }
-
-    // 일회용 토큰 : 복호화 가능한 key, 영구토큰, 만료시간, 서명(HMAC)
-    //5분 만료시간 넣고 | 로 쪼갬, 영구 토큰 받아서 바로 aes로 암호화 함
-
     @Value("${token.secret.key}")
     private String secretKey; // 서명용 키 (HMAC)
 
@@ -29,7 +22,6 @@ public class PaymentEncryption {
 
     private static final long EXPIRATION_TIME = 5 * 60 * 1000; // 5분
 
-    // 키 확인용 코드 , 클래스가 service를 수행하기 전에 발생
     @PostConstruct
     private void validateKeys() {
         if (aesKey.length() != 16 && aesKey.length() != 24 && aesKey.length() != 32) {
@@ -37,34 +29,45 @@ public class PaymentEncryption {
         }
     }
 
-    public String generateOneTimeToken(String permanentToken) throws Exception {
+    public String generateOneTimeToken(String permanentToken, int userId) throws Exception {
         long expiration = System.currentTimeMillis() + EXPIRATION_TIME;
-        String iv = generateIV(); // CBC 모드에서는 IV 필요
-        String encryptedToken = encryptAES(permanentToken, aesKey, iv);
+        String iv = generateIV();
 
-        String data = encryptedToken + "|" + iv + "|" + expiration;
+        // permanentToken과 userId를 함께 암호화
+        String encryptedData = encryptAES(permanentToken + "|" + userId, aesKey, iv);
+
+        String data = encryptedData + "|" + iv + "|" + expiration;
         String signature = generateHMAC(data, secretKey);
 
         return Base64.getUrlEncoder().withoutPadding().encodeToString((data + "|" + signature).getBytes(StandardCharsets.UTF_8));
     }
 
-    public boolean validateOneTimeToken(String token) throws Exception {
+    public String[] validateOneTimeToken(String token) throws Exception {
         String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
         String[] parts = decoded.split("\\|");
 
-        if (parts.length != 4) return false;
+        if (parts.length != 4) return null;
 
-        String encryptedToken = parts[0];
+        String encryptedData = parts[0];
         String iv = parts[1];
         long expiration = Long.parseLong(parts[2]);
         String signature = parts[3];
 
-        if (System.currentTimeMillis() > expiration) return false; // 만료 확인
+        if (System.currentTimeMillis() > expiration) return null;
 
-        String data = encryptedToken + "|" + iv + "|" + expiration;
+        String data = encryptedData + "|" + iv + "|" + expiration;
         String expectedSignature = generateHMAC(data, secretKey);
 
-        return expectedSignature.equals(signature);
+        if (!expectedSignature.equals(signature)) return null;
+
+        // 복호화 후 permanentToken, userId 추출
+        String decryptedData = decryptAES(encryptedData, aesKey, iv);
+        String[] decryptedParts = decryptedData.split("\\|");
+
+        if (decryptedParts.length != 2) return null;
+
+
+        return decryptedParts;
     }
 
     private String encryptAES(String data, String key, String iv) throws Exception {
@@ -98,5 +101,4 @@ public class PaymentEncryption {
         new SecureRandom().nextBytes(iv);
         return Base64.getEncoder().encodeToString(iv);
     }
-
 }
