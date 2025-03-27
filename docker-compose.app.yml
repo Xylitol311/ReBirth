@@ -9,6 +9,13 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - CARDISSUER_URL=${CARDISSUER_URL}
+      - BANK_URL=${BANK_URL}
+      - REBIRTH_URL=${REBIRTH_URL}
+      - TOKEN_SECRET_KEY=${TOKEN_SECRET_KEY}
+      - AES_KEY=${AES_KEY}
+      - REDIS_URL=${REDIS_URL}
+      - REDIS_PORT=${REDIS_PORT}
     ports:
       - "8081:8080"   # 호스트 포트 8081 → 컨테이너 포트 8080
     networks:
@@ -22,6 +29,9 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - CARDISSUER_URL=${CARDISSUER_URL}
+      - BANK_URL=${BANK_URL}
+      - REBIRTH_URL=${REBIRTH_URL}
     ports:
       - "8082:8080"   # 호스트 포트 8082 → 컨테이너 포트 8080
     networks:
@@ -34,6 +44,9 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - CARDISSUER_URL=${CARDISSUER_URL}
+      - BANK_URL=${BANK_URL}
+      - REBIRTH_URL=${REBIRTH_URL}
     ports:
       - "8083:8080"   # 호스트 포트 8083 → 컨테이너 포트 8080
     networks:
