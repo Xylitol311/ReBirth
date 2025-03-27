@@ -17,7 +17,7 @@ public class WebClientService {
 
     public Mono<CardTransactionDTO> checkPermanentToken(CreateTransactionRequestDTO createTransactionRequestDTO) {
         return webClient.post()
-                .uri("/api/cards/test")
+                .uri("/api/transactions")
                 .bodyValue(createTransactionRequestDTO)
                 .retrieve()
                 .bodyToMono(CardTransactionDTO.class);

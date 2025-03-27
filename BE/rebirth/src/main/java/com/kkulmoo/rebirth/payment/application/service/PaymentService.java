@@ -3,6 +3,7 @@ import com.kkulmoo.rebirth.payment.domain.*;
 import com.kkulmoo.rebirth.payment.domain.repository.CardTemplateRepository;
 import com.kkulmoo.rebirth.payment.domain.repository.CardsRepository;
 import com.kkulmoo.rebirth.payment.domain.repository.DisposableTokenRepository;
+import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ public class PaymentService {
         List<String[]> userPTs = new ArrayList<>();
         for(Cards cards : userCards){
 
+            if(cards.getPermanentToken()== null) continue;
             String[] tokenAndCUN = {cards.getCardUniqueNumber(), cards.getPermanentToken()};
             userPTs.add(tokenAndCUN);
         }
@@ -45,13 +47,13 @@ public class PaymentService {
 
     // PTandUCN(영구토큰과 사용자 고유번호) -> 0 : 고유번호 1: 영구토큰
     // disposableTokens -> 0: 고유번호 1:일회용 토큰
-    public List<String[]> createDisposableToken(List<String[]> PTandUCN, int userId) throws Exception {
+    public List<PaymentTokenResponseDTO> createDisposableToken(List<String[]> PTandUCN, int userId) throws Exception {
 
         // 일회용 토큰 : 복호화 가능한 key, 영구토큰, 만료시간, 서명(HMAC)
 
         if(PTandUCN.isEmpty()) return null;
 
-        List<String[]> disposableTokensResponse = new ArrayList<>();
+        List<PaymentTokenResponseDTO> disposableTokensResponse = new ArrayList<>();
         for(String[] pt : PTandUCN) {
 
             // 영구 토큰 별로 일회용 토큰 생성
@@ -61,7 +63,7 @@ public class PaymentService {
             String shortToken = realToken.substring(0,20);
 
             // 카드 고유 번호와 일회용 토큰 넘기기
-            disposableTokensResponse.add(new String[]{pt[0],shortToken});
+            disposableTokensResponse.add(PaymentTokenResponseDTO.builder().token(shortToken).cardId(pt[0]).build());
 
             //redis에 key: 일회용 토큰 / value : 진짜 토큰으로 저장
             disposableTokenRepository.saveToken(shortToken,realToken);
@@ -71,7 +73,7 @@ public class PaymentService {
         String realRecommendToken = paymentEncryption.generateOneTimeToken("rebirth", userId);
         String shortRecommendToken = realRecommendToken.substring(0,20);
 
-        disposableTokensResponse.add(new String[]{"000",shortRecommendToken});
+        disposableTokensResponse.add(PaymentTokenResponseDTO.builder().token(shortRecommendToken).cardId("000").build());
 
         // 얘도 redis에 저장하기
         disposableTokenRepository.saveToken(shortRecommendToken,realRecommendToken);
