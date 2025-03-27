@@ -26,6 +26,12 @@ pipeline {
                     sh 'chmod +x gradlew'
                     sh './gradlew clean build -x test'
                 }
+                echo 'Bank 모듈 빌드 (테스트 생략)'
+                // bank 모듈 빌드
+                dir('BE/bank') {
+                    sh 'chmod +x gradlew'
+                    sh './gradlew clean build -x test'
+                }
             }
         }
         stage('Docker Image Build') {
@@ -38,6 +44,10 @@ pipeline {
                 // cardissuer 이미지 빌드
                 dir('BE/cardissuer') {
                     sh 'docker build -t cardissuer-image .'
+                }
+                // bank 이미지 빌드
+                dir('BE/bank') {
+                    sh 'docker build -t bank-image .'
                 }
             }
         }
