@@ -7,6 +7,8 @@ services:
     container_name: rebirth_app
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "8081:8080"   # 호스트 포트 8081 → 컨테이너 포트 8080
     networks:
@@ -18,6 +20,8 @@ services:
     container_name: cardissuer_app
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "8082:8080"   # 호스트 포트 8082 → 컨테이너 포트 8080
     networks:
@@ -28,6 +32,8 @@ services:
     container_name: bank_app
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "8083:8080"   # 호스트 포트 8083 → 컨테이너 포트 8080
     networks:
