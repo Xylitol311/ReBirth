@@ -47,7 +47,12 @@ public class PaymentController {
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
-        String[] tokenInfo = paymentEncryption.validateOneTimeToken(createTransactionRequestDTO.getToken());
+        System.out.println("이건 그냥 받은 토큰 " + createTransactionRequestDTO.getToken());
+
+        //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
+        String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
+        System.out.println("redis에서 겁색해서 받은 토큰" + realToken);
+        String[] tokenInfo = paymentEncryption.validateOneTimeToken(realToken);
 
         String permanentToken = tokenInfo[0];
         int userId = Integer.parseInt(tokenInfo[1]);

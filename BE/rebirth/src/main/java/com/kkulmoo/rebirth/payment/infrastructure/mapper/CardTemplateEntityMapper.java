@@ -15,11 +15,21 @@ public class CardTemplateEntityMapper {
             return null;
         }
 
-        return CardTemplate.builder().cardTemplateId(cardTemplateEntity.getCardTemplateId()).cardCompanyId(cardTemplateEntity.getCardCompanyId())
-                .cardName(cardTemplateEntity.getCardName()).cardType(cardTemplateEntity.getCardType())
-                .cardImgUrl(cardTemplateEntity.getCardImgUrl()).godImgUrl(cardTemplateEntity.getGodImgUrl())
-                .godName(cardTemplateEntity.getGodName()).maxPerformanceAmount(cardTemplateEntity.getMaxPerformanceAmount())
-                .spendingMaxTier(cardTemplateEntity.getSpendingMaxTier()).annualFee(cardTemplateEntity.getAnnualFee())
+        return CardTemplate.builder()
+                .cardTemplateId(cardTemplateEntity.getCardTemplateId())
+                .cardCompanyId(cardTemplateEntity.getCardCompanyId())
+                .cardName(cardTemplateEntity.getCardName())
+                .annualFee(cardTemplateEntity.getAnnualFee())
+                .benefitConditions(cardTemplateEntity.getBenefitConditions())
+                .lastMonthUsageRanges(cardTemplateEntity.getLastMonthUsageRanges())
+                .cardType(cardTemplateEntity.getCardType())
+                .cardImgUrl(cardTemplateEntity.getCardImgUrl())
+                .godImgUrl(cardTemplateEntity.getGodImgUrl())
+                .godName(cardTemplateEntity.getGodName())
+                .cardConstellationInfo(cardTemplateEntity.getCardConstellationInfo())
+                .cardDeityName(cardTemplateEntity.getCardDeityName())
+                .cardDeityImgUrl(cardTemplateEntity.getCardDeityImgUrl())
+                .cardDetailInfo(cardTemplateEntity.getCardDetailInfo())
                 .build();
 
 

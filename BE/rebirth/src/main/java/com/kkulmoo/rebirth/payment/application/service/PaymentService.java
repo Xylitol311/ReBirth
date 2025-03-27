@@ -53,29 +53,37 @@ public class PaymentService {
 
         List<String[]> disposableTokensResponse = new ArrayList<>();
         for(String[] pt : PTandUCN) {
-            disposableTokensResponse.add(new String[]{pt[0],paymentEncryption.generateOneTimeToken(pt[1],userId)});
 
+            // 영구 토큰 별로 일회용 토큰 생성
+            String realToken = paymentEncryption.generateOneTimeToken(pt[1],userId);
+
+            // 일회용 토큰을 20자로 줄이기
+            String shortToken = realToken.substring(0,20);
+
+            // 카드 고유 번호와 일회용 토큰 넘기기
+            disposableTokensResponse.add(new String[]{pt[0],shortToken});
+
+            //redis에 key: 일회용 토큰 / value : 진짜 토큰으로 저장
+            disposableTokenRepository.saveToken(shortToken,realToken);
         }
 
-        // 추천카드의 고유번호는 000으로
-        disposableTokensResponse.add(new String[]{"000",paymentEncryption.generateOneTimeToken("rebirth", userId)});
+        // 추천카드의 고유번호는 000으로, 영구토큰 대신 rebirth로
+        String realRecommendToken = paymentEncryption.generateOneTimeToken("rebirth", userId);
+        String shortRecommendToken = realRecommendToken.substring(0,20);
 
+        disposableTokensResponse.add(new String[]{"000",shortRecommendToken});
 
-//        // 넘겨주면서 동시에 redis에 저장하기
-//        saveDisposableToken(disposableTokens);
-
+        // 얘도 redis에 저장하기
+        disposableTokenRepository.saveToken(shortRecommendToken,realRecommendToken);
 
         return disposableTokensResponse;
     }
 
-    // 일회용토큰 생성시 모든 토큰들을 redis에 저장하기
-    public void saveDisposableToken(List<String> disposableTokens){
-        if(disposableTokens.isEmpty()) return;
+    // 잘린 토큰으로 전체 토큰 가져오기
+    public String getRealDisposableToken(String shortDisposableTokens){
+        if(shortDisposableTokens.isEmpty()) return null;
 
-        for(String pt : disposableTokens) {
-            String id =UUID.randomUUID().toString();
-            disposableTokenRepository.saveToken(pt, id);
-        }
+        return disposableTokenRepository.findById(shortDisposableTokens);
     }
 
     //영구 토큰에 있는 카드 아이디 전달하고 카드 아이디에 있는 카드 템플릿 가져오기 ( 프론트 화면 용 )
