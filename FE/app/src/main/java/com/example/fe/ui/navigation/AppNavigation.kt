@@ -27,7 +27,7 @@ import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
 import com.example.fe.ui.screens.calendar.CalendarScreen
-import com.example.fe.ui.screens.recCard.recCard
+import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
 import com.example.fe.ui.screens.myCard.MyCardScreen
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
@@ -417,7 +417,7 @@ fun AppNavigation() {
                             )
                         }
                     ) {
-                        recCard(
+                        CardRecommendScreen(
                             onScrollOffsetChange = { offset ->
                                 scrollOffset = offset
                             }
