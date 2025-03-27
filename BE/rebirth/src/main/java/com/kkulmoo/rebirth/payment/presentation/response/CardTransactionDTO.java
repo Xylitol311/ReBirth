@@ -9,8 +9,8 @@ import java.sql.Timestamp;
 @Getter
 @Builder
 public class CardTransactionDTO {
-
+    private Long amount;  // 금액
     private Timestamp createdAt;
-    private String approvalCode;
+    private String approvalCode;  // 승인코드 (카드 취소에도 전달 되도록)
 
 }

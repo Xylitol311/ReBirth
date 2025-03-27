@@ -32,6 +32,8 @@ public class CardTransactionController {
 	@PostMapping
 	public ResponseEntity<BankTransactionResponseDTO> createTransaction(
 		@RequestBody CreateTransactionRequest createTransactionRequest) {
+
+		System.out.println(createTransactionRequest.getToken());
 		BankTransactionResponseDTO cardTransaction = cardTransactionService.createTransaction(createTransactionRequest);
 		return new ResponseEntity<>(cardTransaction, HttpStatus.CREATED);
 	}
