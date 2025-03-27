@@ -9,26 +9,27 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-	// backend -> 카드사 (User의 카드 정보주세요)
-	@Value("${api.first.base-url}")
-	private String firstApiBaseUrl;
+	// 카드사 -> rebirth
+	@Value("${api.rebirth.base-url}")
+	private String rebirthUrl;
 
-	@Value("${api.second.base-url}")
-	private String secondApiBaseUrl;
+	//
+	@Value("${api.bank.base-url}")
+	private String bankUrl;
 
-	@Bean(name = "cardIssuerAPIClient")
-	public WebClient cardIssuerAPIClient() {
+	@Bean(name = "rebirthAPIClient")
+	public WebClient rebirthAPIClient() {
 		return WebClient.builder()
-			.baseUrl(firstApiBaseUrl)
+			.baseUrl(rebirthUrl)
 			.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 			.defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
 			.build();
 	}
 
-	@Bean(name = "ssafyBankAPIClient")
-	public WebClient ssafyBankAPIClient() {
+	@Bean(name = "bankAPIClient")
+	public WebClient bankAPIClient() {
 		return WebClient.builder()
-			.baseUrl(secondApiBaseUrl)
+			.baseUrl(bankUrl)
 			.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 			.defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
 			.build();
