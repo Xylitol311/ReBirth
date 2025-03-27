@@ -18,9 +18,9 @@ public class CardTransactionRepositoryImpl implements CardTransactionRepository 
 	private final CardTransactionMapper cardTransactionMapper;
 
 	@Override
-	public List<CardTransactionEntity> findByCard_UserIdAndCreatedAtAfterOrderByCreatedAtDesc(Integer userId,
+	public List<CardTransactionEntity> findByCard_UserCIAndCreatedAtAfterOrderByCreatedAtDesc(String userId,
 		Timestamp timestamp) {
-		return cardTransactionJpaRepository.findByCard_UserIdAndCreatedAtAfterOrderByCreatedAtDesc(userId, timestamp);
+		return cardTransactionJpaRepository.findByCard_UserCIAndCreatedAtAfterOrderByCreatedAtDesc(userId, timestamp);
 
 	}
 

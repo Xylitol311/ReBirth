@@ -17,6 +17,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import com.cardissuer.cardissuer.cards.infrastructure.CardEntity;
@@ -33,6 +34,10 @@ public class CardTransactionEntity {
 	@Column(name = "transaction_id")
 	private Integer transactionId;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "card_unique_number", referencedColumnName = "card_unique_number", insertable = false, updatable = false)
+	private CardEntity card;
+
 	@Column(name = "card_unique_number", nullable = false)
 	private String cardUniqueNumber;
 
@@ -40,17 +45,10 @@ public class CardTransactionEntity {
 	private Integer amount;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
+	private Timestamp createdAt;
 
 	@Column(name = "merchant_name", length = 50, nullable = false)
 	private String merchantName;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "card_unique_number", referencedColumnName = "card_unique_number", insertable = false, updatable = false)
-	private CardEntity card;
 
-	@PrePersist
-	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-	}
 }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cardissuer.cardissuer.cards.application.CardResponse;
 import com.cardissuer.cardissuer.transaction.domain.CardTransaction;
+import com.cardissuer.cardissuer.transaction.infrastrucuture.BankTransactionResponseDTO;
 import com.cardissuer.cardissuer.transaction.infrastrucuture.CardTransactionEntity;
 import com.cardissuer.cardissuer.transaction.application.CardTransactionService;
 
@@ -29,9 +30,9 @@ public class CardTransactionController {
 
 	// 넣을 때는 사용자가 누구인지 굳이 알려줄 필요가 없어요~
 	@PostMapping
-	public ResponseEntity<CardTransaction> createTransaction(
+	public ResponseEntity<BankTransactionResponseDTO> createTransaction(
 		@RequestBody CreateTransactionRequest createTransactionRequest) {
-		CardTransaction cardTransaction = cardTransactionService.createTransaction(createTransactionRequest);
+		BankTransactionResponseDTO cardTransaction = cardTransactionService.createTransaction(createTransactionRequest);
 		return new ResponseEntity<>(cardTransaction, HttpStatus.CREATED);
 	}
 
@@ -44,6 +45,8 @@ public class CardTransactionController {
 		List<CardTransactionEntity> transactions = cardTransactionService.getAllTransactionsByUserApiKey(ssafyAPIKey);
 		return new ResponseEntity<>(transactions, HttpStatus.OK);
 	}
+
+	// 카드 거래 내역 가져오기. 가드별로 요청을 하는게 맞을듯하다...?  (전체를 싸글이 가져오는게 이득일까??)
 
 	@GetMapping("/user/after")
 	public ResponseEntity<List<CardTransactionEntity>> getTransactionsByUserApiKeyAfterTimestamp(

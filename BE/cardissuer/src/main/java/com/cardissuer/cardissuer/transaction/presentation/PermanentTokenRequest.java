@@ -6,6 +6,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class PermanentTokenRequest {
+	String userCI;
 	String cardUniqueNumber;
 	String cardNumber;
 	String password;
