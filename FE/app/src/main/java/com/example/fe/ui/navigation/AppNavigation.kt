@@ -3,7 +3,10 @@ package com.example.fe.ui.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,13 +28,10 @@ import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
 import com.example.fe.ui.screens.calendar.CalendarScreen
 import com.example.fe.ui.screens.recCard.recCard
-import com.example.fe.ui.screens.mycard.MyCardScreen
+import com.example.fe.ui.screens.myCard.MyCardScreen
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
 import com.example.fe.ui.screens.payment.PaymentScreen
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -45,10 +45,17 @@ import com.example.fe.ui.screens.home.HomeScreenContent
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.fe.ui.screens.myCard.CardItem
+import com.example.fe.ui.screens.myCard.CardDetailScreen
+import com.example.fe.ui.screens.myCard.CardManagementScreen
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
     const val HOME_DETAIL = "home_detail"
+    const val CARD_DETAIL = "card_detail/{cardId}"
+    const val CARD_MANAGEMENT = "card_management"
 }
 
 @Composable
@@ -109,7 +116,8 @@ fun AppNavigation() {
     )
 
     // 네비게이션 바 애니메이션을 위한 상태
-    val bottomBarVisible = currentRoute != NavRoutes.HOME_DETAIL
+    val bottomBarVisible = currentRoute != NavRoutes.HOME_DETAIL && 
+                          !currentRoute.startsWith("card_detail")
 
     // 네비게이션 바 애니메이션 값
     val bottomBarAlpha by animateFloatAsState(
@@ -300,9 +308,34 @@ fun AppNavigation() {
                             )
                         }
                     ) {
+                        // 화면 전환 애니메이션을 위한 상태
+                        val isNavigating = remember { mutableStateOf(false) }
+                        val contentAlpha by animateFloatAsState(
+                            targetValue = if (isNavigating.value) 0f else 1f,
+                            animationSpec = tween(300),
+                            label = "contentAlpha"
+                        )
+
+                        // 코루틴 스코프 추가
+                        val coroutineScope = rememberCoroutineScope()
+
                         MyCardScreen(
+                            modifier = Modifier.graphicsLayer(alpha = contentAlpha),
                             onScrollOffsetChange = { offset ->
                                 scrollOffset = offset
+                            },
+                            onCardClick = { cardItem ->
+                                // 현재 카드(중앙에 있는 카드)만 클릭 시 상세 화면으로 이동
+                                isNavigating.value = true
+                                // 애니메이션 방향 설정 없이 네비게이션만 실행
+                                // 별 이동 효과 없이 페이드만 적용
+                                coroutineScope.launch {
+                                    navController.navigate("card_detail/${cardItem.id}")
+                                }
+                            },
+                            onManageCardsClick = {
+                                // 카드 관리 화면으로 이동
+                                navController.navigate(NavRoutes.CARD_MANAGEMENT)
                             }
                         )
                     }
@@ -415,8 +448,77 @@ fun AppNavigation() {
                     ) {
                         HomeDetailScreen()
                     }
+
+                    // 카드 관리 화면 추가
+                    composable(
+                        route = NavRoutes.CARD_MANAGEMENT,
+                        enterTransition = {
+                            // 오른쪽에서 들어오는 애니메이션 + 페이드인
+                            slideIntoContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(500, easing = EaseInOut)
+                            ) + fadeIn(
+                                animationSpec = tween(400, easing = EaseInOut)
+                            )
+                        },
+                        exitTransition = {
+                            // 오른쪽으로 나가는 애니메이션 + 페이드아웃
+                            slideOutOfContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(500, easing = EaseInOut)
+                            ) + fadeOut(
+                                animationSpec = tween(400, easing = EaseInOut)
+                            )
+                        }
+                    ) {
+                        CardManagementScreen(
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = NavRoutes.CARD_DETAIL,
+                        arguments = listOf(navArgument("cardId") { type = NavType.IntType }),
+                        enterTransition = {
+                            // 슬라이드 애니메이션 완전 제거, 페이드 효과만 적용
+                            fadeIn(
+                                animationSpec = tween(300, easing = EaseInOut)
+                            )
+                        },
+                        exitTransition = {
+                            // 슬라이드 애니메이션 완전 제거, 페이드 효과만 적용
+                            fadeOut(
+                                animationSpec = tween(300, easing = EaseInOut)
+                            )
+                        }
+                    ) { backStackEntry ->
+                        val cardId = backStackEntry.arguments?.getInt("cardId") ?: 1
+                        val card = getCardById(cardId)
+                        CardDetailScreen(
+                            cardItem = card,
+                            onBackClick = {
+                                // 뒤로가기 클릭 시 애니메이션 방향 설정
+                                transitionDirection = -1
+                                // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                                cumulativeOffset += transitionDirection * 800f
+                                animationCounter++
+                                navController.popBackStack()
+                            }
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+private fun getCardById(cardId: Int): CardItem {
+    val cards = listOf(
+        CardItem(1, "토스 신한카드 Mr.Life", "•••• •••• •••• 3456"),
+        CardItem(2, "현대카드", "•••• •••• •••• 4567"),
+        CardItem(3, "삼성카드", "•••• •••• •••• 5678")
+    )
+    return cards.find { it.id == cardId } ?: cards[0]
 }
