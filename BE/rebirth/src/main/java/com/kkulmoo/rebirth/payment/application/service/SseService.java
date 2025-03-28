@@ -1,12 +1,13 @@
 package com.kkulmoo.rebirth.payment.application.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
+@Slf4j
 @Service
 public class SseService {
 
@@ -23,11 +24,15 @@ public class SseService {
 
         sendToUser(userId, "start Connecting...");
 
+        log.info("연결진행");
+
         return emitter;
     }
 
 
     public void sendToUser(int userId, String message) {
+
+        log.info("유저한테 sse 보내는중");
         SseEmitter emitter = emitters.get(userId);
         if (emitter != null) {
             try {
