@@ -39,6 +39,7 @@ public class CardTransactionService {
 		System.out.println("서비스에서 토큰");
 		System.out.println(createTransactionRequest.getToken());
 		// TODO: 토큰을 가지고 사용자 보유카드 가져오기.
+
 		PermanentToken token = cardRepository.findTokenByToken(createTransactionRequest.getToken())
 			.orElseThrow(() -> new RuntimeException("유효하지 않은 토큰입니다."));
 
