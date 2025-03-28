@@ -2,8 +2,7 @@ package com.example.fe.ui.screens.myCard
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.EaseInOutQuad
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -192,7 +191,7 @@ fun CardManagementScreen(
                         
                         val scale by animateFloatAsState(
                             targetValue = if (isDragging && cardItem.isVisible) 1.05f else 1f,
-                            animationSpec = tween(150, easing = EaseInOutQuad),
+                            animationSpec = tween(150, easing = EaseInOut),
                             label = "scale"
                         )
 

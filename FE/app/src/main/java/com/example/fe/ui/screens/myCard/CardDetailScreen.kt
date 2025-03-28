@@ -56,7 +56,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
@@ -138,14 +138,14 @@ fun CardDetailScreen(
     // 카드 위치 이동 효과 (초기에는 화면 하단에서 시작, 그 다음 상단으로 이동)
     val cardYOffset by animateFloatAsState(
         targetValue = if (animationStarted) 320f else 1300f,
-        animationSpec = tween(700, easing = FastOutSlowInEasing),
+        animationSpec = tween(700, easing = EaseInOut),
         label = "cardYOffset"
     )
 
     // 카드 회전 효과 (세로에서 가로로)
     val cardRotation by animateFloatAsState(
         targetValue = if (animationStarted) 0f else 90f,
-        animationSpec = tween(700, easing = FastOutSlowInEasing),
+        animationSpec = tween(700, easing = EaseInOut),
         label = "cardRotation"
     )
 

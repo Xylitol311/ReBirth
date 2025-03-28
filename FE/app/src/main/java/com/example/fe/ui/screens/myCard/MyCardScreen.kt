@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import kotlinx.coroutines.delay
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.EaseInOut
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
@@ -155,28 +155,28 @@ fun MyCardScreen(
     // 카드 등장 애니메이션 값
     val cardsAppearTranslationY by animateFloatAsState(
         targetValue = if (cardsAppeared) 0f else 800f, // 아래에서 올라오는 효과
-        animationSpec = tween(700, easing = FastOutSlowInEasing),
+        animationSpec = tween(700, easing = EaseInOut),
         label = "cardsAppearTranslationY"
     )
     
     // 카드 등장 애니메이션 알파값
     val cardsAppearAlpha by animateFloatAsState(
         targetValue = if (cardsAppeared) 1f else 0f,
-        animationSpec = tween(500, easing = FastOutSlowInEasing),
+        animationSpec = tween(500, easing = EaseInOut),
         label = "cardsAppearAlpha"
     )
     
     // UI 페이드 아웃 애니메이션
     val uiAlpha by animateFloatAsState(
         targetValue = if (isNavigating) 0f else 1f,
-        animationSpec = tween(300, easing = FastOutSlowInEasing),
+        animationSpec = tween(300, easing = EaseInOut),
         label = "uiAlpha"
     )
     
     // UI 위치 애니메이션
     val uiTranslationY by animateFloatAsState(
         targetValue = if (isNavigating) -100f else 0f,
-        animationSpec = tween(300, easing = FastOutSlowInEasing),
+        animationSpec = tween(300, easing = EaseInOut),
         label = "uiTranslationY"
     )
     
@@ -328,7 +328,7 @@ fun MyCardScreen(
                 // 모든 카드의 투명도 애니메이션 - 동일한 속도로
                 val cardAlpha by animateFloatAsState(
                     targetValue = if (isNavigating) 0f else 1f,
-                    animationSpec = tween(300, easing = FastOutSlowInEasing),
+                    animationSpec = tween(300, easing = EaseInOut),
                     label = "cardAlpha"
                 )
                 

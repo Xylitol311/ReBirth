@@ -39,6 +39,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalConfiguration
 
 // 카드 데이터 클래스
 data class CardInfo(
@@ -389,85 +390,93 @@ fun CardCarousel(
     ) {
         HorizontalPager(
             state = pagerState,
-            pageSpacing = (-50).dp,
-            contentPadding = PaddingValues(horizontal = 40.dp)
+            pageSpacing = (-20).dp, // 카드 사이 간격 조정
+            contentPadding = PaddingValues(horizontal = 70.dp), // 균등한 패딩 적용
+            modifier = Modifier.fillMaxWidth() // 전체 너비 채우기
         ) { page ->
-            // 현재 페이지와의 거리 계산
-            val pageOffset = (
-                    (pagerState.currentPage - page) + pagerState
-                        .currentPageOffsetFraction
-                    ).absoluteValue
-
-            // 현재 카드는 더 크게, 다른 카드는 작게
-            val scale = if (page == pagerState.currentPage) 1.2f else 0.8f
-            
+            // 카드 컨테이너
             Box(
-                modifier = Modifier
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        alpha = if (page == pagerState.currentPage) 1f else 0.6f,
-                        clip = false,
-                        cameraDistance = 12f * density
-                    )
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center // 각 페이지 내에서 카드 중앙 정렬
             ) {
-                // 카드와 텍스트를 포함하는 전체 Box
+                // 현재 페이지와의 거리 계산
+                val pageOffset = (
+                        (pagerState.currentPage - page) + pagerState
+                            .currentPageOffsetFraction
+                        ).absoluteValue
+
+                // 현재 카드는 더 크게, 다른 카드는 작게
+                val scale = if (page == pagerState.currentPage) 1.2f else 0.8f
+                
                 Box(
-                    modifier = Modifier.height(430.dp)
+                    modifier = Modifier
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            alpha = if (page == pagerState.currentPage) 1f else 0.6f,
+                            clip = false,
+                            cameraDistance = 12f * density
+                        )
                 ) {
-                    // 카드 이미지
+                    // 카드와 텍스트를 포함하는 전체 Box
                     Box(
-                        modifier = Modifier
-                            .width(300.dp)
-                            .height(400.dp)
-                            .padding(8.dp)
-                            .clickable {
-                                if (page != pagerState.currentPage) {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(page)
-                                    }
-                                } else {
-                                    onCardClick(extendedCards[page])
-                                }
-                            }
+                        modifier = Modifier.height(400.dp) // 높이 증가
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.card),
-                            contentDescription = extendedCards[page].name,
-                            contentScale = ContentScale.FillWidth,
+                        // 카드 이미지
+                        Box(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer(
-                                    rotationZ = 90f // 세로로 회전
-                                )
-                        )
-                    }
-                    
-                    // 텍스트 컬럼
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 0.dp, start = 8.dp, end = 8.dp)
-                    ) {
-                        // 대표 혜택
-                        Text(
-                            text = "카페 10% 할인",
-                            color = Color.Black,
-                            fontSize = if (page == pagerState.currentPage) 18.sp else 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                                .width(380.dp) // 카드 너비 증가
+                                .height(380.dp) // 카드 높이 증가
+                                .padding(8.dp)
+                                .clickable {
+                                    if (page != pagerState.currentPage) {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(page)
+                                        }
+                                    } else {
+                                        onCardClick(extendedCards[page])
+                                    }
+                                }
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.card),
+                                contentDescription = extendedCards[page].name,
+                                contentScale = ContentScale.FillWidth,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer(
+                                        rotationZ = 90f // 세로로 회전
+                                    )
+                            )
+                        }
                         
-                        // 카드 이름
-                        Text(
-                            text = extendedCards[page].name,
-                            color = Color.Black,
-                            fontSize = if (page == pagerState.currentPage) 14.sp else 12.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        // 텍스트 컬럼 - 위치를 더 위로 조정
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .offset(y = (-30).dp) // 텍스트를 더 위로 올림
+                                .padding(start = 8.dp, end = 8.dp)
+                        ) {
+                            // 대표 혜택
+                            Text(
+                                text = "카페 10% 할인",
+                                color = Color.Black, // 검은색으로 변경
+                                fontSize = if (page == pagerState.currentPage) 18.sp else 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            
+                            // 카드 이름
+                            Text(
+                                text = extendedCards[page].name,
+                                color = Color.Black, // 검은색으로 변경
+                                fontSize = if (page == pagerState.currentPage) 14.sp else 12.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
