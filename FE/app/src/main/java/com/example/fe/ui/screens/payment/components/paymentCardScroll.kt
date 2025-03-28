@@ -102,31 +102,54 @@ fun PaymentCardScroll(
             items(cards) { card ->
                 val index = cards.indexOf(card)
                 
-                // 아이템의 중앙 위치 계산
+                // 아이템의 중앙 위치 계산 - 개선된 방식
                 val itemCenter by remember(lazyListState) {
                     derivedStateOf {
+                        val listCenter = lazyListState.layoutInfo.viewportSize.width / 2
                         val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
-                        // 안전하게 인덱스 확인
-                        val itemInfo = if (index < visibleItemsInfo.size) {
-                            visibleItemsInfo.find { it.index == index }
-                        } else null
+                        
+                        // 현재 선택된 인덱스와의 거리 계산
+                        val distanceFromSelected = abs(index - selectedCardIndex)
+                        
+                        // 화면에 보이는 아이템 중에서 현재 카드 찾기
+                        val itemInfo = visibleItemsInfo.find { it.index == index }
                         
                         if (itemInfo != null) {
+                            // 실제 위치 기반 계산
                             val itemCenterX = itemInfo.offset + (itemInfo.size / 2)
-                            val listCenterX = lazyListState.layoutInfo.viewportSize.width / 2
-                            itemCenterX - listCenterX
+                            itemCenterX - listCenter
+                        } else if (distanceFromSelected <= 2) {
+                            // 화면에 보이지 않지만 선택된 카드와 가까운 경우
+                            // 거리에 따라 적절한 값 반환
+                            when (distanceFromSelected) {
+                                0 -> 0f       // 선택된 카드는 중앙에 위치
+                                1 -> 300f     // 바로 옆 카드
+                                else -> 600f  // 두 칸 떨어진 카드
+                            } * if (index < selectedCardIndex) -1 else 1
                         } else {
-                            10000 // 화면 밖에 있는 경우 큰 값 설정
+                            // 화면에서 멀리 떨어진 카드
+                            1000f * if (index < selectedCardIndex) -1 else 1
                         }
                     }
                 }
                 
                 // 중앙에 있는 정도 계산 (0: 중앙에서 멀리, 1: 정확히 중앙)
-                val centeredness = remember(itemCenter) {
+                val centeredness = remember(itemCenter, selectedCardIndex) {
                     val maxDistance = 500f // 최대 거리 설정
                     val distance = minOf(abs(itemCenter.toFloat()), maxDistance)
                     val normalized = 1f - (distance / maxDistance)
-                    EaseOutQuart.transform(normalized)
+                    
+                    // 선택된 카드와의 거리도 고려
+                    val distanceFactor = when (abs(index - selectedCardIndex)) {
+                        0 -> 1.0f
+                        1 -> 0.8f
+                        2 -> 0.6f
+                        else -> 0.4f
+                    }
+                    
+                    // 두 요소를 결합하여 최종 centeredness 계산
+                    val combined = normalized * distanceFactor
+                    EaseOutQuart.transform(combined)
                 }
                 
                 PaymentCardItem(
@@ -139,28 +162,39 @@ fun PaymentCardScroll(
             
             // 카드 추가 아이템
             item {
-                // 아이템의 중앙 위치 계산
                 val index = cards.size
-                val itemCenter by remember(lazyListState) {
+                
+                // 아이템의 중앙 위치 계산 - 개선된 방식
+                val itemCenter by remember(lazyListState, selectedCardIndex) {
                     derivedStateOf {
+                        val listCenter = lazyListState.layoutInfo.viewportSize.width / 2
                         val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
-                        // 안전하게 인덱스 확인
-                        val itemInfo = if (index < visibleItemsInfo.size) {
-                            visibleItemsInfo.find { it.index == index }
-                        } else null
+                        
+                        // 현재 선택된 인덱스와의 거리 계산
+                        val distanceFromSelected = abs(index - selectedCardIndex)
+                        
+                        // 화면에 보이는 아이템 중에서 현재 카드 찾기
+                        val itemInfo = visibleItemsInfo.find { it.index == index }
                         
                         if (itemInfo != null) {
+                            // 실제 위치 기반 계산
                             val itemCenterX = itemInfo.offset + (itemInfo.size / 2)
-                            val listCenterX = lazyListState.layoutInfo.viewportSize.width / 2
-                            itemCenterX - listCenterX
+                            itemCenterX - listCenter
+                        } else if (distanceFromSelected <= 2) {
+                            // 화면에 보이지 않지만 선택된 카드와 가까운 경우
+                            300f * if (index < selectedCardIndex) -1 else 1
                         } else {
-                            10000 // 화면 밖에 있는 경우 큰 값 설정
+                            // 화면에서 멀리 떨어진 카드
+                            1000f
                         }
                     }
                 }
                 
                 // 중앙에 있는 정도 계산 (0: 중앙에서 멀리, 1: 정확히 중앙)
-                val centeredness = remember(itemCenter) {
+                val centeredness = remember(itemCenter, selectedCardIndex) {
+                    // 선택된 카드인 경우 바로 1.0 반환
+                    if (selectedCardIndex == index) return@remember 1.0f
+                    
                     val maxDistance = 500f // 최대 거리 설정
                     val distance = minOf(abs(itemCenter.toFloat()), maxDistance)
                     val normalized = 1f - (distance / maxDistance)

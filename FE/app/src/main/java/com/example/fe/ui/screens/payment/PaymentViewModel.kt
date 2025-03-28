@@ -57,8 +57,8 @@ class PaymentViewModel : ViewModel() {
                         selectCard(firstCardId)
                         
                         // SSE 연결 시작 (userId 사용)
-                        Log.e("PaymentViewModel", "Starting SSE connection with userId: $userId")
-                        connectToPaymentEvents(userId)
+                        // Log.e("PaymentViewModel", "Starting SSE connection with userId: $userId")
+                        // connectToPaymentEvents(userId)
                     }
                 }
                 .onFailure { error ->
@@ -83,11 +83,11 @@ class PaymentViewModel : ViewModel() {
         // 선택된 카드의 토큰 찾기
         val selectedToken = _cardTokens.value.find { it.cardId == cardId }?.token
         
-        if (selectedToken != null) {
-            // 카드 선택 시 바로 SSE 연결 시작
-            Log.e("PaymentViewModel", "Starting SSE connection for selected card with token: $selectedToken")
-            connectToPaymentEvents(selectedToken)
-        }
+//        if (selectedToken != null) {
+//            // 카드 선택 시 바로 SSE 연결 시작
+//            Log.e("PaymentViewModel", "Starting SSE connection for selected card with token: $selectedToken")
+//            connectToPaymentEvents(selectedToken)
+//        }
     }
     
     // 실제 결제 시도 시 호출 (바코드/QR 스캔 시) - 이미 SSE 연결이 되어 있으므로 추가 작업 불필요
