@@ -53,6 +53,7 @@ public class PaymentController {
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
+
         //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
         String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
         String[] tokenInfo = paymentEncryption.validateOneTimeToken(realToken);
@@ -62,6 +63,8 @@ public class PaymentController {
 
         String permanentToken = tokenInfo[0];
         int userId = Integer.parseInt(tokenInfo[1]);
+
+        sseService.sendToUser(userId, "결제시작");
 
         //1. 추천 카드 일경우 로직 작성
         if(permanentToken.equals("rebirth")){
