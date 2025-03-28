@@ -93,10 +93,17 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                 navigationIcon = {
                     // 이름 입력 화면(첫 화면)에서는 뒤로가기 버튼 숨김
                     if (currentStep != Step.NAME) {
-                        IconButton(onClick = {
-                            currentStep = Step.values()[currentStep.ordinal - 1]
-                        }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
+                        IconButton(
+                            onClick = {
+                                currentStep = Step.values()[currentStep.ordinal - 1]
+                            },
+                            modifier = Modifier.size(54.dp) // 아이콘 버튼 크기 증가
+                        ) {
+                            Icon(
+                                Icons.Default.ArrowBack, 
+                                contentDescription = "뒤로가기",
+                                modifier = Modifier.size(32.dp) // 아이콘 크기 증가
+                            )
                         }
                     }
                 }
@@ -121,10 +128,15 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                         Step.CODE -> code.length == 6
                         else -> false
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp), // 버튼 높이 증가
                     shape = MaterialTheme.shapes.large
                 ) {
-                    Text(text = if (currentStep == Step.CODE) "확인" else "다음")
+                    Text(
+                        text = if (currentStep == Step.CODE) "확인" else "다음",
+                        fontSize = 22.sp // 20sp → 22sp로 증가
+                    )
                 }
             }
         }
@@ -134,13 +146,13 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp) // 간격 증가
         ) {
             Spacer(Modifier.height(24.dp))
 
             when (currentStep) {
                 Step.NAME -> {
-                    Text("이름을 알려주세요", fontSize = 20.sp)
+                    Text("이름을 알려주세요", fontSize = 28.sp) // 26sp → 28sp로 증가
                     UnderlineTextField(
                         value = name,
                         onValueChange = { name = it },
@@ -151,60 +163,86 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                     )
                 }
                 Step.SSN -> {
-                    Text("주민등록번호를 입력해주세요", fontSize = 20.sp)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // 앞 6자리 입력
-                        UnderlineTextField(
-                            value = ssnFront,
-                            onValueChange = {
-                                if (it.length <= 6) {
-                                    ssnFront = it
-                                    if (it.length == 6) focusManager.moveFocus(FocusDirection.Next)
-                                }
-                            },
-                            label = "주민등록번호",
+                    Text("주민등록번호를 입력해주세요", fontSize = 28.sp) // 26sp → 28sp로 증가
+                    
+                    // 모든 크기와 패딩을 반응형으로 변경
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        // 중앙 "-" 배치 (더 크고 진하게)
+                        Text(
+                            text = "-", 
+                            fontSize = 32.sp, // 더 크게
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, // 더 진하게
+                            color = Color.Black, // 더 진한 색상
                             modifier = Modifier
-                                .weight(1.2f)
-                                .focusRequester(ssnFrontFocusRequester),
-                            keyboardType = KeyboardType.Number
+                                .align(Alignment.Center)
+                                .padding(bottom = 12.dp) // 위치 조정
                         )
-
-                        Spacer(modifier = Modifier.width(4.dp))
-
-                        // - 기호
-                        Text("-", fontSize = 20.sp, modifier = Modifier.padding(horizontal = 4.dp))
-
-                        // 뒷 1자리 입력
-                        UnderlineTextField(
-                            value = ssnBack,
-                            onValueChange = { if (it.length <= 1) ssnBack = it },
-                            label = "", // 라벨 없애기
-                            modifier = Modifier
-                                .width(48.dp)
-                                .focusRequester(ssnBackFocusRequester),
-                            keyboardType = KeyboardType.Number
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // ●●●●●
+                        
                         Row(
-                            modifier = Modifier.height(56.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            repeat(6) {
-                                Text("●", fontSize = 20.sp, color = Color.Gray)
+                            // 앞 6자리 입력 (왼쪽)
+                            Box(modifier = Modifier.weight(0.45f)) { // 비율 기반 너비
+                                UnderlineTextField(
+                                    value = ssnFront,
+                                    onValueChange = {
+                                        if (it.length <= 6) {
+                                            ssnFront = it
+                                            if (it.length == 6) focusManager.moveFocus(FocusDirection.Next)
+                                        }
+                                    },
+                                    label = "주민등록번호",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .focusRequester(ssnFrontFocusRequester),
+                                    keyboardType = KeyboardType.Number
+                                )
+                            }
+                            
+                            // 중앙 공간 (하이픈용)
+                            Spacer(modifier = Modifier.weight(0.1f)) // 비율 기반 공간
+                            
+                            // 뒷 1자리 입력 (오른쪽)
+                            Box(modifier = Modifier.weight(0.1f)) { // 비율 기반 너비
+                                UnderlineSingleDigitField(
+                                    value = ssnBack,
+                                    onValueChange = { if (it.length <= 1) ssnBack = it },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .focusRequester(ssnBackFocusRequester),
+                                    keyboardType = KeyboardType.Number
+                                )
+                            }
+                            
+                            // 동그라미들 (화면 끝까지 균일하게)
+                            Box(
+                                modifier = Modifier.weight(0.35f) // 비율 기반 너비
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(70.dp)
+                                        .padding(start = 12.dp, bottom = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween, // 균등 분포
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    repeat(6) {
+                                        Text(
+                                            "●", 
+                                            fontSize = 28.sp, // 더 크게
+                                            color = Color.DarkGray // 더 진하게
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
+                    
                     DisplayInfo("이름", name)
                 }
                 Step.TELECOM -> {
-                    Text("통신사를 선택해주세요", fontSize = 20.sp)
+                    Text("통신사를 선택해주세요", fontSize = 28.sp) // 26sp → 28sp로 증가
                     TelcoSelector(telco = telco) {
                         Log.d("TELCO_CLICK", "바텀시트 열림")
                         showTelcoSheet = true
@@ -213,7 +251,7 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                     DisplayInfo("주민등록번호", "$ssnFront-$ssnBack●●●●●●")
                 }
                 Step.PHONE -> {
-                    Text("휴대폰 번호를 입력해주세요", fontSize = 20.sp)
+                    Text("휴대폰 번호를 입력해주세요", fontSize = 28.sp) // 26sp → 28sp로 증가
                     UnderlineTextField(
                         value = phone,
                         onValueChange = {
@@ -230,7 +268,7 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                     DisplayInfo("통신사", telco)
                 }
                 Step.CODE -> {
-                    Text("인증번호를 입력해주세요", fontSize = 20.sp)
+                    Text("인증번호를 입력해주세요", fontSize = 28.sp) // 26sp → 28sp로 증가
                     UnderlineTextField(
                         value = code,
                         onValueChange = { if (it.length <= 6) code = it },
@@ -262,7 +300,11 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
             }
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("통신사를 선택해주세요", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "통신사를 선택해주세요", 
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 24.sp // 22sp → 24sp로 증가
+                )
                 telcos.forEach {
                     Text(
                         text = it,
@@ -272,7 +314,8 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                                 telco = it
                                 showTelcoSheet = false
                             }
-                            .padding(12.dp)
+                            .padding(16.dp), // 패딩 증가
+                        fontSize = 20.sp // 18sp → 20sp로 증가
                     )
                 }
             }
@@ -282,13 +325,17 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
     if (showAgreement) {
         ModalBottomSheet(onDismissRequest = { showAgreement = false }) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("서비스를 쓰려면 동의가 필요해요", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "서비스를 쓰려면 동의가 필요해요", 
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 24.sp // 22sp → 24sp로 증가
+                )
                 agreementItems.forEach { item ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp)
+                            .padding(vertical = 12.dp) // 패딩 증가
                     ) {
                         // 체크박스 부분만 클릭 가능하도록 수정 + 리플 효과 제거
                         Box(
@@ -300,27 +347,34 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                                     if (checkedItems.contains(item)) checkedItems.remove(item)
                                     else checkedItems.add(item)
                                 }
-                                .padding(end = 12.dp)
+                                .padding(end = 16.dp) // 패딩 증가
                         ) {
                             Text(
                                 text = "✔",
                                 color = if (checkedItems.contains(item)) Color(0xFF1976D2) else Color.Gray,
-                                fontSize = 20.sp
+                                fontSize = 26.sp // 24sp → 26sp로 증가
                             )
                         }
                         // 텍스트 부분 (클릭 불가)
-                        Text(item)
+                        Text(item, fontSize = 20.sp) // 18sp → 20sp로 증가
                     }
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(24.dp)) // 간격 증가
                 Button(
                     onClick = {
                         showAgreement = false
                         navController.navigate("card_select")
                     },
                     enabled = checkedItems.size == agreementItems.size,
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("동의하기") }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp), // 버튼 높이 증가
+                ) { 
+                    Text(
+                        "동의하기",
+                        fontSize = 22.sp // 20sp → 22sp로 증가
+                    ) 
+                }
             }
         }
     }
@@ -337,14 +391,44 @@ fun UnderlineTextField(
     TextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier,
+        modifier = modifier.height(70.dp),
         singleLine = true,
-        label = { Text(label) },
+        label = { Text(label, fontSize = 20.sp) }, // 18sp → 20sp로 증가
+        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 20.sp), // 18sp → 20sp로 증가
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Blue,
-            unfocusedIndicatorColor = Color.LightGray,
-            disabledIndicatorColor = Color.LightGray,
+            unfocusedIndicatorColor = Color.Gray,
+            disabledIndicatorColor = Color.Gray,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent
+        )
+    )
+}
+
+@Composable
+fun UnderlineSingleDigitField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Number
+) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier.height(70.dp),
+        singleLine = true,
+        textStyle = androidx.compose.ui.text.TextStyle(
+            fontSize = 20.sp, // 크기는 앞자리와 동일하게
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Normal, // Bold에서 Normal로 변경
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center // 중앙 정렬 유지
+        ),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Blue,
+            unfocusedIndicatorColor = Color.Gray, // DarkGray에서 Gray로 변경
+            disabledIndicatorColor = Color.Gray,
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent
@@ -354,20 +438,29 @@ fun UnderlineTextField(
 
 @Composable
 fun DisplayInfo(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, fontSize = 14.sp, color = Color.Gray)
-        Text(value, fontSize = 14.sp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontSize = 20.sp, color = Color.Gray) // 18sp → 20sp로 증가
+        Text(value, fontSize = 20.sp) // 18sp → 20sp로 증가
     }
 }
 
 @Composable
 fun TelcoSelector(telco: String, onClick: () -> Unit) {
     Column {
-        Text(text = "통신사", style = MaterialTheme.typography.labelMedium)
+        Text(
+            text = "통신사", 
+            style = MaterialTheme.typography.labelMedium,
+            fontSize = 20.sp // 18sp → 20sp로 증가
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .height(70.dp)
                 .border(1.dp, Color.Gray, MaterialTheme.shapes.medium)
                 .clickable { onClick() }
                 .padding(horizontal = 16.dp),
@@ -375,7 +468,8 @@ fun TelcoSelector(telco: String, onClick: () -> Unit) {
         ) {
             Text(
                 text = if (telco.isBlank()) "통신사를 선택해주세요" else telco,
-                color = if (telco.isBlank()) Color.Gray else Color.Black
+                color = if (telco.isBlank()) Color.Gray else Color.Black,
+                fontSize = 20.sp // 18sp → 20sp로 증가
             )
         }
     }

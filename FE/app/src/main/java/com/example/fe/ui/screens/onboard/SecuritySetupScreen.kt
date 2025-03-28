@@ -31,6 +31,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.fragment.app.FragmentActivity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.hypot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 
 enum class SecurityStep { PIN, PIN_CONFIRM, METHOD, PATTERN, PATTERN_CONFIRM, DONE }
 
@@ -58,21 +80,35 @@ fun SecuritySetupScreen(navController: NavController, viewModel: OnboardingViewM
                 navigationIcon = {
                     when (currentStep) {
                         SecurityStep.PIN_CONFIRM -> {
-                            IconButton(onClick = {
-                                currentStep = SecurityStep.PIN
-                                pinInput = ""
-                                confirmInput = ""
-                            }) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
+                            IconButton(
+                                onClick = {
+                                    currentStep = SecurityStep.PIN
+                                    pinInput = ""
+                                    confirmInput = ""
+                                },
+                                modifier = Modifier.size(54.dp) // 아이콘 크기 증가
+                            ) {
+                                Icon(
+                                    Icons.Default.ArrowBack, 
+                                    contentDescription = "뒤로가기",
+                                    modifier = Modifier.size(32.dp) // 아이콘 크기 증가
+                                )
                             }
                         }
                         SecurityStep.PATTERN_CONFIRM -> {
-                            IconButton(onClick = {
-                                currentStep = SecurityStep.PATTERN
-                                patternPoints = listOf()
-                                confirmPatternPoints = listOf()
-                            }) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
+                            IconButton(
+                                onClick = {
+                                    currentStep = SecurityStep.PATTERN
+                                    patternPoints = listOf()
+                                    confirmPatternPoints = listOf()
+                                },
+                                modifier = Modifier.size(54.dp) // 아이콘 크기 증가
+                            ) {
+                                Icon(
+                                    Icons.Default.ArrowBack, 
+                                    contentDescription = "뒤로가기",
+                                    modifier = Modifier.size(32.dp) // 아이콘 크기 증가
+                                )
                             }
                         }
                         else -> {}
@@ -81,223 +117,302 @@ fun SecuritySetupScreen(navController: NavController, viewModel: OnboardingViewM
             )
         }
     ) { padding ->
-        // 상단 영역과 키패드 영역을 분리
+        // 전체 화면 구성 - 반응형 레이아웃으로 수정
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // 방법 선택 화면일 때 건너뛰기 버튼을 하단에 배치
-            if (currentStep == SecurityStep.METHOD) {
-                // 건너뛰기 버튼
-                Button(
-                    onClick = {
-                        navController.navigate("registration_complete")
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF191E3F)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .padding(horizontal = 24.dp)
-                ) {
-                    Text("건너뛰기")
-                }
-            }
-
-            // 상단 콘텐츠 영역
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                when (currentStep) {
-                    SecurityStep.PIN -> {
-                        Text("비밀번호를 설정해주세요", fontSize = 18.sp, fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        ShowPinDots(pinInput.length)
-                    }
-
-                    SecurityStep.PIN_CONFIRM -> {
-                        Text("비밀번호를 다시 입력해주세요", fontSize = 18.sp, fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        ShowPinDots(confirmInput.length)
-                    }
-
-                    SecurityStep.METHOD -> {
-                        Text("추가 인증수단 선택", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "지문인증 또는 패턴인증으로\n더욱 안전하게 로그인 하세요.",
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                            color = Color.Gray
-                        )
-
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        // 지문인증 옵션
-                        AuthMethodOption(
-                            title = "지문인증",
-                            description = "기기에 등록된 지문 인증으로\n빠르게 서비스를 이용할 수 있어요",
-                            iconResId = R.drawable.fingerprint,
-                            onClick = {
-                                val activity = context as? FragmentActivity
-                                if (activity == null) {
-                                    Toast.makeText(context, "지문 인증을 사용할 수 없습니다", Toast.LENGTH_SHORT).show()
-                                    return@AuthMethodOption
-                                }
-
-                                val biometricManager = BiometricManager.from(context)
-                                if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
-                                    != BiometricManager.BIOMETRIC_SUCCESS
-                                ) {
-                                    Toast.makeText(context, "지문 인증을 사용할 수 없습니다", Toast.LENGTH_SHORT).show()
-                                    return@AuthMethodOption
-                                }
-
-                                val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                                    .setTitle("지문 인증")
-                                    .setSubtitle("지문을 등록해주세요")
-                                    .setNegativeButtonText("취소")
-                                    .build()
-
-                                val biometricPrompt = BiometricPrompt(
-                                    activity,
-                                    executor,
-                                    object : BiometricPrompt.AuthenticationCallback() {
-                                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                                            currentStep = SecurityStep.DONE
-                                        }
-
-                                        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                                            Toast.makeText(context, "인증 실패: $errString", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                )
-                                biometricPrompt.authenticate(promptInfo)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // 패턴인증 옵션
-                        AuthMethodOption(
-                            title = "패턴인증",
-                            description = "간단하고 편리한 패턴으로\n보다 간편하게 이용할 수 있어요",
-                            iconResId = R.drawable.apps,
-                            onClick = {
-                                currentStep = SecurityStep.PATTERN
-                            }
-                        )
-
-                        // 건너뛰기 버튼이 하단에 별도로 배치되므로 여기에서는 제거
-                    }
-
-                    SecurityStep.PATTERN -> {
-                        Text("패턴 등록", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "인증에 사용할 패턴을 등록해주세요",
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                            color = Color.Gray
-                        )
-
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        PatternGrid(
-                            selectedPoints = patternPoints,
-                            onPatternComplete = { pattern ->
-                                patternPoints = pattern
-                                currentStep = SecurityStep.PATTERN_CONFIRM
-                            }
-                        )
-                    }
-
-                    SecurityStep.PATTERN_CONFIRM -> {
-                        Text("패턴 확인", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "인증에 사용할 패턴을 다시 등록해주세요",
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                            color = Color.Gray
-                        )
-
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        PatternGrid(
-                            selectedPoints = confirmPatternPoints,
-                            onPatternComplete = { pattern ->
-                                confirmPatternPoints = pattern
-                                if (patternPoints == confirmPatternPoints) {
-                                    currentStep = SecurityStep.DONE
-                                } else {
-                                    Toast.makeText(context, "패턴이 일치하지 않습니다", Toast.LENGTH_SHORT).show()
-                                    confirmPatternPoints = listOf()
-                                }
-                            }
-                        )
-                    }
-
-                    SecurityStep.DONE -> {
-                        Text("등록이 완료됐어요!", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Button(
-                            onClick = {
-                                navController.navigate("registration_complete")
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF191E3F)
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                        ) {
-                            Text("확인")
-                        }
-                    }
-                }
-            }
-
-            // 키패드 영역 (하단에 배치)
-            if (currentStep == SecurityStep.PIN || currentStep == SecurityStep.PIN_CONFIRM) {
+            // METHOD 단계가 아닐 때만 기존 레이아웃 유지
+            if (currentStep != SecurityStep.METHOD) {
+                // 상단 콘텐츠 영역 (반응형으로 조정)
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 24.dp)
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // 현재 단계에 맞는 키패드 표시
-                    ShowNumberPad(
-                        numbers = if (currentStep == SecurityStep.PIN) pinShuffledNumbers else confirmShuffledNumbers,
-                        input = if (currentStep == SecurityStep.PIN) pinInput else confirmInput,
-                        onInputChange = { newInput ->
-                            if (currentStep == SecurityStep.PIN) {
-                                pinInput = newInput
-                            } else {
-                                confirmInput = newInput
-                            }
-                        },
-                        onComplete = {
-                            if (currentStep == SecurityStep.PIN) {
-                                currentStep = SecurityStep.PIN_CONFIRM
-                            } else {
-                                if (confirmInput == pinInput) {
-                                    currentStep = SecurityStep.METHOD
-                                } else {
-                                    Toast.makeText(context, "비밀번호가 일치하지 않아요", Toast.LENGTH_SHORT).show()
-                                    confirmInput = ""
+                    // 상단 여백 (비율 기반)
+                    Spacer(modifier = Modifier.weight(0.1f))
+
+                    when (currentStep) {
+                        SecurityStep.PIN -> {
+                            Text(
+                                "비밀번호를 설정해주세요", 
+                                fontSize = 28.sp, // 18sp에서 28sp로 증가
+                                fontWeight = FontWeight.Medium
+                            )
+                            
+                            // 비밀번호 점들을 중상단에 배치하기 위한 여백
+                            Spacer(modifier = Modifier.weight(0.15f))
+                            
+                            ShowPinDots(pinInput.length)
+                            
+                            // 키패드와 점 사이의 여백
+                            Spacer(modifier = Modifier.weight(0.3f))
+                            
+                            // 키패드 배치
+                            ShowNumberPad(
+                                numbers = pinShuffledNumbers,
+                                input = pinInput,
+                                onInputChange = { newInput ->
+                                    pinInput = newInput
+                                },
+                                onComplete = {
+                                    if (pinInput.length == 6) {
+                                        currentStep = SecurityStep.PIN_CONFIRM
+                                    }
+                                }
+                            )
+                            
+                            // 하단 여백
+                            Spacer(modifier = Modifier.weight(0.05f))
+                        }
+
+                        SecurityStep.PIN_CONFIRM -> {
+                            Text(
+                                "비밀번호를 다시 입력해주세요", 
+                                fontSize = 28.sp, // 18sp에서 28sp로 증가
+                                fontWeight = FontWeight.Medium
+                            )
+                            
+                            // 비밀번호 점들을 중상단에 배치하기 위한 여백
+                            Spacer(modifier = Modifier.weight(0.15f))
+                            
+                            ShowPinDots(confirmInput.length)
+                            
+                            // 키패드와 점 사이의 여백
+                            Spacer(modifier = Modifier.weight(0.3f))
+                            
+                            // 키패드 배치
+                            ShowNumberPad(
+                                numbers = confirmShuffledNumbers,
+                                input = confirmInput,
+                                onInputChange = { newInput ->
+                                    confirmInput = newInput
+                                },
+                                onComplete = {
+                                    if (confirmInput.length == 6) {
+                                        if (pinInput == confirmInput) {
+                                            currentStep = SecurityStep.METHOD
+                                        } else {
+                                            Toast.makeText(
+                                                context,
+                                                "비밀번호가 일치하지 않습니다",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            confirmInput = ""
+                                        }
+                                    }
+                                }
+                            )
+                            
+                            // 하단 여백
+                            Spacer(modifier = Modifier.weight(0.05f))
+                        }
+
+                        SecurityStep.PATTERN -> {
+                            Text(
+                                "패턴을 설정해주세요",
+                                fontSize = 28.sp, // 18sp에서 28sp로 증가
+                                fontWeight = FontWeight.Medium
+                            )
+                            
+                            Spacer(modifier = Modifier.height(32.dp)) // 24dp에서 32dp로 증가
+
+                            PatternGrid(
+                                onPatternComplete = { pattern ->
+                                    if (pattern.size < 4) {
+                                        Toast.makeText(
+                                            context,
+                                            "최소 4개 이상의 점을 연결해주세요",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        patternPoints = pattern
+                                        currentStep = SecurityStep.PATTERN_CONFIRM
+                                    }
+                                }
+                            )
+                        }
+
+                        SecurityStep.PATTERN_CONFIRM -> {
+                            Text(
+                                "패턴을 다시 입력해주세요",
+                                fontSize = 28.sp, // 18sp에서 28sp로 증가
+                                fontWeight = FontWeight.Medium
+                            )
+                            
+                            Spacer(modifier = Modifier.height(32.dp)) // 24dp에서 32dp로 증가
+
+                            PatternGrid(
+                                onPatternComplete = { pattern ->
+                                    if (pattern.size < 4) {
+                                        Toast.makeText(
+                                            context,
+                                            "최소 4개 이상의 점을 연결해주세요",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        confirmPatternPoints = pattern
+                                        if (patternPoints == confirmPatternPoints) {
+                                            // 뷰모델에 패턴 저장
+                                            viewModel.hasPatternAuth = true
+                                            currentStep = SecurityStep.DONE
+                                        } else {
+                                            Toast.makeText(
+                                                context,
+                                                "패턴이 일치하지 않습니다",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            confirmPatternPoints = listOf()
+                                        }
+                                    }
+                                }
+                            )
+                        }
+
+                        SecurityStep.DONE -> {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    "보안 설정이 완료되었습니다",
+                                    fontSize = 28.sp, // 18sp에서 28sp로 증가
+                                    fontWeight = FontWeight.Bold
+                                )
+                                
+                                Spacer(modifier = Modifier.height(32.dp)) // 24dp에서 32dp로 증가
+                                
+                                Button(
+                                    onClick = {
+                                        navController.navigate("registration_complete") {
+                                            popUpTo("security_setup") { inclusive = true }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF191E3F)
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(60.dp), // 버튼 높이 증가
+                                ) {
+                                    Text(text = "다음", fontSize = 22.sp) // 글씨 크기 증가
                                 }
                             }
                         }
+                        
+                        else -> {}
+                    }
+                }
+            } else {
+                // METHOD 단계일 때 새로운 레이아웃
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top // 중앙 정렬에서 상단 정렬로 변경
+                ) {
+                    Spacer(modifier = Modifier.height(60.dp)) // 상단 고정 여백으로 변경
+                    
+                    Text(
+                        "추가 인증수단 선택", 
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "지문인증 또는 패턴인증으로\n더욱 안전하게 로그인 하세요.",
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray
+                    )
+
+                    Spacer(modifier = Modifier.height(40.dp))
+
+                    // 지문인증 옵션
+                    AuthMethodOption(
+                        title = "지문인증",
+                        description = "기기에 등록된 지문 인증으로\n빠르게 서비스를 이용할 수 있어요",
+                        iconResId = R.drawable.fingerprint,
+                        onClick = {
+                            val activity = context as? FragmentActivity
+                            if (activity == null) {
+                                Toast.makeText(context, "지문 인증을 사용할 수 없습니다", Toast.LENGTH_SHORT).show()
+                                return@AuthMethodOption
+                            }
+
+                            val biometricManager = BiometricManager.from(context)
+                            if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                                != BiometricManager.BIOMETRIC_SUCCESS
+                            ) {
+                                Toast.makeText(context, "지문 인증을 사용할 수 없습니다", Toast.LENGTH_SHORT).show()
+                                return@AuthMethodOption
+                            }
+
+                            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                                .setTitle("지문 인증")
+                                .setSubtitle("지문을 등록해주세요")
+                                .setNegativeButtonText("취소")
+                                .build()
+
+                            val biometricPrompt = BiometricPrompt(
+                                activity,
+                                executor,
+                                object : BiometricPrompt.AuthenticationCallback() {
+                                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                                        currentStep = SecurityStep.DONE
+                                    }
+
+                                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                                        Toast.makeText(context, "인증 실패: $errString", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            )
+                            biometricPrompt.authenticate(promptInfo)
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 패턴인증 옵션
+                    AuthMethodOption(
+                        title = "패턴인증",
+                        description = "나만의 패턴을 그려서\n간편하게 서비스를 이용할 수 있어요",
+                        iconResId = R.drawable.fingerprint,
+                        onClick = {
+                            currentStep = SecurityStep.PATTERN
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.weight(1f)) // 남은 공간을 모두 차지하는 여백
+                    
+                    // 건너뛰기 버튼 - 화면 하단에 위치
+                    Button(
+                        onClick = {
+                            navController.navigate("registration_complete")
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF191E3F)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(65.dp) // 버튼 높이 증가
+                            .padding(horizontal = 0.dp, vertical = 0.dp) // 패딩 조정
+                    ) {
+                        Text(
+                            text = "건너뛰기", 
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold // 글자 두껍게
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(40.dp)) // 하단 여백 증가
                 }
             }
         }
@@ -311,155 +426,192 @@ fun AuthMethodOption(
     iconResId: Int,
     onClick: () -> Unit
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .background(Color.White)
-            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(8.dp))
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF191E3F)
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Icon(
-            painter = painterResource(id = iconResId),
-            contentDescription = title,
-            modifier = Modifier.size(48.dp),
-            tint = Color(0xFF191E3F)
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+        Row(
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 아이콘
+            Icon(
+                painter = painterResource(id = iconResId),
+                contentDescription = title,
+                modifier = Modifier
+                    .size(56.dp)
+                    .padding(end = 20.dp),
+                tint = Color.White
             )
-            Text(
-                text = description,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = description,
+                    fontSize = 18.sp,
+                    color = Color.Gray
+                )
+            }
         }
-
-        Icon(
-            painter = painterResource(id = R.drawable.arrow_right),
-            contentDescription = "선택",
-            tint = Color.Gray,
-            modifier = Modifier.size(20.dp) // 아이콘 크기 조정
-        )
     }
 }
 
 @Composable
 fun PatternGrid(
-    selectedPoints: List<Int>,
     onPatternComplete: (List<Int>) -> Unit
 ) {
-    val context = LocalContext.current
-    var currentPattern by remember(selectedPoints) { mutableStateOf(selectedPoints) }
+    val rows = 3
+    val columns = 3
+    val pointRadius = 24.dp
+    val pointCount = rows * columns
+    val touchSlop = 20f
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // 3x3 그리드 생성
-        Grid(
-            rows = 3,
-            columns = 3,
-            selectedPoints = currentPattern,
-            onPointClick = { point ->
-                // 이미 선택된 점이면 무시
-                if (!currentPattern.contains(point)) {
-                    // 새로운 점 추가
-                    currentPattern = currentPattern + point
-                }
-            },
-            onComplete = {
-                if (currentPattern.size >= 4) {
-                    onPatternComplete(currentPattern)
-                } else {
-                    Toast.makeText(
-                        context,
-                        "최소 4개 이상의 점을 연결해주세요",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    currentPattern = listOf()
-                }
-            }
-        )
+    var currentPattern by remember { mutableStateOf(listOf<Int>()) }
+    var isDragging by remember { mutableStateOf(false) }
+    var currentDragPoint by remember { mutableStateOf<Offset?>(null) }
+    
+    val points = remember {
+        List(pointCount) { idx ->
+            val row = idx / columns
+            val col = idx % columns
+            val centerX = col * 120f + 60f // 중앙 위치 X (3x3 그리드에서 간격은 120dp로 가정)
+            val centerY = row * 120f + 60f // 중앙 위치 Y
+            Offset(centerX, centerY)
+        }
     }
-}
 
-@Composable
-fun Grid(
-    rows: Int,
-    columns: Int,
-    selectedPoints: List<Int>,
-    onPointClick: (Int) -> Unit,
-    onComplete: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(16.dp)
-    ) {
-        repeat(rows) { row ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
-                modifier = Modifier.padding(vertical = 24.dp)
-            ) {
-                repeat(columns) { col ->
-                    val pointIndex = row * columns + col
-                    val isSelected = selectedPoints.contains(pointIndex)
+    val density = LocalDensity.current
+    val pointRadiusPx = with(density) { pointRadius.toPx() }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp) // 360dp에서 400dp로 증가
+            .background(Color.Transparent)
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        isDragging = true
+                        currentDragPoint = offset
+                        currentPattern = listOf()
 
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(if (isSelected) Color(0xFF191E3F) else Color.LightGray.copy(alpha = 0.5f))
-                            .clickable { onPointClick(pointIndex) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // 선택된 순서 표시 (선택 순서대로 숫자 표시)
-                        if (isSelected) {
-                            val order = selectedPoints.indexOf(pointIndex) + 1
-                            Text(
-                                text = order.toString(),
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
+                        // 시작점 찾기
+                        points.forEachIndexed { index, point ->
+                            if (hypot(offset.x - point.x, offset.y - point.y) <= pointRadiusPx + touchSlop) {
+                                currentPattern = listOf(index)
+                            }
                         }
+                    },
+                    onDrag = { change, _ ->
+                        change.consume()
+                        currentDragPoint = change.position
+
+                        // 현재 드래그 중인 위치와 가장 가까운 점 찾기
+                        points.forEachIndexed { index, point ->
+                            if (!currentPattern.contains(index) && 
+                                hypot(change.position.x - point.x, change.position.y - point.y) <= pointRadiusPx + touchSlop) {
+                                currentPattern = currentPattern + index
+                            }
+                        }
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        currentDragPoint = null
+                        onPatternComplete(currentPattern)
+                    },
+                    onDragCancel = {
+                        isDragging = false
+                        currentDragPoint = null
+                        // 패턴 입력 취소
+                        currentPattern = listOf()
                     }
+                )
+            }
+    ) {
+        // 선 그리기
+        Canvas(modifier = Modifier.matchParentSize()) {
+            if (currentPattern.isNotEmpty()) {
+                for (i in 0 until currentPattern.size - 1) {
+                    val start = points[currentPattern[i]]
+                    val end = points[currentPattern[i + 1]]
+                    
+                    drawLine(
+                        color = Color(0xFF7B68EE), // 보라색 선
+                        start = start,
+                        end = end,
+                        strokeWidth = 8f,
+                        cap = StrokeCap.Round
+                    )
+                }
+                
+                // 현재 드래그 중인 선 그리기
+                if (isDragging && currentPattern.isNotEmpty() && currentDragPoint != null) {
+                    val start = points[currentPattern.last()]
+                    drawLine(
+                        color = Color(0xFF7B68EE), // 보라색 선
+                        start = start,
+                        end = currentDragPoint!!,
+                        strokeWidth = 8f,
+                        cap = StrokeCap.Round
+                    )
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = { onComplete() },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF191E3F)
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Text("확인")
+        
+        // 점들 그리기
+        points.forEachIndexed { index, offset ->
+            val isSelected = currentPattern.contains(index)
+            
+            Box(
+                modifier = Modifier
+                    .size(pointRadius * 2)
+                    .offset(
+                        x = with(density) { offset.x.toDp() } - pointRadius,
+                        y = with(density) { offset.y.toDp() } - pointRadius
+                    )
+                    .background(
+                        color = if (isSelected) Color(0xFF7B68EE) else Color.LightGray.copy(alpha = 0.5f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Text(
+                        text = (currentPattern.indexOf(index) + 1).toString(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
 fun ShowPinDots(count: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         repeat(6) {
             Box(
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(20.dp)
                     .clip(CircleShape)
                     .background(
-                        if (it < count) Color(0xFF3366FF) else Color(0xFFE0E0E0)
+                        if (it < count) Color(0xFF191E3F) else Color(0xFFE0E0E0)
                     )
             )
         }
@@ -473,7 +625,10 @@ fun ShowNumberPad(
     onInputChange: (String) -> Unit,
     onComplete: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp), // 12dp에서 16dp로 증가
+        modifier = Modifier.fillMaxWidth() // 가로 전체 사용
+    ) {
         // 1-9 숫자 패드 (이미 1-9로 구성됨)
         numbers.chunked(3).forEach { row ->
             Row(
@@ -499,7 +654,7 @@ fun ShowNumberPad(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Spacer(modifier = Modifier.size(70.dp)) // 빈 공간
+            Spacer(modifier = Modifier.size(80.dp)) // 70dp에서 80dp로 증가
 
             // 0 버튼
             NumberKey(
@@ -532,7 +687,7 @@ fun NumberKey(
 ) {
     Box(
         modifier = Modifier
-            .size(70.dp)
+            .size(80.dp) // 70dp에서 80dp로 증가
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(4.dp),
@@ -540,7 +695,7 @@ fun NumberKey(
     ) {
         Text(
             text = text,
-            fontSize = 26.sp,
+            fontSize = 32.sp, // 26sp에서 32sp로 증가 
             textAlign = TextAlign.Center,
             color = Color.Black,
             fontWeight = FontWeight.Medium

@@ -84,7 +84,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                             painter = painterResource(id = pages[page].imageRes),
                             contentDescription = null,
                             modifier = Modifier
-                                .size(180.dp),
+                                .size(220.dp), // 이미지 크기도 키움
                             contentScale = ContentScale.Fit
                         )
                     }
@@ -94,7 +94,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                     // 텍스트 (현재 페이지)
                     Text(
                         text = pages[pagerState.currentPage].title,
-                        fontSize = 18.sp,
+                        fontSize = 24.sp, // 18sp에서 24sp로 키움
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         textAlign = TextAlign.Center,
@@ -103,7 +103,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
 
                     Text(
                         text = pages[pagerState.currentPage].description,
-                        fontSize = 16.sp,
+                        fontSize = 20.sp, // 16sp에서 20sp로 키움
                         color = Color.White.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
@@ -116,7 +116,9 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                         pagerState = pagerState,
                         activeColor = Color.White,
                         inactiveColor = Color.Gray.copy(alpha = 0.5f),
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
+                        indicatorWidth = 12.dp, // 인디케이터 크기도 키움
+                        indicatorHeight = 12.dp // 인디케이터 크기도 키움
                     )
                 }
 
@@ -139,7 +141,8 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp)
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 24.dp),
+                        .padding(bottom = 24.dp)
+                        .height(60.dp), // 버튼 높이 증가
                     shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFEE82EE) // 분홍색
@@ -147,7 +150,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                 ) {
                     Text(
                         text = if (pagerState.currentPage == pages.lastIndex) "시작하기" else "다음",
-                        fontSize = 16.sp,
+                        fontSize = 20.sp, // 16sp에서 20sp로 키움
                         fontWeight = FontWeight.Bold
                     )
                 }
