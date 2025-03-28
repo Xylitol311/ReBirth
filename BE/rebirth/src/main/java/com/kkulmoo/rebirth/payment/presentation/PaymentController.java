@@ -45,7 +45,6 @@ public class PaymentController {
 
     //3. 토큰 전달
     //3-1. sse 열기
-        sseService.subscribe(userId);
 
         return ResponseEntity.ok(apiResponseDTO);
 
