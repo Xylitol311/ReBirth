@@ -2,6 +2,7 @@ package com.kkulmoo.rebirth.payment.presentation;
 
 import com.kkulmoo.rebirth.payment.application.service.SseService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -18,7 +19,7 @@ public class SseController {
     }
 
     // 특정 유저 SSE 구독
-    @GetMapping("/subscribe")
+    @GetMapping(path="/subscribe",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> subscribe(@RequestParam(value="userId") int userId) {
         log.info("sse 구독 진행중~~~ userId: {}", userId);
 
