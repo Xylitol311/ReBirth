@@ -3,12 +3,16 @@ package com.example.fe.ui.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,59 +28,73 @@ import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
 import com.example.fe.ui.screens.calendar.CalendarScreen
-import com.example.fe.ui.screens.recCard.recCard
-import com.example.fe.ui.screens.mycard.MyCardScreen
+import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
+import com.example.fe.ui.screens.myCard.MyCardScreen
+import com.example.fe.ui.screens.onboard.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
 import com.example.fe.ui.screens.payment.PaymentScreen
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fe.ui.screens.home.HomeScreenContent
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.fe.ui.screens.myCard.CardItem
+import com.example.fe.ui.screens.myCard.CardDetailScreen
+import com.example.fe.ui.screens.myCard.CardManagementScreen
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
     const val HOME_DETAIL = "home_detail"
+    const val CARD_DETAIL = "card_detail/{cardId}"
+    const val CARD_MANAGEMENT = "card_management"
 }
 
 @Composable
 fun AppNavigation() {
+    val context = LocalContext.current
     val navController = rememberNavController()
-    
+
+    // 로그아웃을 위한 ViewModel
+    val viewModel: OnboardingViewModel = viewModel(
+        factory = OnboardingViewModelFactory(context)
+    )
+
     // 현재 경로 추적
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: BottomNavItem.Home.route
-    
+
     // 공유 스크롤 오프셋 상태
     var scrollOffset by remember { mutableStateOf(0f) }
-    
+
     // 누적 가로 오프셋 (별들의 전체 이동 거리)
     var cumulativeOffset by remember { mutableStateOf(0f) }
-    
+
     // 화면 전환 방향 (-1: 왼쪽으로, 1: 오른쪽으로)
     var transitionDirection by remember { mutableStateOf(0) }
-    
+
     // 애니메이션 트리거를 위한 카운터
     var animationCounter by remember { mutableStateOf(0) }
-    
+
     // 현재 선택된 탭 인덱스 추적
     var currentTabIndex by remember { mutableStateOf(0) }
     var previousTabIndex by remember { mutableStateOf(0) }
-    
+
     // 코루틴 스코프
     val coroutineScope = rememberCoroutineScope()
-    
+
     // 화면 전환 애니메이션을 위한 상태
     val isNavigatingBack = remember { mutableStateOf(false) }
-    
+
     // 탭 인덱스 맵
     val tabIndices = mapOf(
         BottomNavItem.Home.route to 0,
@@ -104,36 +122,37 @@ fun AppNavigation() {
             transitionDirection = 0
         }
     )
-    
+
     // 네비게이션 바 애니메이션을 위한 상태
-    val bottomBarVisible = currentRoute != NavRoutes.HOME_DETAIL
-    
+    val bottomBarVisible = currentRoute != NavRoutes.HOME_DETAIL && 
+                          !currentRoute.startsWith("card_detail")
+
     // 네비게이션 바 애니메이션 값
     val bottomBarAlpha by animateFloatAsState(
         targetValue = if (bottomBarVisible) 1f else 0f,
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomBarAlpha"
     )
-    
+
     // 네비게이션 바 슬라이드 애니메이션 값
     val bottomBarOffset by animateFloatAsState(
         targetValue = if (bottomBarVisible) 0f else 100f,
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomBarOffset"
     )
-    
+
     // 네비게이션 바 높이 (일반적으로 80dp)
     val bottomBarHeight = 80.dp
-    
+
     // 패딩 애니메이션 값 (네비게이션 바가 사라질 때 패딩도 0으로)
     val bottomPadding by animateDpAsState(
         targetValue = if (bottomBarVisible) bottomBarHeight else 0.dp,
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomPadding"
     )
-    
+
     Scaffold(
-        topBar = { 
+        topBar = {
             // 현재 경로에 따라 TopBar 내용 변경
             when (currentRoute) {
                 NavRoutes.HOME_DETAIL -> {
@@ -153,15 +172,25 @@ fun AppNavigation() {
                                 animationCounter++
                                 navController.popBackStack()
                             }
+                        },
+                        onLogoutClick = {
+                            // 로그아웃 처리
+                            viewModel.logout()
                         }
                     )
                 }
                 else -> {
-                    TopBar() // 기본 TopBar
+                    TopBar(
+                        onProfileClick = { /* 프로필 화면으로 이동 */ },
+                        onLogoutClick = {
+                            // 로그아웃 처리
+                            viewModel.logout()
+                        }
+                    ) // 기본 TopBar
                 }
             }
         },
-        bottomBar = { 
+        bottomBar = {
             // 상세 화면에서도 BottomBar 유지하되 투명도와 위치 애니메이션 적용
             Box(
                 modifier = Modifier
@@ -179,7 +208,7 @@ fun AppNavigation() {
                             val newIndex = tabIndices[item.route] ?: 0
                             previousTabIndex = currentTabIndex
                             currentTabIndex = newIndex
-                            
+
                             // 방향 계산 및 애니메이션 트리거
                             transitionDirection = if (newIndex > previousTabIndex) 1 else -1
                             
@@ -202,7 +231,7 @@ fun AppNavigation() {
             start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
             end = paddingValues.calculateEndPadding(LocalLayoutDirection.current)
         )
-        
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -225,9 +254,9 @@ fun AppNavigation() {
                         enterTransition = {
                             // 왼쪽에서 들어오는 애니메이션 + 페이드인
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(700, easing = EaseInOut)
                             ) + fadeIn(
@@ -237,9 +266,9 @@ fun AppNavigation() {
                         exitTransition = {
                             // 나가는 애니메이션 + 페이드아웃
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(700, easing = EaseInOut)
                             ) + fadeOut(
@@ -264,52 +293,77 @@ fun AppNavigation() {
                             }
                         )
                     }
-                    
+
                     // 다른 화면들도 동일하게 수정
                     composable(
                         route = BottomNavItem.MyCard.route,
                         enterTransition = {
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         }
                     ) {
+                        // 화면 전환 애니메이션을 위한 상태
+                        val isNavigating = remember { mutableStateOf(false) }
+                        val contentAlpha by animateFloatAsState(
+                            targetValue = if (isNavigating.value) 0f else 1f,
+                            animationSpec = tween(300),
+                            label = "contentAlpha"
+                        )
+
+                        // 코루틴 스코프 추가
+                        val coroutineScope = rememberCoroutineScope()
+
                         MyCardScreen(
+                            modifier = Modifier.graphicsLayer(alpha = contentAlpha),
                             onScrollOffsetChange = { offset ->
                                 scrollOffset = offset
+                            },
+                            onCardClick = { cardItem ->
+                                // 현재 카드(중앙에 있는 카드)만 클릭 시 상세 화면으로 이동
+                                isNavigating.value = true
+                                // 애니메이션 방향 설정 없이 네비게이션만 실행
+                                // 별 이동 효과 없이 페이드만 적용
+                                coroutineScope.launch {
+                                    navController.navigate("card_detail/${cardItem.id}")
+                                }
+                            },
+                            onManageCardsClick = {
+                                // 카드 관리 화면으로 이동
+                                navController.navigate(NavRoutes.CARD_MANAGEMENT)
                             }
                         )
                     }
-                    
+
                     composable(
                         route = BottomNavItem.Payment.route,
                         enterTransition = {
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
@@ -326,23 +380,23 @@ fun AppNavigation() {
                             }
                         )
                     }
-                    
+
                     composable(
                         route = BottomNavItem.Calendar.route,
                         enterTransition = {
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
@@ -354,35 +408,35 @@ fun AppNavigation() {
                             }
                         )
                     }
-                    
+
                     composable(
                         route = BottomNavItem.CardRecommend.route,
                         enterTransition = {
                             slideIntoContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                towards = if (transitionDirection > 0) 
+                                towards = if (transitionDirection > 0)
                                     AnimatedContentTransitionScope.SlideDirection.Left
-                                else 
+                                else
                                     AnimatedContentTransitionScope.SlideDirection.Right,
                                 animationSpec = tween(500, easing = EaseInOut)
                             )
                         }
                     ) {
-                        recCard(
+                        CardRecommendScreen(
                             onScrollOffsetChange = { offset ->
                                 scrollOffset = offset
                             }
                         )
                     }
-                    
+
                     // 홈 상세 화면 추가
                     composable(
                         route = NavRoutes.HOME_DETAIL,
@@ -407,8 +461,77 @@ fun AppNavigation() {
                     ) {
                         HomeDetailScreen()
                     }
+
+                    // 카드 관리 화면 추가
+                    composable(
+                        route = NavRoutes.CARD_MANAGEMENT,
+                        enterTransition = {
+                            // 오른쪽에서 들어오는 애니메이션 + 페이드인
+                            slideIntoContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(500, easing = EaseInOut)
+                            ) + fadeIn(
+                                animationSpec = tween(400, easing = EaseInOut)
+                            )
+                        },
+                        exitTransition = {
+                            // 오른쪽으로 나가는 애니메이션 + 페이드아웃
+                            slideOutOfContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(500, easing = EaseInOut)
+                            ) + fadeOut(
+                                animationSpec = tween(400, easing = EaseInOut)
+                            )
+                        }
+                    ) {
+                        CardManagementScreen(
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = NavRoutes.CARD_DETAIL,
+                        arguments = listOf(navArgument("cardId") { type = NavType.IntType }),
+                        enterTransition = {
+                            // 슬라이드 애니메이션 완전 제거, 페이드 효과만 적용
+                            fadeIn(
+                                animationSpec = tween(300, easing = EaseInOut)
+                            )
+                        },
+                        exitTransition = {
+                            // 슬라이드 애니메이션 완전 제거, 페이드 효과만 적용
+                            fadeOut(
+                                animationSpec = tween(300, easing = EaseInOut)
+                            )
+                        }
+                    ) { backStackEntry ->
+                        val cardId = backStackEntry.arguments?.getInt("cardId") ?: 1
+                        val card = getCardById(cardId)
+                        CardDetailScreen(
+                            cardItem = card,
+                            onBackClick = {
+                                // 뒤로가기 클릭 시 애니메이션 방향 설정
+                                transitionDirection = -1
+                                // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                                cumulativeOffset += transitionDirection * 800f
+                                animationCounter++
+                                navController.popBackStack()
+                            }
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+private fun getCardById(cardId: Int): CardItem {
+    val cards = listOf(
+        CardItem(1, "토스 신한카드 Mr.Life", "•••• •••• •••• 3456"),
+        CardItem(2, "현대카드", "•••• •••• •••• 4567"),
+        CardItem(3, "삼성카드", "•••• •••• •••• 5678")
+    )
+    return cards.find { it.id == cardId } ?: cards[0]
 }

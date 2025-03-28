@@ -2,7 +2,7 @@ package com.example.fe.ui.components.backgrounds
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.EaseInOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -50,7 +50,7 @@ fun StarryBackground(
     val animatedHorizontalOffset by animateFloatAsState(
         targetValue = horizontalOffset,
         // 더 빠른 애니메이션과 가속/감속 효과
-        animationSpec = tween(800, easing = FastOutSlowInEasing),
+        animationSpec = tween(800, easing = EaseInOut),
         label = "horizontalOffset"
     )
     
