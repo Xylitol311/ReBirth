@@ -8,7 +8,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Slf4j
 @CrossOrigin
 @RestController
-@RequestMapping("api/payment/sse")
+@RequestMapping("/api/payment/sse")
 public class SseController {
     private final SseService sseService;
 
