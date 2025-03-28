@@ -206,7 +206,7 @@ fun BarcodeView(
                 val bitMatrix = multiFormatWriter.encode(
                     barcodeData,
                     BarcodeFormat.CODE_128,
-                    350, // 너비 조정
+                    300, // 너비 조정
                     100, // 높이 조정
                     hints
                 )
@@ -239,8 +239,7 @@ fun BarcodeView(
                 modifier = Modifier
                     .width(300.dp) // 너비 조정
                     .height(100.dp) // 높이 조정
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White), // 단순 흰색 배경
+                    .clip(RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 // 바코드 이미지
@@ -295,8 +294,8 @@ fun QRCodeView(
                 val bitMatrix = qrCodeWriter.encode(
                     qrData,
                     BarcodeFormat.QR_CODE,
-                    130,
-                    130,
+                    120,
+                    120,
                     hints
                 )
                 

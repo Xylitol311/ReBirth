@@ -75,4 +75,8 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+//    implementation("io.ktor:ktor-server-core:2.3.4")
+//    implementation("io.ktor:ktor-server-netty:2.3.4")
+//    implementation("io.ktor:ktor-server-host-common:2.3.4")
+
 }
