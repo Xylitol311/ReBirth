@@ -29,7 +29,7 @@ public class UserEntity {
 	private Integer userId;
 
 	@Column(name = "consumption_pattern_id")
-	private Byte consumptionPatternId;
+	private String consumptionPatternId;
 
 	@Column(name = "user_email")
 	private String userEmail;

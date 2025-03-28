@@ -12,7 +12,6 @@ import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 
 @Component
 public class UserEntityMapper {
-
 	public User toUser(UserEntity userEntity) {
 
 		if (userEntity == null) {
@@ -64,3 +63,4 @@ public class UserEntityMapper {
 			.collect(Collectors.toList());
 	}
 }
+

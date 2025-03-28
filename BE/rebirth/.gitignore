@@ -36,5 +36,3 @@ out/
 ### VS Code ###
 .vscode/
 
-## application-local.properites
-application-*.properties
