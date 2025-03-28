@@ -1,4 +1,8 @@
 package com.kkulmoo.rebirth.common.webclient;
+<<<<<<< BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/webclient/WebClientConfig.java
+
+=======
+>>>>>>> BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/webclient/WebClientConfig.java
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
-
     // backend -> 카드사 (User의 카드 정보주세요)
     @Value("${api.cardissuer.base-url}")
     private String firstApiBaseUrl;

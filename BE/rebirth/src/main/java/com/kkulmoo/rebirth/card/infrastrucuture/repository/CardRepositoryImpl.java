@@ -1,0 +1,58 @@
+package com.kkulmoo.rebirth.card.infrastrucuture.repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Repository;
+
+import com.kkulmoo.rebirth.card.domain.Card;
+import com.kkulmoo.rebirth.card.domain.CardId;
+import com.kkulmoo.rebirth.card.domain.CardRepository;
+import com.kkulmoo.rebirth.card.domain.CardTemplate;
+import com.kkulmoo.rebirth.card.infrastrucuture.entity.CardEntity;
+import com.kkulmoo.rebirth.card.infrastrucuture.mapper.CardEntityMapper;
+import com.kkulmoo.rebirth.card.infrastrucuture.repository.CardJpaRepository;
+import com.kkulmoo.rebirth.user.domain.UserId;
+
+import lombok.RequiredArgsConstructor;
+
+// JPA 구현체
+@Repository
+@RequiredArgsConstructor
+public class CardRepositoryImpl implements CardRepository {
+	private final CardJpaRepository cardJpaRepository;
+	private final CardEntityMapper cardEntityMapper;
+	private final CardTemplateJpaRepository cardTemplateJpaRepository;
+
+	@Override
+	public Card save(Card card) {
+		CardEntity cardEntity = cardJpaRepository.save(cardEntityMapper.toEntity(card));
+		return cardEntityMapper.toCard(cardEntity);
+	}
+
+	@Override
+	public Optional<Card> findById(CardId cardId) {
+		return cardJpaRepository.findById(cardId.getValue())
+			.map(cardEntityMapper::toCard);
+	}
+
+	@Override
+	public List<Card> findByUserId(UserId userId ) {
+		return cardJpaRepository.findByUserId(userId.getValue())
+			.stream()
+			.map(cardEntityMapper::toCard)
+			.collect(Collectors.toList());
+	}
+
+	@Override
+	public Optional<Card> findByCardUniqueNumber(String cardUniqueNumber) {
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<CardTemplate> findCardTemplateByCardName(String cardName) {
+		return null;
+	}
+
+}
