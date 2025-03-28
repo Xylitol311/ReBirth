@@ -1,8 +1,4 @@
 package com.kkulmoo.rebirth.common.webclient;
-<<<<<<< BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/webclient/WebClientConfig.java
-
-=======
->>>>>>> BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/webclient/WebClientConfig.java
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
