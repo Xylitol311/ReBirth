@@ -18,7 +18,7 @@ public class SseController {
 
     // 특정 유저 SSE 구독
     @GetMapping("/subscribe")
-    public SseEmitter subscribe(@RequestParam("userId") int userId) {
+    public SseEmitter subscribe(@RequestParam(value="userId") int userId) {
         log.info("sse 구독 진행중~~~");
         return sseService.subscribe(userId);
     }
