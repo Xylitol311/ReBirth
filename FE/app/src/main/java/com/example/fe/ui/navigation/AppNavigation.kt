@@ -86,11 +86,18 @@ fun AppNavigation() {
         BottomNavItem.CardRecommend.route to 4
     )
     
+    // 배경 이동 거리 배율 (더 큰 값으로 변경)
+    val backgroundMovementMultiplier = 800f  // 기존 300f에서 증가
+    
+    // 상세 화면 이동 시 배경 이동 거리 배율 (더 큰 값으로 변경)
+    val detailBackgroundMovementMultiplier = 1500f  // 기존 800f에서 증가
+    
     // 애니메이션 적용된 가로 오프셋
     val animatedHorizontalOffset by animateFloatAsState(
         // 누적 오프셋 + 현재 전환에 의한 오프셋
         targetValue = cumulativeOffset,
-        animationSpec = tween(300, easing = EaseInOut),
+        // 애니메이션 속도 증가 (300ms에서 200ms로 감소)
+        animationSpec = tween(200, easing = EaseInOut),
         label = "horizontalOffset",
         finishedListener = {
             // 애니메이션이 끝나면 방향 초기화 (다음 애니메이션을 위해)
@@ -142,7 +149,7 @@ fun AppNavigation() {
                                 // 뒤로가기 시 애니메이션 방향 설정
                                 transitionDirection = -1
                                 // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
-                                cumulativeOffset += transitionDirection * 800f
+                                cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
                                 animationCounter++
                                 navController.popBackStack()
                             }
@@ -176,8 +183,8 @@ fun AppNavigation() {
                             // 방향 계산 및 애니메이션 트리거
                             transitionDirection = if (newIndex > previousTabIndex) 1 else -1
                             
-                            // 누적 오프셋 업데이트
-                            cumulativeOffset += transitionDirection * 300f
+                            // 누적 오프셋 업데이트 (더 큰 값으로 변경)
+                            cumulativeOffset += transitionDirection * backgroundMovementMultiplier
                             
                             animationCounter++ // 애니메이션 트리거
                         }
@@ -204,7 +211,7 @@ fun AppNavigation() {
             // 공유 StarryBackground - 각 화면에서 별도로 StarryBackground를 사용하지 않도록 수정
             StarryBackground(
                 scrollOffset = 0f,
-                starCount = 150,
+                starCount = 150,  // 150에서 200으로 증가
                 horizontalOffset = animatedHorizontalOffset
             ) {
                 // 내비게이션 호스트를 StarryBackground 내부에 배치
@@ -251,7 +258,7 @@ fun AppNavigation() {
                                     // 애니메이션 트리거를 위한 방향 설정
                                     transitionDirection = 1
                                     // 누적 오프셋 업데이트 (별들이 더 빠르게 이동)
-                                    cumulativeOffset += transitionDirection * 800f
+                                    cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
                                     animationCounter++
                                 }
                             }
@@ -311,6 +318,11 @@ fun AppNavigation() {
                         PaymentScreen(
                             onScrollOffsetChange = { offset ->
                                 scrollOffset = offset
+                            },
+                            onNavigateToHome = {
+                                navController.navigate("home") {
+                                    popUpTo("home") { inclusive = true }
+                                }
                             }
                         )
                     }
