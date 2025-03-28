@@ -78,6 +78,7 @@ public class PaymentController {
         // CardTemplate cardTemplate = paymentService.getCardTemplate(permanentToken);
 
         //2-2. permanent는 웹 클라이언트로 카드사에 넘기기 & 값 받
+        log.info(permanentToken);
         CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder().token(permanentToken).amount(createTransactionRequestDTO.getAmount()).merchantName(createTransactionRequestDTO.getMerchantName()).build();
         CardTransactionDTO cardTransactionDTO = webClientService.checkPermanentToken(dataToCardsa).block();
 

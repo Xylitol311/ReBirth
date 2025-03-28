@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-	@Value("${api.cardissuer.base_url}")
+	@Value("${api.cardissuer.base-url}")
 	private String baseUrl;
 
 	@Bean
