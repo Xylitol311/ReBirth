@@ -26,13 +26,10 @@ public class UserEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "user_id")
-	private Integer userId;
+	private Long userId;
 
 	@Column(name = "consumption_pattern_id")
 	private String consumptionPatternId;
-
-	@Column(name = "user_email")
-	private String userEmail;
 
 	@Column(name = "user_name", nullable = false, length = 10)
 	private String userName;
