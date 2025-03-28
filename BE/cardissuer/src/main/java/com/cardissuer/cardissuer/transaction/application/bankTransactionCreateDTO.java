@@ -1,6 +1,7 @@
 package com.cardissuer.cardissuer.transaction.application;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -13,5 +14,5 @@ public class bankTransactionCreateDTO {
 	private String userId;
 	private String type;
 	private String description;
-	private Timestamp createdAt;
+	private LocalDateTime createdAt;
 }

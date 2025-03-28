@@ -14,6 +14,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BankTransactionResponseDTO {
 	private Long amount;  // 금액
-	private Timestamp createdAt;
+	private LocalDateTime createdAt;
 	private String approvalCode;  // 승인코드 (카드 취소에도 전달 되도록)
 }

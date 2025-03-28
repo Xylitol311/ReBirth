@@ -35,17 +35,6 @@ public class CardTransactionController {
 		BankTransactionResponseDTO cardTransaction = cardTransactionService.createTransaction(createTransactionRequest);
 		return new ResponseEntity<>(cardTransaction, HttpStatus.CREATED);
 	}
-
-	//사용자의 거래내역을 가져와라
-	@GetMapping("/user")
-	public ResponseEntity<List<CardTransactionEntity>> getAllTransactionsByUserApiKey(
-		@RequestHeader("Authorization") String authorizationHeader) {
-		// "Bearer " 접두사 제거하여 실제 API 키 추출
-		String ssafyAPIKey = authorizationHeader.replace("Bearer ", "");
-		List<CardTransactionEntity> transactions = cardTransactionService.getAllTransactionsByUserApiKey(ssafyAPIKey);
-		return new ResponseEntity<>(transactions, HttpStatus.OK);
-	}
-
 	// 카드 거래 내역 가져오기. 가드별로 요청을 하는게 맞을듯하다...?  (전체를 싸글이 가져오는게 이득일까??)
 
 	@GetMapping("/user/after")
@@ -62,4 +51,15 @@ public class CardTransactionController {
 			ssafyAPIKey, startTime);
 		return new ResponseEntity<>(transactions, HttpStatus.OK);
 	}
+
+	//사용자의 거래내역을 가져와라
+	// @GetMapping("/user")
+	// public ResponseEntity<List<CardTransactionEntity>> getAllTransactionsByUserApiKey(
+	// 	@RequestHeader("Authorization") String authorizationHeader) {
+	// 	// "Bearer " 접두사 제거하여 실제 API 키 추출
+	// 	String ssafyAPIKey = authorizationHeader.replace("Bearer ", "");
+	// 	List<CardTransactionEntity> transactions = cardTransactionService.getAllTransactionsByUserApiKey(ssafyAPIKey);
+	// 	return new ResponseEntity<>(transactions, HttpStatus.OK);
+	// }
+
 }

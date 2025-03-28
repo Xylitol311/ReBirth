@@ -33,7 +33,6 @@ public class TransactionService {
 		AccountEntity account = accountService.getAccountWithPessimisticLock(
 			transactionDTO.getUserId(), transactionDTO.getAccountNumber());
 
-		// TransactionType Enum 값 가져오기
 		String typeStr = transactionDTO.getType();
 		if (typeStr == null || typeStr.isEmpty()) {
 			throw new RuntimeException("거래 유형이 설정되지 않았습니다");
@@ -42,30 +41,66 @@ public class TransactionService {
 		TransactionType type;
 		try {
 			type = TransactionType.valueOf(typeStr);
+			System.out.println(typeStr);
 		} catch (IllegalArgumentException e) {
 			throw new RuntimeException("유효하지 않은 거래 유형입니다: " + typeStr);
 		}
 
-		// 출금 거래(이체, 카드)인 경우에만 잔액 검증
-		if (type != TransactionType.DEP && Math.abs(transactionDTO.getAmount()) > account.getBalance()) {
-			throw new RuntimeException("계좌 잔액이 부족합니다: " + transactionDTO.getAccountNumber());
+		switch (type) {
+			case DEP:
+				// 입금 처리
+				processDeposit(transactionDTO, account);
+				break;
+			case TXN:
+				// 카드 결제 처리
+				processCardTransaction(transactionDTO, account);
+				break;
+			default:
+				throw new RuntimeException("지원하지 않는 거래 유형입니다: " + type);
 		}
 
-		// 승인코드 처리: 카드가 아닌 경우 자체 생성
-		if (type != TransactionType.TXN &&
-			(transactionDTO.getApprovalCode() == null || transactionDTO.getApprovalCode().isEmpty())) {
-			// 승인코드 생성 (시간 + 랜덤값)
-			String approvalCode = generateApprovalCode(type.name());
-			transactionDTO.setApprovalCode(approvalCode);
+		if(transactionDTO.getType().equals("REJ")){
+			return transactionDTO;
 		}
 
-		TransactionEntity transactionEntity = transactionMapper.toEntity(transactionDTO);
-		TransactionEntity savedTransaction = transactionRepository.save(transactionEntity);
-
+		TransactionEntity savedTransaction = transactionRepository.save(transactionMapper.toEntity(transactionDTO));
 		// 계좌 잔액 업데이트 - 계좌번호로 직접 업데이트
 		accountService.updateBalance(transactionDTO.getAccountNumber(), transactionDTO.getAmount());
-
 		return transactionMapper.toDTO(savedTransaction);
+	}
+
+	/**
+	 * 입금 처리
+	 */
+	private void processDeposit(TransactionDTO transactionDTO, AccountEntity account) {
+		// 승인코드 생성
+		String approvalCode = generateApprovalCode("DEP");
+		transactionDTO.setApprovalCode(approvalCode);
+
+		// 입금은 항상 양수 금액이어야 함
+		if (transactionDTO.getAmount() <= 0) {
+			throw new RuntimeException("입금 금액은 0보다 커야 합니다");
+		}
+	}
+
+	private void processCardTransaction(TransactionDTO transactionDTO, AccountEntity account) {
+
+		if (transactionDTO.getAmount() > account.getBalance()) {
+			// 카드 거절 처리로 전환
+			transactionDTO.setType("REJ");
+			transactionDTO.setDescription("잔액 부족으로 카드 거래 거절: 필요 금액 " +
+				Math.abs(transactionDTO.getAmount()) + ", 현재 잔액 " + account.getBalance());
+
+			// 새로운 승인코드 생성
+			String rejectionCode = generateApprovalCode("REJ");
+			transactionDTO.setApprovalCode(rejectionCode);
+
+			return;
+		}
+
+		transactionDTO.setAmount(transactionDTO.getAmount() * -1);
+		transactionDTO.setApprovalCode(generateApprovalCode("TXN"));
+		System.out.println(transactionDTO.getType());
 	}
 
 	/**
@@ -92,69 +127,21 @@ public class TransactionService {
 			.collect(Collectors.toList());
 	}
 
-	// @Transactional
-	// public TransactionDTO transferMoney(TransferRequestDTO transferRequestDTO) {
-	// 	// 사용자 권한 검증
-	// 	if (!accountService.validateAccountOwnership(transferRequestDTO.getUserKey(),
-	// 		transferRequestDTO.getSourceAccountNumber())) {
-	// 		throw new RuntimeException("이 계좌에 대한 접근권한이 없습니다.");
-	// 	}
-	//
-	// 	// 출금 계좌에서 금액 차감
-	// 	accountService.updateBalance(transferRequestDTO.getSourceAccountNumber(), -transferRequestDTO.getAmount());
-	//
-	// 	// 입금 계좌에 금액 추가
-	// 	accountService.updateBalance(transferRequestDTO.getDestinationAccountNumber(), transferRequestDTO.getAmount());
-	//
-	// 	// 승인 코드 생성
-	// 	String approvalCode = generateApprovalCode("이체");
-	// 	LocalDateTime now = LocalDateTime.now();
-	//
-	// 	// 거래 기록 저장 - 출금 계좌
-	// 	TransactionEntity transaction = TransactionEntity.builder()
-	// 		.accountNumber(transferRequestDTO.getSourceAccountNumber())
-	// 		.amount(-transferRequestDTO.getAmount())
-	// 		.type("이체")
-	// 		.createdAt(now)
-	// 		.description("계좌이체 - " + transferRequestDTO.getDestinationAccountNumber() + "로 송금")
-	// 		.approvalCode(approvalCode)
-	// 		.build();
-	//
-	// 	TransactionEntity savedTransaction = transactionRepository.save(transaction);
-	//
-	// 	// 수신 계좌의 거래 기록도 저장
-	// 	TransactionEntity recipientTransaction = TransactionEntity.builder()
-	// 		.accountNumber(transferRequestDTO.getDestinationAccountNumber())
-	// 		.amount(transferRequestDTO.getAmount())
-	// 		.type("입금")
-	// 		.createdAt(now)
-	// 		.description("계좌이체 - " + transferRequestDTO.getSourceAccountNumber() + "에서 입금")
-	// 		.approvalCode(approvalCode)  // 같은 승인코드 사용
-	// 		.build();
-	//
-	// 	transactionRepository.save(recipientTransaction);
-	//
-	// 	return convertToDTO(savedTransaction);
-	// }
-	//
-
-	// 승인코드 생성 메서드
 	private String generateApprovalCode(String type) {
 		String prefix;
 		if ("DEP".equals(type)) {
 			prefix = "DEP";
 		} else if ("TRF".equals(type)) {
 			prefix = "TRF";
-		} else {
+		} else if ("TXN".equals(type)) {
 			prefix = "TXN";
+		} else {
+			prefix = "REJ";
 		}
 
 		// 현재 시간 밀리초 + 랜덤 숫자 4자리
 		long timestamp = System.currentTimeMillis();
-		int random = (int) (Math.random() * 10000);
+		int random = (int)(Math.random() * 10000);
 		return prefix + timestamp + String.format("%04d", random);
 	}
-
 }
-
-

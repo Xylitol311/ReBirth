@@ -31,11 +31,12 @@ public class CardController {
 	@PostMapping("/tokens")
 	public ResponseEntity<?> getPermanentToken(
 		@RequestBody PermanentTokenRequest permanentTokenRequest) {
-		// Authorization을 받아서
+
 		String userCI = permanentTokenRequest.getUserCI();
 		System.out.println(userCI);
 		PermanentToken token = cardService.getPermanentToken(userCI, permanentTokenRequest);
 		return ResponseEntity.ok(token);
+
 	}
 
 	@GetMapping
