@@ -11,7 +11,6 @@ import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @Slf4j
@@ -55,7 +54,6 @@ public class PaymentController {
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
-
         //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
         String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
         String[] tokenInfo = paymentEncryption.validateOneTimeToken(realToken);
@@ -65,8 +63,6 @@ public class PaymentController {
 
         String permanentToken = tokenInfo[0];
         int userId = Integer.parseInt(tokenInfo[1]);
-
-        sseService.sendToUser(userId, "결제 진행 중");
 
         //1. 추천 카드 일경우 로직 작성
         if(permanentToken.equals("rebirth")){
@@ -90,6 +86,18 @@ public class PaymentController {
 
         return ResponseEntity.ok(cardTransactionDTO);
     }
+
+
+    //가맹점을 위한 QR 코드 생성
+    @GetMapping("/onlinepay")
+    public ResponseEntity<?> createQRforOnline(@RequestParam("merchantName") String merchantName, @RequestParam("") int amount){
+
+
+
+        return ResponseEntity.ok("online");
+
+    }
+
 
 
     //선택해서 카드 결제 하는 경우

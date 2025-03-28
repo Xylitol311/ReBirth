@@ -65,4 +65,6 @@ public class CardsEntity {
     @Column(name = "payment_created_at")
     private LocalDateTime paymentCreatedAt;
 
+
+
 }
