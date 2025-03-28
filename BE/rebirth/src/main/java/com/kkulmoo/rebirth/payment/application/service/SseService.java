@@ -15,7 +15,7 @@ public class SseService {
     private final Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
 
     public SseEmitter subscribe(int userId) {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        SseEmitter emitter = new SseEmitter(300_000L); // 5분(300,000ms)
         emitters.put(userId, emitter);
 
         // 클라이언트가 연결을 끊으면 삭제
