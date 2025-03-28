@@ -8,11 +8,13 @@ import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequest
 import com.kkulmoo.rebirth.payment.presentation.response.ApiResponseDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/payment")
@@ -53,9 +55,13 @@ public class PaymentController {
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
+
         //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
         String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
         String[] tokenInfo = paymentEncryption.validateOneTimeToken(realToken);
+
+        log.info(realToken);
+        log.info(tokenInfo[0]);
 
         String permanentToken = tokenInfo[0];
         int userId = Integer.parseInt(tokenInfo[1]);
