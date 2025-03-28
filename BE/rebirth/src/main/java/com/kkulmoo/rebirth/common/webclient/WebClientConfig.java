@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
+
     // backend -> 카드사 (User의 카드 정보주세요)
     @Value("${api.cardissuer.base-url}")
     private String firstApiBaseUrl;
