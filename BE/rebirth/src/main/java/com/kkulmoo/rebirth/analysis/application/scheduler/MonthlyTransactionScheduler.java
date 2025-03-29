@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.analysis.application.scheduler;
 
+import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
 import com.kkulmoo.rebirth.analysis.domain.repository.MonthlyTransactionSummaryRepository;
 import com.kkulmoo.rebirth.analysis.domain.repository.ReportCardCategoriesRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.MonthlyConsumptionReportEntity;
@@ -223,8 +224,8 @@ public class MonthlyTransactionScheduler {
         return result;
     }
 
-    public List<Object[]> getTotalSpendingByCategory(UserEntity user, int year, int month) {
-        List<Object[]> totalSpendingByCategory = reportCardCategoriesJpaRepository.getTotalSpendingByCategoryNameAndUser(user.getUserId(), year, month);
+    public List<ReportCategoryDTO> getTotalSpendingByCategory(UserEntity user, int year, int month) {
+        List<ReportCategoryDTO> totalSpendingByCategory = reportCardCategoriesJpaRepository.getTotalSpendingByCategoryNameAndUser(user.getUserId(), year, month);
         return totalSpendingByCategory;
     }
 }

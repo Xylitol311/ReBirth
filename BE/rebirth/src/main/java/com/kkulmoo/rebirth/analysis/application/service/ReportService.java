@@ -3,6 +3,7 @@ package com.kkulmoo.rebirth.analysis.application.service;
 import com.kkulmoo.rebirth.analysis.application.scheduler.MonthlyTransactionScheduler;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.CardCategoryDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCardDTO;
+import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportWithPatternDTO;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.*;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.*;
@@ -16,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -138,8 +138,8 @@ public class ReportService {
 
             int reportId = monthlyTransactionSummaryJpaRepository.save(monthlyTransactionSummary).getReportId();
             MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getById(reportId);
-            List<CardEntity> cards = cardsJpaRepository.getByUserId(user.getUserId());
-            for(CardEntity card : cards) {
+            List<CardsEntity> cards = cardsJpaRepository.getByUserId(user.getUserId());
+            for(CardsEntity card : cards) {
 
                 ReportCardsEntity reportCardsEntity = ReportCardsEntity
                         .builder()
@@ -244,10 +244,10 @@ public class ReportService {
 
             String question = "다음은 " + user.getUserName() + "님의 한달간 소비 내역이야. 요약해줘.\n";
 
-            List<Object[]> spendingByCategory = getTotalSpendingByCategory(user, year, month);
-            for(Object[] row : spendingByCategory) {
-                String category = (String) row[0];
-                question = question.concat(category+"카테고리 지출 : "+row[1]+"원\n");
+            List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
+            for(ReportCategoryDTO row : spendingByCategory) {
+                String category = row.getCategory();
+                question = question.concat(category+"카테고리 지출 : "+row.getAmount()+"원\n");
             }
             question = question.concat("과소비성향 : "+pattern[0]+"\n");
             question = question.concat("소비변동성 : "+pattern[1]+"\n");
@@ -282,9 +282,9 @@ public class ReportService {
     public int[] calculateSpendingPattern(UserEntity user, LocalDateTime now) {
         // 필요한 정보 - 월평균 수입, 월 총 지출, 카테고리별 지출, 전 월 지출
         int monthlyIncome = user.getAverageMonthlyIncome();
-        MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
         int year = now.getYear();
         int month = now.getMonthValue();
+        MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
         // 전 월 총지출 가져오기
         LocalDateTime lastMonth = now.minusMonths(1);
 
@@ -314,10 +314,10 @@ public class ReportService {
         extrovertCategories.put("택시",1);
 
         // 카테고리별 지출 가져오기
-        List<Object[]> spendingByCategory = getTotalSpendingByCategory(user, year, month);
+        List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
         int extrovertSpendAmount = 0;
-        for(Object[] spending : spendingByCategory) {
-            if(extrovertCategories.containsKey((String)spending[0])) extrovertSpendAmount += (Integer)spending[1];
+        for(ReportCategoryDTO spending : spendingByCategory) {
+            if(extrovertCategories.containsKey(spending.getCategory())) extrovertSpendAmount += spending.getAmount();
         }
         int extrovert = extrovertSpendAmount / report.getTotalSpending();
 
@@ -330,8 +330,8 @@ public class ReportService {
         return result;
     }
 
-    public List<Object[]> getTotalSpendingByCategory(UserEntity user, int year, int month) {
-        List<Object[]> totalSpendingByCategory = reportCardCategoriesJpaRepository.getTotalSpendingByCategoryNameAndUser(user.getUserId(), year, month);
+    public List<ReportCategoryDTO> getTotalSpendingByCategory(UserEntity user, int year, int month) {
+        List<ReportCategoryDTO> totalSpendingByCategory = reportCardCategoriesJpaRepository.getTotalSpendingByCategoryNameAndUser(user.getUserId(), year, month);
         return totalSpendingByCategory;
     }
 
@@ -342,7 +342,7 @@ public class ReportService {
 
         int preYear = year;
         int preMonth = month;
-        month--;
+        preMonth--;
         if(preMonth==0) {
             preMonth = 12;
             preYear--;
@@ -389,7 +389,7 @@ public class ReportService {
 
 
     public List<ReportCardDTO> getReportCards(Integer userId, int year, int month) {
-        List<ReportCardDTO> result = new ArrayList<ReportCardDTO>();
+        List<ReportCardDTO> result = new ArrayList<>();
         MonthlyTransactionSummaryEntity monthlyTransactionSummary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(userId, year, month);
         List<ReportCardsEntity> reportCards = reportCardsJpaRepository.getByReportId(monthlyTransactionSummary.getReportId());
         for (ReportCardsEntity reportCard : reportCards) {
@@ -421,5 +421,11 @@ public class ReportService {
             result.add(reportCardDTO);
         }
         return result;
+    }
+
+    public List<ReportCategoryDTO> getReportCategories(Integer userId, int year, int month) {
+
+        List<ReportCategoryDTO> reportCategories = reportCardCategoriesJpaRepository.getTotalSpendingByCategoryNameAndUser(userId, year, month);
+        return reportCategories;
     }
 }

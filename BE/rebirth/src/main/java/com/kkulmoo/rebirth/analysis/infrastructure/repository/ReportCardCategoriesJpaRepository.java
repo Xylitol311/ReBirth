@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.analysis.infrastructure.repository;
 
+import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardCategoriesEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,7 @@ import java.util.List;
 @Repository
 public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportCardCategoriesEntity, Integer> {
 
-    @Query("SELECT c.categoryName, SUM(rcc.amount) " +
+    @Query("SELECT c.categoryName, SUM(rcc.amount), SUM(rcc.receivedBenefitAmount) " +
             "FROM ReportCardCategoriesEntity rcc " +
             "JOIN ReportCardsEntity rc ON rcc.reportCardId = rc.reportCardId " +
             "JOIN MonthlyTransactionSummaryEntity mts ON rc.reportId = mts.reportId " +
@@ -21,7 +22,7 @@ public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportC
             "AND mts.month = :month " +
             "GROUP BY c.categoryName " +
             "ORDER BY SUM(rcc.amount) DESC")
-    List<Object[]> getTotalSpendingByCategoryNameAndUser(
+    List<ReportCategoryDTO> getTotalSpendingByCategoryNameAndUser(
             @Param("userId") int userId,
             @Param("year") int year,
             @Param("month") int month

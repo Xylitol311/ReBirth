@@ -2,6 +2,7 @@ package com.kkulmoo.rebirth.analysis.presentation;
 
 import com.kkulmoo.rebirth.analysis.application.service.ReportService;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCardDTO;
+import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportWithPatternDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ResponseDTO;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
@@ -10,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @RestController
@@ -21,7 +24,8 @@ public class ReportController {
     private final UserJpaRepository userJpaRepository;
 
     @PostMapping("/frommydata")
-    public ResponseEntity<ResponseDTO> getReportFromMyData(@AuthenticationPrincipal(expression = "userId") Integer userId) {
+    public ResponseEntity<ResponseDTO> getReportFromMyData(//@AuthenticationPrincipal(expression = "userId") Integer userId,
+                                                           @RequestParam(value = "userId") Integer userId) {
         UserEntity user = userJpaRepository.getById(userId);
         reportService.startWithMyData(user);
         ResponseDTO responseDTO = ResponseDTO
@@ -33,7 +37,8 @@ public class ReportController {
     }
 
     @GetMapping
-    public ResponseEntity<ResponseDTO> getReportWithPattern(@AuthenticationPrincipal(expression = "userId") Integer userId,
+    public ResponseEntity<ResponseDTO> getReportWithPattern(// @AuthenticationPrincipal(expression = "userId") Integer userId,
+                                                            @RequestParam(value = "userId") Integer userId,
                                                             @RequestParam int year, @RequestParam int month) {
         ReportWithPatternDTO report = reportService.getReportWithPattern(userId, year, month);
         ResponseDTO result = new ResponseDTO();
@@ -45,8 +50,9 @@ public class ReportController {
     }
 
     @GetMapping("/card")
-    public ResponseEntity<ResponseDTO> getReportCards(@AuthenticationPrincipal(expression = "userId") Integer userId,
-                                                     @RequestParam int year, @RequestParam int month) {
+    public ResponseEntity<ResponseDTO> getReportCards(// @AuthenticationPrincipal(expression = "userId") Integer userId,
+                                                      @RequestParam(value = "userId") Integer userId,
+                                                      @RequestParam int year, @RequestParam int month) {
 
         List<ReportCardDTO> reportCards = reportService.getReportCards(userId, year, month);
         ResponseDTO result = new ResponseDTO();
@@ -57,9 +63,18 @@ public class ReportController {
         return ResponseEntity.ok().body(result);
     }
 
-//    @GetMapping("/category")
-//    public ResponseEntity<ResponseDTO> getReportCategories() {
-//
-//        List<>
-//    }
+    @GetMapping("/category")
+    public ResponseEntity<ResponseDTO> getReportCategories(@RequestParam(value = "userId") Integer userId,
+                                                           @RequestParam int year, @RequestParam int month) {
+
+        List<ReportCategoryDTO> reportCategories = reportService.getReportCategories(userId, year,month);
+        Collections.sort(reportCategories, Comparator.comparing(ReportCategoryDTO::getAmount));
+
+        ResponseDTO result = new ResponseDTO();
+        result.setSuccess(true);
+        result.setMessage("카테고리별 조회 완료");
+        result.setData(reportCategories);
+
+        return ResponseEntity.ok().body(result);
+    }
 }
