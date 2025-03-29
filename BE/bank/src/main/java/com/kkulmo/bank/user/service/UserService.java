@@ -5,16 +5,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+
+import com.kkulmo.bank.user.dto.CardIssuerRequest;
 import com.kkulmo.bank.user.dto.User;
 import com.kkulmo.bank.user.dto.UserDTO;
 import com.kkulmo.bank.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 	private final UserRepository userRepository;
+	private final cardissuerAPI cardissuerAPI;
 
 	public UserDTO createUser(UserDTO userDTO) {
 		validateMonthdayBirth(userDTO.getMonthdaybirth());
@@ -30,7 +33,6 @@ public class UserService {
 			return convertToDTO(existingUser.get());
 		}
 
-
 		// 새 사용자 생성 (Builder 패턴 사용)
 		User user = User.builder()
 			.userId(UUID.randomUUID().toString())
@@ -41,6 +43,13 @@ public class UserService {
 
 		// 저장 후 DTO 변환하여 반환
 		User savedUser = userRepository.save(user);
+
+		cardissuerAPI.createCardIssuerUser(CardIssuerRequest.builder()
+			.userName(user.getName())
+			.userCI(user.getUserId())
+			.createdAt(user.getCreatedAt())
+			.build());
+
 		return convertToDTO(savedUser);
 	}
 
@@ -54,7 +63,7 @@ public class UserService {
 			.build();
 	}
 
-	public void deleteUser(String id){
+	public void deleteUser(String id) {
 		userRepository.deleteById(id);
 	}
 

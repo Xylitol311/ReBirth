@@ -45,7 +45,7 @@ public class CardTransactionEntity {
 	private Integer amount;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
-	private Timestamp createdAt;
+	private LocalDateTime createdAt;
 
 	@Column(name = "merchant_name", length = 50, nullable = false)
 	private String merchantName;

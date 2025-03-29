@@ -71,7 +71,8 @@ public class AccountService {
 	public void updateBalance(String accountId, Long amount) {
 		AccountEntity account = accountRepository.findById(accountId)
 			.orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
-		account.updateBalance(account.getBalance() + amount);
+
+		account.updateBalance(amount);
 		accountRepository.save(account);
 	}
 

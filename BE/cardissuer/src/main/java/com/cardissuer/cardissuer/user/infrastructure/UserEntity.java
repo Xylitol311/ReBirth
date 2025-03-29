@@ -31,9 +31,9 @@ public class UserEntity {
 	private String userName;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
-	private Timestamp createdAt;
+	private LocalDateTime createdAt;
 
 	@Column(name = "deleted_at")
-	private Timestamp deletedAt;
+	private LocalDateTime deletedAt;
 
 }

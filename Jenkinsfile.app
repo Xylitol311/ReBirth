@@ -58,6 +58,8 @@ pipeline {
                 sh 'docker-compose -f docker-compose.app.yml down'
                 echo '변경된 설정으로 컨테이너 생성...'
                 sh 'docker-compose -f docker-compose.app.yml up -d'
+                echo 'nginx reload 실행...'
+                sh 'docker exec -i nginx_proxy nginx -s reload'
             }
         }
     }

@@ -12,11 +12,12 @@ import lombok.Getter;
 @Getter
 @Builder
 public class CardTransaction {
+
 	private Integer transactionId;
 	private CardUniqueNumber cardUniqueNumber;
 	private String accountNumber;
 	private Integer amount;
-	private Timestamp createdAt;
+	private LocalDateTime createdAt;
 	private String merchantName;
 	private String approvalCode;
 	private String description;

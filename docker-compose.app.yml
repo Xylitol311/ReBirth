@@ -4,7 +4,7 @@ services:
   # rebirth 서비스 (Spring Boot 애플리케이션)
   rebirth:
     image: rebirth-image
-    container_name: rebirth_app
+    container_name: rebirth-app
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - POSTGRES_URL=${POSTGRES_URL}
@@ -25,7 +25,7 @@ services:
   # cardissuer 서비스
   cardissuer:
     image: cardissuer-image
-    container_name: cardissuer_app
+    container_name: cardissuer-app
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - POSTGRES_URL=${POSTGRES_URL}
@@ -41,7 +41,7 @@ services:
   # bank 서비스
   bank:
     image: bank-image
-    container_name: bank_app
+    container_name: bank-app
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - POSTGRES_URL=${POSTGRES_URL}

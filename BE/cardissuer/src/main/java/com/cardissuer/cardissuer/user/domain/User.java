@@ -12,6 +12,6 @@ import lombok.Getter;
 public class User {
 	String userCI;
 	String userName;
-	Timestamp createdAt;
-	Timestamp deletedAt;
+	LocalDateTime createdAt;
+	LocalDateTime deletedAt;
 }

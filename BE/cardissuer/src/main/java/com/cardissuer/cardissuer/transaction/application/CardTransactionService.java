@@ -39,6 +39,7 @@ public class CardTransactionService {
 		System.out.println("서비스에서 토큰");
 		System.out.println(createTransactionRequest.getToken());
 		// TODO: 토큰을 가지고 사용자 보유카드 가져오기.
+
 		PermanentToken token = cardRepository.findTokenByToken(createTransactionRequest.getToken())
 			.orElseThrow(() -> new RuntimeException("유효하지 않은 토큰입니다."));
 
@@ -49,11 +50,13 @@ public class CardTransactionService {
 			.accountNumber(card.getAccountNumber())
 			.amount(createTransactionRequest.getAmount())
 			.userId(card.getUserCI())
-			.type("DEP")
+			.type("TXN")
 			.createdAt(createTransactionRequest.getCreatedAt())
 			.build());
 
-		if(bankResult.getApprovalCode().equals("TXN")){
+
+
+		if(bankResult.getApprovalCode().contains("TXN")){
 			cardTransactionRepository.save(
 				CardTransaction.builder()
 					.cardUniqueNumber(card.getCardUniqueNumber())
@@ -87,10 +90,8 @@ public class CardTransactionService {
 	@Transactional(readOnly = true)
 	public List<CardTransactionEntity> getAllTransactionsByUserApiKey(String userAPiKey) {
 		Optional<User> optionalUser = userRepository.findByUserApiKey(userAPiKey);
-
 		if (optionalUser.isPresent()) {
 			User user = optionalUser.get();
-
 			Timestamp oldTimestamp = Timestamp.valueOf("1970-01-01 00:00:00");
 			return cardTransactionRepository.findByCard_UserCIAndCreatedAtAfterOrderByCreatedAtDesc(
 				user.getUserCI(),

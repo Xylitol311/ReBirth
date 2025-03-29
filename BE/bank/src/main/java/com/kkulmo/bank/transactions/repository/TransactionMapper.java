@@ -41,21 +41,10 @@ public class TransactionMapper {
 			return null;
 		}
 
-		TransactionType transactionType = null;
-		if (dto.getType() != null) {
-			try {
-				transactionType = TransactionType.valueOf(dto.getType());
-			} catch (IllegalArgumentException e) {
-				// 잘못된 type 문자열이 전달되었을 경우의 오류 처리
-				// 로깅 또는 기본값 설정 등을 수행할 수 있습니다.
-				// throw new IllegalArgumentException("Invalid transaction type: " + dto.getType());
-			}
-		}
-
 		return TransactionEntity.builder()
 			.accountNumber(dto.getAccountNumber())
 			.amount(dto.getAmount())
-			.type(transactionType)
+			.type(TransactionType.valueOf(dto.getType()))
 			.description(dto.getDescription())
 			.approvalCode(dto.getApprovalCode())
 			.createdAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now())

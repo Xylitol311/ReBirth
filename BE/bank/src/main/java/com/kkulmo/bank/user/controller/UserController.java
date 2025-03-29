@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kkulmo.bank.user.dto.UserDTO;
 import com.kkulmo.bank.user.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -20,8 +21,9 @@ public class UserController {
 
 	private final UserService userService;
 
+	// 은행 user 생성시에 카드 생성하기
 	@PostMapping
-	public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
+	public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO userDTO) {
 		return ResponseEntity.ok(userService.createUser(userDTO));
 	}
 

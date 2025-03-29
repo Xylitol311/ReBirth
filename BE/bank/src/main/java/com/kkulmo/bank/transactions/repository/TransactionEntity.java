@@ -1,5 +1,6 @@
 package com.kkulmo.bank.transactions.repository;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import com.kkulmo.bank.transactions.dto.TransactionType;
