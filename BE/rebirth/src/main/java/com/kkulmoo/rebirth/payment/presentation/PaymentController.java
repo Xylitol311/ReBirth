@@ -1,17 +1,26 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
-import com.kkulmoo.rebirth.payment.application.service.PaymentEncryption;
-import com.kkulmoo.rebirth.payment.application.service.PaymentService;
-import com.kkulmoo.rebirth.payment.application.service.SseService;
-import com.kkulmoo.rebirth.payment.application.service.WebClientService;
+import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
+import com.kkulmoo.rebirth.payment.application.service.*;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
-import com.kkulmoo.rebirth.payment.presentation.response.ApiResponseDTO;
+import com.kkulmoo.rebirth.payment.presentation.request.OnlinePayDTO;
+
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+
+/*
+
+추가 수정 필요
+1) 프론트에 전달해야할 데이터 -> 카드 이름, 카드 이미지, 별 좌표
+2) 결제 이후 DB 저장로직
+ */
+
 
 @Slf4j
 @CrossOrigin(origins = "http://localhost:3000")
@@ -20,21 +29,26 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final PaymentEncryption paymentEncryption;
+    private final PaymentOfflineEncryption paymentOfflineEncryption;
     private final SseService sseService;
     private final WebClientService webClientService;
+    private final PaymentOnlineEncryption paymentOnlineEncryption;
 
 
-    public PaymentController(PaymentService paymentService, PaymentEncryption paymentEncryption, SseService sseService, WebClientService webClientService) {
+    public PaymentController(PaymentService paymentService, PaymentOfflineEncryption paymentOfflineEncryption, SseService sseService, WebClientService webClientService, PaymentOnlineEncryption paymentOnlineEncryption) {
         this.paymentService = paymentService;
-        this.paymentEncryption = paymentEncryption;
+        this.paymentOfflineEncryption = paymentOfflineEncryption;
         this.sseService = sseService;
         this.webClientService = webClientService;
+        this.paymentOnlineEncryption = paymentOnlineEncryption;
     }
+
+    // 오프라인에서의 일회용 토큰 생성
 
     @GetMapping("/disposabletoken")
     public ResponseEntity<?> getDisposableToken(@RequestParam(value="userId") int userId) throws Exception {
     //1. 사용자 받아온 걸로 영구토큰 전부다 가져오기
+        // 영구 토큰하고 카드 고유 번호만 주는데, 나중에 카드 사진하고 카드 이름도 주는 걸로 바꾸기
     List<String[]> PTandUCN = paymentService.getAllUsersPermanentToken(userId);
 
 
@@ -42,98 +56,82 @@ public class PaymentController {
     List<PaymentTokenResponseDTO> disposableTokens = paymentService.createDisposableToken(PTandUCN,userId);
     ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"일회용 토큰 생성",disposableTokens);
 
-
     //3. 토큰 전달
     //3-1. sse 열기
-
         return ResponseEntity.ok(apiResponseDTO);
 
     }
 
-    @PostMapping("/progresspay")
-    public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
+//    // 오프라인에서의 결제 진행
+//    @PostMapping("/progresspay")
+//    public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
+//
+//        //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
+//        String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
+//        String[] tokenInfo = paymentOfflineEncryption.validateOneTimeToken(realToken);
+//
+//        log.info(realToken);
+//        log.info(tokenInfo[0]);
+//
+//        String permanentToken = tokenInfo[0];
+//        int userId = Integer.parseInt(tokenInfo[1]);
+//
+//        sseService.sendToUser(userId, "결제시작");
+//
+//        //1. 추천 카드 일경우 로직 작성
+//        if(permanentToken.equals("rebirth")){
+//
+//        }
+//
+//        //2. 추천 카드가 아닐 경우 해당 카드로 정보 검색
+//        // 영구토큰 까서 검색해서 카드 가져오기
+//        // CardTemplate cardTemplate = paymentService.getCardTemplate(permanentToken);
+//
+//        //2-2. permanent는 웹 클라이언트로 카드사에 넘기기 & 값 받
+//        log.info(permanentToken);
+//        CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder().token(permanentToken).amount(createTransactionRequestDTO.getAmount()).merchantName(createTransactionRequestDTO.getMerchantName()).build();
+//        CardTransactionDTO cardTransactionDTO = webClientService.checkPermanentToken(dataToCardsa).block();
+//
+//        //3. 받은 값으로 아래 데이터 갱신하기
+//        // 값 최종 업데이트 해주기 ( 이거 어디어디 해줘야 하는데... ) -> 나중으로 우선 미루기
+//
+//        //4. 결제 결과 반환하기
+//        sseService.sendToUser(userId, cardTransactionDTO.getApprovalCode());
+//
+//        return ResponseEntity.ok(cardTransactionDTO);
+//    }
 
 
-        //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
-        String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
-        String[] tokenInfo = paymentEncryption.validateOneTimeToken(realToken);
+    // 가맹점을 위한 QR 코드 생성
+    @GetMapping("/generateqr")
+    public ResponseEntity<?> generateQRforOnline(@RequestParam("merchantName") String merchantName, @RequestParam("amount") int amount) throws Exception {
 
-        log.info(realToken);
-        log.info(tokenInfo[0]);
+        String QRcode = paymentOnlineEncryption.generateQRToken(merchantName, amount);
 
-        String permanentToken = tokenInfo[0];
-        int userId = Integer.parseInt(tokenInfo[1]);
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"가맹점 QRd용 토큰 생성",QRcode);
+        return ResponseEntity.ok(apiResponseDTO);
 
-        sseService.sendToUser(userId, "결제시작");
-
-        //1. 추천 카드 일경우 로직 작성
-        if(permanentToken.equals("rebirth")){
-
-        }
-
-        //2. 추천 카드가 아닐 경우 해당 카드로 정보 검색
-        // 영구토큰 까서 검색해서 카드 가져오기
-        // CardTemplate cardTemplate = paymentService.getCardTemplate(permanentToken);
-
-        //2-2. permanent는 웹 클라이언트로 카드사에 넘기기 & 값 받
-        log.info(permanentToken);
-        CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder().token(permanentToken).amount(createTransactionRequestDTO.getAmount()).merchantName(createTransactionRequestDTO.getMerchantName()).build();
-        CardTransactionDTO cardTransactionDTO = webClientService.checkPermanentToken(dataToCardsa).block();
-
-        //3. 받은 값으로 아래 데이터 갱신하기
-        // 값 최종 업데이트 해주기 ( 이거 어디어디 해줘야 하는데... ) -> 나중으로 우선 미루기
-
-        //4. 결제 결과 반환하기
-        sseService.sendToUser(userId, cardTransactionDTO.getApprovalCode());
-
-        return ResponseEntity.ok(cardTransactionDTO);
     }
 
+    // 반환해야하는 데이터 확인
+    @PostMapping("/onlinedisposabletoken")
+    public ResponseEntity<?> generateOnlineDisposableToken(@RequestBody OnlinePayDTO onlinePay) throws Exception {
 
-    //가맹점을 위한 QR 코드 생성
-    @GetMapping("/onlinepay")
-    public ResponseEntity<?> createQRforOnline(@RequestParam("merchantName") String merchantName, @RequestParam("") int amount){
+        // 받은 토큰을 까서 가맹점 & 가격 확인 0: 가맹점 이름 , 1: 가격정보
+        String[] merchantInfo = paymentOnlineEncryption.validateQRToken(onlinePay.getToken());
+
+        //1. 사용자 받아온 걸로 영구토큰 전부다 가져오기
+        List<String[]> PTandUCN = paymentService.getAllUsersPermanentToken(onlinePay.getUserId());
+
+        //2. 영구 토큰 싹다 일회용 토큰 처리
+        List<PaymentTokenResponseDTO> disposableTokens = paymentService.createOnlineDisposableToken(PTandUCN,merchantInfo[0],
+                Integer.parseInt(merchantInfo[1]));
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"일회용 토큰 생성",disposableTokens);
 
 
 
-        return ResponseEntity.ok("online");
-
+        return ResponseEntity.ok(apiResponseDTO);
     }
-
-
-
-    //선택해서 카드 결제 하는 경우
-    //1. rebirth로 시작하는게 아닐 경우에
-
-//    선택 결제 시 로직
-//1. 일회용 토큰 복호화
-//1-1. 영구 토큰에 해당하는 해당 카드에 대해서 SSE로 클라한테 보내주기(end point는 userId)(아래 비동기)
-//            2. 영구 토큰을 카드사 에게 보내기
-//3. 카드사한테 결제 결과를 받기
-//4. 결제 결과를 DB에 저장하기
-//5. 결제 되었다는 걸 SSE로 다시 쏘기, SSE 연결 끊기
-
-
-    //2. rebirth로 시작 할 경우
-
-
-
-
-
-    // 추천카드로 결제 할때 포스기에서 직접 선택을하던가
-    // 바코드 값의 시작값을 바꾸던가
-
-
-    //가맹점 QR 생성
-
-    // 포스기 ui, 마켓 ui도 만들어야함
-    // 포스기 ui는 api 그냥 연결 하나만 해두면 될듯 web에서
-    //pc 용 ui도 하나 만들어 오기, 그냥 클론 코딩해서 payment 키기
-
-
-    // 추천 결제 바코드에는 userId넣어주는데, 이건 프론트에서 해주기
-
-
 
 
 

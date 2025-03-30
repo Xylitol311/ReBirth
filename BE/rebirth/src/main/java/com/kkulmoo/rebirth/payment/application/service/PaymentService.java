@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 //
 @Service
@@ -16,14 +15,16 @@ public class PaymentService {
 
     private final CardsRepository cardsRepository;
     private final DisposableTokenRepository disposableTokenRepository;
-    private final PaymentEncryption paymentEncryption;
+    private final PaymentOfflineEncryption paymentOfflineEncryption;
     private final CardTemplateRepository cardTemplateRepository;
+    private final PaymentOnlineEncryption paymentOnlineEncryption;
 
-    public PaymentService(CardsRepository cardsRepository, DisposableTokenRepository disposableTokenRepository, PaymentEncryption paymentEncryption, CardTemplateRepository cardTemplateRepository) {
+    public PaymentService(CardsRepository cardsRepository, DisposableTokenRepository disposableTokenRepository, PaymentOfflineEncryption paymentOfflineEncryption, CardTemplateRepository cardTemplateRepository, PaymentOnlineEncryption paymentOnlineEncryption) {
         this.cardsRepository = cardsRepository;
         this.disposableTokenRepository = disposableTokenRepository;
-        this.paymentEncryption = paymentEncryption;
+        this.paymentOfflineEncryption = paymentOfflineEncryption;
         this.cardTemplateRepository = cardTemplateRepository;
+        this.paymentOnlineEncryption = paymentOnlineEncryption;
     }
 
 
@@ -57,7 +58,7 @@ public class PaymentService {
         for(String[] pt : PTandUCN) {
 
             // 영구 토큰 별로 일회용 토큰 생성
-            String realToken = paymentEncryption.generateOneTimeToken(pt[1],userId);
+            String realToken = paymentOfflineEncryption.generateOneTimeToken(pt[1],userId);
 
             // 일회용 토큰을 20자로 줄이기
             String shortToken = realToken.substring(0,20);
@@ -70,13 +71,39 @@ public class PaymentService {
         }
 
         // 추천카드의 고유번호는 000으로, 영구토큰 대신 rebirth로
-        String realRecommendToken = paymentEncryption.generateOneTimeToken("rebirth", userId);
+        String realRecommendToken = paymentOfflineEncryption.generateOneTimeToken("rebirth", userId);
         String shortRecommendToken = realRecommendToken.substring(0,20);
 
         disposableTokensResponse.add(PaymentTokenResponseDTO.builder().token(shortRecommendToken).cardId("000").build());
 
         // 얘도 redis에 저장하기
         disposableTokenRepository.saveToken(shortRecommendToken,realRecommendToken);
+
+        return disposableTokensResponse;
+    }
+
+
+    public List<PaymentTokenResponseDTO> createOnlineDisposableToken(List<String[]> PTandUCN, String merchantName, int amount) throws Exception {
+
+        // 일회용 토큰 : 복호화 가능한 key, 영구토큰, 만료시간, 서명(HMAC)
+        if(PTandUCN.isEmpty()) return null;
+
+        List<PaymentTokenResponseDTO> disposableTokensResponse = new ArrayList<>();
+        for(String[] pt : PTandUCN) {
+
+            // 영구 토큰 별로 일회용 토큰 생성
+            String realToken = paymentOnlineEncryption.generateOnlineToken(merchantName,amount,pt[1]);
+
+            // 카드 고유 번호와 일회용 토큰 넘기기
+            disposableTokensResponse.add(PaymentTokenResponseDTO.builder().token(realToken).cardId(pt[0]).build());
+
+        }
+
+        // 추천카드의 고유번호는 000으로, 영구토큰 대신 rebirth로
+        String realRecommendToken = paymentOnlineEncryption.generateOnlineToken(merchantName,amount,"rebirth");
+
+        disposableTokensResponse.add(PaymentTokenResponseDTO.builder().token(realRecommendToken).cardId("000").build());
+
 
         return disposableTokensResponse;
     }

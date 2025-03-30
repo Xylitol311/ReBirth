@@ -1,6 +1,6 @@
 package com.kkulmoo.rebirth.payment.infrastructure.repository;
 
-import com.kkulmoo.rebirth.payment.infrastructure.entity.CardTemplateEntity;
+import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 // 카드 템플릿
