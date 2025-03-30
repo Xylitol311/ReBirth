@@ -1,6 +1,6 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
-import com.kkulmoo.rebirth.payment.application.service.PaymentEncryption;
+import com.kkulmoo.rebirth.payment.application.service.PaymentOfflineEncryption;
 import com.kkulmoo.rebirth.payment.application.service.PaymentService;
 import com.kkulmoo.rebirth.payment.application.service.SseService;
 import com.kkulmoo.rebirth.payment.application.service.WebClientService;
@@ -19,13 +19,13 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class SseController {
     private final SseService sseService;
     private final PaymentService paymentService;
-    private final PaymentEncryption paymentEncryption;
+    private final PaymentOfflineEncryption paymentOfflineEncryption;
     private final WebClientService webClientService;
 
-    public SseController(SseService sseService, PaymentService paymentService, PaymentEncryption paymentEncryption, WebClientService webClientService) {
+    public SseController(SseService sseService, PaymentService paymentService, PaymentOfflineEncryption paymentOfflineEncryption, WebClientService webClientService) {
         this.sseService = sseService;
         this.paymentService = paymentService;
-        this.paymentEncryption = paymentEncryption;
+        this.paymentOfflineEncryption = paymentOfflineEncryption;
         this.webClientService = webClientService;
     }
 
@@ -51,7 +51,7 @@ public class SseController {
 
         //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
         String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
-        String[] tokenInfo = paymentEncryption.validateOneTimeToken(realToken);
+        String[] tokenInfo = paymentOfflineEncryption.validateOneTimeToken(realToken);
 
         log.info(realToken);
         log.info(tokenInfo[0]);
