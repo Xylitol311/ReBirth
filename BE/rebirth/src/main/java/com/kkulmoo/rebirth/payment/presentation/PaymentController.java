@@ -1,13 +1,18 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
+import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
 import com.kkulmoo.rebirth.payment.application.service.*;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
 import com.kkulmoo.rebirth.payment.presentation.request.OnlinePayDTO;
-import com.kkulmoo.rebirth.payment.presentation.response.ApiResponseDTO;
+
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /*
 
@@ -39,6 +44,7 @@ public class PaymentController {
     }
 
     // 오프라인에서의 일회용 토큰 생성
+
     @GetMapping("/disposabletoken")
     public ResponseEntity<?> getDisposableToken(@RequestParam(value="userId") int userId) throws Exception {
     //1. 사용자 받아온 걸로 영구토큰 전부다 가져오기
