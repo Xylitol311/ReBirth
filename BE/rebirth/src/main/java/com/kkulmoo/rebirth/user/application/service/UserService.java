@@ -52,7 +52,7 @@ public class UserService {
 		// 사용자 정보 업데이트
 		boolean isUpdated = userRepository.update(user);
 
-		// 업데이트 실패 시 예외 처리
+		// 업데이트 실패 시 예외 AuthService처리
 		if (!isUpdated) {
 			throw new UserDeletionException("사용자 삭제에 실패하였습니다. ID: " + userId);
 		}

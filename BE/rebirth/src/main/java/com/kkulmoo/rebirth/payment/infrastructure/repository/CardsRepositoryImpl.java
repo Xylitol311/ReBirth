@@ -1,0 +1,42 @@
+package com.kkulmoo.rebirth.payment.infrastructure.repository;
+
+
+import com.kkulmoo.rebirth.payment.domain.Cards;
+import com.kkulmoo.rebirth.payment.domain.repository.CardsRepository;
+import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
+import com.kkulmoo.rebirth.payment.infrastructure.mapper.CardsEntityMapper;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+
+@Repository
+public class CardsRepositoryImpl implements CardsRepository{
+
+    private final CardsJpaRepository cardsJpaRepository;
+    private final CardsEntityMapper cardsEntityMapper;
+
+    public CardsRepositoryImpl(CardsJpaRepository cardsJpaRepository, CardsEntityMapper cardsEntityMapper) {
+        this.cardsJpaRepository = cardsJpaRepository;
+        this.cardsEntityMapper = cardsEntityMapper;
+    }
+
+
+    //사용자 보유 카드 리스트 가져오기
+    @Override
+    public List<Cards> findByUserId(int userId) {
+
+        List<CardsEntity> cardsEntity = cardsJpaRepository.findByUserId(userId);
+        if(cardsEntity.isEmpty()) return null;
+
+        List<Cards> cards = cardsEntityMapper.toCardsList(cardsEntity);
+        return cards;
+    }
+
+    @Override
+    public int findCardTemplateIdByToken(String permanentToken) {
+        return cardsJpaRepository.findCardTemplateIdByPermanentToken(permanentToken)
+                .orElseThrow(() -> new NoSuchElementException("해당 permanentToken을 가진 카드가 없습니다."));
+    }
+
+}

@@ -5,12 +5,11 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kkulmoo.rebirth.common.APIResponseDTO.ApiResponseDTO;
-import com.kkulmoo.rebirth.common.annotation.UserId;
+import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
+import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.user.application.service.UserService;
 
 import lombok.RequiredArgsConstructor;
-
 
 @RestController
 @RequestMapping("/api/user")
@@ -26,7 +25,7 @@ public class UserController {
 	// }
 
 	@DeleteMapping
-	public ResponseEntity<ApiResponseDTO<Void>> deleteUser(@UserId Integer userId) {
+	public ResponseEntity<ApiResponseDTO<Void>> deleteUser(@JwtUserId Integer userId) {
 		userService.deleteUser(userId);
 		return ResponseEntity.ok(ApiResponseDTO.success("삭제에 성공하였습니다."));
 	}

@@ -8,7 +8,6 @@ import com.kkulmoo.rebirth.user.domain.UserId;
 import lombok.Builder;
 import lombok.Getter;
 
-
 @Getter
 @Builder
 public class Card {

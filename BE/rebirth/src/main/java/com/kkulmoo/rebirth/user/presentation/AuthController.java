@@ -7,10 +7,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kkulmoo.rebirth.common.APIResponseDTO.ApiResponseDTO;
-import com.kkulmoo.rebirth.common.annotation.UserId;
+import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
+import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.user.application.command.CreateUserCommand;
 import com.kkulmoo.rebirth.user.application.service.AuthService;
+import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.presentation.requestDTO.UserSignupRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class AuthController {
 
 	@PostMapping("/signup")
 	public ResponseEntity<ApiResponseDTO<Void>> signup(
-		@UserId UserId userId,
+		@JwtUserId UserId userId,
 		@RequestBody UserSignupRequest request) {
 		authService.createUser(CreateUserCommand.fromRequest(request));
 

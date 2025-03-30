@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 public class User {
 	private final UserId userId;
-	private final Byte consumptionPatternId;
+	private final String consumptionPatternId;
 	private final String userName;
 	private final String hashedPinNumber;
 	private final String phoneNumber;
@@ -20,7 +20,7 @@ public class User {
 	private LocalDateTime latestLoadDataAt;
 
 	@Builder
-	public User(UserId userId, Byte consumptionPatternId, String userName, String hashedPinNumber,
+	public User(UserId userId, String consumptionPatternId, String userName, String hashedPinNumber,
 		String phoneNumber, String phoneSerialNumber, String userApiKey,
 		LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt,
 		LocalDateTime latestLoadDataAt) {

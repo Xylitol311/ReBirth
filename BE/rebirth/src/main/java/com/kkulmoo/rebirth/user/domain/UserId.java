@@ -1,6 +1,5 @@
 package com.kkulmoo.rebirth.user.domain;
 
-import lombok.Getter;
 import lombok.Value;
 
 @Value

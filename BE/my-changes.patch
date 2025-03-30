@@ -1,0 +1,1976 @@
+diff --git a/BE/bank/src/main/resources/application-local.properties b/BE/bank/src/main/resources/application-local.properties
+index 7bbde2d..6523820 100644
+--- a/BE/bank/src/main/resources/application-local.properties
++++ b/BE/bank/src/main/resources/application-local.properties
+@@ -1,5 +1,5 @@
+ # Local DB
+-spring.datasource.url=jdbc:postgresql://localhost:5432/ssafybank
++spring.datasource.url=jdbc:postgresql://3.34.192.7:5432/ssafybank
+ 
+ # Local Server Setting
+ server.address=localhost
+diff --git a/BE/bank/src/main/resources/application.properties b/BE/bank/src/main/resources/application.properties
+index 578b0b4..374ef21 100644
+--- a/BE/bank/src/main/resources/application.properties
++++ b/BE/bank/src/main/resources/application.properties
+@@ -20,6 +20,6 @@ logging.level.org.hibernate.SQL=DEBUG
+ logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+ 
+ # API Endpoint
+-api.cardissuer.base-url=${CARDISSUER_URL}
+-api.bank.base-url=${BANK_URL}
+-api.rebirth.base-url=${REBIRTH_URL}
++api.cardissuer.base-url= ${CARDISSUER_URL}
++api.bank.base-url= ${BANK_URL}
++api.rebirth.base-url= ${REBIRTH_URL}
+diff --git a/BE/cardissuer/src/main/resources/application-local.properties b/BE/cardissuer/src/main/resources/application-local.properties
+index 00750b9..5896c32 100644
+--- a/BE/cardissuer/src/main/resources/application-local.properties
++++ b/BE/cardissuer/src/main/resources/application-local.properties
+@@ -1,5 +1,5 @@
+ # Local DB
+-spring.datasource.url=jdbc:postgresql://localhost:5432/cardissuer
++spring.datasource.url=jdbc:postgresql://3.34.192.7:5432/cardissuer
+ 
+ # Local Server Setting
+ server.address=localhost
+diff --git a/BE/cardissuer/src/main/resources/application.properties b/BE/cardissuer/src/main/resources/application.properties
+index a7008d1..fc0ca7b 100644
+--- a/BE/cardissuer/src/main/resources/application.properties
++++ b/BE/cardissuer/src/main/resources/application.properties
+@@ -20,6 +20,6 @@ logging.level.org.hibernate.SQL=DEBUG
+ logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+ 
+ # API Endpoint
+-api.cardissuer.base-url=${CARDISSUER_URL}
+-api.bank.base-url=${BANK_URL}
+-api.rebirth.base-url=${REBIRTH_URL}
+\ No newline at end of file
++api.cardissuer.base-url= ${CARDISSUER_URL}
++api.bank.base-url= ${BANK_URL}
++api.rebirth.base-url= ${REBIRTH_URL}
+\ No newline at end of file
+diff --git a/BE/rebirth/.gitignore b/BE/rebirth/.gitignore
+index 13ef52c..d9326b0 100644
+--- a/BE/rebirth/.gitignore
++++ b/BE/rebirth/.gitignore
+@@ -36,3 +36,5 @@ out/
+ ### VS Code ###
+ .vscode/
+ 
++### Local Configuration ###
++application-local.properties
+diff --git a/BE/rebirth/build.gradle b/BE/rebirth/build.gradle
+index 4f4b8cf..4b12a1c 100644
+--- a/BE/rebirth/build.gradle
++++ b/BE/rebirth/build.gradle
+@@ -34,8 +34,6 @@ dependencies {
+     compileOnly 'org.projectlombok:lombok'                    // Lombok
+     annotationProcessor 'org.projectlombok:lombok'
+ 
+-    implementation 'org.springframework:spring-webflux:6.2.0'
+-
+     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+ 
+ }
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/application/response/AuthDetailResponse.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/application/response/AuthDetailResponse.java
+new file mode 100644
+index 0000000..b2df0ca
+--- /dev/null
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/application/response/AuthDetailResponse.java
+@@ -0,0 +1,4 @@
++package com.kkulmoo.rebirth.auth.application.response;
++
++public class AuthDetailResponse {
++}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/application/service/AuthService.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/application/service/AuthService.java
+new file mode 100644
+index 0000000..d49281e
+--- /dev/null
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/application/service/AuthService.java
+@@ -0,0 +1,4 @@
++package com.kkulmoo.rebirth.auth.application.service;
++
++public class AuthService {
++}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/presentation/AuthController.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/presentation/AuthController.java
+new file mode 100644
+index 0000000..1506bca
+--- /dev/null
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/auth/presentation/AuthController.java
+@@ -0,0 +1,4 @@
++package com.kkulmoo.rebirth.auth.presentation;
++
++public class AuthController {
++}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/CardEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/CardEntity.java
+new file mode 100644
+index 0000000..388715b
+--- /dev/null
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/CardEntity.java
+@@ -0,0 +1,4 @@
++package com.kkulmoo.rebirth.card;
++
++public class CardEntity {
++}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/application/CardPort.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/application/CardPort.java
+deleted file mode 100644
+index a6393b2..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/application/CardPort.java
++++ /dev/null
+@@ -1,11 +0,0 @@
+-package com.kkulmoo.rebirth.card.application;
+-
+-import java.util.List;
+-
+-import com.kkulmoo.rebirth.card.infrastrucuture.adapter.dto.CardApiResponse;
+-import com.kkulmoo.rebirth.user.domain.User;
+-
+-public interface CardPort {
+-	List<CardApiResponse> fetchCardData(User user);
+-
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/application/CardService.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/application/CardService.java
+deleted file mode 100644
+index a852075..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/application/CardService.java
++++ /dev/null
+@@ -1,131 +0,0 @@
+-package com.kkulmoo.rebirth.card.application;
+-
+-import java.util.List;
+-import java.util.Optional;
+-import java.util.Set;
+-import java.util.stream.Collectors;
+-
+-import org.springframework.context.ApplicationEventPublisher;
+-import org.springframework.stereotype.Service;
+-import org.springframework.transaction.event.TransactionPhase;
+-import org.springframework.transaction.event.TransactionalEventListener;
+-
+-import com.kkulmoo.rebirth.card.domain.Card;
+-import com.kkulmoo.rebirth.card.domain.CardRepository;
+-import com.kkulmoo.rebirth.card.domain.CardTemplate;
+-import com.kkulmoo.rebirth.card.infrastrucuture.adapter.dto.CardApiResponse;
+-import com.kkulmoo.rebirth.common.exception.CardProcessingException;
+-import com.kkulmoo.rebirth.user.application.eventDTO.MyDataEvent;
+-import com.kkulmoo.rebirth.user.domain.User;
+-import com.kkulmoo.rebirth.user.domain.UserId;
+-
+-import lombok.RequiredArgsConstructor;
+-import lombok.extern.slf4j.Slf4j;
+-
+-@Service
+-@Slf4j
+-@RequiredArgsConstructor
+-public class CardService {
+-	private final ApplicationEventPublisher eventPublisher;
+-	private final CardRepository cardRepository;
+-	private final CardPort cardPort; // 인터페이스 의존
+-
+-	// 처음에 Card정보를 가져와서 create하자..!
+-	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+-	public void getCardFromMyDataListener(MyDataEvent myDataEvent) {
+-		User user = myDataEvent.getUser();
+-		getCardData(user);
+-	}
+-
+-	// 컨트롤러에서 호출할 수 있는 메서드
+-	public void getCardData(User user) {
+-		try {
+-			log.info("사용자 {}의 카드 데이터 처리 시작", user.getUserName());
+-
+-			// 1. 현재 DB에 있는 사용자의 카드 조회
+-			List<Card> existingCards = cardRepository.findByUserId(user.getUserId());
+-			log.info("사용자 {}의 기존 카드 {}개가 DB에 존재합니다", user.getUserName(), existingCards.size());
+-
+-			// 기존 카드의 고유 번호를 Set으로 변환 (검색 최적화)
+-			Set<String> existingCardNumbers = existingCards.stream()
+-				.map(Card::getCardUniqueNumber)
+-				.collect(Collectors.toSet());
+-
+-			// 2. API를 통해 최신 카드 정보 가져오기
+-			List<CardApiResponse> apiCards = cardPort.fetchCardData(user);
+-			log.info("API에서 사용자 {}의 카드 {}개를 가져왔습니다", user.getUserName(), apiCards.size());
+-
+-			// 3. 아직 DB에 없는 카드만 처리
+-			processNewCards(apiCards, existingCardNumbers, user);
+-
+-		} catch (Exception e) {
+-			log.error("카드 데이터 처리 중 오류 발생 (사용자: {}): {}", user.getUserName(), e.getMessage());
+-			throw new CardProcessingException("카드 데이터 처리에 실패했습니다", e);
+-		}
+-	}
+-
+-
+-	/**
+-	 * API에서 가져온 카드 중 DB에 없는 것만 처리하는 메서드
+-	 */
+-	private void processNewCards(List<CardApiResponse> apiCards, Set<String> existingCardNumbers, User user) {
+-		log.info("사용자 {}의 새 카드 처리 시작", user.getUserName());
+-		int newCardCount = 0;
+-
+-		for (CardApiResponse apiCard : apiCards) {
+-			String cardUniqueNumber = apiCard.getCardUniqueNumber();
+-
+-			// 이미 DB에 있는 카드는 건너뜀
+-			if (existingCardNumbers.contains(cardUniqueNumber)) {
+-				log.debug("카드 {}는 이미 DB에 존재합니다", cardUniqueNumber);
+-				continue;
+-			}
+-
+-			// 새 카드 생성
+-			createCard(apiCard, user.getUserId());
+-			log.info("새 카드가 생성되었습니다: {}", cardUniqueNumber);
+-			newCardCount++;
+-		}
+-
+-		log.info("사용자 {}의 카드 처리 완료. {}개의 새 카드가 생성됨", user.getUserName(), newCardCount);
+-	}
+-
+-
+-	// 카드 존재 여부 확인 메서드
+-	private Card createCard(CardApiResponse apiCard, UserId userId) {
+-		// 카드 템플릿 가져오기
+-		Optional<CardTemplate> cardTemplateOptional = cardRepository.findCardTemplateByCardName(apiCard.getCardName());
+-
+-		if (cardTemplateOptional.isEmpty()) {
+-			log.error("카드 '{}' 템플릿을 찾을 수 없습니다", apiCard.getCardName());
+-			throw new CardProcessingException("카드 템플릿을 찾을 수 없습니다: " + apiCard.getCardName());
+-		}
+-
+-		CardTemplate cardTemplate = cardTemplateOptional.get();
+-
+-		// 새 카드 객체 생성
+-		Card newCard = Card.builder()
+-			.userId(userId)
+-			.cardTemplateId(cardTemplate.getCardTemplateId())
+-			.cardUniqueNumber(apiCard.getCardUniqueNumber())
+-			.build();
+-
+-		// 저장 후 반환
+-		return cardRepository.save(newCard);
+-	}
+-}
+-
+-// 마이데이터 불러오기
+-// 카드 정보 가져오기
+-//
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/Card.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/Card.java
+deleted file mode 100644
+index 2e7169e..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/Card.java
++++ /dev/null
+@@ -1,29 +0,0 @@
+-package com.kkulmoo.rebirth.card.domain;
+-
+-import java.time.LocalDate;
+-import java.time.LocalDateTime;
+-
+-import com.kkulmoo.rebirth.user.domain.UserId;
+-
+-import lombok.Builder;
+-import lombok.Getter;
+-
+-
+-@Getter
+-@Builder
+-public class Card {
+-	private Integer cardId;
+-	private UserId userId;
+-	private Integer cardTemplateId;
+-	private Integer annualFee;
+-	private String cardUniqueNumber;
+-	private LocalDate expiryDate;
+-	private Short cardOrder;
+-	private Short isExpired;
+-	private String permanentToken;
+-	private Short paymentCardOrder;
+-	private LocalDateTime paymentCreatedAt;
+-	private LocalDateTime createdAt;
+-	private LocalDateTime deletedAt;
+-
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardId.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardId.java
+deleted file mode 100644
+index 96c54c1..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardId.java
++++ /dev/null
+@@ -1,19 +0,0 @@
+-package com.kkulmoo.rebirth.card.domain;
+-
+-import lombok.Value;
+-
+-@Value
+-public class CardId {
+-	Integer value;
+-
+-	public CardId(Integer value) {
+-		validateCardId(value);
+-		this.value = value;
+-	}
+-
+-	private void validateCardId(Integer value) {
+-		if (value == null || value <= 0) {
+-			throw new IllegalArgumentException("유효하지 않은 카드 ID입니다.");
+-		}
+-	}
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardRepository.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardRepository.java
+deleted file mode 100644
+index 89a16cc..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardRepository.java
++++ /dev/null
+@@ -1,20 +0,0 @@
+-package com.kkulmoo.rebirth.card.domain;
+-
+-import java.util.List;
+-import java.util.Optional;
+-
+-import com.kkulmoo.rebirth.card.infrastrucuture.entity.CardTemplateEntity;
+-import com.kkulmoo.rebirth.user.domain.UserId;
+-
+-public interface CardRepository {
+-	Card save(Card card);
+-
+-	Optional<Card> findById(CardId cardId);
+-
+-	List<Card> findByUserId(UserId userId);
+-	// 필요한 다른 메서드들
+-
+-	Optional<Card> findByCardUniqueNumber(String cardUniqueNumber);
+-
+-	Optional<CardTemplate> findCardTemplateByCardName (String cardName);
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardTemplate.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardTemplate.java
+deleted file mode 100644
+index 33999a1..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/domain/CardTemplate.java
++++ /dev/null
+@@ -1,20 +0,0 @@
+-package com.kkulmoo.rebirth.card.domain;
+-
+-import lombok.Builder;
+-import lombok.Getter;
+-
+-@Getter
+-@Builder(toBuilder = true)
+-public class CardTemplate {
+-	private Integer cardTemplateId;
+-	private Integer cardCompanyId;
+-	private String cardName;
+-	private String cardImgUrl;
+-	private String godName;
+-	private String godImgUrl;
+-	private Integer annualFee;
+-	private String cardType;
+-	private Short spendingMaxTier;
+-	private Integer maxPerformanceAmount;
+-	private String benefitText;
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/adapter/CardPortImpl.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/adapter/CardPortImpl.java
+deleted file mode 100644
+index b16ceb5..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/adapter/CardPortImpl.java
++++ /dev/null
+@@ -1,50 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.adapter;
+-
+-import java.util.Collections;
+-import java.util.List;
+-
+-import org.springframework.beans.factory.annotation.Qualifier;
+-import org.springframework.core.ParameterizedTypeReference;
+-import org.springframework.stereotype.Component;
+-import org.springframework.web.reactive.function.client.WebClient;
+-
+-import com.kkulmoo.rebirth.card.application.CardPort;
+-import com.kkulmoo.rebirth.card.domain.Card;
+-import com.kkulmoo.rebirth.card.infrastrucuture.adapter.dto.CardApiResponse;
+-import com.kkulmoo.rebirth.common.exception.CardFetchException;
+-import com.kkulmoo.rebirth.user.domain.User;
+-
+-import lombok.Data;
+-import lombok.RequiredArgsConstructor;
+-import lombok.extern.slf4j.Slf4j;
+-import reactor.core.publisher.Mono;
+-
+-@Component
+-@RequiredArgsConstructor
+-@Slf4j
+-public class CardPortImpl implements CardPort {
+-
+-	@Qualifier("cardIssuerAPIClient") // 또는 secondApiClient 중 적절한 것 선택
+-	private final WebClient webClient;
+-
+-	@Override
+-	public List<CardApiResponse> fetchCardData(User user) {
+-		try {
+-			// WebClient로 API 호출 후 바로 List<CardApiResponse>로 반환
+-			List<CardApiResponse> cardList = webClient.get()
+-				.uri("/cards")
+-				.header("Authorization", "Bearer " + user.getUserApiKey())
+-				.retrieve()
+-				.bodyToMono(new ParameterizedTypeReference<List<CardApiResponse>>() {})
+-				.block();
+-
+-			log.info("사용자 {}의 카드 {}개를 가져왔습니다", user.getUserName(),
+-				cardList != null ? cardList.size() : 0);
+-
+-			return cardList != null ? cardList : Collections.emptyList();
+-		} catch (Exception e) {
+-			log.error("사용자 {}의 카드 데이터 가져오기 실패: {}", user.getUserName(), e.getMessage());
+-			throw new CardFetchException("카드 데이터를 가져오는데 실패했습니다", e);
+-		}
+-	}
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/adapter/dto/CardApiResponse.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/adapter/dto/CardApiResponse.java
+deleted file mode 100644
+index 5da05ea..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/adapter/dto/CardApiResponse.java
++++ /dev/null
+@@ -1,10 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.adapter.dto;
+-
+-import lombok.Data;
+-
+-@Data
+-public class CardApiResponse {
+-	private String cardUniqueNumber;
+-	private String cardName;
+-
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/BenefitTemplateEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/BenefitTemplateEntity.java
+deleted file mode 100644
+index 49e9728..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/BenefitTemplateEntity.java
++++ /dev/null
+@@ -1,78 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.entity;
+-
+-import com.kkulmoo.rebirth.transactions.infrastructure.CategoryEntity;
+-import com.kkulmoo.rebirth.transactions.infrastructure.MerchantEntity;
+-import com.kkulmoo.rebirth.transactions.infrastructure.SubcategoryEntity;
+-
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.FetchType;
+-import jakarta.persistence.GeneratedValue;
+-import jakarta.persistence.GenerationType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.JoinColumn;
+-import jakarta.persistence.ManyToOne;
+-import jakarta.persistence.Table;
+-import lombok.AccessLevel;
+-import lombok.AllArgsConstructor;
+-import lombok.Builder;
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-
+-@Entity
+-@Table(name = "benefit_templates")
+-@Getter
+-@Setter
+-@Builder
+-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+-@AllArgsConstructor
+-public class BenefitTemplateEntity {
+-	@Id
+-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+-	@Column(name = "benefit_template_id")
+-	private Integer benefitTemplateId;
+-
+-	@ManyToOne(fetch = FetchType.LAZY)
+-	@JoinColumn(name = "card_template_id", nullable = false)
+-	private CardTemplateEntity cardTemplate;
+-
+-	@ManyToOne(fetch = FetchType.LAZY)
+-	@JoinColumn(name = "merchant_id")
+-	private MerchantEntity merchant;
+-
+-	@ManyToOne(fetch = FetchType.LAZY)
+-	@JoinColumn(name = "category_id", nullable = false)
+-	private CategoryEntity category;
+-
+-	@ManyToOne(fetch = FetchType.LAZY)
+-	@JoinColumn(name = "subcategory_id", nullable = false)
+-	private SubcategoryEntity subcategory;
+-
+-	@Column(name = "max_benefit_limit")
+-	private Integer maxBenefitLimit;
+-
+-	@Column(name = "max_benefit_count_limit_month")
+-	private Short maxBenefitCountLimitMonth;
+-
+-	@Column(name = "max_benefit_count_limit_year")
+-	private Short maxBenefitCountLimitYear;
+-
+-	@Column(name = "benefit_type", nullable = false)
+-	private String benefitType;
+-
+-	@Column(name = "benefit_amount")
+-	private Integer benefitAmount;
+-
+-	@Column(name = "spending_tier")
+-	private Short spendingTier;
+-
+-	@Column(name = "spending_min_amount")
+-	private Integer spendingMinAmount;
+-
+-	@Column(name = "spending_max_amount")
+-	private Integer spendingMaxAmount;
+-
+-	@Column(name = "coverage_type", nullable = false)
+-	private String coverageType;
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardCompanyEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardCompanyEntity.java
+deleted file mode 100644
+index 8be9247..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardCompanyEntity.java
++++ /dev/null
+@@ -1,29 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.entity;
+-
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.GeneratedValue;
+-import jakarta.persistence.GenerationType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.Table;
+-import lombok.AccessLevel;
+-import lombok.AllArgsConstructor;
+-import lombok.Builder;
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-
+-@Entity
+-@Table(name = "card_companies")
+-@Getter
+-@Builder
+-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+-@AllArgsConstructor
+-public class CardCompanyEntity {
+-	@Id
+-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+-	@Column(name = "card_company_id")
+-	private Short cardCompanyId;
+-
+-	@Column(name = "company_name", nullable = false, length = 30)
+-	private String companyName;
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardEntity.java
+deleted file mode 100644
+index 65b7824..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardEntity.java
++++ /dev/null
+@@ -1,75 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.entity;
+-
+-import java.time.LocalDate;
+-import java.time.LocalDateTime;
+-import java.util.List;
+-import java.util.Optional;
+-import java.util.stream.Collectors;
+-
+-import org.springframework.data.jpa.repository.JpaRepository;
+-import org.springframework.stereotype.Repository;
+-
+-import com.kkulmoo.rebirth.card.domain.Card;
+-import com.kkulmoo.rebirth.card.domain.CardRepository;
+-
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.GeneratedValue;
+-import jakarta.persistence.GenerationType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.Table;
+-import lombok.AccessLevel;
+-import lombok.Builder;
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.RequiredArgsConstructor;
+-
+-@Entity
+-@Table(name = "cards")
+-@Getter
+-@Builder
+-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+-public class CardEntity {
+-	@Id
+-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+-	@Column(name = "card_id")
+-	private Long cardId;
+-
+-	@Column(name = "user_id", nullable = false)
+-	private Long userId;
+-
+-	@Column(name = "card_template_id", nullable = false)
+-	private Long cardTemplateId;
+-
+-	@Column(name = "card_unique_number", nullable = false)
+-	private String cardUniqueNumber;
+-
+-	@Column(name = "expiry_date", nullable = false)
+-	private LocalDate expiryDate;
+-
+-	@Column(name = "card_order", nullable = false)
+-	private Short cardOrder;
+-
+-	@Column(name = "created_at", nullable = false)
+-	private LocalDateTime createdAt;
+-
+-	@Column(name = "deleted_at")
+-	private LocalDateTime deletedAt;
+-
+-	@Column(name = "is_expried", nullable = false)
+-	private Short isExpired;
+-
+-	@Column(name = "annual_fee", nullable = false)
+-	private Integer annualFee;
+-
+-	@Column(name = "permanent_token")
+-	private String permanentToken;
+-
+-	@Column(name = "payment_card_order")
+-	private Short paymentCardOrder;
+-
+-	@Column(name = "payment_created_at")
+-	private LocalDateTime paymentCreatedAt;
+-
+-}
+-
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardTemplateEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardTemplateEntity.java
+deleted file mode 100644
+index 7183586..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/entity/CardTemplateEntity.java
++++ /dev/null
+@@ -1,68 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.entity;
+-
+-import java.time.LocalDateTime;
+-import java.util.List;
+-
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.FetchType;
+-import jakarta.persistence.GeneratedValue;
+-import jakarta.persistence.GenerationType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.JoinColumn;
+-import jakarta.persistence.ManyToOne;
+-import jakarta.persistence.OneToMany;
+-import jakarta.persistence.Table;
+-import lombok.AccessLevel;
+-import lombok.AllArgsConstructor;
+-import lombok.Builder;
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-
+-@Entity
+-@Table(name = "card_templates")
+-@Getter
+-@Setter
+-@Builder
+-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+-@AllArgsConstructor
+-public class CardTemplateEntity {
+-
+-	@Id
+-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+-	@Column(name = "card_template_id")
+-	private Integer cardTemplateId;
+-
+-	@ManyToOne(fetch = FetchType.LAZY)
+-	@JoinColumn(name = "card_company_id", nullable = false)
+-	private CardCompanyEntity cardCompany;
+-
+-	@Column(name = "card_name", nullable = false, length = 100)
+-	private String cardName;
+-
+-	@Column(name = "card_img_url", nullable = false, length = 255)
+-	private String cardImgUrl;
+-
+-	@Column(name = "god_name", length = 10)
+-	private String godName;
+-
+-	@Column(name = "god_img_url", length = 255)
+-	private String godImgUrl;
+-
+-	@Column(name = "annual_fee", nullable = false)
+-	private Integer annualFee;
+-
+-	@Column(name = "card_type", nullable = false)
+-	private String cardType;
+-
+-	@Column(name = "spending_max_tier", nullable = false)
+-	private Short spendingMaxTier;
+-
+-	@Column(name = "max_performance_amount", nullable = false)
+-	private Integer maxPerformanceAmount;
+-
+-	@Column(name = "benefit_text")
+-	private String benefitText;
+-
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/mapper/CardEntityMapper.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/mapper/CardEntityMapper.java
+deleted file mode 100644
+index a916231..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/mapper/CardEntityMapper.java
++++ /dev/null
+@@ -1,68 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.mapper;
+-
+-import com.kkulmoo.rebirth.card.domain.Card;
+-import com.kkulmoo.rebirth.card.infrastrucuture.entity.CardEntity;
+-
+-/**
+- * CardEntityMapper - Card와 CardEntity 간의 변환을 담당하는 매퍼 클래스
+- */
+-public class CardEntityMapper {
+-
+-	/**
+-	 * CardEntity를 Card로 변환
+-	 * @param entity 변환할 CardEntity 객체
+-	 * @return 변환된 Card 객체
+-	 */
+-	public Card toCard(CardEntity entity) {
+-		if (entity == null) {
+-			return null;
+-		}
+-
+-		return Card.builder()
+-			.cardId(entity.getCardId())
+-			.userId(entity.getUserId())
+-			.cardTemplateId(entity.getCardTemplateId())
+-			.cardNumber(entity.getCardNumber())
+-			.cardUniqueNumber(entity.getCardUniqueNumber())
+-			.expiryDate(entity.getExpiryDate())
+-			.cardOrder(entity.getCardOrder())
+-			.createdAt(entity.getCreatedAt())
+-			.deletedAt(entity.getDeletedAt())
+-			.isExpired(entity.getIsExpired())
+-			.annualFee(entity.getAnnualFee())
+-			.permanentToken(entity.getPermanentToken())
+-			.paymentCardOrder(entity.getPaymentCardOrder())
+-			.paymentCreatedAt(entity.getPaymentCreatedAt())
+-			.build();
+-	}
+-
+-	/**
+-	 * Card를 CardEntity로 변환
+-	 * 현재 구현에서는 생성자가 필요합니다.
+-	 *
+-	 * @param card 변환할 Card 객체
+-	 * @return 변환된 CardEntity 객체
+-	 */
+-	public CardEntity toEntity(Card card) {
+-		if (card == null) {
+-			return null;
+-		}
+-
+-		return CardEntity.builder()
+-			.cardId(card.getCardId())
+-			.userId(card.getUserId())
+-			.cardTemplateId(card.getCardTemplateId())
+-			.cardNumber(card.getCardNumber())
+-			.cardUniqueNumber(card.getCardUniqueNumber())
+-			.expiryDate(card.getExpiryDate())
+-			.cardOrder(card.getCardOrder())
+-			.createdAt(card.getCreatedAt())
+-			.deletedAt(card.getDeletedAt())
+-			.isExpired(card.getIsExpired())
+-			.annualFee(card.getAnnualFee())
+-			.permanentToken(card.getPermanentToken())
+-			.paymentCardOrder(card.getPaymentCardOrder())
+-			.paymentCreatedAt(card.getPaymentCreatedAt())
+-			.build();
+-	}
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardJpaRepository.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardJpaRepository.java
+deleted file mode 100644
+index d132665..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardJpaRepository.java
++++ /dev/null
+@@ -1,11 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.repository;
+-
+-import java.util.List;
+-
+-import org.springframework.data.jpa.repository.JpaRepository;
+-
+-import com.kkulmoo.rebirth.card.infrastrucuture.entity.CardEntity;
+-
+-public interface CardJpaRepository extends JpaRepository<CardEntity,Integer> {
+-	List<CardEntity> findByUserId(Integer userId);
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardRepositoryImpl.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardRepositoryImpl.java
+deleted file mode 100644
+index 3cb6b7c..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardRepositoryImpl.java
++++ /dev/null
+@@ -1,58 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.repository;
+-
+-import java.util.List;
+-import java.util.Optional;
+-import java.util.stream.Collectors;
+-
+-import org.springframework.stereotype.Repository;
+-
+-import com.kkulmoo.rebirth.card.domain.Card;
+-import com.kkulmoo.rebirth.card.domain.CardId;
+-import com.kkulmoo.rebirth.card.domain.CardRepository;
+-import com.kkulmoo.rebirth.card.domain.CardTemplate;
+-import com.kkulmoo.rebirth.card.infrastrucuture.entity.CardEntity;
+-import com.kkulmoo.rebirth.card.infrastrucuture.mapper.CardEntityMapper;
+-import com.kkulmoo.rebirth.card.infrastrucuture.repository.CardJpaRepository;
+-import com.kkulmoo.rebirth.user.domain.UserId;
+-
+-import lombok.RequiredArgsConstructor;
+-
+-// JPA 구현체
+-@Repository
+-@RequiredArgsConstructor
+-public class CardRepositoryImpl implements CardRepository {
+-	private final CardJpaRepository cardJpaRepository;
+-	private final CardEntityMapper cardEntityMapper;
+-	private final CardTemplateJpaRepository cardTemplateJpaRepository;
+-
+-	@Override
+-	public Card save(Card card) {
+-		CardEntity cardEntity = cardJpaRepository.save(cardEntityMapper.toEntity(card));
+-		return cardEntityMapper.toCard(cardEntity);
+-	}
+-
+-	@Override
+-	public Optional<Card> findById(CardId cardId) {
+-		return cardJpaRepository.findById(cardId.getValue())
+-			.map(cardEntityMapper::toCard);
+-	}
+-
+-	@Override
+-	public List<Card> findByUserId(UserId userId ) {
+-		return cardJpaRepository.findByUserId(userId.getValue())
+-			.stream()
+-			.map(cardEntityMapper::toCard)
+-			.collect(Collectors.toList());
+-	}
+-
+-	@Override
+-	public Optional<Card> findByCardUniqueNumber(String cardUniqueNumber) {
+-		return Optional.empty();
+-	}
+-
+-	@Override
+-	public Optional<CardTemplate> findCardTemplateByCardName(String cardName) {
+-		return null;
+-	}
+-
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardTemplateJpaRepository.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardTemplateJpaRepository.java
+deleted file mode 100644
+index c99665b..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/infrastrucuture/repository/CardTemplateJpaRepository.java
++++ /dev/null
+@@ -1,17 +0,0 @@
+-package com.kkulmoo.rebirth.card.infrastrucuture.repository;
+-
+-import java.util.Collection;
+-import java.util.List;
+-import java.util.Optional;
+-
+-import org.springframework.data.jpa.repository.JpaRepository;
+-
+-import com.kkulmoo.rebirth.card.infrastrucuture.entity.CardTemplateEntity;
+-
+-public interface CardTemplateJpaRepository extends JpaRepository<CardTemplateEntity, Integer> {
+-	Optional<CardTemplateEntity> findByCardName(String cardName);
+-	List<CardTemplateEntity> findByCardNameContaining(String cardName);
+-	List<CardTemplateEntity> findByCardNameIn(Collection<String> cardNames);
+-
+-}
+-
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/presentation/CardController.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/presentation/CardController.java
+deleted file mode 100644
+index 414656e..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/card/presentation/CardController.java
++++ /dev/null
+@@ -1,9 +0,0 @@
+-package com.kkulmoo.rebirth.card.presentation;
+-
+-import org.springframework.web.bind.annotation.RestController;
+-
+-@RestController
+-public class CardController {
+-
+-
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/APIResponseDTO/ApiResponseDTO.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/APIResponseDTO/ApiResponseDTO.java
+deleted file mode 100644
+index aa98704..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/APIResponseDTO/ApiResponseDTO.java
++++ /dev/null
+@@ -1,43 +0,0 @@
+-package com.kkulmoo.rebirth.common.APIResponseDTO;
+-
+-import lombok.AllArgsConstructor;
+-import lombok.Builder;
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-
+-@Getter
+-@Builder
+-@NoArgsConstructor
+-@AllArgsConstructor
+-public class ApiResponseDTO<T> {
+-	private boolean success;
+-	private String message;
+-	private T data;
+-
+-	// 성공 응답 생성 메서드 (데이터 포함)
+-	public static <T> ApiResponseDTO<T> success(String message, T data) {
+-		return ApiResponseDTO.<T>builder()
+-			.success(true)
+-			.message(message)
+-			.data(data)
+-			.build();
+-	}
+-
+-	// 성공 응답 생성 메서드 (데이터 미포함)
+-	public static <T> ApiResponseDTO<T> success(String message) {
+-		return ApiResponseDTO.<T>builder()
+-			.success(true)
+-			.message(message)
+-			.data(null)
+-			.build();
+-	}
+-
+-	// 실패 응답 생성 메서드
+-	public static <T> ApiResponseDTO<T> error(String message) {
+-		return ApiResponseDTO.<T>builder()
+-			.success(false)
+-			.message(message)
+-			.data(null)
+-			.build();
+-	}
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/annotation/UserId.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/annotation/UserId.java
+deleted file mode 100644
+index ea70417..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/annotation/UserId.java
++++ /dev/null
+@@ -1,11 +0,0 @@
+-package com.kkulmoo.rebirth.common.annotation;
+-
+-import java.lang.annotation.ElementType;
+-import java.lang.annotation.Retention;
+-import java.lang.annotation.RetentionPolicy;
+-import java.lang.annotation.Target;
+-
+-@Target(ElementType.PARAMETER)
+-@Retention(RetentionPolicy.RUNTIME)
+-public @interface UserId {
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/CardFetchException.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/CardFetchException.java
+deleted file mode 100644
+index 281cb59..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/CardFetchException.java
++++ /dev/null
+@@ -1,6 +0,0 @@
+-package com.kkulmoo.rebirth.common.exception;
+-
+-public class CardFetchException extends RuntimeException {
+-	public CardFetchException(String failed_to_fetch_card_data, Throwable e) {
+-	}
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/CardProcessingException.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/CardProcessingException.java
+deleted file mode 100644
+index 8bb85c1..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/CardProcessingException.java
++++ /dev/null
+@@ -1,17 +0,0 @@
+-package com.kkulmoo.rebirth.common.exception;
+-
+-
+-public class CardProcessingException extends RuntimeException {
+-
+-	// 메시지만 받는 생성자
+-	public CardProcessingException(String message) {
+-		super(message);
+-	}
+-
+-	// 메시지와 원인 예외를 받는 생성자
+-	public CardProcessingException(String message, Throwable cause) {
+-		super(message, cause);
+-	}
+-
+-
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserAlreadyDeletedException.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserAlreadyDeletedException.java
+deleted file mode 100644
+index c17dcbe..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserAlreadyDeletedException.java
++++ /dev/null
+@@ -1,6 +0,0 @@
+-package com.kkulmoo.rebirth.common.exception;
+-
+-public class UserAlreadyDeletedException extends RuntimeException {
+-	public UserAlreadyDeletedException(String s) {
+-	}
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserCreationException.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserCreationException.java
+deleted file mode 100644
+index 4b37b5d..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserCreationException.java
++++ /dev/null
+@@ -1,6 +0,0 @@
+-package com.kkulmoo.rebirth.common.exception;
+-
+-public class UserCreationException extends RuntimeException {
+-	public UserCreationException(String s) {
+-	}
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserDeletionException.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserDeletionException.java
+deleted file mode 100644
+index 50c3e28..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserDeletionException.java
++++ /dev/null
+@@ -1,7 +0,0 @@
+-package com.kkulmoo.rebirth.common.exception;
+-
+-public class UserDeletionException extends RuntimeException {
+-	public UserDeletionException(String s) {
+-
+-	}
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserNotFoundException.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserNotFoundException.java
+deleted file mode 100644
+index e167d22..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/exception/UserNotFoundException.java
++++ /dev/null
+@@ -1,11 +0,0 @@
+-package com.kkulmoo.rebirth.common.exception;
+-
+-public class UserNotFoundException extends RuntimeException {
+-	public UserNotFoundException(String message) {
+-		super(message);
+-	}
+-
+-	public UserNotFoundException(String message, Throwable cause) {
+-		super(message, cause);
+-	}
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/webclient/WebClientConfig.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/webclient/WebClientConfig.java
+index 17702ab..b0a99f5 100644
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/webclient/WebClientConfig.java
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/common/webclient/WebClientConfig.java
+@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
+ import org.springframework.web.reactive.function.client.WebClient;
+ @Configuration
+ public class WebClientConfig {
++
+     // backend -> 카드사 (User의 카드 정보주세요)
+     @Value("${api.cardissuer.base-url}")
+     private String firstApiBaseUrl;
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/config/PasswordUtils.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/config/PasswordUtils.java
+deleted file mode 100644
+index 91e6ef0..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/config/PasswordUtils.java
++++ /dev/null
+@@ -1,57 +0,0 @@
+-package com.kkulmoo.rebirth.config;
+-
+-import java.nio.charset.StandardCharsets;
+-import java.security.MessageDigest;
+-import java.security.NoSuchAlgorithmException;
+-
+-public class PasswordUtils {
+-
+-	private PasswordUtils() {
+-		// 인스턴스화 방지
+-	}
+-
+-	/**
+-	 * 비밀번호를 SHA-256으로 해시화합니다.
+-	 *
+-	 * @param password 해시화할 원본 비밀번호
+-	 * @return 해시화된 비밀번호 (16진수 문자열)
+-	 */
+-	public static String encodePassword(String password) {
+-		try {
+-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+-			byte[] encodedHash = digest.digest(
+-				password.getBytes(StandardCharsets.UTF_8));
+-
+-			return bytesToHex(encodedHash);
+-		} catch (NoSuchAlgorithmException e) {
+-			throw new RuntimeException("SHA-256 알고리즘을 사용할 수 없습니다.", e);
+-		}
+-	}
+-
+-	/**
+-	 * 비밀번호가 저장된 해시와 일치하는지 확인합니다.
+-	 *
+-	 * @param rawPassword 확인할 원본 비밀번호
+-	 * @param storedHash 저장된 해시값
+-	 * @return 일치 여부
+-	 */
+-	public static boolean matchPassword(String rawPassword, String storedHash) {
+-		String inputHash = encodePassword(rawPassword);
+-		return inputHash.equals(storedHash);
+-	}
+-
+-	/**
+-	 * 바이트 배열을 16진수 문자열로 변환합니다.
+-	 */
+-	private static String bytesToHex(byte[] hash) {
+-		StringBuilder hexString = new StringBuilder(2 * hash.length);
+-		for (byte b : hash) {
+-			String hex = Integer.toHexString(0xff & b);
+-			if (hex.length() == 1) {
+-				hexString.append('0');
+-			}
+-			hexString.append(hex);
+-		}
+-		return hexString.toString();
+-	}
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/TransactionController.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/TransactionController.java
+deleted file mode 100644
+index c479d63..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/TransactionController.java
++++ /dev/null
+@@ -1,7 +0,0 @@
+-package com.kkulmoo.rebirth.transactions;
+-
+-import org.springframework.web.bind.annotation.RestController;
+-
+-@RestController
+-public class TransactionController {
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/TransactionService.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/TransactionService.java
+deleted file mode 100644
+index 59da14a..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/TransactionService.java
++++ /dev/null
+@@ -1,8 +0,0 @@
+-package com.kkulmoo.rebirth.transactions;
+-
+-import org.springframework.stereotype.Service;
+-
+-@Service
+-public class TransactionService {
+-
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/CategoryEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/CategoryEntity.java
+deleted file mode 100644
+index 61958d8..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/CategoryEntity.java
++++ /dev/null
+@@ -1,38 +0,0 @@
+-package com.kkulmoo.rebirth.transactions.infrastructure;
+-
+-import java.util.List;
+-
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.GeneratedValue;
+-import jakarta.persistence.GenerationType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.OneToMany;
+-import jakarta.persistence.Table;
+-import lombok.AccessLevel;
+-import lombok.AllArgsConstructor;
+-import lombok.Builder;
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-
+-@Entity
+-@Table(name = "category")
+-@Getter
+-@Builder
+-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+-@AllArgsConstructor
+-public class CategoryEntity {
+-
+-	@Id
+-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+-	@Column(name = "categorty_id")
+-	private Integer categoryId;
+-
+-	@Column(name = "category_name", nullable = false, length = 100)
+-	private String categoryName;
+-
+-	@OneToMany(mappedBy = "category")
+-	private List<SubcategoryEntity> subcategories;
+-
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/MerchantEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/MerchantEntity.java
+deleted file mode 100644
+index bf48414..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/MerchantEntity.java
++++ /dev/null
+@@ -1,56 +0,0 @@
+-package com.kkulmoo.rebirth.transactions.infrastructure;
+-
+-import java.time.LocalDateTime;
+-
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.FetchType;
+-import jakarta.persistence.GeneratedValue;
+-import jakarta.persistence.GenerationType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.JoinColumn;
+-import jakarta.persistence.ManyToOne;
+-import jakarta.persistence.PrePersist;
+-import jakarta.persistence.Table;
+-import lombok.AccessLevel;
+-import lombok.AllArgsConstructor;
+-import lombok.Builder;
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-
+-@Entity
+-@Table(name = "merchants")
+-@Getter
+-@Builder
+-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+-@AllArgsConstructor
+-public class MerchantEntity {
+-
+-	@Id
+-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+-	@Column(name = "merchant_id")
+-	private Integer merchantId;
+-
+-	// 외래키 관계
+-	@ManyToOne(fetch = FetchType.LAZY)
+-	@JoinColumn(name = "subcategory_id", nullable = false)
+-	private SubcategoryEntity subcategory;
+-
+-	@Column(name = "merchant_name", length = 100)
+-	private String merchantName;
+-
+-	@Column(name = "brand_name", length = 100)
+-	private String brandName;
+-
+-	@Column(name = "created_at", nullable = false, updatable = false)
+-	private LocalDateTime createdAt;
+-
+-	@Column(name = "deleted_at")
+-	private LocalDateTime deletedAt;
+-
+-	@PrePersist
+-	protected void onCreate() {
+-		createdAt = LocalDateTime.now();
+-	}
+-
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/SubcategoryEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/SubcategoryEntity.java
+deleted file mode 100644
+index e6fbb89..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/SubcategoryEntity.java
++++ /dev/null
+@@ -1,45 +0,0 @@
+-package com.kkulmoo.rebirth.transactions.infrastructure;
+-
+-import java.util.List;
+-
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.FetchType;
+-import jakarta.persistence.GeneratedValue;
+-import jakarta.persistence.GenerationType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.JoinColumn;
+-import jakarta.persistence.ManyToOne;
+-import jakarta.persistence.OneToMany;
+-import jakarta.persistence.Table;
+-import lombok.AccessLevel;
+-import lombok.AllArgsConstructor;
+-import lombok.Builder;
+-import lombok.Getter;
+-import lombok.NoArgsConstructor;
+-import lombok.Setter;
+-
+-@Entity
+-@Table(name = "subcategory")
+-@Getter
+-@Builder
+-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+-@AllArgsConstructor
+-public class SubcategoryEntity {
+-	@Id
+-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+-	@Column(name = "subcategory_id")
+-	private Integer subcategoryId;
+-
+-	@Column(name = "subcategory_name", nullable = false, length = 100)
+-	private String subcategoryName;
+-
+-	// 외래키 관계
+-	@ManyToOne(fetch = FetchType.LAZY)
+-	@JoinColumn(name = "category_id", nullable = false)
+-	private CategoryEntity category;
+-
+-	// 역방향 관계 (선택적)
+-	@OneToMany(mappedBy = "subcategory")
+-	private List<MerchantEntity> merchants;
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/TransactionEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/TransactionEntity.java
+deleted file mode 100644
+index e23b7b5..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/transactions/infrastructure/TransactionEntity.java
++++ /dev/null
+@@ -1,7 +0,0 @@
+-package com.kkulmoo.rebirth.transactions.infrastructure;
+-
+-import jakarta.persistence.Entity;
+-
+-@Entity
+-public class TransactionEntity {
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/command/CreateUserCommand.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/command/CreateUserCommand.java
+deleted file mode 100644
+index efd1182..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/command/CreateUserCommand.java
++++ /dev/null
+@@ -1,29 +0,0 @@
+-package com.kkulmoo.rebirth.user.application.command;
+-
+-import com.kkulmoo.rebirth.user.presentation.requestDTO.UserSignupRequest;
+-
+-import lombok.AllArgsConstructor;
+-import lombok.Builder;
+-import lombok.Getter;
+-
+-@AllArgsConstructor
+-@Builder
+-@Getter
+-public class CreateUserCommand {
+-	private final String userName;
+-	private final String userEmail;
+-	private final String pinNumber;
+-	private final String phoneNumber;
+-	private final String phoneSerialNumber;
+-
+-	// DTO에서 Command로 변환하는 팩토리 메서드
+-	public static CreateUserCommand fromRequest(UserSignupRequest request) {
+-		return CreateUserCommand.builder()
+-			.userName(request.getUserName())
+-			.userEmail(request.getUserEmail())
+-			.pinNumber(request.getPinNumber())
+-			.phoneNumber(request.getPhoneNumber())
+-			.phoneSerialNumber(request.getDeviceId())
+-			.build();
+-	}
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/eventDTO/BankDataEvent.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/eventDTO/BankDataEvent.java
+deleted file mode 100644
+index 4afb987..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/eventDTO/BankDataEvent.java
++++ /dev/null
+@@ -1,12 +0,0 @@
+-package com.kkulmoo.rebirth.user.application.eventDTO;
+-
+-import com.kkulmoo.rebirth.user.domain.UserId;
+-
+-import lombok.AllArgsConstructor;
+-import lombok.Getter;
+-
+-@AllArgsConstructor
+-@Getter
+-public class BankDataEvent {
+-	private final UserId userId;
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/eventDTO/MyDataEvent.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/eventDTO/MyDataEvent.java
+deleted file mode 100644
+index 29fa254..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/eventDTO/MyDataEvent.java
++++ /dev/null
+@@ -1,12 +0,0 @@
+-package com.kkulmoo.rebirth.user.application.eventDTO;
+-
+-import com.kkulmoo.rebirth.user.domain.User;
+-
+-import lombok.AllArgsConstructor;
+-import lombok.Getter;
+-
+-@AllArgsConstructor
+-@Getter
+-public class MyDataEvent {
+-	private final User user;
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/service/AuthService.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/service/AuthService.java
+deleted file mode 100644
+index 2889ba3..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/service/AuthService.java
++++ /dev/null
+@@ -1,42 +0,0 @@
+-package com.kkulmoo.rebirth.user.application.service;
+-
+-import org.springframework.stereotype.Service;
+-
+-import com.kkulmoo.rebirth.common.exception.UserCreationException;
+-import com.kkulmoo.rebirth.config.PasswordUtils;
+-import com.kkulmoo.rebirth.user.application.command.CreateUserCommand;
+-import com.kkulmoo.rebirth.user.domain.User;
+-import com.kkulmoo.rebirth.user.domain.UserRepository;
+-
+-import lombok.RequiredArgsConstructor;
+-
+-@Service
+-@RequiredArgsConstructor
+-public class AuthService {
+-	private final UserRepository userRepository;
+-
+-
+-	public User createUser(CreateUserCommand command) {
+-		// PIN 번호 암호화
+-		String hashedPinNumber = PasswordUtils.encodePassword(command.getPinNumber());
+-
+-		// 사용자 객체 생성
+-		User newUser = User.builder()
+-			.userName(command.getUserName())
+-			.hashedPinNumber(hashedPinNumber)
+-			.phoneNumber(command.getPhoneNumber())
+-			.phoneSerialNumber(command.getPhoneSerialNumber())
+-			.consumptionPatternId((byte)1)  // 기본값 설정 또는 파라미터로 받을 수 있음
+-			.build();
+-
+-		// 사용자 저장
+-		User createdUser  = userRepository.save(newUser);
+-
+-		if (createdUser == null) {
+-			throw new UserCreationException("사용자 생성에 실패했습니다.");
+-		}
+-
+-		return createdUser;
+-	}
+-
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/service/UserService.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/service/UserService.java
+index 6fc772c..879099f 100644
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/service/UserService.java
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/application/service/UserService.java
+@@ -1,15 +1,7 @@
+ package com.kkulmoo.rebirth.user.application.service;
+ 
+-import org.springframework.context.ApplicationEventPublisher;
+ import org.springframework.stereotype.Service;
+-import org.springframework.transaction.annotation.Transactional;
+ 
+-import com.kkulmoo.rebirth.common.exception.UserAlreadyDeletedException;
+-import com.kkulmoo.rebirth.common.exception.UserDeletionException;
+-import com.kkulmoo.rebirth.common.exception.UserNotFoundException;
+-import com.kkulmoo.rebirth.user.application.eventDTO.MyDataEvent;
+-import com.kkulmoo.rebirth.user.domain.User;
+-import com.kkulmoo.rebirth.user.domain.UserId;
+ import com.kkulmoo.rebirth.user.domain.UserRepository;
+ 
+ import lombok.RequiredArgsConstructor;
+@@ -18,43 +10,6 @@ import lombok.RequiredArgsConstructor;
+ @RequiredArgsConstructor
+ public class UserService {
+ 
+-	private final ApplicationEventPublisher eventPublisher;
+ 	private final UserRepository userRepository;
+ 
+-	@Transactional
+-	public void loadMyData(Integer userId) {
+-		User user = userRepository.findByUserId(new UserId(userId));
+-		eventPublisher.publishEvent(new MyDataEvent(user));
+-
+-
+-
+-	}
+-
+-	public void deleteUser(Integer userId) {
+-		UserId userIdObj = new UserId(userId);
+-
+-		// 사용자 조회
+-		User user = userRepository.findByUserId(userIdObj);
+-
+-		// 사용자가 존재하지 않는 경우 예외 처리
+-		if (user == null) {
+-			throw new UserNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId);
+-		}
+-
+-		// 이미 삭제된 사용자인지 확인
+-		if (user.isDeleted()) {
+-			throw new UserAlreadyDeletedException("이미 삭제된 사용자입니다. ID: " + userId);
+-		}
+-
+-		// 사용자에 삭제 표시
+-		user.delete();
+-
+-		// 사용자 정보 업데이트
+-		boolean isUpdated = userRepository.update(user);
+-
+-		// 업데이트 실패 시 예외 처리
+-		if (!isUpdated) {
+-			throw new UserDeletionException("사용자 삭제에 실패하였습니다. ID: " + userId);
+-		}
+-	}
+ }
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/User.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/User.java
+index c33b429..0294323 100644
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/User.java
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/User.java
+@@ -1,49 +1,4 @@
+ package com.kkulmoo.rebirth.user.domain;
+ 
+-import java.time.LocalDateTime;
+-
+-import lombok.Builder;
+-import lombok.Getter;
+-
+-@Getter
+ public class User {
+-	private final UserId userId;
+-	private final Byte consumptionPatternId;
+-	private final String userName;
+-	private final String hashedPinNumber;
+-	private final String phoneNumber;
+-	private final String phoneSerialNumber;
+-	private final String userApiKey;
+-	private final LocalDateTime createdAt;
+-	private LocalDateTime updatedAt;
+-	private LocalDateTime deletedAt;
+-	private LocalDateTime latestLoadDataAt;
+-
+-	@Builder
+-	public User(UserId userId, Byte consumptionPatternId, String userName, String hashedPinNumber,
+-		String phoneNumber, String phoneSerialNumber, String userApiKey,
+-		LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt,
+-		LocalDateTime latestLoadDataAt) {
+-		this.userId = userId;
+-		this.consumptionPatternId = consumptionPatternId;
+-		this.userName = userName;
+-		this.hashedPinNumber = hashedPinNumber;
+-		this.phoneNumber = phoneNumber;
+-		this.phoneSerialNumber = phoneSerialNumber;
+-		this.userApiKey = userApiKey;
+-		this.createdAt = createdAt;
+-		this.updatedAt = updatedAt;
+-		this.deletedAt = deletedAt;
+-		this.latestLoadDataAt = latestLoadDataAt;
+-	}
+-
+-
+-	public void delete() {
+-		this.deletedAt = LocalDateTime.now();
+-	}
+-
+-	public boolean isDeleted() {
+-		return this.deletedAt != null;
+-	}
+-
+-}
+\ No newline at end of file
++}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/UserId.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/UserId.java
+deleted file mode 100644
+index 4194431..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/UserId.java
++++ /dev/null
+@@ -1,20 +0,0 @@
+-package com.kkulmoo.rebirth.user.domain;
+-
+-import lombok.Getter;
+-import lombok.Value;
+-
+-@Value
+-public class UserId {
+-	Integer value;
+-
+-	public UserId(Integer value) {
+-		validateUserId(value);
+-		this.value = value;
+-	}
+-
+-	private void validateUserId(Integer value) {
+-		if (value == null || value <= 0) {
+-			throw new IllegalArgumentException("사용자 ID가 존재하지 않습니다.");
+-		}
+-	}
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/UserRepository.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/UserRepository.java
+index 816f228..1079cb7 100644
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/UserRepository.java
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/domain/UserRepository.java
+@@ -1,8 +1,4 @@
+ package com.kkulmoo.rebirth.user.domain;
+ 
+-
+ public interface UserRepository{
+-	User findByUserId(UserId userid);
+-	boolean update(User user);
+-	User save(User user);
+ }
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/entity/UserEntity.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/entity/UserEntity.java
+index 07c02f0..e0d6c3b 100644
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/entity/UserEntity.java
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/entity/UserEntity.java
+@@ -26,14 +26,11 @@ public class UserEntity {
+ 	@Id
+ 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+ 	@Column(name = "user_id")
+-	private Integer userId;
++	private Long userId;
+ 
+ 	@Column(name = "consumption_pattern_id")
+ 	private String consumptionPatternId;
+ 
+-	@Column(name = "user_email")
+-	private String userEmail;
+-
+ 	@Column(name = "user_name", nullable = false, length = 10)
+ 	private String userName;
+ 
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/mapper/UserEntityMapper.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/mapper/UserEntityMapper.java
+index 96a04e1..f6e1dcf 100644
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/mapper/UserEntityMapper.java
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/mapper/UserEntityMapper.java
+@@ -1,66 +1,9 @@
+ package com.kkulmoo.rebirth.user.infrastrucutre.mapper;
+ 
+-import java.util.Collections;
+-import java.util.List;
+-import java.util.stream.Collectors;
+-
+ import org.springframework.stereotype.Component;
+ 
+-import com.kkulmoo.rebirth.user.domain.User;
+-import com.kkulmoo.rebirth.user.domain.UserId;
+-import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
+-
+ @Component
+ public class UserEntityMapper {
+-	public User toUser(UserEntity userEntity) {
+-
+-		if (userEntity == null) {
+-			return null;
+-		}
+-
+-		return User.builder()
+-			.userId(new UserId(userEntity.getUserId().intValue()))
+-			.consumptionPatternId(userEntity.getConsumptionPatternId())
+-			.userName(userEntity.getUserName())
+-			.hashedPinNumber(userEntity.getHashedPinNumber())
+-			.phoneNumber(userEntity.getPhoneNumber())
+-			.phoneSerialNumber(userEntity.getPhoneSerialNumber())
+-			.userApiKey(userEntity.getUserApiKey())
+-			.createdAt(userEntity.getCreatedAt())
+-			.updatedAt(userEntity.getUpdatedAt())
+-			.deletedAt(userEntity.getDeletedAt())
+-			.latestLoadDataAt(userEntity.getLatestLoadDataAt())
+-			.build();
+-	}
+ 
+-	public UserEntity toEntity(User user) {
+-		if (user == null) {
+-			return null;
+-		}
+ 
+-		return UserEntity.builder()
+-			.userId(user.getUserId() != null ? Long.valueOf(user.getUserId().getValue()) : null)
+-			.consumptionPatternId(user.getConsumptionPatternId())
+-			.userName(user.getUserName())
+-			.hashedPinNumber(user.getHashedPinNumber())
+-			.phoneNumber(user.getPhoneNumber())
+-			.phoneSerialNumber(user.getPhoneSerialNumber())
+-			.userApiKey(user.getUserApiKey())
+-			.createdAt(user.getCreatedAt())
+-			.updatedAt(user.getUpdatedAt())
+-			.deletedAt(user.getDeletedAt())
+-			.latestLoadDataAt(user.getLatestLoadDataAt())
+-			.build();
+-	}
+-
+-	public List<User> toUserList(List<UserEntity> userEntities) {
+-		if (userEntities == null) {
+-			return Collections.emptyList();
+-		}
+-
+-		return userEntities.stream()
+-			.map(this::toUser)
+-			.collect(Collectors.toList());
+-	}
+ }
+-
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/repository/UserRepositoryImpl.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/repository/UserRepositoryImpl.java
+index b1e2fa6..e82a5c3 100644
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/repository/UserRepositoryImpl.java
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/infrastrucutre/repository/UserRepositoryImpl.java
+@@ -1,14 +1,8 @@
+ package com.kkulmoo.rebirth.user.infrastrucutre.repository;
+ 
+-import java.util.Optional;
+-
+ import org.springframework.stereotype.Repository;
+ 
+-import com.kkulmoo.rebirth.common.exception.UserNotFoundException;
+-import com.kkulmoo.rebirth.user.domain.User;
+-import com.kkulmoo.rebirth.user.domain.UserId;
+ import com.kkulmoo.rebirth.user.domain.UserRepository;
+-import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
+ import com.kkulmoo.rebirth.user.infrastrucutre.mapper.UserEntityMapper;
+ 
+ import lombok.RequiredArgsConstructor;
+@@ -19,24 +13,4 @@ public class UserRepositoryImpl implements UserRepository {
+ 	private final UserJpaRepository userJpaRepository;
+ 	private final UserEntityMapper userEntityMapper;
+ 
+-	@Override
+-	public User findByUserId(UserId userId) {
+-		UserEntity userEntity = userJpaRepository.findById(userId.getValue())
+-			.orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId.getValue()));
+-		return userEntityMapper.toUser(userEntity);
+-	}
+-
+-	@Override
+-	public boolean update(User user) {
+-		UserEntity userEntity = userEntityMapper.toEntity(user);
+-		userJpaRepository.save(userEntity);
+-		return true;
+-	}
+-
+-	@Override
+-	public User save(User user) {
+-		UserEntity userEntity = userEntityMapper.toEntity(user);
+-		UserEntity savedEntity = userJpaRepository.save(userEntity);
+-		return userEntityMapper.toUser(savedEntity);
+-	}
+ }
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/AuthController.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/AuthController.java
+deleted file mode 100644
+index 395bee2..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/AuthController.java
++++ /dev/null
+@@ -1,36 +0,0 @@
+-package com.kkulmoo.rebirth.user.presentation;
+-
+-import org.springframework.http.HttpStatus;
+-import org.springframework.http.ResponseEntity;
+-import org.springframework.web.bind.annotation.PostMapping;
+-import org.springframework.web.bind.annotation.RequestBody;
+-import org.springframework.web.bind.annotation.RequestMapping;
+-import org.springframework.web.bind.annotation.RestController;
+-
+-import com.kkulmoo.rebirth.common.APIResponseDTO.ApiResponseDTO;
+-import com.kkulmoo.rebirth.common.annotation.UserId;
+-import com.kkulmoo.rebirth.user.application.command.CreateUserCommand;
+-import com.kkulmoo.rebirth.user.application.service.AuthService;
+-import com.kkulmoo.rebirth.user.presentation.requestDTO.UserSignupRequest;
+-
+-import lombok.RequiredArgsConstructor;
+-
+-@RestController
+-@RequestMapping("/api/auth")
+-@RequiredArgsConstructor
+-public class AuthController {
+-
+-	private final AuthService authService;
+-
+-	@PostMapping("/signup")
+-	public ResponseEntity<ApiResponseDTO<Void>> signup(
+-		@UserId UserId userId,
+-		@RequestBody UserSignupRequest request) {
+-		authService.createUser(CreateUserCommand.fromRequest(request));
+-
+-		return ResponseEntity.status(HttpStatus.CREATED)
+-			.body(ApiResponseDTO.success("회원가입이 성공적으로 완료되었습니다."));
+-	}
+-
+-
+-}
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/UserController.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/UserController.java
+index c88978f..72bc696 100644
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/UserController.java
++++ b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/UserController.java
+@@ -1,35 +1,4 @@
+ package com.kkulmoo.rebirth.user.presentation;
+ 
+-import org.springframework.http.ResponseEntity;
+-import org.springframework.web.bind.annotation.DeleteMapping;
+-import org.springframework.web.bind.annotation.RequestMapping;
+-import org.springframework.web.bind.annotation.RestController;
+-
+-import com.kkulmoo.rebirth.common.APIResponseDTO.ApiResponseDTO;
+-import com.kkulmoo.rebirth.common.annotation.UserId;
+-import com.kkulmoo.rebirth.user.application.service.UserService;
+-
+-import lombok.RequiredArgsConstructor;
+-
+-
+-@RestController
+-@RequestMapping("/api/user")
+-@RequiredArgsConstructor
+ public class UserController {
+-
+-	private final UserService userService;
+-
+-
+-	// @PostMapping
+-	// public ResponseEntity<ApiResponseDTO<Void>> setMyData(@UserId Integer userId){
+-	//
+-	// }
+-
+-	@DeleteMapping
+-	public ResponseEntity<ApiResponseDTO<Void>> deleteUser(@UserId Integer userId) {
+-		userService.deleteUser(userId);
+-		return ResponseEntity.ok(ApiResponseDTO.success("삭제에 성공하였습니다."));
+-	}
+-
+-
+ }
+diff --git a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/requestDTO/UserSignupRequest.java b/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/requestDTO/UserSignupRequest.java
+deleted file mode 100644
+index be85ebe..0000000
+--- a/BE/rebirth/src/main/java/com/kkulmoo/rebirth/user/presentation/requestDTO/UserSignupRequest.java
++++ /dev/null
+@@ -1,15 +0,0 @@
+-package com.kkulmoo.rebirth.user.presentation.requestDTO;
+-
+-import lombok.AllArgsConstructor;
+-import lombok.Getter;
+-
+-@AllArgsConstructor
+-@Getter
+-public class UserSignupRequest {
+-	String userName;
+-	String userEmail;
+-	String pinNumber;
+-	String phoneNumber;
+-	String deviceId;
+-
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/resources/META-INF/additional-spring-configuration-metadata.json b/BE/rebirth/src/main/resources/META-INF/additional-spring-configuration-metadata.json
+deleted file mode 100644
+index 398cf4c..0000000
+--- a/BE/rebirth/src/main/resources/META-INF/additional-spring-configuration-metadata.json
++++ /dev/null
+@@ -1,9 +0,0 @@
+-{
+-  "properties": [
+-    {
+-      "name": "api.first.base-url",
+-      "type": "java.lang.String",
+-      "description": "Description for api.first.base-url."
+-  }
+-]
+-}
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/resources/application-local.properties b/BE/rebirth/src/main/resources/application-local.properties
+index 071a6cc..6d6e57e 100644
+--- a/BE/rebirth/src/main/resources/application-local.properties
++++ b/BE/rebirth/src/main/resources/application-local.properties
+@@ -1,10 +1,7 @@
+ # Local DB
+-spring.datasource.url=jdbc:postgresql://localhost:5432/rebirth
++spring.datasource.url=jdbc:postgresql://3.34.192.7:5432/rebirth
+ 
+ # Local Server Setting
+ server.address=localhost
+ server.port=8081
+ 
+-# Local Redis
+-spring.redis.host=localhost
+-spring.redis.port=6379
+\ No newline at end of file
+diff --git a/BE/rebirth/src/main/resources/application.properties b/BE/rebirth/src/main/resources/application.properties
+index 32e3f8e..c7e7c2e 100644
+--- a/BE/rebirth/src/main/resources/application.properties
++++ b/BE/rebirth/src/main/resources/application.properties
+@@ -21,9 +21,9 @@ logging.level.org.hibernate.SQL=DEBUG
+ logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+ 
+ # API Endpoint
+-api.cardissuer.base-url=${CARDISSUER_URL}
+-api.bank.base-url=${BANK_URL}
+-api.rebirth.base-url=${REBIRTH_URL}
++api.cardissuer.base-url= ${CARDISSUER_URL}
++api.bank.base-url= ${BANK_URL}
++api.rebirth.base-url= ${REBIRTH_URL}
+ 
+ # Security
+ token.secret.key =${TOKEN_SECRET_KEY}
+diff --git a/Jenkinsfile.app b/Jenkinsfile.app
+index b36ffd4..dcf9e10 100644
+--- a/Jenkinsfile.app
++++ b/Jenkinsfile.app
+@@ -58,8 +58,6 @@ pipeline {
+                 sh 'docker-compose -f docker-compose.app.yml down'
+                 echo '변경된 설정으로 컨테이너 생성...'
+                 sh 'docker-compose -f docker-compose.app.yml up -d'
+-                echo 'nginx reload 실행...'
+-                sh 'docker exec -it nginx_proxy nginx -s reload'
+             }
+         }
+     }
+diff --git a/docker-compose.app.yml b/docker-compose.app.yml
+index 6c31028..1e37953 100644
+--- a/docker-compose.app.yml
++++ b/docker-compose.app.yml
+@@ -4,7 +4,7 @@ services:
+   # rebirth 서비스 (Spring Boot 애플리케이션)
+   rebirth:
+     image: rebirth-image
+-    container_name: rebirth-app
++    container_name: rebirth_app
+     environment:
+       - SPRING_PROFILES_ACTIVE=prod
+       - POSTGRES_URL=${POSTGRES_URL}
+@@ -25,7 +25,7 @@ services:
+   # cardissuer 서비스
+   cardissuer:
+     image: cardissuer-image
+-    container_name: cardissuer-app
++    container_name: cardissuer_app
+     environment:
+       - SPRING_PROFILES_ACTIVE=prod
+       - POSTGRES_URL=${POSTGRES_URL}
+@@ -41,7 +41,7 @@ services:
+   # bank 서비스
+   bank:
+     image: bank-image
+-    container_name: bank-app
++    container_name: bank_app
+     environment:
+       - SPRING_PROFILES_ACTIVE=prod
+       - POSTGRES_URL=${POSTGRES_URL}

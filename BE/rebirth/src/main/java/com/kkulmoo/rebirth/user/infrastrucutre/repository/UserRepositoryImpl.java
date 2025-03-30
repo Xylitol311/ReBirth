@@ -1,7 +1,5 @@
 package com.kkulmoo.rebirth.user.infrastrucutre.repository;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Repository;
 
 import com.kkulmoo.rebirth.common.exception.UserNotFoundException;
