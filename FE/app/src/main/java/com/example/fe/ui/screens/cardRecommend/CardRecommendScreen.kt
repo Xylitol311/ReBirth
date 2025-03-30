@@ -40,6 +40,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.border
+import com.example.fe.ui.components.backgrounds.GlassSurface
 
 // 카드 데이터 클래스
 data class CardInfo(
@@ -207,45 +209,45 @@ fun PersonalizedRecommendations(
                 Text(
                     text = "이번 달",
                     color = Color.White,
-                    fontSize = 14.sp
+                    fontSize = 18.sp
                 )
                 Text(
                     text = "당신에게 가장 추천하는 카드",
                     color = Color.White,
-                    fontSize = 20.sp,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "이전 3개월 소비 내역을 바탕으로 추천해드려요",
-                    color = Color.Gray,
-                    fontSize = 12.sp,
+                    color = Color.White,
+                    fontSize = 14.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }
 
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFDDDDEE)
-                )
+            // GlassSurface 컴포넌트 사용
+            GlassSurface(
+                modifier = Modifier.fillMaxWidth(),
+                cornerRadius = 16f,
+                color = Color(0x60FFFFFF),
+                borderColor = Color(0xAAFFFFFF),
+                blurRadius = 10f
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
                         text = "추천 TOP 3",
-                        color = Color.Black,
-                        fontSize = 18.sp,
+                        color = Color.White,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "3개월 간 총 500,000원 썼어요",
-                        color = Color.DarkGray,
-                        fontSize = 12.sp,
+                        color = Color.White,
+                        fontSize = 14.sp,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                     
@@ -261,14 +263,14 @@ fun PersonalizedRecommendations(
             Text(
                 text = "카테고리별 추천 카드",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 16.dp)
             )
             Text(
                 text = "이전 3개월 소비를 바탕으로 API가 추천해요",
-                color = Color.Gray,
-                fontSize = 12.sp
+                color = Color.White,
+                fontSize = 14.sp
             )
         }
 
@@ -276,13 +278,13 @@ fun PersonalizedRecommendations(
             Text(
                 text = "병원/약국 혜택 추천",
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = "병원/약국에 1,240,000원 썼어요",
-                color = Color.Gray,
-                fontSize = 12.sp
+                color = Color.White,
+                fontSize = 14.sp
             )
         }
     }
@@ -295,31 +297,53 @@ fun CardFinder(
     cards: List<CardInfo>,
     onCardClick: (CardInfo) -> Unit
 ) {
-    LazyColumn(
+    Column(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.Top // 간격 조정을 위해 Top으로 변경
     ) {
         // 필터 태그들
-        items(filterTags) { tag ->
-            FilterTagRow(
-                tag = tag,
-                onOptionSelected = { option ->
-                    onFilterChange(tag.category, option)
-                }
-            )
+        filterTags.forEach { tag ->
+            Column(modifier = Modifier.fillMaxWidth()) {
+                FilterTagRow(
+                    tag = tag,
+                    onOptionSelected = { option ->
+                        onFilterChange(tag.category, option)
+                    }
+                )
+                
+                Divider(
+                    color = Color.Gray.copy(alpha = 0.5f), // 구분선 더 진하게
+                    thickness = 1.dp, // 두께 증가
+                    modifier = Modifier
+                )
+            }
         }
 
-        // 구분선
-        item {
-            Divider(
-                color = Color.Gray.copy(alpha = 0.3f),
-                modifier = Modifier.padding(vertical = 8.dp)
+        // 이벤트 카드 제외 텍스트
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 4.dp)
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "인기순",
+                color = Color.White,
+                fontSize = 16.sp
+            )
+            
+            Text(
+                text = "이벤트 카드 제외",
+                color = Color.White,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(end = 8.dp)
             )
         }
 
         // 카드 목록
-        items(cards) { card ->
+        cards.forEach { card ->
             SimpleCardItem(card = card, onClick = { onCardClick(card) })
         }
     }
@@ -330,28 +354,52 @@ fun FilterTagRow(
     tag: FilterTag,
     onOptionSelected: (String) -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
     ) {
+        // 카테고리 이름
         Text(
             text = tag.category,
             color = Color.White,
-            fontSize = 14.sp,
-            modifier = Modifier.width(80.dp)
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
         )
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        // 옵션 목록
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 100.dp, bottom = 8.dp)
         ) {
-            tag.options.forEach { option ->
+            // 전체 옵션 먼저 추가
+            item {
+                val isSelected = tag.selectedOption == "전체"
+                Text(
+                    text = "전체",
+                    color = if (isSelected) Color(0xFFFFF176) else Color.White, // 선택된 항목은 노란색
+                    fontSize = 22.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier
+                        .clickable { onOptionSelected("전체") }
+                        .padding(vertical = 4.dp)
+                )
+            }
+            
+            // 나머지 옵션들
+            items(tag.options) { option ->
                 val isSelected = tag.selectedOption == option
+                
                 Text(
                     text = option,
-                    color = if (isSelected) Color.Yellow else Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier.clickable { onOptionSelected(option) }
+                    color = if (isSelected) Color(0xFFFFF176) else Color.White, // 선택된 항목은 노란색
+                    fontSize = 22.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier
+                        .clickable { onOptionSelected(option) }
+                        .padding(vertical = 4.dp)
                 )
             }
         }
@@ -386,7 +434,7 @@ fun CardCarousel(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(460.dp)
+            .height(470.dp)
     ) {
         HorizontalPager(
             state = pagerState,
@@ -405,38 +453,42 @@ fun CardCarousel(
                             .currentPageOffsetFraction
                         ).absoluteValue
 
-                // 현재 카드는 더 크게, 다른 카드는 작게
-                val scale = if (page == pagerState.currentPage) 1.2f else 0.8f
+                // 페이지 오프셋에 따른 스케일 계산 - 부드러운 전환을 위해
+                // 1.2f (현재 페이지)에서 0.9f (다른 페이지)로 부드럽게 변화
+                val scale = 1.2f - (pageOffset * 0.3f).coerceIn(0f, 0.3f)
+                
+                // 페이지 오프셋에 따른 알파값 계산 - 부드러운 투명도 전환
+                val alpha = 1f - (pageOffset * 0.4f).coerceIn(0f, 0.4f)
                 
                 Box(
                     modifier = Modifier
                         .graphicsLayer(
                             scaleX = scale,
                             scaleY = scale,
-                            alpha = if (page == pagerState.currentPage) 1f else 0.6f,
+                            alpha = alpha,
                             clip = false,
                             cameraDistance = 12f * density
                         )
+                        .clickable {
+                            if (page != pagerState.currentPage) {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(page)
+                                }
+                            } else {
+                                onCardClick(extendedCards[page])
+                            }
+                        }
                 ) {
                     // 카드와 텍스트를 포함하는 전체 Box
                     Box(
-                        modifier = Modifier.height(400.dp) // 높이 증가
+                        modifier = Modifier.height(420.dp) // 높이 증가
                     ) {
                         // 카드 이미지
                         Box(
                             modifier = Modifier
-                                .width(380.dp) // 카드 너비 증가
-                                .height(380.dp) // 카드 높이 증가
-                                .padding(8.dp)
-                                .clickable {
-                                    if (page != pagerState.currentPage) {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(page)
-                                        }
-                                    } else {
-                                        onCardClick(extendedCards[page])
-                                    }
-                                }
+                                .width(380.dp)
+                                .height(340.dp) // 높이 약간 감소하여 텍스트 영역 확보
+                                .padding(top = 0.dp, bottom = 0.dp)
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.card),
@@ -450,31 +502,38 @@ fun CardCarousel(
                             )
                         }
                         
-                        // 텍스트 컬럼 - 위치를 더 위로 조정
+                        // 텍스트 컬럼
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .offset(y = (-30).dp) // 텍스트를 더 위로 올림
-                                .padding(start = 8.dp, end = 8.dp)
+                                .padding(top = 10.dp) // 상단 패딩 증가
+                                .padding(bottom = 15.dp) // 하단 패딩 추가
+                                .padding(horizontal = 24.dp) // 좌우 패딩 더 넓게
+                                .fillMaxWidth()
                         ) {
                             // 대표 혜택
                             Text(
                                 text = "카페 10% 할인",
-                                color = Color.Black, // 검은색으로 변경
-                                fontSize = if (page == pagerState.currentPage) 18.sp else 14.sp,
+                                color = Color.White,
+                                fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp) // 혜택과 이름 사이 간격 추가
                             )
                             
                             // 카드 이름
                             Text(
                                 text = extendedCards[page].name,
-                                color = Color.Black, // 검은색으로 변경
-                                fontSize = if (page == pagerState.currentPage) 14.sp else 12.sp,
+                                color = Color.White,
+                                fontSize = 16.sp,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp) // 텍스트 위아래 패딩 추가
                             )
                         }
                     }
@@ -491,15 +550,15 @@ fun CardItem(
 ) {
     Column(
         modifier = Modifier
-            .width(300.dp) // 너비 증가
+            .width(300.dp) // 너비 유지
             .clickable { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 카드 이미지
         Box(
             modifier = Modifier
-                .width(300.dp) // 너비 증가
-                .height(420.dp) // 높이 증가 (비율 유지)
+                .width(300.dp)
+                .height(390.dp)
                 .clip(RoundedCornerShape(16.dp))
         ) {
             Image(
@@ -514,19 +573,22 @@ fun CardItem(
             )
         }
         
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp)) // 14dp에서 8dp로 간격 더 감소
         
         // 카드 혜택 및 이름
         Text(
             text = "카페 10% 할인",
-            color = Color.Black,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 2.dp) // 4dp에서 2dp로 감소
         )
         Text(
             text = card.name,
-            color = Color.DarkGray,
-            fontSize = 12.sp
+            color = Color.White,
+            fontSize = 18.sp,
+            maxLines = 1, // 최대 1줄로 제한
+            modifier = Modifier.fillMaxWidth(0.9f) // 너비 90%로 제한하여 텍스트가 잘리지 않도록 함
         )
     }
 }
@@ -575,8 +637,8 @@ fun RecommendedCardItem(
                     card.icons.forEach { icon ->
                         Text(
                             text = icon,
-                            color = Color.Gray,
-                            fontSize = 12.sp
+                            color = Color.White,
+                            fontSize = 14.sp
                         )
                     }
                 }
@@ -590,24 +652,34 @@ fun SimpleCardItem(
     card: CardInfo,
     onClick: () -> Unit
 ) {
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2A2A40)
-        )
+            .padding(vertical = 4.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0x66FFFFFF).copy(alpha = 0.1f))
+            .clickable(onClick = onClick)
+            .border(
+                width = 0.5.dp,
+                color = Color.White.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(12.dp)
+            )
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 카드 이미지 (실제로는 Image 컴포넌트로 대체)
+            // 카드 이미지
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .background(Color(0xFF4A4A60), RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0x80FFFFFF).copy(alpha = 0.2f))
+                    .border(
+                        width = 0.5.dp,
+                        color = Color.White.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(8.dp)
+                    )
             )
             
             Column(
@@ -618,7 +690,7 @@ fun SimpleCardItem(
                 Text(
                     text = card.name,
                     color = Color.White,
-                    fontSize = 14.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
                 
@@ -629,8 +701,8 @@ fun SimpleCardItem(
                     card.icons.forEach { icon ->
                         Text(
                             text = icon,
-                            color = Color.Gray,
-                            fontSize = 12.sp
+                            color = Color.White,
+                            fontSize = 14.sp
                         )
                     }
                 }

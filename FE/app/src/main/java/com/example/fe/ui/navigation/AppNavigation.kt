@@ -7,6 +7,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,10 +21,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.navigation.NavController
+import androidx.navigation.NavOptions
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
@@ -46,17 +52,18 @@ import com.example.fe.ui.screens.home.HomeScreenContent
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
 import com.example.fe.ui.screens.myCard.CardItem
 import com.example.fe.ui.screens.myCard.CardDetailScreen
 import com.example.fe.ui.screens.myCard.CardManagementScreen
+import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
+import com.example.fe.ui.screens.cardRecommend.CardInfo
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
     const val HOME_DETAIL = "home_detail"
     const val CARD_DETAIL = "card_detail/{cardId}"
     const val CARD_MANAGEMENT = "card_management"
+    const val CARD_DETAIL_INFO = "card_detail_info/{cardId}"
 }
 
 @Composable
@@ -94,6 +101,13 @@ fun AppNavigation() {
 
     // 화면 전환 애니메이션을 위한 상태
     val isNavigatingBack = remember { mutableStateOf(false) }
+    
+    // 화면 전환 시 콘텐츠 페이드 효과
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (isNavigatingBack.value) 0f else 1f,
+        animationSpec = tween(300),
+        label = "contentAlpha"
+    )
 
     // 탭 인덱스 맵
     val tabIndices = mapOf(
@@ -430,11 +444,28 @@ fun AppNavigation() {
                             )
                         }
                     ) {
-                        CardRecommendScreen(
-                            onScrollOffsetChange = { offset ->
-                                scrollOffset = offset
-                            }
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer(alpha = contentAlpha)
+                        ) {
+                            // StarryBackground 없이 직접 콘텐츠만 표시
+                            CardRecommendScreen(
+                                onScrollOffsetChange = { offset ->
+                                    scrollOffset = offset
+                                },
+                                onCardClick = { cardInfo ->
+                                    // 카드 상세 정보 화면으로 이동
+                                    navController.navigate("card_detail_info/${cardInfo.id}") {
+                                        // 애니메이션 트리거를 위한 방향 설정
+                                        transitionDirection = 1
+                                        // 누적 오프셋 업데이트
+                                        cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
+                                        animationCounter++
+                                    }
+                                }
+                            )
+                        }
                     }
 
                     // 홈 상세 화면 추가
@@ -517,6 +548,55 @@ fun AppNavigation() {
                                 // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
                                 cumulativeOffset += transitionDirection * 800f
                                 animationCounter++
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
+                    // 카드 상세 정보 화면 추가
+                    composable(
+                        route = NavRoutes.CARD_DETAIL_INFO,
+                        arguments = listOf(navArgument("cardId") { type = NavType.IntType }),
+                        enterTransition = { 
+                            slideIntoContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(500, easing = EaseInOut)
+                            ) + fadeIn(animationSpec = tween(400, easing = EaseInOut))
+                        },
+                        exitTransition = { 
+                            slideOutOfContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(500, easing = EaseInOut)
+                            ) + fadeOut(animationSpec = tween(400, easing = EaseInOut))
+                        }
+                    ) { backStackEntry ->
+                        val cardId = backStackEntry.arguments?.getInt("cardId") ?: 1
+                        
+                        // 샘플 카드 데이터 (실제로는 ViewModel이나 Repository에서 가져오는 것이 좋습니다)
+                        val sampleCards = remember {
+                            listOf(
+                                CardInfo(
+                                    id = 1,
+                                    name = "토스 신한카드 Mr.Life",
+                                    company = "신한카드",
+                                    benefits = listOf(
+                                        "카페 10% 할인",
+                                        "편의점, 외식 10% 할인",
+                                        "병원, 약국, 전기, 가스요금, 해외 10% 할인"
+                                    ),
+                                    annualFee = "30,000원",
+                                    minSpending = "월 30만원",
+                                    icons = listOf("식당", "교통")
+                                )
+                            )
+                        }
+                        
+                        // ID로 카드 찾기
+                        val selectedCard = sampleCards.find { it.id == cardId } ?: sampleCards.first()
+                        
+                        CardDetailInfoScreen(
+                            card = selectedCard,
+                            onBackClick = {
                                 navController.popBackStack()
                             }
                         )
