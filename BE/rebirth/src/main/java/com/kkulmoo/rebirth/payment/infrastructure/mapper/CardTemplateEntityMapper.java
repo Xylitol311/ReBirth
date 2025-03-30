@@ -1,9 +1,8 @@
 package com.kkulmoo.rebirth.payment.infrastructure.mapper;
 
 import com.kkulmoo.rebirth.payment.domain.CardTemplate;
-import com.kkulmoo.rebirth.payment.domain.Cards;
-import com.kkulmoo.rebirth.payment.infrastructure.entity.CardTemplateEntity;
-import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
+import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
+
 import org.springframework.stereotype.Component;
 
 @Component
