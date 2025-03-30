@@ -12,7 +12,10 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.kkulmoo.rebirth.card.domain.Card;
 import com.kkulmoo.rebirth.card.domain.CardRepository;
-import com.kkulmoo.rebirth.payment.domain.CardTemplate;
+import com.kkulmoo.rebirth.card.domain.CardTemplate;
+import com.kkulmoo.rebirth.card.infrastructure.adapter.dto.CardApiResponse;
+import com.kkulmoo.rebirth.common.exception.CardProcessingException;
+import com.kkulmoo.rebirth.user.application.eventDTO.MyDataEvent;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
 
