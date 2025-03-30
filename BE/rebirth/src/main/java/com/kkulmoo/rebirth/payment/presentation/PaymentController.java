@@ -6,10 +6,8 @@ import com.kkulmoo.rebirth.payment.presentation.request.OnlinePayDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.ApiResponseDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 /*
 
