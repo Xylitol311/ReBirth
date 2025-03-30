@@ -16,6 +16,7 @@ public class Card {
 	private Integer cardTemplateId;
 	private Integer annualFee;
 	private String cardUniqueNumber;
+	private String cardNumber;
 	private LocalDate expiryDate;
 	private Short cardOrder;
 	private Short isExpired;
