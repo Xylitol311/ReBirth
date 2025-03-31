@@ -12,11 +12,11 @@ import lombok.*;
 public class MonthlyLogInfoDTO {
 
     @JsonProperty("total_spending_amount")
-    int totalSpendingAmount;
+    Long totalSpendingAmount;
 
     @JsonProperty("category_name")
     String categoryName;
 
     @JsonProperty("monthly_difference")
-    int monthlyDifferenceAmount;
+    Long monthlyDifferenceAmount;
 }

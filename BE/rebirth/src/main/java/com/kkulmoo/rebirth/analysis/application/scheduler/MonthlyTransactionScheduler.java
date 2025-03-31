@@ -7,13 +7,10 @@ import com.kkulmoo.rebirth.analysis.infrastructure.entity.MonthlyConsumptionRepo
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.MonthlyTransactionSummaryEntity;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardCategoriesEntity;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardsEntity;
-import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyConsumptionReportJpaRepository;
-import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyTransactionSummaryJpaRepository;
-import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
-import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardsJpaRepository;
+import com.kkulmoo.rebirth.analysis.infrastructure.repository.*;
 import com.kkulmoo.rebirth.card.infrastructure.entity.BenefitTemplateEntity;
-import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
+import com.kkulmoo.rebirth.shared.entity.CardsEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.repository.UserJpaRepository;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -44,7 +41,7 @@ public class MonthlyTransactionScheduler {
 
     @Scheduled(cron = "0 0 0 1 * ?")
     public void createMonthlyTransaction() {
-        List<UserEntity> users = userJpaRepository.findAll(); // 나중에 deleted_at 있는건 안가져오게 수정할 것
+        List<UserEntity> users = userJpaRepository.findAllAndDeletedAtIsNull(); // 나중에 deleted_at 있는건 안가져오게 수정할 것
         for(UserEntity user : users) {
 
             createMonthlyTransactionSummary(user);
@@ -54,7 +51,7 @@ public class MonthlyTransactionScheduler {
 
     @Scheduled(cron = "0 0 0 1 * ?")
     public void endMonthlyTransaction() {
-        List<UserEntity> users = userJpaRepository.findAll(); // 나중에 deleted_at 있는건 안가져오게 수정할 것
+        List<UserEntity> users = userJpaRepository.findAllAndDeletedAtIsNull(); // 나중에 deleted_at 있는건 안가져오게 수정할 것
         for(UserEntity user : users) {
             makeMonthlyConsumptionReport(user);
         }
@@ -101,28 +98,24 @@ public class MonthlyTransactionScheduler {
                 .build();
         int reportCardId = reportCardsJpaRepository.save(reportCardsEntity).getReportCardId();
         ReportCardsEntity reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
-//        // 보유카드의 카드 템플릿을 확인하여, 실적구간을 고려한 혜택 템플릿을 모두 가져옴
-//        List<BenefitTemplateEntity> benefitTemplates = benefitTemplateJpaRepository.getByCardTemplateIdAndSpendingTier(card.getCardTemplateId, card.getSpendingTier);
-//        for(BenefitTemplateEntity benefit : benefitTemplates) {
-//            ReportCardCategoriesEntity reportCardCategories = createReportCardCategories(reportCard,benefit);
-//        }
+
     }
 
-    @Transactional
-    public ReportCardCategoriesEntity createReportCardCategories(ReportCardsEntity reportCard, BenefitTemplateEntity benefit) {
-        ReportCardCategoriesEntity reportCardCategoriesEntity = ReportCardCategoriesEntity
-                .builder()
-                .reportCardId(reportCard.getReportCardId())
-                .categoryId(benefit.getCategory().getCategoryId())
-//                .merchantId(benefit.getMerchantId())
-                .amount(0)
-                .receivedBenefitAmount(0)
-                .count(0)
-                .createdAt(reportCard.getCreatedAt())
-                .build();
-        int reportCardCategoryId = reportCardCategoriesJpaRepository.save(reportCardCategoriesEntity).getReportCategoryId();
-        return reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
-    }
+//    @Transactional
+//    public ReportCardCategoriesEntity createReportCardCategories(ReportCardsEntity reportCard, BenefitTemplateEntity benefit) {
+//        ReportCardCategoriesEntity reportCardCategoriesEntity = ReportCardCategoriesEntity
+//                .builder()
+//                .reportCardId(reportCard.getReportCardId())
+//                .categoryId(benefit.getCategory().getCategoryId())
+////                .merchantId(benefit.getMerchantId())
+//                .amount(0)
+//                .receivedBenefitAmount(0)
+//                .count(0)
+//                .createdAt(reportCard.getCreatedAt())
+//                .build();
+//        int reportCardCategoryId = reportCardCategoriesJpaRepository.save(reportCardCategoriesEntity).getReportCategoryId();
+//        return reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
+//    }
 
     @Transactional
     public void makeMonthlyConsumptionReport(UserEntity user) {

@@ -36,16 +36,16 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionsEnt
             @Param("month") int month);
 
     @Query("SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogDTO( " +
-            "FUNCTION('DAY', t.createdAt), " +
-            "COALESCE(SUM(CASE WHEN ct.transactionId IS NOT NULL THEN t.amount ELSE 0 END), 0), " +
-            "COALESCE(SUM(CASE WHEN bt.transactionId IS NOT NULL THEN t.amount ELSE 0 END), 0)) " +
+            "DAY(t.createdAt), " +
+            "CAST(COALESCE(SUM(CASE WHEN ct.transactionId IS NOT NULL THEN t.amount ELSE 0 END), 0) AS int), " +
+            "CAST(COALESCE(SUM(CASE WHEN bt.transactionId IS NOT NULL THEN t.amount ELSE 0 END), 0) AS int)) " +
             "FROM TransactionsEntity t " +
             "LEFT JOIN CardTransactionsEntity ct ON t.transactionId = ct.transactionId " +
             "LEFT JOIN BankTransactionsEntity bt ON t.transactionId = bt.transactionId AND bt.transactionType = 'DEPOSIT' " +
-            "WHERE FUNCTION('YEAR', t.createdAt) = :year " +
-            "AND FUNCTION('MONTH', t.createdAt) = :month " +
+            "WHERE YEAR(t.createdAt) = :year " +
+            "AND MONTH(t.createdAt) = :month " +
             "AND t.userId = :userId " +
-            "GROUP BY FUNCTION('DAY', t.createdAt)")
+            "GROUP BY DAY(t.createdAt)")
     List<MonthlyLogDTO> getMonthlyLogs(@Param("userId") int userId, @Param("year") int year, @Param("month") int month);
 
 
@@ -65,9 +65,9 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionsEnt
         JOIN CategoryEntity c ON sc.category.categoryId = c.categoryId
         JOIN CardTemplateEntity cardTemplate ON card.cardTemplateId = cardTemplate.cardTemplateId
         WHERE t.userId = :userId
-        AND FUNCTION('YEAR', t.createdAt) = :year
-        AND FUNCTION('MONTH', t.createdAt) = :month
-        AND FUNCTION('DAY', t.createdAt) = :day
+        AND YEAR(t.createdAt) = :year
+        AND MONTH(t.createdAt) = :month
+        AND DAY(t.createdAt) = :day
         AND ct.status = '승인'
         ORDER BY t.createdAt DESC
     """)

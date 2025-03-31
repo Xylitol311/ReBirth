@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.analysis.domain.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Data
@@ -10,7 +11,12 @@ import lombok.*;
 @Builder
 public class MonthlyLogDTO {
 
+    @JsonProperty("day")
     int day;
+
+    @JsonProperty("plus")
     int plus;
+
+    @JsonProperty("minus")
     int minus;
 }

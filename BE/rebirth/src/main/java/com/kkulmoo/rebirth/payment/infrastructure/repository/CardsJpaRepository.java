@@ -21,4 +21,6 @@ public interface CardsJpaRepository extends JpaRepository<CardsEntity, Integer>{
             "JOIN CardsEntity c ON ct.cardTemplateId = c.cardTemplateId " +
             "WHERE c.cardId = :cardId")
     CardTemplateEntity findCardNameByCardId(int cardId);
+
+    List<CardsEntity> getByUserId(int userId);
 }
