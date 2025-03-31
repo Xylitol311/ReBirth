@@ -20,13 +20,13 @@ public class SseController {
     private final SseService sseService;
     private final PaymentService paymentService;
     private final PaymentOfflineEncryption paymentOfflineEncryption;
-    private final WebClientService webClientService;
 
-    public SseController(SseService sseService, PaymentService paymentService, PaymentOfflineEncryption paymentOfflineEncryption, WebClientService webClientService) {
+
+    public SseController(SseService sseService, PaymentService paymentService, PaymentOfflineEncryption paymentOfflineEncryption) {
         this.sseService = sseService;
         this.paymentService = paymentService;
         this.paymentOfflineEncryption = paymentOfflineEncryption;
-        this.webClientService = webClientService;
+
     }
 
     // 특정 유저 SSE 구독
@@ -73,7 +73,8 @@ public class SseController {
         //2-2. permanent는 웹 클라이언트로 카드사에 넘기기 & 값 받
         log.info(permanentToken);
         CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder().token(permanentToken).amount(createTransactionRequestDTO.getAmount()).merchantName(createTransactionRequestDTO.getMerchantName()).build();
-        CardTransactionDTO cardTransactionDTO = webClientService.checkPermanentToken(dataToCardsa).block();
+        CardTransactionDTO cardTransactionDTO = paymentService.transactionToCardsa(dataToCardsa);
+
 
         //3. 받은 값으로 아래 데이터 갱신하기
         // 값 최종 업데이트 해주기 ( 이거 어디어디 해줘야 하는데... ) -> 나중으로 우선 미루기

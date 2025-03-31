@@ -3,10 +3,11 @@ package com.kkulmoo.rebirth.payment.domain;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
+@Builder
 public class Cards {
 
     private int cardId;
@@ -19,7 +20,7 @@ public class Cards {
 
     private String cardUniqueNumber;
 
-    private Date expiryDate;
+    private LocalDate expiryDate;
 
     private Short cardOrder;
 
@@ -37,21 +38,4 @@ public class Cards {
 
     private LocalDateTime paymentCreatedAt;
 
-    @Builder
-    public Cards(LocalDateTime paymentCreatedAt, Short paymentCardOrder, String permanentToken, int annualFee, Short isExpired, LocalDateTime deletedAt, LocalDateTime createdAt, Short cardOrder, Date expiryDate, String cardUniqueNumber, String cardNumber, int cardTemplateId, int userId, int cardId) {
-        this.paymentCreatedAt = paymentCreatedAt;
-        this.paymentCardOrder = paymentCardOrder;
-        this.permanentToken = permanentToken;
-        this.annualFee = annualFee;
-        this.isExpired = isExpired;
-        this.deletedAt = deletedAt;
-        this.createdAt = createdAt;
-        this.cardOrder = cardOrder;
-        this.expiryDate = expiryDate;
-        this.cardUniqueNumber = cardUniqueNumber;
-        this.cardNumber = cardNumber;
-        this.cardTemplateId = cardTemplateId;
-        this.userId = userId;
-        this.cardId = cardId;
-    }
 }

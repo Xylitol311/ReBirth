@@ -1,11 +1,10 @@
 package com.kkulmoo.rebirth.card.infrastructure.repository;
 
-import java.util.List;
-
+import com.kkulmoo.rebirth.shared.entity.CardsEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.kkulmoo.rebirth.shared.entity.CardEntity;
+import java.util.List;
 
-public interface CardJpaRepository extends JpaRepository<CardEntity,Integer> {
-	List<CardEntity> findByUserId(Integer userId);
+public interface CardJpaRepository extends JpaRepository<CardsEntity,Integer> {
+	List<CardsEntity> findByUserId(Integer userId);
 }
