@@ -10,7 +10,11 @@ public interface MonthlyTransactionSummaryJpaRepository extends JpaRepository<Mo
 
     MonthlyTransactionSummaryEntity getByUserId(int userId);
 
-
+    @Query("SELECT mts " +
+            "FROM MonthlyTransactionSummaryEntity mts " +
+            "WHERE mts.userId = :userId " +
+            "AND mts.year = :year " +
+            "AND mts.month = :month")
     MonthlyTransactionSummaryEntity getByUserIdAndYearMonth(int userId, int year, int month);
 
     @Query("SELECT AVG(ms.receivedBenefitAmount)" +
