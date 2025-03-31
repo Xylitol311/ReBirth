@@ -11,7 +11,8 @@ import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyConsumption
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyTransactionSummaryJpaRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardsJpaRepository;
-import com.kkulmoo.rebirth.card.CardEntity;
+import com.kkulmoo.rebirth.card.infrastructure.entity.BenefitTemplateEntity;
+import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.repository.UserJpaRepository;
@@ -76,9 +77,9 @@ public class MonthlyTransactionScheduler {
                 .build();
 
         int reportId = monthlyTransactionSummaryJpaRepository.save(monthlyTransactionSummary).getReportId();
-        MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getById(reportId);
-        List<CardEntity> cards = cardsJpaRepository.getByUserId(user.getUserId());
-        for(CardEntity card : cards) {
+        MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getReferenceById(reportId);
+        List<CardsEntity> cards = cardsJpaRepository.getByUserId(user.getUserId());
+        for(CardsEntity card : cards) {
 
             createReportCards(card, report);
 
@@ -87,7 +88,7 @@ public class MonthlyTransactionScheduler {
     }
 
     @Transactional
-    public void createReportCards(CardEntity card, MonthlyTransactionSummaryEntity report) {
+    public void createReportCards(CardsEntity card, MonthlyTransactionSummaryEntity report) {
         // 카드별 혜택, 사용금액 0,
         ReportCardsEntity reportCardsEntity = ReportCardsEntity
                 .builder()
@@ -99,7 +100,7 @@ public class MonthlyTransactionScheduler {
                 .spendingTier(card.getSpendingTier())
                 .build();
         int reportCardId = reportCardsJpaRepository.save(reportCardsEntity).getReportCardId();
-        ReportCardsEntity reportCard = reportCardsJpaRepository.getById(reportCardId);
+        ReportCardsEntity reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
 //        // 보유카드의 카드 템플릿을 확인하여, 실적구간을 고려한 혜택 템플릿을 모두 가져옴
 //        List<BenefitTemplateEntity> benefitTemplates = benefitTemplateJpaRepository.getByCardTemplateIdAndSpendingTier(card.getCardTemplateId, card.getSpendingTier);
 //        for(BenefitTemplateEntity benefit : benefitTemplates) {
@@ -112,15 +113,15 @@ public class MonthlyTransactionScheduler {
         ReportCardCategoriesEntity reportCardCategoriesEntity = ReportCardCategoriesEntity
                 .builder()
                 .reportCardId(reportCard.getReportCardId())
-                .categoryId(benefit.getCategoryId())
+                .categoryId(benefit.getCategory().getCategoryId())
 //                .merchantId(benefit.getMerchantId())
                 .amount(0)
                 .receivedBenefitAmount(0)
                 .count(0)
                 .createdAt(reportCard.getCreatedAt())
                 .build();
-        int reportCardCategoryId = reportCardCategoriesJpaRepository.save(reportCardCategoriesEntity).getId();
-        return reportCardCategoriesJpaRepository.getById(reportCardCategoryId);
+        int reportCardCategoryId = reportCardCategoriesJpaRepository.save(reportCardCategoriesEntity).getReportCategoryId();
+        return reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
     }
 
     @Transactional
@@ -142,10 +143,10 @@ public class MonthlyTransactionScheduler {
 
         String question = "다음은 " + user.getUserName() + "님의 한달간 소비 내역이야. 요약해줘.\n";
 
-        List<Object[]> spendingByCategory = getTotalSpendingByCategory(user, year, month);
-        for(Object[] row : spendingByCategory) {
-            String category = (String) row[0];
-            question = question.concat(category+"카테고리 지출 : "+row[1]+"원\n");
+        List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
+        for(ReportCategoryDTO row : spendingByCategory) {
+            String category = row.getCategory();
+            question = question.concat(category+"카테고리 지출 : "+row.getAmount()+"원\n");
         }
         question = question.concat("과소비성향 : "+pattern[0]+"\n");
         question = question.concat("소비변동성 : "+pattern[1]+"\n");
@@ -208,10 +209,10 @@ public class MonthlyTransactionScheduler {
         extrovertCategories.put("택시",1);
 
         // 카테고리별 지출 가져오기
-        List<Object[]> spendingByCategory = getTotalSpendingByCategory(user, year, month);
+        List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
         int extrovertSpendAmount = 0;
-        for(Object[] spending : spendingByCategory) {
-            if(extrovertCategories.containsKey((String)spending[0])) extrovertSpendAmount += (Integer)spending[1];
+        for(ReportCategoryDTO spending : spendingByCategory) {
+            if(extrovertCategories.containsKey(spending.getCategory())) extrovertSpendAmount += spending.getAmount();
         }
         int extrovert = (int)(100* ((float)extrovertSpendAmount) / report.getTotalSpending());
 
