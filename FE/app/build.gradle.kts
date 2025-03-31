@@ -42,7 +42,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -90,4 +89,5 @@ dependencies {
     
     // 권한 요청을 위한 라이브러리
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+    implementation("io.coil-kt:coil-compose:2.4.0")
 }

@@ -3,14 +3,11 @@ package com.example.fe.ui.screens.payment
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fe.data.model.payment.PaymentStatus
 import com.example.fe.data.model.payment.TokenInfo
 import com.example.fe.data.repository.PaymentRepository
-import com.example.fe.data.model.payment.PaymentEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class PaymentViewModel : ViewModel() {
@@ -27,10 +24,14 @@ class PaymentViewModel : ViewModel() {
     // 모든 카드의 토큰 정보
     private val _cardTokens = MutableStateFlow<List<TokenInfo>>(emptyList())
     val cardTokens: StateFlow<List<TokenInfo>> = _cardTokens
+
+    // API에서 가져온 카드 정보
+    private val _cards = MutableStateFlow<List<PaymentCardInfo>>(emptyList())
+    val cards: StateFlow<List<PaymentCardInfo>> = _cards
     
-    // 현재 선택된 카드 ID
-    private val _selectedCardId = MutableStateFlow<String?>(null)
-    val selectedCardId: StateFlow<String?> = _selectedCardId
+    // 현재 선택된 카드 이름 (cardId 대신 cardName 사용)
+    private val _selectedCardName = MutableStateFlow<String?>(null)
+    val selectedCardName: StateFlow<String?> = _selectedCardName
     
     // 사용자 ID (실제 앱에서는 로그인 정보에서 가져와야 함)
     private val userId = "2" // 임시 사용자 ID
@@ -46,6 +47,19 @@ class PaymentViewModel : ViewModel() {
                 .onSuccess { tokens ->
                     Log.e("PaymentViewModel", "initializePaymentProcess getPaymentTokens success")
                     _cardTokens.value = tokens
+                    
+                    // API 응답에서 카드 정보 추출 (추천 카드 제외)
+                    val apiCards = tokens
+                        .filter { it.cardName != "추천카드" }  // 추천 카드 제외
+                        .map { tokenInfo ->
+                            PaymentCardInfo(
+                                cardName = tokenInfo.cardName ?: "",  // cardName을 주요 식별자로 사용
+                                cardImageUrl = tokenInfo.cardImgUrl ?: "",
+                                constellationInfo = tokenInfo.cardConstellationInfo ?: "{}"
+                            )
+                        }
+                    _cards.value = apiCards
+                    
                     _paymentState.value = PaymentState.TokensReceived(tokens)
                     
                     // 토큰을 받은 후 바로 SSE 연결 시작
@@ -62,21 +76,10 @@ class PaymentViewModel : ViewModel() {
         }
     }
     
-    // 카드 선택 시 호출 - 기존 SSE 연결 종료 후 새 카드로 SSE 연결 시작
-    fun selectCard(cardId: String) {
-
-        // 기존 SSE 연결 종료
-//        paymentRepository.disconnectFromPaymentEvents()
-
-        _selectedCardId.value = cardId
-
-        // 선택된 카드의 토큰 찾기
-
-//        if (selectedToken != null) {
-//            // 카드 선택 시 바로 SSE 연결 시작
-//            Log.e("PaymentViewModel", "Starting SSE connection for selected card with token: $selectedToken")
-//            connectToPaymentEvents(selectedToken)
-//        }
+    // 카드 선택 시 호출 - cardName 기반으로 변경
+    fun selectCard(cardName: String) {
+        _selectedCardName.value = cardName
+        Log.d("PaymentViewModel", "카드 선택됨: $cardName")
     }
     
     // SSE 연결 시작
@@ -181,20 +184,21 @@ class PaymentViewModel : ViewModel() {
         data class Error(val message: String) : PaymentState()
     }
     
-    // 특정 카드의 토큰 가져오기
-    fun getTokenForCard(cardId: String): String? {
-        // 카드 ID 매핑 (앱 ID -> 서버 ID)
-        val serverCardId = when(cardId) {
-            "card1" -> "000"
-            "card2" -> "f662c4d2-6ec2-473c-9c07-de23530211ea"
-            else -> cardId
+    // 특정 카드의 토큰 가져오기 (cardName 기반으로 변경)
+    fun getTokenForCard(cardName: String): String? {
+        // 카드 이름으로 토큰 찾기
+        val token = _cardTokens.value.find { it.cardName == cardName }?.token
+        
+        // 추천 카드 토큰 가져오기 (cardName이 "추천카드"인 항목)
+        if (cardName == "AUTO") {
+            return _cardTokens.value.find { it.cardName == "추천카드" }?.token
         }
         
-        // 매핑된 ID로 토큰 찾기
-        val token = _cardTokens.value.find { it.cardId == serverCardId }?.token
-        
-//        Log.e("PaymentViewModel", "getTokenForCard: cardId=$cardId, serverCardId=$serverCardId, token=$token")
-        
         return token
+    }
+
+    // 추천 카드 토큰 가져오기
+    fun getAutoCardToken(): String? {
+        return _cardTokens.value.find { it.cardName == "추천카드" }?.token
     }
 } 

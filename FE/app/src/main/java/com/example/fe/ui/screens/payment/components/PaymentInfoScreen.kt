@@ -27,7 +27,6 @@ import com.example.fe.ui.screens.payment.PaymentCardInfo
 
 @Composable
 fun PaymentInfoScreen(
-    qrCode: String,
     cards: List<PaymentCardInfo>,
     onClose: () -> Unit,
     onPaymentComplete: () -> Unit,
@@ -106,7 +105,7 @@ fun PaymentInfoScreen(
             ) {
                 // 별자리 뷰
                 DynamicZodiacView(
-                    cardId = selectedCard?.id ?: "card1",
+                    cardId = selectedCard?.cardName ?: "card1",
                     useJSON = false,
                     useBackend = false,
                     modifier = Modifier.size(180.dp)
@@ -218,12 +217,6 @@ fun PaymentCardItem(
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = card.cardNumber,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 16.sp
-                )
             }
             
             // 카드 로고 또는 아이콘 (예시)

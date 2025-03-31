@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,17 +14,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.TabPosition
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
-import androidx.compose.ui.Alignment.Companion.BottomCenter
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -39,7 +32,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.LocalConfiguration
 
 // 카드 데이터 클래스
 data class CardInfo(
@@ -62,8 +54,6 @@ data class FilterTag(
 
 @Composable
 fun CardRecommendScreen(
-    modifier: Modifier = Modifier,
-    onScrollOffsetChange: (Float) -> Unit = {},
     onCardClick: (CardInfo) -> Unit = {}
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
@@ -399,12 +389,6 @@ fun CardCarousel(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center // 각 페이지 내에서 카드 중앙 정렬
             ) {
-                // 현재 페이지와의 거리 계산
-                val pageOffset = (
-                        (pagerState.currentPage - page) + pagerState
-                            .currentPageOffsetFraction
-                        ).absoluteValue
-
                 // 현재 카드는 더 크게, 다른 카드는 작게
                 val scale = if (page == pagerState.currentPage) 1.2f else 0.8f
                 
@@ -477,107 +461,6 @@ fun CardCarousel(
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CardItem(
-    card: CardInfo,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .width(300.dp) // 너비 증가
-            .clickable { onClick() },
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // 카드 이미지
-        Box(
-            modifier = Modifier
-                .width(300.dp) // 너비 증가
-                .height(420.dp) // 높이 증가 (비율 유지)
-                .clip(RoundedCornerShape(16.dp))
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.card),
-                contentDescription = card.name,
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(
-                        rotationZ = 90f // 세로로 회전
-                    )
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // 카드 혜택 및 이름
-        Text(
-            text = "카페 10% 할인",
-            color = Color.Black,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = card.name,
-            color = Color.DarkGray,
-            fontSize = 12.sp
-        )
-    }
-}
-
-@Composable
-fun RecommendedCardItem(
-    card: CardInfo,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF3A3A50)
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // 카드 이미지 (실제로는 Image 컴포넌트로 대체)
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(Color(0xFF4A4A60), RoundedCornerShape(8.dp))
-            )
-            
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp)
-            ) {
-                Text(
-                    text = card.name,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Row(
-                    modifier = Modifier.padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    card.icons.forEach { icon ->
-                        Text(
-                            text = icon,
-                            color = Color.Gray,
-                            fontSize = 12.sp
-                        )
                     }
                 }
             }

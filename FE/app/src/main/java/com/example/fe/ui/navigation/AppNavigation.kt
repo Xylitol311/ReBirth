@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,16 +44,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fe.ui.screens.home.HomeScreenContent
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.fe.ui.screens.myCard.CardItem
 import com.example.fe.ui.screens.myCard.CardDetailScreen
 import com.example.fe.ui.screens.myCard.CardManagementScreen
 import android.util.Log
+import androidx.compose.runtime.collectAsState
 import com.example.fe.ui.screens.payment.components.QRScannerScreen
 import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
-import com.example.fe.ui.screens.payment.PaymentCardInfo
+import com.example.fe.ui.screens.payment.PaymentViewModel
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
@@ -65,17 +64,37 @@ object NavRoutes {
 
 @Composable
 fun AppNavigation() {
-    val context = LocalContext.current
     val navController = rememberNavController()
 
-    // 로그아웃을 위한 ViewModel
-    val viewModel: OnboardingViewModel = viewModel(
-        factory = OnboardingViewModelFactory(context)
-    )
-
-    // 현재 경로 추적
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: BottomNavItem.Home.route
+    // 현재 경로 가져오기
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route ?: "home"
+    
+    // 뒤로가기 버튼 표시 여부 결정
+    val showBackButton = when {
+        currentRoute.startsWith("card_detail") -> true
+        currentRoute.startsWith("home_detail") -> true
+        currentRoute.startsWith("card_management") -> true
+        currentRoute == "payment" -> false
+        currentRoute == "calendar" -> false
+        currentRoute == "cardrecommend" -> false
+        currentRoute == "mycard" -> false
+        currentRoute == "home" -> false
+        else -> false
+    }
+    
+    // 화면 제목 설정
+    val title = when {
+        currentRoute.startsWith("card_detail") -> "카드 상세"
+        currentRoute.startsWith("home_detail") -> "거래 상세"
+        currentRoute.startsWith("card_management") -> "카드 관리"
+        currentRoute == "payment" -> "결제"
+        currentRoute == "calendar" -> "캘린더"
+        currentRoute == "cardrecommend" -> "카드 추천"
+        currentRoute == "mycard" -> "내 카드"
+        currentRoute == "home" -> "홈"
+        else -> ""  // 기본값은 빈 문자열 (RE 로고만 표시)
+    }
 
     // 공유 스크롤 오프셋 상태
     var scrollOffset by remember { mutableStateOf(0f) }
@@ -92,12 +111,6 @@ fun AppNavigation() {
     // 현재 선택된 탭 인덱스 추적
     var currentTabIndex by remember { mutableStateOf(0) }
     var previousTabIndex by remember { mutableStateOf(0) }
-
-    // 코루틴 스코프
-    val coroutineScope = rememberCoroutineScope()
-
-    // 화면 전환 애니메이션을 위한 상태
-    val isNavigatingBack = remember { mutableStateOf(false) }
 
     // 탭 인덱스 맵
     val tabIndices = mapOf(
@@ -152,13 +165,6 @@ fun AppNavigation() {
         label = "bottomBarAlpha"
     )
 
-    // 상단 바 애니메이션 값
-    val topBarAlpha by animateFloatAsState(
-        targetValue = if (topBarVisible) 1f else 0f,
-        animationSpec = tween(300, easing = EaseInOut),
-        label = "topBarAlpha"
-    )
-
     // 네비게이션 바 슬라이드 애니메이션 값
     val bottomBarOffset by animateFloatAsState(
         targetValue = if (bottomBarVisible) 0f else 100f,
@@ -176,36 +182,15 @@ fun AppNavigation() {
         label = "bottomPadding"
     )
 
-    // BottomNavBar에 카메라 클릭 콜백 전달
-    val isPaymentScreen = currentRoute == "payment"
-
     Scaffold(
         topBar = {
-            // QR 스캐너가 표시될 때는 상단 바 숨김
-            if (topBarVisible) {
-                TopBar(
-                    title = "이번 달 사용 내역",
-                    showBackButton = true,
-                    onBackClick = {
-                        // 페이드아웃 시작
-                        isNavigatingBack.value = true
-                        // 약간의 지연 후 네비게이션
-                        coroutineScope.launch {
-                            delay(200)
-                            // 뒤로가기 시 애니메이션 방향 설정
-                            transitionDirection = -1
-                            // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
-                            cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
-                            animationCounter++
-                            navController.popBackStack()
-                        }
-                    },
-                    onLogoutClick = {
-                        // 로그아웃 처리
-                        viewModel.logout()
-                    }
-                )
-            }
+            TopBar(
+                title = title,
+                showBackButton = showBackButton,
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
         },
         bottomBar = {
             // QR 스캐너가 표시될 때는 네비게이션 바 숨김
@@ -448,11 +433,6 @@ fun AppNavigation() {
                             )
                         }
                     ) {
-                        CardRecommendScreen(
-                            onScrollOffsetChange = { offset ->
-                                scrollOffset = offset
-                            }
-                        )
                     }
 
                     // 홈 상세 화면 추가
@@ -559,38 +539,12 @@ fun AppNavigation() {
 
         // 결제 정보 화면 (오버레이로 표시)
         if (showPaymentInfo) {
-            // 카드 목록 (PaymentScreen에서 가져온 더미 데이터)
-            val cards = listOf(
-                PaymentCardInfo(
-                    id = "tes_card_unique_number",
-                    cardNumber = "8801062318551",
-                    cardName = "토스 신한카드 Mr.Life"
-                ),
-                PaymentCardInfo(
-                    id = "000",
-                    cardNumber = "8801062318552",
-                    cardName = "삼성카드 taptap O"
-                ),
-                PaymentCardInfo(
-                    id = "card3",
-                    cardNumber = "8801062318553",
-                    cardName = "현대카드 ZERO"
-                ),
-                PaymentCardInfo(
-                    id = "card4",
-                    cardNumber = "8801062318554",
-                    cardName = "KB국민 톡톡"
-                ),
-                PaymentCardInfo(
-                    id = "card5",
-                    cardNumber = "8801062318555",
-                    cardName = "하나 원큐"
-                )
-            )
+            // 더미 데이터 제거하고 ViewModel에서 카드 정보 가져오기
+            val paymentViewModel: PaymentViewModel = viewModel()
+            val cards by paymentViewModel.cards.collectAsState()
             
             PaymentInfoScreen(
-                qrCode = scannedQRCode,
-                cards = cards,
+                cards = cards,  // API에서 가져온 카드 목록 사용
                 onClose = { showPaymentInfo = false },
                 onPaymentComplete = {
                     // 결제 완료 후 홈 화면으로 이동

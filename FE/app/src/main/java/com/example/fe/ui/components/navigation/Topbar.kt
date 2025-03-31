@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +32,7 @@ import com.example.fe.R
 
 @Composable
 fun TopBar(
-    title: String = "RE",
+    title: String = "",
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
@@ -44,55 +45,63 @@ fun TopBar(
             .height(60.dp),
         color = Color.Black
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
-            if (showBackButton) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // 왼쪽 영역 (뒤로가기 버튼 또는 RE 로고)
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (showBackButton) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "뒤로가기",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable { onBackClick() }
+                    )
+                } else {
+                    Text(
+                        text = "RE",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            
+            // 중앙 영역 (타이틀)
+            if (title.isNotEmpty()) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            
+            // 오른쪽 영역 (로그아웃 및 프로필 버튼)
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "뒤로가기",
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "로그아웃",
                     tint = Color.White,
                     modifier = Modifier
                         .size(28.dp)
-                        .clickable { onBackClick() }
+                        .clickable { onLogoutClick() }
                 )
+                
                 Spacer(modifier = Modifier.width(16.dp))
-            }
-
-            // 제목 (기본값은 "RE")
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-            )
-
-            // 로그아웃 버튼
-            Icon(
-                imageVector = Icons.Default.ExitToApp,
-                contentDescription = "로그아웃",
-                tint = Color.White,
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { onLogoutClick() }
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // 프로필 아이콘
-            Box(
-                modifier = Modifier.padding(top = 0.dp, bottom = 4.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
+                
                 Icon(
                     modifier = Modifier
                         .size(36.dp)

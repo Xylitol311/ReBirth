@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit
 
 class PaymentSseClient {
     private val TAG = "PaymentSseClient"
-    private val gson = Gson()
     private var eventSource: EventSource? = null
     
     private val client = OkHttpClient.Builder()
@@ -98,7 +97,6 @@ class PaymentSseClient {
         
         try {
             eventSource = EventSources.createFactory(client).newEventSource(request, listener)
-            this@PaymentSseClient.eventSource = eventSource
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create EventSource", e)
             trySend(PaymentEvent("EventSource 생성 실패: ${e.message}"))

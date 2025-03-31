@@ -40,7 +40,6 @@ import kotlin.math.abs
 import kotlin.math.pow
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.CircleShape
@@ -167,8 +166,10 @@ fun HomeRecCard() {
                             .fillMaxWidth()
                     ) {
                         HorizontalCardLayout(
-                            cardImage = painterResource(id = card.cardImage),
-                            modifier = Modifier.fillMaxWidth()
+                            cardName = card.title,
+                            cardImageUrl = "",
+                            cardImage = card.cardImage,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                         
                         // 선택된 카드에만 표시되는 추가 효과 (체크 아이콘)
@@ -250,13 +251,3 @@ private fun lerp(start: Float, end: Float, fraction: Float): Float {
     return start + (end - start) * fraction
 }
 
-private fun lerp(start: Dp, end: Dp, fraction: Float): Dp {
-    return start + (end - start) * fraction
-}
-
-// 이징 함수
-private object EaseOutQuart {
-    fun transform(x: Float): Float {
-        return 1f - (1f - x).pow(4)
-    }
-}

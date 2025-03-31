@@ -1,7 +1,6 @@
 package com.example.fe.ui.screens.payment.components
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,16 +29,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
@@ -50,129 +46,104 @@ import com.google.zxing.MultiFormatWriter
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.*
-import kotlin.math.absoluteValue
 
 @Composable
 fun PaymentBarcodeQRSection(
     remainingTime: Int,
     refreshTrigger: Int,
     onRefresh: () -> Unit,
-    paymentToken: String? = null,
+    paymentToken: String?,
     modifier: Modifier = Modifier
 ) {
-    var isQRMode by remember { mutableStateOf(false) }
-    var isRefreshing by remember { mutableStateOf(false) }
-    
-    // 서버에서 받은 토큰 또는 가짜 토큰 사용
-    val fullToken = remember(refreshTrigger, paymentToken) {
-        paymentToken ?: "MOCK_TOKEN_${System.currentTimeMillis()}"
-    }
-    
-    val barcodeToken = remember(fullToken) {
-        fullToken.take(20)
-    }
-    
-    val qrToken = remember(fullToken) {
-        fullToken
-    }
-    
-    // 새로고침 효과
-    LaunchedEffect(refreshTrigger) {
-        isRefreshing = true
-        delay(300)
-        isRefreshing = false
-    }
-    
-    Box(
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
     ) {
-        // 바코드 영역 (왼쪽)
-        Column(
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier
-                .width(250.dp)
-                .align(Alignment.TopStart)
-                .padding(top = 8.dp)
-                .graphicsLayer(
-                    alpha = if (isRefreshing) 0.3f else 1f
-                )
-        ) {
-            // 바코드 - 토큰 기반 데이터 사용
+        // 바코드 표시
+        if (paymentToken != null) {
             BarcodeView(
-                barcodeData = barcodeToken,
+                barcodeData = paymentToken,
                 refreshTrigger = refreshTrigger,
                 barcodeFormat = BarcodeFormat.CODE_128,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(80.dp)
+                    .padding(horizontal = 16.dp)
             )
             
-            // 바코드 번호 (사용자에게는 원래 카드 번호만 표시)
-            Text(
-                text = barcodeToken.take(20),
-                fontSize = 14.sp,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            )
-            Log.d("PaymentBarcodeQRSection", "barcodeToken: $barcodeToken")
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
-            // 타이머 및 새로고침 버튼 (왼쪽 하단)
+            // QR 코드와 새로고침 버튼을 나란히 배치
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             ) {
-                // 새로고침 버튼
-                Box(
+                // QR 코드 표시
+                QRCodeView(
+                    qrData = paymentToken,
+                    refreshTrigger = refreshTrigger,
+                    errorCorrectionLevel = ErrorCorrectionLevel.M,
+                    margin = 0,
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF2D2A57))
-                        .clickable { onRefresh() },
-                    contentAlignment = Alignment.Center
+                        .size(130.dp)
+                )
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                // 새로고침 버튼과 타이머를 세로로 배치
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_refresh),
-                        contentDescription = "새로고침",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                    // 새로고침 버튼
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF2D2A57))
+                            .clickable { onRefresh() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_refresh),
+                            contentDescription = "새로고침",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // 타이머 표시
+                    Text(
+                        text = "${remainingTime}초",
+                        color = if (remainingTime <= 10) Color.Red else Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-                
-                // 타이머
-                Text(
-                    text = "$remainingTime",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
             }
-        }
-        
-        // QR 코드
-        Box(
-            modifier = Modifier
-                .size(130.dp)
-                .align(Alignment.TopEnd)
-                .padding(top = 8.dp, end = 8.dp)
-                .graphicsLayer(
-                    alpha = if (isRefreshing) 0.3f else 1f
-                )
-        ) {
-            QRCodeView(
-                qrData = qrToken,
-                refreshTrigger = refreshTrigger,
-                errorCorrectionLevel = ErrorCorrectionLevel.M,
-                margin = 0,
-                modifier = Modifier.fillMaxSize()
+        } else {
+            // 토큰이 없는 경우 로딩 표시
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier
+                    .size(36.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = "토큰을 가져오는 중...",
+                color = Color.White,
+                fontSize = 16.sp
             )
         }
     }
@@ -334,20 +305,6 @@ fun QRCodeView(
             Box(
                 modifier = Modifier.fillMaxSize()
             )
-        }
-    }
-}
-
-// 실제 토큰과 동일한 형식의 모의 토큰 생성 함수
-
-// 실제 토큰과 유사한 Base64 문자열 생성 함수
-private fun generateBase64String(random: Random, length: Int): String {
-    // 실제 토큰에서 사용된 문자셋 분석
-    val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
-    
-    return buildString {
-        repeat(length) {
-            append(charset[random.nextInt(charset.length)])
         }
     }
 }

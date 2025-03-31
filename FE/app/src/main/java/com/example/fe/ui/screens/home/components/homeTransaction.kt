@@ -56,10 +56,12 @@ fun HomeTransaction() {
                 ) {
                     // 카드 이미지 - HorizontalCardLayout 사용
                     HorizontalCardLayout(
-                        cardImage = painterResource(id = R.drawable.card),
+                        cardName = "GS25 편의점 추천 카드",
+                        cardImageUrl = "",
+                        cardImage = R.drawable.card,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(100.dp)
+                            .height(100.dp),
                     )
                     
                     // 슬픈 이모지
@@ -118,10 +120,12 @@ fun HomeTransaction() {
                         .padding(vertical = 8.dp)
                 ) {
                     HorizontalCardLayout(
-                        cardImage = painterResource(id = R.drawable.card),
+                        cardName = "삼성 IDONE 카드",
+                        cardImageUrl = "",
+                        cardImage = R.drawable.card,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(100.dp)
+                            .height(100.dp),
                     )
                 }
                 
