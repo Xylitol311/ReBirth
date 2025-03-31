@@ -16,10 +16,6 @@ public class CardTemplate {
 
 	private String cardImgUrl;
 
-	private String cardDeityName;
-
-	private String cardDeityImgUrl;
-
 	private int annualFee;
 
 	private String cardType;
@@ -27,13 +23,5 @@ public class CardTemplate {
 	private String cardDetailInfo;
 
 	private String cardConstellationInfo;
-
-	private String benefitConditions;
-
-	private String lastMonthUsageRanges;
-
-	private String godImgUrl;
-
-	private String godName;
 
 }
