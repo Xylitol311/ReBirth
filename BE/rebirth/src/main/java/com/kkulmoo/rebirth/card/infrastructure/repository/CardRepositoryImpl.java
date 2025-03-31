@@ -1,20 +1,18 @@
 package com.kkulmoo.rebirth.card.infrastructure.repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Repository;
-
 import com.kkulmoo.rebirth.card.domain.Card;
 import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.CardTemplate;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardEntityMapper;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardTemplateJpaRepository;
-import com.kkulmoo.rebirth.shared.entity.CardEntity;
+import com.kkulmoo.rebirth.shared.entity.CardsEntity;
 import com.kkulmoo.rebirth.user.domain.UserId;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 // JPA 구현체
 @Repository
@@ -26,7 +24,7 @@ public class CardRepositoryImpl implements CardRepository {
 
 	@Override
 	public Card save(Card card) {
-		CardEntity cardEntity = cardJpaRepository.save(cardEntityMapper.toEntity(card));
+		CardsEntity cardEntity = cardJpaRepository.save(cardEntityMapper.toEntity(card));
 		return cardEntityMapper.toCard(cardEntity);
 	}
 

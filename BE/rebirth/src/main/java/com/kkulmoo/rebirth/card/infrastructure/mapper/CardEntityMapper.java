@@ -1,10 +1,9 @@
 package com.kkulmoo.rebirth.card.infrastructure.mapper;
 
-import org.springframework.stereotype.Component;
-
 import com.kkulmoo.rebirth.card.domain.Card;
-import com.kkulmoo.rebirth.shared.entity.CardEntity;
+import com.kkulmoo.rebirth.shared.entity.CardsEntity;
 import com.kkulmoo.rebirth.user.domain.UserId;
+import org.springframework.stereotype.Component;
 
 /**
  * CardEntityMapper - Card와 CardEntity 간의 변환을 담당하는 매퍼 클래스
@@ -17,7 +16,7 @@ public class CardEntityMapper {
 	 * @param entity 변환할 CardEntity 객체
 	 * @return 변환된 Card 객체
 	 */
-	public Card toCard(CardEntity entity) {
+	public Card toCard(CardsEntity entity) {
 		if (entity == null) {
 			return null;
 		}
@@ -47,12 +46,12 @@ public class CardEntityMapper {
 	 * @param card 변환할 Card 객체
 	 * @return 변환된 CardEntity 객체
 	 */
-	public CardEntity toEntity(Card card) {
+	public CardsEntity toEntity(Card card) {
 		if (card == null) {
 			return null;
 		}
 
-		return CardEntity.builder()
+		return CardsEntity.builder()
 			.cardId(card.getCardId())
 			.userId(card.getUserId().getValue())
 			.cardTemplateId(card.getCardTemplateId())
