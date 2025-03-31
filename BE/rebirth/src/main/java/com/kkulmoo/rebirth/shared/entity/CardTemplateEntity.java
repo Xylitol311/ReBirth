@@ -30,15 +30,15 @@ public class CardTemplateEntity {
 
     @Column(name = "card_img_url", length = 255, nullable = false)
     private String cardImgUrl;
+    @Column(name = "annual_fee", nullable = false)
+    private int annualFee;
+
 
     @Column(name = "card_deity_name", length = 50)
     private String cardDeityName;
 
     @Column(name = "card_deity_img_url", length = 255)
     private String cardDeityImgUrl;
-
-    @Column(name = "annual_fee", nullable = false)
-    private int annualFee;
 
     @Column(name = "card_type", length = 10, nullable = false)
     private String cardType;
