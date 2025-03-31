@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
+import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
 import com.kkulmoo.rebirth.payment.application.service.PaymentOfflineEncryption;
 import com.kkulmoo.rebirth.payment.application.service.PaymentService;
 import com.kkulmoo.rebirth.payment.application.service.SseService;
@@ -82,7 +83,9 @@ public class SseController {
         //4. 결제 결과 반환하기
         sseService.sendToUser(userId, cardTransactionDTO.getApprovalCode());
 
-        return ResponseEntity.ok(cardTransactionDTO);
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"일회용 토큰 생성",cardTransactionDTO);
+
+        return ResponseEntity.ok(apiResponseDTO);
     }
 }
 
