@@ -1,25 +1,12 @@
 package com.kkulmoo.rebirth.card.infrastructure.entity;
 
+import com.kkulmoo.rebirth.card.domain.BenefitType;
+import com.kkulmoo.rebirth.card.domain.DiscountType;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
-import com.kkulmoo.rebirth.transactions.infrastructure.CategoryEntity;
-import com.kkulmoo.rebirth.transactions.infrastructure.MerchantEntity;
-import com.kkulmoo.rebirth.transactions.infrastructure.SubcategoryEntity;
+import jakarta.persistence.*;
+import lombok.*;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.util.List;
 
 @Entity
 @Table(name = "benefit_templates")
@@ -38,42 +25,44 @@ public class BenefitTemplateEntity {
 	@JoinColumn(name = "card_template_id", nullable = false)
 	private CardTemplateEntity cardTemplate;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "merchant_id")
-	private MerchantEntity merchant;
+	@Column(name = "category_id", columnDefinition = "integer[]")
+	private List<Integer> categoryIds;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "category_id", nullable = false)
-	private CategoryEntity category;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "subcategory_id", nullable = false)
-	private SubcategoryEntity subcategory;
-
-	@Column(name = "max_benefit_limit")
-	private Integer maxBenefitLimit;
-
-	@Column(name = "max_benefit_count_limit_month")
-	private Short maxBenefitCountLimitMonth;
-
-	@Column(name = "max_benefit_count_limit_year")
-	private Short maxBenefitCountLimitYear;
+	@Column(name = "subcategory_id", columnDefinition = "integer[]")
+	private List<Integer> subcategoryIds;
 
 	@Column(name = "benefit_type", nullable = false)
-	private String benefitType;
+	@Enumerated(EnumType.STRING)
+	private BenefitType benefitType;
 
-	@Column(name = "benefit_amount")
-	private Integer benefitAmount;
+	@Column(name = "benefit_method", nullable = false)
+	private Short benefitMethod;
 
-	@Column(name = "spending_tier")
-	private Short spendingTier;
+	@Column(name = "performance_range", nullable = false)
+	private Integer[] performanceRange;
 
-	@Column(name = "spending_min_amount")
-	private Integer spendingMinAmount;
+	@Column(name = "performance_range_by_benefit")
+	private Double[] performanceRangeByBenefit;
 
-	@Column(name = "spending_max_amount")
-	private Integer spendingMaxAmount;
+	@Column(name = "merchant_info", nullable = false)
+	private Boolean merchantInfo;
 
-	@Column(name = "coverage_type", nullable = false)
-	private String coverageType;
+	@Column(name = "merchant_list")
+	private String[] merchantList;
+
+	@Column(name = "payment_range")
+	private Integer[] paymentRange;
+
+	@Column(name = "benefit_usage_limit")
+	private Short[] benefitUsageLimit;
+
+	@Column(name = "benefit_usage_amount")
+	private Short[] benefitUsageAmount;
+
+	@Column(name = "discount_type")
+	@Enumerated(EnumType.STRING)
+	private DiscountType discountType;
+
+	@Column(name = "additional_info")
+	private String additionalInfo;
 }

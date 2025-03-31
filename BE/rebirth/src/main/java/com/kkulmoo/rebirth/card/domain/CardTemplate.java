@@ -20,7 +20,7 @@ public class CardTemplate {
 
 	private String cardDeityImgUrl;
 
-	private int annualFee = 0;
+	private int annualFee;
 
 	private String cardType;
 
