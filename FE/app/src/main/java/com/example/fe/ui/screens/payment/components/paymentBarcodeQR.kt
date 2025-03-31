@@ -1,6 +1,7 @@
 package com.example.fe.ui.screens.payment.components
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -71,7 +72,7 @@ fun PaymentBarcodeQRSection(
     }
     
     val barcodeToken = remember(fullToken) {
-        fullToken.take(24)
+        fullToken.take(20)
     }
     
     val qrToken = remember(fullToken) {
@@ -111,7 +112,7 @@ fun PaymentBarcodeQRSection(
             
             // 바코드 번호 (사용자에게는 원래 카드 번호만 표시)
             Text(
-                text = barcodeToken.take(12) + "...",
+                text = barcodeToken.take(20),
                 fontSize = 14.sp,
                 color = Color.White,
                 textAlign = TextAlign.Center,
@@ -119,7 +120,7 @@ fun PaymentBarcodeQRSection(
                     .fillMaxWidth()
                     .padding(top = 8.dp)
             )
-            
+            Log.d("PaymentBarcodeQRSection", "barcodeToken: $barcodeToken")
             Spacer(modifier = Modifier.height(32.dp))
             
             // 타이머 및 새로고침 버튼 (왼쪽 하단)
@@ -338,39 +339,6 @@ fun QRCodeView(
 }
 
 // 실제 토큰과 동일한 형식의 모의 토큰 생성 함수
-private fun generateMockPaymentToken(cardNumber: String): String {
-    // 현재 시간을 밀리초로 가져옴
-    val timestamp = System.currentTimeMillis()
-    
-    // 난수 생성기
-    val random = Random(timestamp)
-    
-    // 첫 번째 부분 (28자)
-    val part1 = generateBase64String(random, 28)
-    
-    // 구분자
-    val separator = "f"
-    
-    // 두 번째 부분 (24자)
-    val part2 = generateBase64String(random, 24)
-    
-    // 두 번째 구분자
-    val separator2 = "f"
-    
-    // 세 번째 부분 (타임스탬프 - 13자로 고정)
-    val part3 = timestamp.toString().padEnd(13, '0').substring(0, 13)
-    
-    // 세 번째 구분자
-    val separator3 = "f"
-    
-    // 네 번째 부분 (나머지 길이를 채움)
-    val remainingLength = 144 - (part1.length + separator.length + part2.length + 
-                                separator2.length + part3.length + separator3.length)
-    val part4 = generateBase64String(random, remainingLength)
-    
-    // 모든 부분을 합쳐서 최종 토큰 생성 (총 144자)
-    return part1 + separator + part2 + separator2 + part3 + separator3 + part4
-}
 
 // 실제 토큰과 유사한 Base64 문자열 생성 함수
 private fun generateBase64String(random: Random, length: Int): String {

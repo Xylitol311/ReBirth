@@ -70,6 +70,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.okhttp3:okhttp-sse:4.11.0")
+    implementation("com.launchdarkly:okhttp-eventsource:4.1.0")
     implementation("com.google.accompanist:accompanist-pager:0.30.1")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.30.1")
     implementation("androidx.biometric:biometric:1.1.0")
@@ -79,4 +80,14 @@ dependencies {
 //    implementation("io.ktor:ktor-server-netty:2.3.4")
 //    implementation("io.ktor:ktor-server-host-common:2.3.4")
 
+    // CameraX 의존성
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
+    
+    // QR 코드 스캔을 위한 ML Kit
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    
+    // 권한 요청을 위한 라이브러리
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
 }

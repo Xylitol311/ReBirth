@@ -64,7 +64,8 @@ fun BottomNavBarPreview() {
 @Composable
 fun BottomNavBar(
     navController: NavController,
-    onTabSelected: (BottomNavItem) -> Unit = {}
+    onTabSelected: (BottomNavItem) -> Unit = {},
+    onCameraClick: () -> Unit = {}
 ) {
     val items = listOf(
         BottomNavItem.Home,
@@ -74,6 +75,10 @@ fun BottomNavBar(
         BottomNavItem.CardRecommend
     )
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val isPaymentScreen = currentRoute == "payment"
+
     NavigationBar(
         modifier = Modifier
             .fillMaxWidth()
@@ -81,9 +86,6 @@ fun BottomNavBar(
         containerColor = Color.Black,
         tonalElevation = 0.dp
     ) {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
-
         items.forEach { item ->
             NavigationBarItem(
                 icon = {
@@ -101,9 +103,11 @@ fun BottomNavBar(
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
+                                val iconRes = if (isPaymentScreen) R.drawable.ic_camera else item.icon
+                                
                                 Icon(
                                     modifier = Modifier.size(40.dp),
-                                    painter = painterResource(id = item.icon),
+                                    painter = painterResource(id = iconRes),
                                     contentDescription = null,
                                     tint = Color.White
                                 )
@@ -121,15 +125,19 @@ fun BottomNavBar(
                 label = null,
                 selected = currentRoute == item.route,
                 onClick = {
-                    onTabSelected(item)
-                    navController.navigate(item.route) {
-                        navController.graph.startDestinationRoute?.let { route ->
-                            popUpTo(route) {
-                                saveState = true
+                    if (isPaymentScreen && item == BottomNavItem.Payment) {
+                        onCameraClick()
+                    } else {
+                        onTabSelected(item)
+                        navController.navigate(item.route) {
+                            navController.graph.startDestinationRoute?.let { route ->
+                                popUpTo(route) {
+                                    saveState = true
+                                }
                             }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(

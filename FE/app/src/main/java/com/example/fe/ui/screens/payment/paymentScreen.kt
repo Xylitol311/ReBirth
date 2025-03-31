@@ -48,6 +48,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.delay
 import android.util.Log
+import android.net.ConnectivityManager
+import android.content.Context
+import com.example.fe.ui.screens.payment.components.QRScannerScreen
 
 // 카드 정보 데이터 클래스
 data class PaymentCardInfo(
@@ -64,6 +67,9 @@ fun PaymentScreen(
     viewModel: PaymentViewModel = viewModel(),
     onNavigateToHome: () -> Unit = {}
 ) {
+    // QR 스캐너 표시 여부
+    var showQRScanner by remember { mutableStateOf(false) }
+    
     // 스크롤 오프셋 추적 (우주 배경 효과용)
     var scrollOffset by remember { mutableFloatStateOf(0f) }
     val lazyListState = rememberLazyListState()
@@ -126,6 +132,13 @@ fun PaymentScreen(
     // 타이머 상태
     var remainingTime by remember { mutableStateOf(60) }
     
+    // 네트워크 연결 상태 확인
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+    val isConnected = networkCapabilities != null
+
+    Log.d("PaymentScreen", "네트워크 연결 상태: $isConnected")
+    
     // 화면 진입 시 모든 카드의 토큰 요청
     LaunchedEffect(Unit) {
         viewModel.initializePaymentProcess()
@@ -166,14 +179,10 @@ fun PaymentScreen(
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val cardWidth = 280.dp
     val horizontalPadding = (screenWidth - cardWidth) / 2
-    
-    // 디버깅용 - 파일 경로 표시
-    val isDebugMode = true // 개발 중에만 true로 설정
-    
+
     // 결제 상태 관찰
     val paymentState by viewModel.paymentState.collectAsState()
-    val paymentInfo by viewModel.paymentInfo.collectAsState()
-        
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -219,7 +228,7 @@ fun PaymentScreen(
                 if (selectedCard != null) {
                     // 선택된 카드의 토큰 가져오기
                     val cardToken = viewModel.getTokenForCard(selectedCard!!.id)
-                    Log.e("PaymentScreen", "Card: ${selectedCard!!.id}, Token: $cardToken")
+//                    Log.e("PaymentScreen", "Card: ${selectedCard!!.id}, Token: $cardToken")
                     
                     PaymentBarcodeQRSection(
                         remainingTime = remainingTime,
@@ -342,25 +351,7 @@ fun PaymentScreen(
                         )
                         
                         Spacer(modifier = Modifier.height(8.dp))
-                        
-                        paymentInfo?.let { info ->
-                            Text(
-                                text = "금액: ${info.amount ?: "-"}원",
-                                color = Color.White,
-                                fontSize = 16.sp
-                            )
-                            
-                            if (info.merchantName != null) {
-                                Text(
-                                    text = "가맹점: ${info.merchantName}",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
+
                         Button(
                             onClick = onNavigateToHome,
                             colors = ButtonDefaults.buttonColors(

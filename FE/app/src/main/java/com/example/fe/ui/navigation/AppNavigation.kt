@@ -51,6 +51,10 @@ import androidx.navigation.navArgument
 import com.example.fe.ui.screens.myCard.CardItem
 import com.example.fe.ui.screens.myCard.CardDetailScreen
 import com.example.fe.ui.screens.myCard.CardManagementScreen
+import android.util.Log
+import com.example.fe.ui.screens.payment.components.QRScannerScreen
+import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
+import com.example.fe.ui.screens.payment.PaymentCardInfo
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
@@ -123,15 +127,36 @@ fun AppNavigation() {
         }
     )
 
+    // QR 스캐너 표시 여부
+    var showQRScanner by remember { mutableStateOf(false) }
+
+    // 결제 정보 화면 표시 여부
+    var showPaymentInfo by remember { mutableStateOf(false) }
+
+    // 스캔된 QR 코드
+    var scannedQRCode by remember { mutableStateOf("") }
+
     // 네비게이션 바 애니메이션을 위한 상태
     val bottomBarVisible = currentRoute != NavRoutes.HOME_DETAIL && 
-                          !currentRoute.startsWith("card_detail")
+                          !currentRoute.startsWith("card_detail") &&
+                          !showQRScanner &&
+                          !showPaymentInfo  // 결제 정보 화면에서도 네비게이션 바 숨김
+
+    // 상단 바 표시 여부
+    val topBarVisible = !showQRScanner && !showPaymentInfo  // 결제 정보 화면에서도 상단 바 숨김
 
     // 네비게이션 바 애니메이션 값
     val bottomBarAlpha by animateFloatAsState(
         targetValue = if (bottomBarVisible) 1f else 0f,
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomBarAlpha"
+    )
+
+    // 상단 바 애니메이션 값
+    val topBarAlpha by animateFloatAsState(
+        targetValue = if (topBarVisible) 1f else 0f,
+        animationSpec = tween(300, easing = EaseInOut),
+        label = "topBarAlpha"
     )
 
     // 네비게이션 바 슬라이드 애니메이션 값
@@ -151,74 +176,72 @@ fun AppNavigation() {
         label = "bottomPadding"
     )
 
+    // BottomNavBar에 카메라 클릭 콜백 전달
+    val isPaymentScreen = currentRoute == "payment"
+
     Scaffold(
         topBar = {
-            // 현재 경로에 따라 TopBar 내용 변경
-            when (currentRoute) {
-                NavRoutes.HOME_DETAIL -> {
-                    TopBar(
-                        title = "이번 달 사용 내역",
-                        showBackButton = true,
-                        onBackClick = {
-                            // 페이드아웃 시작
-                            isNavigatingBack.value = true
-                            // 약간의 지연 후 네비게이션
-                            coroutineScope.launch {
-                                delay(200)
-                                // 뒤로가기 시 애니메이션 방향 설정
-                                transitionDirection = -1
-                                // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
-                                cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
-                                animationCounter++
-                                navController.popBackStack()
-                            }
-                        },
-                        onLogoutClick = {
-                            // 로그아웃 처리
-                            viewModel.logout()
+            // QR 스캐너가 표시될 때는 상단 바 숨김
+            if (topBarVisible) {
+                TopBar(
+                    title = "이번 달 사용 내역",
+                    showBackButton = true,
+                    onBackClick = {
+                        // 페이드아웃 시작
+                        isNavigatingBack.value = true
+                        // 약간의 지연 후 네비게이션
+                        coroutineScope.launch {
+                            delay(200)
+                            // 뒤로가기 시 애니메이션 방향 설정
+                            transitionDirection = -1
+                            // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                            cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
+                            animationCounter++
+                            navController.popBackStack()
                         }
-                    )
-                }
-                else -> {
-                    TopBar(
-                        onProfileClick = { /* 프로필 화면으로 이동 */ },
-                        onLogoutClick = {
-                            // 로그아웃 처리
-                            viewModel.logout()
-                        }
-                    ) // 기본 TopBar
-                }
+                    },
+                    onLogoutClick = {
+                        // 로그아웃 처리
+                        viewModel.logout()
+                    }
+                )
             }
         },
         bottomBar = {
-            // 상세 화면에서도 BottomBar 유지하되 투명도와 위치 애니메이션 적용
-            Box(
-                modifier = Modifier
-                    .graphicsLayer(
-                        alpha = bottomBarAlpha,
-                        translationY = bottomBarOffset
-                    )
-            ) {
-                BottomNavBar(
-                    navController = navController,
-                    onTabSelected = { item: BottomNavItem ->
-                        // 현재 경로와 선택한 경로가 다를 때만 처리
-                        if (currentRoute != item.route) {
-                            // 탭 선택 시 전환 방향 계산
-                            val newIndex = tabIndices[item.route] ?: 0
-                            previousTabIndex = currentTabIndex
-                            currentTabIndex = newIndex
+            // QR 스캐너가 표시될 때는 네비게이션 바 숨김
+            if (bottomBarVisible) {
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer(
+                            alpha = bottomBarAlpha,
+                            translationY = bottomBarOffset
+                        )
+                ) {
+                    BottomNavBar(
+                        navController = navController,
+                        onTabSelected = { item ->
+                            // 현재 경로와 선택한 경로가 다를 때만 처리
+                            if (currentRoute != item.route) {
+                                // 탭 선택 시 전환 방향 계산
+                                val newIndex = tabIndices[item.route] ?: 0
+                                previousTabIndex = currentTabIndex
+                                currentTabIndex = newIndex
 
-                            // 방향 계산 및 애니메이션 트리거
-                            transitionDirection = if (newIndex > previousTabIndex) 1 else -1
-                            
-                            // 누적 오프셋 업데이트 (더 큰 값으로 변경)
-                            cumulativeOffset += transitionDirection * backgroundMovementMultiplier
-                            
-                            animationCounter++ // 애니메이션 트리거
+                                // 방향 계산 및 애니메이션 트리거
+                                transitionDirection = if (newIndex > previousTabIndex) 1 else -1
+                                
+                                // 누적 오프셋 업데이트 (더 큰 값으로 변경)
+                                cumulativeOffset += transitionDirection * backgroundMovementMultiplier
+                                
+                                animationCounter++ // 애니메이션 트리거
+                            }
+                        },
+                        onCameraClick = {
+                            // 카메라 아이콘 클릭 시 QR 스캐너 표시
+                            showQRScanner = true
                         }
-                    }
-                )
+                    )
+                }
             }
         },
         // 동적 패딩 적용
@@ -349,36 +372,31 @@ fun AppNavigation() {
                     }
 
                     composable(
-                        route = BottomNavItem.Payment.route,
-                        enterTransition = {
-                            slideIntoContainer(
-                                towards = if (transitionDirection > 0)
-                                    AnimatedContentTransitionScope.SlideDirection.Left
-                                else
-                                    AnimatedContentTransitionScope.SlideDirection.Right,
-                                animationSpec = tween(500, easing = EaseInOut)
-                            )
-                        },
-                        exitTransition = {
-                            slideOutOfContainer(
-                                towards = if (transitionDirection > 0)
-                                    AnimatedContentTransitionScope.SlideDirection.Left
-                                else
-                                    AnimatedContentTransitionScope.SlideDirection.Right,
-                                animationSpec = tween(500, easing = EaseInOut)
+                        route = "payment",
+                        enterTransition = { fadeIn() },
+                        exitTransition = { fadeOut() }
+                    ) {
+                        // showQRScanner 상태를 AppNavigation에서 관리하는 방법
+                        var showQRScanner by remember { mutableStateOf(false) }
+                        
+                        PaymentScreen(
+                            onScrollOffsetChange = { scrollOffset = it },
+                            onNavigateToHome = { navController.navigate("home") }
+                        )
+                        
+                        // QR 스캐너 화면 (오버레이로 표시)
+                        if (showQRScanner) {
+                            QRScannerScreen(
+                                onClose = { showQRScanner = false },
+                                onQRCodeScanned = { qrCode ->
+                                    // QR 코드 스캔 결과 처리
+                                    Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
+                                    scannedQRCode = qrCode
+                                    showQRScanner = false
+                                    showPaymentInfo = true  // 결제 정보 화면 표시
+                                }
                             )
                         }
-                    ) {
-                        PaymentScreen(
-                            onScrollOffsetChange = { offset ->
-                                scrollOffset = offset
-                            },
-                            onNavigateToHome = {
-                                navController.navigate("home") {
-                                    popUpTo("home") { inclusive = true }
-                                }
-                            }
-                        )
                     }
 
                     composable(
@@ -523,6 +541,68 @@ fun AppNavigation() {
                     }
                 }
             }
+        }
+        
+        // QR 스캐너 화면 (오버레이로 표시)
+        if (showQRScanner) {
+            QRScannerScreen(
+                onClose = { showQRScanner = false },
+                onQRCodeScanned = { qrCode ->
+                    // QR 코드 스캔 결과 처리
+                    Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
+                    scannedQRCode = qrCode
+                    showQRScanner = false
+                    showPaymentInfo = true  // 결제 정보 화면 표시
+                }
+            )
+        }
+
+        // 결제 정보 화면 (오버레이로 표시)
+        if (showPaymentInfo) {
+            // 카드 목록 (PaymentScreen에서 가져온 더미 데이터)
+            val cards = listOf(
+                PaymentCardInfo(
+                    id = "tes_card_unique_number",
+                    cardNumber = "8801062318551",
+                    cardName = "토스 신한카드 Mr.Life"
+                ),
+                PaymentCardInfo(
+                    id = "000",
+                    cardNumber = "8801062318552",
+                    cardName = "삼성카드 taptap O"
+                ),
+                PaymentCardInfo(
+                    id = "card3",
+                    cardNumber = "8801062318553",
+                    cardName = "현대카드 ZERO"
+                ),
+                PaymentCardInfo(
+                    id = "card4",
+                    cardNumber = "8801062318554",
+                    cardName = "KB국민 톡톡"
+                ),
+                PaymentCardInfo(
+                    id = "card5",
+                    cardNumber = "8801062318555",
+                    cardName = "하나 원큐"
+                )
+            )
+            
+            PaymentInfoScreen(
+                qrCode = scannedQRCode,
+                cards = cards,
+                onClose = { showPaymentInfo = false },
+                onPaymentComplete = {
+                    // 결제 완료 후 홈 화면으로 이동
+                    showPaymentInfo = false
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                },
+                onScrollOffsetChange = { offset ->
+                    scrollOffset = offset
+                }
+            )
         }
     }
 }

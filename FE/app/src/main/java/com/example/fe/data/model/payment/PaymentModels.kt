@@ -2,7 +2,7 @@ package com.example.fe.data.model.payment
 
 import java.time.LocalDateTime
 
-// 결제 상태 열거형
+// SSE 상태 열거형
 enum class PaymentStatus {
     READY,          // 결제 준비 상태
     PROCESSING,     // 결제 처리 중
@@ -12,15 +12,17 @@ enum class PaymentStatus {
     EXPIRED         // 토큰 만료
 }
 
-// 결제 이벤트 데이터 클래스
+// SSE 이벤트 데이터 클래스
 data class PaymentEvent(
-    val status: PaymentStatus,
     val message: String? = null,
-    val transactionId: String? = null,
-    val amount: Double? = null,
-    val merchantName: String? = null,
-    val timestamp: LocalDateTime = LocalDateTime.now()
-)
+    val eventType: String? = null,
+    val eventId: String? = null,
+    val timestamp: Long = System.currentTimeMillis()
+) {
+    override fun toString(): String {
+        return "PaymentEvent(type=$eventType, id=$eventId, message=$message)"
+    }
+}
 
 
 // 얼마결제됐는지
@@ -44,9 +46,9 @@ data class TokenInfo(
 )
 
 // 결제 정보 클래스 (UI 표시용)
-data class PaymentInfo(
-    val cardId: String,
-    val amount: Double? = null,
-    val merchantName: String? = null,
-    val transactionId: String? = null
-)
+//data class PaymentInfo(
+//    val cardId: String,
+//    val amount: Double? = null,
+//    val merchantName: String? = null,
+//    val transactionId: String? = null
+//)
