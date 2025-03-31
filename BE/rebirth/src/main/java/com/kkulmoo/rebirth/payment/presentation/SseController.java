@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
+import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
 import com.kkulmoo.rebirth.payment.application.service.PaymentOfflineEncryption;
 import com.kkulmoo.rebirth.payment.application.service.PaymentService;
 import com.kkulmoo.rebirth.payment.application.service.SseService;
@@ -48,7 +49,6 @@ public class SseController {
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
-
         //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
         String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
         String[] tokenInfo = paymentOfflineEncryption.validateOneTimeToken(realToken);
@@ -82,7 +82,9 @@ public class SseController {
         //4. 결제 결과 반환하기
         sseService.sendToUser(userId, cardTransactionDTO.getApprovalCode());
 
-        return ResponseEntity.ok(cardTransactionDTO);
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"일회용 토큰 생성",cardTransactionDTO);
+
+        return ResponseEntity.ok(apiResponseDTO);
     }
 }
 

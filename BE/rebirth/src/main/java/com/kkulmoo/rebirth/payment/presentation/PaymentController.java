@@ -6,6 +6,7 @@ import com.kkulmoo.rebirth.payment.presentation.request.CardInfoDTO;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
 import com.kkulmoo.rebirth.payment.presentation.request.OnlinePayDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
+import com.kkulmoo.rebirth.payment.presentation.response.OnlinePayResponseDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -96,7 +97,8 @@ public class PaymentController {
         //2. 영구 토큰 싹다 일회용 토큰 처리하고, 카드 정보 모아서 가져오기
         List<PaymentTokenResponseDTO> disposableTokens = paymentService.createOnlineDisposableToken(cardInfo,merchantInfo[0],
                 Integer.parseInt(merchantInfo[1]));
-        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"일회용 토큰 생성",disposableTokens);
+
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"일회용 토큰 생성",OnlinePayResponseDTO.builder().paymentTokenResponseDTO(disposableTokens).merchantName(merchantInfo[0]).amount(Integer.parseInt(merchantInfo[1])).build());
 
         return ResponseEntity.ok(apiResponseDTO);
     }
@@ -107,15 +109,14 @@ public class PaymentController {
     @PostMapping("/onlineprogresspay")
     public ResponseEntity<?> onlineProgressPay(@RequestBody String token) throws Exception {
 
-
         // 받은 토큰을 까서 가맹점 & 가격 확인 0: 토큰, 1: 가맹점 이름 , 2: 가격정보
         String[] merchantInfo = paymentOnlineEncryption.validateOnlineToken(token);
 
         CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder().token(merchantInfo[0]).amount(Integer.parseInt(merchantInfo[2])).merchantName(merchantInfo[1]).build();
         CardTransactionDTO cardTransactionDTO = paymentService.transactionToCardsa(dataToCardsa);
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"결제 응답",cardTransactionDTO);
 
-        return ResponseEntity.ok(cardTransactionDTO);
-
+        return ResponseEntity.ok(apiResponseDTO);
     }
 
 
