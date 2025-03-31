@@ -5,11 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -28,11 +31,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +47,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -59,25 +67,38 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.draw.blur
 import kotlinx.coroutines.delay
 import com.example.fe.ui.components.backgrounds.StarryBackground
+import com.example.fe.ui.components.backgrounds.GlassSurface
+import kotlin.math.sin
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.indication
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.material3.HorizontalDivider
 
 data class TransactionItem(
     val date: String,
     val time: String,
-    val storeName: String,
+    val place: String,
     val amount: String,
     val category: String,
-    val isCredit: Boolean = true
+    val isApproved: Boolean = true,
+    val benefitAmount: String = "혜택 0원"
 )
 
 data class BenefitItem(
-    val category: String,
+    val storeName: String,
     val percentage: String,
-    val limit: String,
-    val used: String,
-    val total: String
+    val totalAmount: String,
+    val remainingAmount: String,
+    val usedAmount: String,
+    val progressRate: Float = 0.3f
 )
 
 data class TabItem(
@@ -88,7 +109,8 @@ data class TabItem(
 @Composable
 fun CardDetailScreen(
     cardItem: CardItem,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onNavigationBarVisibilityChange: (Boolean) -> Unit = {}
 ) {
     var selectedMonth by remember { mutableIntStateOf(3) } // 3월로 초기화
     var selectedTab by remember { mutableIntStateOf(0) } // 0: 내역, 1: 혜택
@@ -122,22 +144,27 @@ fun CardDetailScreen(
     
     // 네비게이션 바 숨기기 효과 전달
     LaunchedEffect(key1 = Unit) {
-        // 화면이 그려질 때 네비게이션 바 숨기기
-        // 여기서는 함수가 없으므로 주석으로 표시합니다.
-        // 실제로는 AppNavigation.kt에서 이 화면에 진입할 때 네비게이션 바를 숨기도록 
-        // 설정해야 합니다.
+        // 화면이 그려질 때 네비게이션 바 숨기기 함수 호출
+        onNavigationBarVisibilityChange(false)
+    }
+
+    // 화면이 종료될 때 네비게이션 바 다시 표시
+    DisposableEffect(key1 = Unit) {
+        onDispose {
+            onNavigationBarVisibilityChange(true)
+        }
     }
 
     // 카드 크기 조정 (비율 유지)
     val cardScale by animateFloatAsState(
-        targetValue = if (animationStarted) 0.9f else 1.0f,
+        targetValue = if (animationStarted) 0.85f else 1.3f,
         animationSpec = tween(600, easing = EaseOutQuart),
         label = "cardScale"
     )
 
     // 카드 위치 이동 효과 (초기에는 화면 하단에서 시작, 그 다음 상단으로 이동)
     val cardYOffset by animateFloatAsState(
-        targetValue = if (animationStarted) 320f else 1300f,
+        targetValue = if (animationStarted) 200f else 1850f,
         animationSpec = tween(700, easing = EaseInOut),
         label = "cardYOffset"
     )
@@ -159,9 +186,9 @@ fun CardDetailScreen(
     // 샘플 거래 데이터
     val transactions = remember {
         listOf(
-            TransactionItem("03.13(월)", "09:34", "토스", "5000원", "카페", true),
-            TransactionItem("03.12(일)", "15:34", "다이소", "5000원", "쇼핑", true),
-            TransactionItem("03.10(금)", "19:34", "롯데리아", "3000원", "음식점", true),
+            TransactionItem("03.13(월)", "09:34", "카페", "5000원", "카페", true, "혜택 100원"),
+            TransactionItem("03.12(일)", "15:34", "다이소", "5000원", "쇼핑", true, "혜택 100원"),
+            TransactionItem("03.10(금)", "19:34", "롯데리아", "3000원", "음식점", true, "혜택 50원"),
             TransactionItem("03.10(금)", "12:34", "세븐일레븐", "2000원", "편의점", false)
         )
     }
@@ -169,68 +196,37 @@ fun CardDetailScreen(
     // 샘플 혜택 데이터
     val benefits = remember {
         listOf(
-            BenefitItem("롯데리아", "1.2% 할인", "전액 : 5000원", "5000원 남음", ""),
-            BenefitItem("소칼", "2% 할인", "전액 : 10000원", "", "")
+            BenefitItem("롯데리아", "1.2% 할인", "전액 : 5000원", "잔여 : 5000원", "50원", 0.3f),
+            BenefitItem("소칼", "2% 할인", "전액 : 10000원", "잔여 : 10000원", "200원", 0.5f)
         )
     }
+
+    // 탑바의 알파값 애니메이션
+    val topBarAlpha by animateFloatAsState(
+        targetValue = if (showHeader) 1f else 0f,
+        animationSpec = tween(300),
+        label = "topBarAlpha"
+    )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer {
-                alpha = backgroundAlpha
-            }
-            .background(Color(0xFF0F0F1E))
     ) {
-        // 배경
+        // 별이 빛나는 배경 추가
         StarryBackground(
             scrollOffset = 0f,
             starCount = 150,
-            horizontalOffset = 0f,
             modifier = Modifier.fillMaxSize()
         ) {
             // 빈 Box - 배경만 표시
         }
         
-        // 상단 UI 요소들
-        Column(modifier = Modifier.fillMaxSize()) {
-            // 상단 앱바
-            AnimatedVisibility(
-                visible = showHeader,
-                enter = fadeIn(animationSpec = tween(300)) + 
-                       slideInVertically(animationSpec = tween(300)) { -40 }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "뒤로가기",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .clickable { onBackClick() }
-                            .size(24.dp)
-                    )
-    
-                    Spacer(modifier = Modifier.width(16.dp))
-    
-                    Text(
-                        text = "카드 상세 정보",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
-                    )
-    
-                    // 우측 여백을 위한 빈 공간
-                    Spacer(modifier = Modifier.width(40.dp))
-                }
-            }
-
+        // 콘텐츠 부분 - TopBar는 AppNavigation에서 관리됨
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 20.dp, bottom = 16.dp) // TopBar 높이 패딩 감소
+        ) {
             // 월 선택 네비게이터
             AnimatedVisibility(
                 visible = showMonthSelector,
@@ -240,7 +236,7 @@ fun CardDetailScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp, vertical = 16.dp),
+                        .padding(horizontal = 32.dp, vertical = 2.dp), // 상하 패딩 더 줄임
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -254,18 +250,18 @@ fun CardDetailScreen(
                             }
                             .size(30.dp)
                     )
-    
+        
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = "${selectedMonth}월",
                             color = Color.White,
-                            fontSize = 18.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
-    
+        
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowRight,
                         contentDescription = "다음 달",
@@ -280,7 +276,7 @@ fun CardDetailScreen(
             }
 
             // 카드를 위한 빈 공간 (애니메이션이 완료된 후의 위치)
-            Spacer(modifier = Modifier.height(200.dp))
+            Spacer(modifier = Modifier.height(125.dp)) // 약간 더 줄임
 
             // 카드 이름
             AnimatedVisibility(
@@ -291,11 +287,11 @@ fun CardDetailScreen(
                 Text(
                     text = cardItem.name,
                     color = Color.White,
-                    fontSize = 16.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 8.dp),
+                        .padding(top = 45.dp, bottom = 4.dp),
                     textAlign = TextAlign.Center
                 )
             }
@@ -306,36 +302,65 @@ fun CardDetailScreen(
                 enter = fadeIn(animationSpec = tween(300)) + 
                        slideInVertically(animationSpec = tween(300)) { 40 }
             ) {
-                TabRow(
-                    selectedTabIndex = selectedTab,
-                    containerColor = Color.Transparent,
-                    contentColor = Color.White,
-                    indicator = {},
-                    divider = {}
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Tab(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        text = {
-                            Text(
-                                text = "내역",
-                                color = if (selectedTab == 0) Color.White else Color.Gray,
-                                fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    )
-    
-                    Tab(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        text = {
-                            Text(
-                                text = "혜택",
-                                color = if (selectedTab == 1) Color.White else Color.Gray,
-                                fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    )
+                    // 왼쪽 탭 (내역)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { selectedTab = 0 },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "내역",
+                            color = if (selectedTab == 0) Color.White else Color.Gray,
+                            fontSize = 26.sp,
+                            fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                        
+                        // 인디케이터
+                        Box(
+                            modifier = Modifier
+                                .width(40.dp)
+                                .height(2.dp)
+                                .align(Alignment.CenterHorizontally)
+                                .background(
+                                    color = if (selectedTab == 0) Color.White else Color.Transparent
+                                )
+                        )
+                    }
+                    
+                    // 오른쪽 탭 (혜택)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { selectedTab = 1 },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "혜택",
+                            color = if (selectedTab == 1) Color.White else Color.Gray,
+                            fontSize = 26.sp,
+                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                        
+                        // 인디케이터
+                        Box(
+                            modifier = Modifier
+                                .width(40.dp)
+                                .height(2.dp)
+                                .align(Alignment.CenterHorizontally)
+                                .background(
+                                    color = if (selectedTab == 1) Color.White else Color.Transparent
+                                )
+                        )
+                    }
                 }
             }
 
@@ -349,6 +374,7 @@ fun CardDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f) // 남은 공간 모두 차지
+                        .padding(top = 8.dp) // 상단 여백 추가
                 ) {
                     when (selectedTab) {
                         0 -> TransactionsContent(transactions)
@@ -361,18 +387,18 @@ fun CardDetailScreen(
         // 카드 이미지 - UI와 분리된 절대 위치에 배치
         Card(
             modifier = Modifier
-                .width(250.dp)
-                .height(150.dp) // 가로 방향 카드 높이
-                .align(Alignment.TopCenter) // 상단 중앙 정렬
+                .width(220.dp)
+                .height(140.dp)
+                .align(Alignment.TopCenter)
                 .graphicsLayer(
                     scaleX = cardScale,
                     scaleY = cardScale,
-                    translationY = cardYOffset, // 화면 하단에서 시작해서 상단으로 이동
-                    rotationZ = cardRotation // 카드 회전 (세로 -> 가로)
+                    translationY = cardYOffset,
+                    rotationZ = cardRotation
                 ),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF673AB7) // 보라색 카드
+                containerColor = Color(0xFF673AB7)
             )
         ) {
             Box(
@@ -391,72 +417,178 @@ fun CardDetailScreen(
 
 @Composable
 fun TransactionsContent(transactions: List<TransactionItem>) {
-    Column(
+    // 날짜별로 거래 내역 그룹화
+    val transactionsByDate = transactions.groupBy { it.date }
+    
+    LazyColumn(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
     ) {
-        // 총액 정보
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "총 소비",
-                color = Color.White,
-                fontSize = 14.sp
-            )
-
-            Text(
-                text = "15000원",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
+        // 총 소비 및 혜택 금액 헤더
+        item {
+            GlassSurface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                cornerRadius = 16f,
+                color = Color(0x55FFFFFF),  // 패널 더 밝게 조정
+                borderColor = Color(0x65FFFFFF)  // 테두리도 더 밝게
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp)  // 패딩 값 키움 (16.dp -> 24.dp)
+                ) {
+                    // 총액 정보
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "총 소비",
+                            color = Color.White,
+                            fontSize = 26.sp  // 폰트 크기 더 증가
+                        )
+                        
+                        Text(
+                            text = "15000원",
+                            color = Color.White,
+                            fontSize = 26.sp,  // 폰트 크기 더 증가
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))  // 간격 약간 증가
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "혜택 받은 금액",
+                            color = Color.White,
+                            fontSize = 24.sp  // 폰트 크기 더 증가
+                        )
+                        
+                        Text(
+                            text = "250원",
+                            color = Color(0xFFCCFF00), // 연두색
+                            fontSize = 24.sp,  // 폰트 크기 더 증가
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
         }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "혜택 합은 금액",
-                color = Color.White,
-                fontSize = 12.sp
-            )
-
-            Text(
-                text = "250원",
-                color = Color(0xFFCCFF00), // 연두색
-                fontSize = 12.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // 프로그레스 바
-        LinearProgressIndicator(
-            progress = { 0.5f },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp),
-            color = Color.White,
-            trackColor = Color.Gray.copy(alpha = 0.3f)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 거래 내역 리스트
-        LazyColumn {
-            items(transactions) { transaction ->
-                TransactionItemView(transaction = transaction)
-                
-                if (transaction != transactions.last()) {
-                    Divider(
-                        color = Color.Gray.copy(alpha = 0.3f),
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+        
+        // 날짜별로 거래 내역 표시
+        transactionsByDate.forEach { (date, dateTransactions) ->
+            item {
+                // 날짜별 패널
+                GlassSurface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    cornerRadius = 16f,
+                    color = Color(0x55FFFFFF),  // 패널 더 밝게 조정
+                    borderColor = Color(0x65FFFFFF)  // 테두리도 더 밝게
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp)  // 패딩 값 키움 (16.dp -> 24.dp)
+                    ) {
+                        // 날짜 헤더
+                        Text(
+                            text = date,
+                            color = Color.White,
+                            fontSize = 20.sp,  // 폰트 크기 증가
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        
+                        // 날짜에 해당하는 모든 거래 내역
+                        dateTransactions.forEach { transaction ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // 왼쪽: 시간
+                                Text(
+                                    text = transaction.time,
+                                    color = Color.White,
+                                    fontSize = 18.sp,  // 폰트 크기 증가
+                                    modifier = Modifier.width(60.dp)
+                                )
+                                
+                                // 중앙: 아이콘과 장소 (좌측 정렬)
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // 아이콘
+                                    val iconColor = when (transaction.category) {
+                                        "카페" -> Color(0xFFFFD700) // 금색
+                                        "쇼핑" -> Color(0xFFFFA500) // 주황색
+                                        "음식점" -> Color(0xFFFF6347) // 토마토색
+                                        "편의점" -> Color(0xFF00CED1) // 청록색
+                                        else -> Color(0xFFFFD700) // 기본 금색
+                                    }
+                                    
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .background(iconColor, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = transaction.category.take(1),
+                                            color = Color.Black,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    
+                                    // 장소
+                                    Text(
+                                        text = transaction.place,
+                                        color = Color.White,
+                                        fontSize = 20.sp,  // 폰트 크기 증가
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                
+                                // 오른쪽: 금액
+                                Column(
+                                    modifier = Modifier.width(90.dp),
+                                    horizontalAlignment = Alignment.End
+                                ) {
+                                    Text(
+                                        text = transaction.amount,
+                                        color = Color.White,
+                                        fontSize = 20.sp,  // 폰트 크기 증가
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    
+                                    Text(
+                                        text = transaction.benefitAmount,
+                                        color = Color(0xFFCCFF00),
+                                        fontSize = 18.sp  // 폰트 크기 증가
+                                    )
+                                }
+                            }
+                            
+                            // 마지막 항목이 아니면 구분선 추가
+                            if (transaction != dateTransactions.last()) {
+                                HorizontalDivider(
+                                    color = Color.Gray.copy(alpha = 0.2f),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -465,145 +597,84 @@ fun TransactionsContent(transactions: List<TransactionItem>) {
 
 @Composable
 fun BenefitsContent(benefits: List<BenefitItem>) {
-    Column(
+    LazyColumn(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
     ) {
-        // 적립/사용액 정보
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "적립 / 사용액",
-                color = Color.White,
-                fontSize = 14.sp
-            )
-
-            Text(
-                text = "15000원 / 15000원",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "다음 구간까지",
-                color = Color.White,
-                fontSize = 12.sp
-            )
-
-            Text(
-                text = "5000원 남음",
-                color = Color.White,
-                fontSize = 12.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 프로그레스 바
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LinearProgressIndicator(
-                progress = { 0.7f },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(4.dp),
-                color = Color.White,
-                trackColor = Color.Gray.copy(alpha = 0.3f)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .background(Color.White, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "2",
-                    color = Color(0xFF191970),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 1구간 혜택
-        Text(
-            text = "1구간 혜택",
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // 혜택 리스트
-        for (benefit in benefits) {
-            Column(
+        items(benefits) { benefit ->
+            GlassSurface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 8.dp),
+                cornerRadius = 16f,
+                color = Color(0x55FFFFFF),  // 패널 더 밝게 조정
+                borderColor = Color(0x65FFFFFF)  // 테두리도 더 밝게
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Column(
+                    modifier = Modifier.padding(24.dp)  // 패딩 값 키움 (16.dp -> 24.dp)
                 ) {
-                    Text(
-                        text = benefit.category,
-                        color = Color.White,
-                        fontSize = 14.sp
-                    )
-
-                    Text(
-                        text = benefit.percentage,
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                if (benefit.limit.isNotEmpty()) {
+                    // 혜택 이름 및 퍼센트
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = benefit.limit,
-                            color = Color.Gray,
-                            fontSize = 12.sp
+                            text = benefit.storeName,
+                            color = Color.White,
+                            fontSize = 22.sp,  // 폰트 크기 증가
+                            fontWeight = FontWeight.Bold
                         )
-
-                        if (benefit.used.isNotEmpty()) {
-                            Text(
-                                text = benefit.used,
-                                color = Color.Gray,
-                                fontSize = 12.sp
-                            )
-                        }
+                        
+                        Text(
+                            text = benefit.percentage,
+                            color = Color.White,
+                            fontSize = 22.sp,  // 폰트 크기 증가
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // 혜택 프로그레스 바
+                    val progress = benefit.progressRate
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)  // 프로그레스 바 높이 증가
+                            .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(progress)
+                                .height(10.dp)  // 프로그레스 바 높이 증가
+                                .background(Color(0xFF5F77F5), RoundedCornerShape(4.dp)) // 파란색 프로그레스 바
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // 혜택 상세 금액
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // 왼쪽에 사용한 혜택 금액
+                        Text(
+                            text = benefit.usedAmount,
+                            color = Color.White,
+                            fontSize = 20.sp  // 폰트 크기 증가
+                        )
+                        
+                        // 오른쪽에 전체 금액
+                        Text(
+                            text = benefit.remainingAmount,
+                            color = Color.White,
+                            fontSize = 20.sp  // 폰트 크기 증가
+                        )
                     }
                 }
-
-                Divider(
-                    color = Color.Gray.copy(alpha = 0.3f),
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
             }
         }
     }
@@ -614,24 +685,24 @@ fun TransactionItemView(transaction: TransactionItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 날짜/시간 정보
         Column(
-            modifier = Modifier.width(90.dp),
+            modifier = Modifier.width(100.dp),
             horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = transaction.date,
                 color = Color.LightGray,
-                fontSize = 12.sp
+                fontSize = 18.sp
             )
             
             Text(
                 text = transaction.time,
                 color = Color.LightGray,
-                fontSize = 12.sp
+                fontSize = 18.sp
             )
         }
         
@@ -640,16 +711,16 @@ fun TransactionItemView(transaction: TransactionItem) {
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = transaction.storeName,
+                text = transaction.place,
                 color = Color.White,
-                fontSize = 14.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             
             Text(
                 text = transaction.category,
                 color = Color.LightGray,
-                fontSize = 12.sp
+                fontSize = 18.sp
             )
         }
         
@@ -660,14 +731,14 @@ fun TransactionItemView(transaction: TransactionItem) {
             Text(
                 text = transaction.amount,
                 color = Color.White,
-                fontSize = 14.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             
             Text(
-                text = if (transaction.isCredit) "신용" else "체크",
+                text = if (transaction.isApproved) "승인" else "취소",
                 color = Color.LightGray,
-                fontSize = 12.sp
+                fontSize = 18.sp
             )
         }
     }
@@ -683,7 +754,7 @@ fun BenefitCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp),
+            .padding(bottom = 16.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1A1A2E)
         ),
@@ -692,46 +763,47 @@ fun BenefitCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 컬러 마커
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .background(color, RoundedCornerShape(20.dp)),
+                    .size(48.dp)
+                    .background(color, RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = "혜택",
-                    tint = Color.White
+                    tint = Color.White,
+                    modifier = Modifier.size(30.dp)
                 )
             }
             
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(20.dp))
             
             // 혜택 텍스트
             Column {
                 Text(
                     text = title,
                     color = Color.White,
-                    fontSize = 16.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
                     text = description,
                     color = Color.LightGray,
-                    fontSize = 14.sp
+                    fontSize = 16.sp
                 )
                 
                 Text(
                     text = highlight,
                     color = color,
-                    fontSize = 14.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 6.dp)
                 )
             }
         }
@@ -748,7 +820,7 @@ fun CategoryBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -757,13 +829,13 @@ fun CategoryBar(
             Text(
                 text = category,
                 color = Color.White,
-                fontSize = 14.sp
+                fontSize = 18.sp
             )
             
             Text(
                 text = "${amount / 10000}만원",
                 color = Color.White,
-                fontSize = 14.sp
+                fontSize = 18.sp
             )
         }
         
@@ -771,15 +843,15 @@ fun CategoryBar(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(12.dp)
-                .padding(vertical = 4.dp)
-                .background(Color(0xFF2D2D3A), RoundedCornerShape(6.dp))
+                .height(16.dp)
+                .padding(vertical = 6.dp)
+                .background(Color(0xFF2D2D3A), RoundedCornerShape(8.dp))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(ratio)
-                    .height(12.dp)
-                    .background(color, RoundedCornerShape(6.dp))
+                    .height(16.dp)
+                    .background(color, RoundedCornerShape(8.dp))
             )
         }
     }
@@ -837,7 +909,7 @@ fun ServiceItem(title: String, description: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 10.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1A1A2E)
         )
@@ -845,29 +917,30 @@ fun ServiceItem(title: String, description: String) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "서비스",
-                tint = Color(0xFF6200EE)
+                tint = Color(0xFF6200EE),
+                modifier = Modifier.size(28.dp)
             )
             
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(20.dp))
             
             Column {
                 Text(
                     text = title,
                     color = Color.White,
-                    fontSize = 14.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
                     text = description,
                     color = Color.LightGray,
-                    fontSize = 12.sp
+                    fontSize = 16.sp
                 )
             }
         }
@@ -879,24 +952,24 @@ fun InfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = label,
             color = Color.LightGray,
-            fontSize = 14.sp
+            fontSize = 18.sp
         )
         
         Text(
             text = value,
             color = Color.White,
-            fontSize = 14.sp
+            fontSize = 18.sp
         )
     }
     
-    Divider(
+    HorizontalDivider(
         color = Color(0xFF2D2D3A),
-        modifier = Modifier.padding(vertical = 2.dp)
+        modifier = Modifier.padding(vertical = 4.dp)
     )
 }

@@ -214,11 +214,11 @@ fun SecuritySetupScreen(navController: NavController, viewModel: OnboardingViewM
                         SecurityStep.PATTERN -> {
                             Text(
                                 "패턴을 설정해주세요",
-                                fontSize = 28.sp, // 18sp에서 28sp로 증가
+                                fontSize = 28.sp,
                                 fontWeight = FontWeight.Medium
                             )
                             
-                            Spacer(modifier = Modifier.height(32.dp)) // 24dp에서 32dp로 증가
+                            Spacer(modifier = Modifier.height(32.dp))
 
                             PatternGrid(
                                 onPatternComplete = { pattern ->
@@ -232,18 +232,19 @@ fun SecuritySetupScreen(navController: NavController, viewModel: OnboardingViewM
                                         patternPoints = pattern
                                         currentStep = SecurityStep.PATTERN_CONFIRM
                                     }
-                                }
+                                },
+                                showConfirmButton = true
                             )
                         }
 
                         SecurityStep.PATTERN_CONFIRM -> {
                             Text(
                                 "패턴을 다시 입력해주세요",
-                                fontSize = 28.sp, // 18sp에서 28sp로 증가
+                                fontSize = 28.sp,
                                 fontWeight = FontWeight.Medium
                             )
                             
-                            Spacer(modifier = Modifier.height(32.dp)) // 24dp에서 32dp로 증가
+                            Spacer(modifier = Modifier.height(32.dp))
 
                             PatternGrid(
                                 onPatternComplete = { pattern ->
@@ -256,7 +257,6 @@ fun SecuritySetupScreen(navController: NavController, viewModel: OnboardingViewM
                                     } else {
                                         confirmPatternPoints = pattern
                                         if (patternPoints == confirmPatternPoints) {
-                                            // 뷰모델에 패턴 저장
                                             viewModel.hasPatternAuth = true
                                             currentStep = SecurityStep.DONE
                                         } else {
@@ -268,7 +268,8 @@ fun SecuritySetupScreen(navController: NavController, viewModel: OnboardingViewM
                                             confirmPatternPoints = listOf()
                                         }
                                     }
-                                }
+                                },
+                                showConfirmButton = false
                             )
                         }
 
@@ -473,127 +474,153 @@ fun AuthMethodOption(
 
 @Composable
 fun PatternGrid(
-    onPatternComplete: (List<Int>) -> Unit
+    onPatternComplete: (List<Int>) -> Unit,
+    showConfirmButton: Boolean = false
 ) {
     val rows = 3
     val columns = 3
-    val pointRadius = 24.dp
+    val pointRadius = 16.dp  // 점 크기 더 크게 (16dp -> 20dp)
     val pointCount = rows * columns
-    val touchSlop = 20f
+    val touchSlop = 35f  // 터치 영역 더 크게 (30f -> 35f)
+    val gridSize = 650.dp  // 그리드 크기 더 크게 (500dp -> 600dp)
+    val spacing = gridSize / 1.5f  // 간격 더 크게 (1.8f -> 1.5f)
+
+    val pointColor = Color(0xFF4169E1)
+    val density = LocalDensity.current
+    val pointRadiusPx = with(density) { pointRadius.toPx() }
 
     var currentPattern by remember { mutableStateOf(listOf<Int>()) }
     var isDragging by remember { mutableStateOf(false) }
     var currentDragPoint by remember { mutableStateOf<Offset?>(null) }
-    
+
     val points = remember {
         List(pointCount) { idx ->
             val row = idx / columns
             val col = idx % columns
-            val centerX = col * 120f + 60f // 중앙 위치 X (3x3 그리드에서 간격은 120dp로 가정)
-            val centerY = row * 120f + 60f // 중앙 위치 Y
+            val centerX = col * (spacing.value) + (spacing.value / 2)
+            val centerY = row * (spacing.value) + (spacing.value / 2)
             Offset(centerX, centerY)
         }
     }
-
-    val density = LocalDensity.current
-    val pointRadiusPx = with(density) { pointRadius.toPx() }
     
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp) // 360dp에서 400dp로 증가
-            .background(Color.Transparent)
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        isDragging = true
-                        currentDragPoint = offset
-                        currentPattern = listOf()
-
-                        // 시작점 찾기
-                        points.forEachIndexed { index, point ->
-                            if (hypot(offset.x - point.x, offset.y - point.y) <= pointRadiusPx + touchSlop) {
-                                currentPattern = listOf(index)
-                            }
-                        }
-                    },
-                    onDrag = { change, _ ->
-                        change.consume()
-                        currentDragPoint = change.position
-
-                        // 현재 드래그 중인 위치와 가장 가까운 점 찾기
-                        points.forEachIndexed { index, point ->
-                            if (!currentPattern.contains(index) && 
-                                hypot(change.position.x - point.x, change.position.y - point.y) <= pointRadiusPx + touchSlop) {
-                                currentPattern = currentPattern + index
-                            }
-                        }
-                    },
-                    onDragEnd = {
-                        isDragging = false
-                        currentDragPoint = null
-                        onPatternComplete(currentPattern)
-                    },
-                    onDragCancel = {
-                        isDragging = false
-                        currentDragPoint = null
-                        // 패턴 입력 취소
-                        currentPattern = listOf()
-                    }
-                )
-            }
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center  // 화면 중앙 정렬
     ) {
-        // 선 그리기
-        Canvas(modifier = Modifier.matchParentSize()) {
-            if (currentPattern.isNotEmpty()) {
-                for (i in 0 until currentPattern.size - 1) {
-                    val start = points[currentPattern[i]]
-                    val end = points[currentPattern[i + 1]]
-                    
-                    drawLine(
-                        color = Color(0xFF7B68EE), // 보라색 선
-                        start = start,
-                        end = end,
-                        strokeWidth = 8f,
-                        cap = StrokeCap.Round
-                    )
-                }
-                
-                // 현재 드래그 중인 선 그리기
-                if (isDragging && currentPattern.isNotEmpty() && currentDragPoint != null) {
-                    val start = points[currentPattern.last()]
-                    drawLine(
-                        color = Color(0xFF7B68EE), // 보라색 선
-                        start = start,
-                        end = currentDragPoint!!,
-                        strokeWidth = 8f,
-                        cap = StrokeCap.Round
-                    )
-                }
-            }
-        }
-        
-        // 점들 그리기
-        points.forEachIndexed { index, offset ->
-            val isSelected = currentPattern.contains(index)
+        Column(
+            modifier = Modifier.wrapContentSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Spacer(modifier = Modifier.height(150.dp))  // 상단 여백 추가
             
             Box(
                 modifier = Modifier
-                    .size(pointRadius * 2)
-                    .offset(
-                        x = with(density) { offset.x.toDp() } - pointRadius,
-                        y = with(density) { offset.y.toDp() } - pointRadius
-                    )
-                    .background(
-                        color = if (isSelected) Color(0xFF7B68EE) else Color.LightGray.copy(alpha = 0.5f),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
+                    .size(gridSize)
+                    .background(Color.Transparent)
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = { offset ->
+                                isDragging = true
+                                currentDragPoint = offset
+                                currentPattern = listOf()
+
+                                points.forEachIndexed { index, point ->
+                                    if (hypot(offset.x - point.x, offset.y - point.y) <= pointRadiusPx + touchSlop) {
+                                        currentPattern = listOf(index)
+                                    }
+                                }
+                            },
+                            onDrag = { change, _ ->
+                                change.consume()
+                                currentDragPoint = change.position
+
+                                points.forEachIndexed { index, point ->
+                                    if (!currentPattern.contains(index) && 
+                                        hypot(change.position.x - point.x, change.position.y - point.y) <= pointRadiusPx + touchSlop) {
+                                        currentPattern = currentPattern + index
+                                    }
+                                }
+                            },
+                            onDragEnd = {
+                                isDragging = false
+                                currentDragPoint = null
+                                if (!showConfirmButton) {  // 재입력 화면에서만 바로 완료 처리
+                                    onPatternComplete(currentPattern)
+                                }
+                            },
+                            onDragCancel = {
+                                isDragging = false
+                                currentDragPoint = null
+                                currentPattern = listOf()
+                            }
+                        )
+                    }
             ) {
-                if (isSelected) {
+                // 선 그리기
+                Canvas(modifier = Modifier.matchParentSize()) {
+                    if (currentPattern.isNotEmpty()) {
+                        for (i in 0 until currentPattern.size - 1) {
+                            val start = points[currentPattern[i]]
+                            val end = points[currentPattern[i + 1]]
+                            
+                            drawLine(
+                                color = pointColor,
+                                start = start,
+                                end = end,
+                                strokeWidth = 12f,  // 선 굵기 증가 (4f -> 12f)
+                                cap = StrokeCap.Round
+                            )
+                        }
+                        
+                        if (isDragging && currentPattern.isNotEmpty() && currentDragPoint != null) {
+                            val start = points[currentPattern.last()]
+                            drawLine(
+                                color = pointColor,
+                                start = start,
+                                end = currentDragPoint!!,
+                                strokeWidth = 12f,  // 선 굵기 증가 (4f -> 12f)
+                                cap = StrokeCap.Round
+                            )
+                        }
+                    }
+                }
+                
+                // 점들 그리기
+                points.forEachIndexed { index, offset ->
+                    val isSelected = currentPattern.contains(index)
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(pointRadius * 2)
+                            .offset(
+                                x = with(density) { offset.x.toDp() } - pointRadius,
+                                y = with(density) { offset.y.toDp() } - pointRadius
+                            )
+                            .background(
+                                color = if (isSelected) pointColor else pointColor.copy(alpha = 0.6f),
+                                shape = CircleShape
+                            )
+                    )
+                }
+            }
+
+            // 확인 버튼 (첫 입력 화면에서만 표시)
+            if (showConfirmButton && currentPattern.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(0.dp))
+                Button(
+                    onClick = { onPatternComplete(currentPattern) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF191E3F)
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .padding(horizontal = 24.dp)
+                ) {
                     Text(
-                        text = (currentPattern.indexOf(index) + 1).toString(),
-                        color = Color.White,
+                        text = "확인",
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }

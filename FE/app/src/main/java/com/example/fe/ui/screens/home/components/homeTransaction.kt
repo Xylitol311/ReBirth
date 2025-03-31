@@ -25,23 +25,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.R
 import com.example.fe.ui.components.cards.HorizontalCardLayout
+import com.example.fe.ui.components.backgrounds.GlassSurface
 
 @Composable
 fun HomeTransaction() {
-    // 거래 내역 및 혜택 카드
-    Card(
+    GlassSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        shape = RoundedCornerShape(16.dp)
+            .padding(vertical = 8.dp),
+        cornerRadius = 16f,
+        color = Color(0x55FFFFFF),
+        borderColor = Color(0x65FFFFFF)
     ) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
+            modifier = Modifier.padding(24.dp)
         ) {
             // 혜택을 놓친 거래 내역
             Column(
@@ -67,7 +64,7 @@ fun HomeTransaction() {
                         painter = painterResource(id = R.drawable.sad_emoji),
                         contentDescription = "Sad Emoji",
                         modifier = Modifier
-                            .size(60.dp)
+                            .size(70.dp)
                             .align(Alignment.BottomCenter)
                     )
                 }
@@ -75,9 +72,9 @@ fun HomeTransaction() {
                 // 혜택을 놓쳤어요 텍스트
                 Text(
                     text = "혜택을 놓쳤어요",
-                    fontSize = 24.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Red,
+                    color = Color(0xFFFF4444),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
@@ -85,15 +82,15 @@ fun HomeTransaction() {
                 // 가게 정보 및 결제 금액
                 Text(
                     text = "GS25지에스역삼점",
-                    fontSize = 18.sp,
-                    color = Color.Black,
+                    fontSize = 22.sp,
+                    color = Color.White,
                     textAlign = TextAlign.Center
                 )
                 
                 Text(
                     text = "4,200원 결제",
-                    fontSize = 18.sp,
-                    color = Color.Black,
+                    fontSize = 22.sp,
+                    color = Color.White,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -103,7 +100,7 @@ fun HomeTransaction() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                color = Color(0xFFE0E0E0)
+                color = Color(0x80FFFFFF)  // 반투명 흰색 구분선
             )
             
             // 다른 카드 사용 시 혜택 정보
@@ -128,9 +125,9 @@ fun HomeTransaction() {
                 // 다른 카드 사용 시 혜택 정보
                 Text(
                     text = "삼성 IDONE 카드를 사용했다면",
-                    fontSize = 18.sp,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = Color.White,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 16.dp)
                 )
@@ -142,15 +139,15 @@ fun HomeTransaction() {
                 ) {
                     Text(
                         text = "420원",
-                        fontSize = 18.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = Color.White
                     )
                     
                     Text(
                         text = "의 혜택을 볼 수도 있었어요",
-                        fontSize = 18.sp,
-                        color = Color.Black
+                        fontSize = 22.sp,
+                        color = Color.White
                     )
                 }
             }

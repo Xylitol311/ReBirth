@@ -52,7 +52,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
     )
 
     // 현재 페이지에 따른 수평 오프셋 계산
-    val horizontalOffset = pagerState.currentPage * 500f
+    val horizontalOffset = (pagerState.currentPage + pagerState.currentPageOffset) * 300f
 
     // 페이지 오프셋 비율 (애니메이션 용)
     val currentPageOffset = pagerState.currentPageOffset
@@ -63,6 +63,23 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
             horizontalOffset = horizontalOffset
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
+                // 임시 보안 설정 버튼 추가
+                Button(
+                    onClick = {
+                        navController.navigate("security_setup") {
+                            popUpTo("onboarding") { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4169E1)
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    Text("보안설정 테스트", fontSize = 16.sp)
+                }
+
                 // 콘텐츠 영역 (이미지와 텍스트) - 화면 중앙으로 배치
                 Column(
                     modifier = Modifier
@@ -76,7 +93,6 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                     HorizontalPager(
                         count = pages.size,
                         state = pagerState,
-                        // 페이저 자체에 애니메이션 속도 설정 추가
                         contentPadding = PaddingValues(0.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) { page ->
@@ -128,7 +144,11 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                         scope.launch {
                             if (pagerState.currentPage < pages.lastIndex) {
                                 pagerState.animateScrollToPage(
-                                    page = pagerState.currentPage + 1
+                                    page = pagerState.currentPage + 1,
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        easing = androidx.compose.animation.core.LinearEasing
+                                    )
                                 )
                             } else {
                                 navController.navigate("auth") {

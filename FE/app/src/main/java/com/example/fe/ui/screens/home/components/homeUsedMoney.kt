@@ -1,155 +1,207 @@
 package com.example.fe.ui.screens.home.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.R
-import com.example.fe.ui.screens.home.CategorySpendingList
+import com.example.fe.ui.components.backgrounds.GlassSurface
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 
 @Composable
 fun HomeUsedMoney(
     onDetailClick: () -> Unit = {}
 ) {
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    
-    // 이번 달 소비 카드
-    Card(
+    GlassSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        shape = RoundedCornerShape(16.dp)
+            .padding(vertical = 8.dp)
     ) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.padding(48.dp)
+        ) {
+            // 이번 달 소비 금액과 상세보기 버튼
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 60.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(start = 50.dp, end = 0.dp),
+                ) {
+                    Text(
+                        text = "이번 달 소비",
+                        fontSize = 22.sp,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "150,000원",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    // 받은 혜택
+                    Text(
+                        text = "받은 혜택 1,000원",
+                        fontSize = 18.sp,
+                        color = Color(0xFF64B5F6),
+                        modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+                    )
+
+                }
+
+                IconButton(
+                    onClick = onDetailClick,
+                    modifier = Modifier
+                        .offset(y = (-14).dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.White.copy(alpha = 0.2f))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = "상세보기",
+                        tint = Color.White
+                    )
+                }
+            }
+            
+            // 탭 레이아웃
+            var selectedTabIndex by remember { mutableStateOf(0) }
+            TabRow(
+                selectedTabIndex = selectedTabIndex,
+                containerColor = Color.Transparent,
+                contentColor = Color.White,
+                indicator = { tabPositions ->
+                    Box(
+                        modifier = Modifier
+                            .tabIndicatorOffset(tabPositions[selectedTabIndex])
+                            .height(2.dp)
+                            .background(color = Color.White)
+                    )
+                }
+            ) {
+                Tab(
+                    selected = selectedTabIndex == 0,
+                    onClick = { selectedTabIndex = 0 },
+                    text = { Text("혜택이 아쉬운 소비") }
+                )
+                Tab(
+                    selected = selectedTabIndex == 1,
+                    onClick = { selectedTabIndex = 1 },
+                    text = { Text("혜택을 잘 받은 소비") }
+                )
+            }
+            
+            // 카테고리별 소비 내역
+            CategorySpendingList(selectedTabIndex)
+        }
+    }
+}
+
+@Composable
+private fun CategorySpendingList(selectedTabIndex: Int) {
+    val categories = listOf(
+        Triple("카페", 50000, 5000),
+        Triple("음식점", 30000, 3000),
+        Triple("편의점", 20000, 2000)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+    ) {
+        categories.forEach { (category, amount, benefit) ->
+            CategoryRow(
+                category = category,
+                amount = amount,
+                benefit = benefit,
+                isGoodTab = selectedTabIndex == 1,
+                iconResId = when (category) {
+                    "카페" -> R.drawable.ic_coffee
+                    "음식점" -> R.drawable.ic_restaurant
+                    else -> R.drawable.ic_shopping
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CategoryRow(
+    category: String,
+    amount: Int,
+    benefit: Int,
+    isGoodTab: Boolean,
+    iconResId: Int
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 카테고리 아이콘과 이름
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                painter = painterResource(id = iconResId),
+                contentDescription = category,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = category,
+                fontSize = 20.sp,
+                color = Color.White,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+
+        // 금액 정보
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "이번 달 소비",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
+                text = "${amount}원",
+                fontSize = 18.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Medium
             )
             
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .fillMaxWidth()
-            ) {
+            if (isGoodTab) {
                 Text(
-                    text = "150,000원",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    text = "+${benefit}원",
+                    fontSize = 16.sp,
+                    color = Color(0xFF4285F4)
                 )
-                
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_right),
-                    contentDescription = "Details",
-                    tint = Color.Black,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .size(24.dp)
-                        .clickable { 
-                            onDetailClick()
-                        }
+            } else {
+                Text(
+                    text = "-${benefit}원",
+                    fontSize = 16.sp,
+                    color = Color(0xFFFF5252)
                 )
             }
-            
-            Text(
-                text = "받은 혜택 1,000원",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            
-            // 아쉬움/잘함 탭
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFF2D2A57))
-                    .padding(4.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            if (selectedTabIndex == 0) Color.White else Color.Transparent
-                        )
-                        .clickable { selectedTabIndex = 0 }
-                        .padding(horizontal = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "아쉬움",
-                        color = if (selectedTabIndex == 0) Color(0xFF2D2A57) else Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            if (selectedTabIndex == 1) Color.White else Color.Transparent
-                        )
-                        .clickable { selectedTabIndex = 1 }
-                        .padding(horizontal = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "잘함",
-                        color = if (selectedTabIndex == 1) Color(0xFF2D2A57) else Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-            
-            // 카테고리별 소비 목록
-            Spacer(modifier = Modifier.height(16.dp))
-            CategorySpendingList(selectedTabIndex = selectedTabIndex)
         }
     }
 }

@@ -18,6 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.random.Random
@@ -36,7 +39,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.CompositionLocalProvider
@@ -91,6 +93,9 @@ fun StarryBackground(
         }
     }
     
+    // 캔버스 크기 상태
+    var canvasSize by remember { mutableStateOf(IntSize(0, 0)) }
+    
     // 상태를 글로벌 상태에 저장
     starryBackgroundState.stars = stars
     starryBackgroundState.isInitialized = true
@@ -125,35 +130,49 @@ fun StarryBackground(
                 .background(Color(0xFF0A0A1A))
         ) {
             // 별이 빛나는 배경
-            Canvas(modifier = Modifier.fillMaxSize()) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged { canvasSize = it }
+            ) {
                 val canvasWidth = size.width
                 val canvasHeight = size.height
                 
-                // 별 그리기
-                stars.forEach { star ->
-                    // 스크롤 오프셋에 따라 별의 위치 조정 (수직)
-                    val yOffset = (scrollOffset / 1000f) % 1f
-                    
-                    // 가로 방향 이동에 따른 별의 위치 조정 (수평)
-                    val xOffset = (animatedHorizontalOffset / (canvasWidth * 0.5f))
-                    
-                    // 최종 별 위치 계산 (무한 스크롤을 위해 모듈로 연산)
-                    val x = (star.x - xOffset) % 1f
-                    // 음수 처리 (모듈로 연산 결과가 음수일 경우)
-                    val adjustedX = if (x < 0) x + 1f else x
-                    
-                    // 별의 실제 화면 좌표
-                    val xPos = adjustedX * canvasWidth
-                    val yPos = (star.y - yOffset) % 1f * canvasHeight
-                    
-                    // 별 그리기
-                    drawStar(
-                        center = Offset(xPos, yPos),
-                        radius = star.size,
-                        color = Color.White,
-                        time = time,
-                        star = star
-                    )
+                // 스크롤 오프셋 (픽셀 단위로 변환)
+                val pixelScrollOffset = scrollOffset / 1000f * canvasHeight
+                
+                // 복제할 세트의 수 (위 아래로 각각 하나씩)
+                val repeatSets = 3
+                
+                // 3세트의 별을 그림 (현재 위치, 위, 아래)
+                for (setIndex in -1 until repeatSets - 1) {
+                    stars.forEach { star ->
+                        // 기본 y 위치 계산
+                        val baseY = star.y * canvasHeight
+                        
+                        // 세트별 오프셋 계산
+                        val setOffset = setIndex * canvasHeight
+                        
+                        // 최종 y 위치 (세트 오프셋 + 기본 위치 - 스크롤 오프셋)
+                        val finalY = baseY + setOffset - (pixelScrollOffset % canvasHeight)
+                        
+                        // 각 세트별 x 위치 계산 및 가로 방향 오프셋 적용
+                        val xOffset = (animatedHorizontalOffset / (canvasWidth * 0.5f)) * canvasWidth
+                        val xPos = (star.x * canvasWidth - xOffset) % canvasWidth
+                        // 음수 처리
+                        val adjustedX = if (xPos < 0) xPos + canvasWidth else xPos
+                        
+                        // 별이 화면 내에 있을 때만 그리기
+                        if (finalY >= -100 && finalY <= canvasHeight + 100) {
+                            drawStar(
+                                center = Offset(adjustedX, finalY),
+                                radius = star.size,
+                                color = Color.White,
+                                time = time,
+                                star = star
+                            )
+                        }
+                    }
                 }
             }
             
@@ -168,8 +187,8 @@ fun StarryBackground(
 fun GlassSurface(
     modifier: Modifier = Modifier,
     cornerRadius: Float = 16f,
-    color: Color = Color(0x60FFFFFF),
-    borderColor: Color = Color(0xAAFFFFFF),
+    color: Color = Color(0x70FFFFFF),  // 더 밝게 변경 (0x30 -> 0x70)
+    borderColor: Color = Color(0x90FFFFFF),  // 더 밝게 변경 (0x70 -> 0x90)
     blurRadius: Float = 10f,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -180,12 +199,12 @@ fun GlassSurface(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(cornerRadius.dp))
-                .blur(radius = 25.dp) // 블러 강도 유지
+                .blur(radius = 8.dp)  // 블러 강도 약간 감소 (10.dp -> 8.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xE5145B8C), // 더 밝은 파란색으로 변경
-                            Color(0xC51E3A5F)  // 더 밝은 하단 색상
+                            Color(0x70145B8C),  // 더 밝게 변경 (0x50 -> 0x70)
+                            Color(0x601E3A5F)   // 더 밝게 변경 (0x40 -> 0x60)
                         ),
                         start = Offset(0f, 0f),
                         end = Offset(0f, Float.POSITIVE_INFINITY)
@@ -200,11 +219,11 @@ fun GlassSurface(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(cornerRadius.dp))
                 .border(
-                    width = 1.dp,
+                    width = 0.5.dp,  // 테두리 그대로 유지
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xEE90CAF9), // 상단은 더 밝은 테두리
-                            Color(0x8064B5F6)  // 하단은 더 어두운 테두리
+                            Color(0x8590CAF9),  // 더 밝게 변경 (0x55 -> 0x85)
+                            Color(0x7064B5F6)   // 더 밝게 변경 (0x30 -> 0x70)
                         ),
                         start = Offset(0f, 0f),
                         end = Offset(0f, Float.POSITIVE_INFINITY)
@@ -221,8 +240,8 @@ fun GlassSurface(
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color(0x503F51B5), // 더 밝은 상단 내부 색상
-                                Color(0x352B5BDF)  // 더 밝은 하단 내부 색상
+                                Color(0x503F51B5),  // 더 밝게 변경 (0x20 -> 0x50)
+                                Color(0x402B5BDF)   // 더 밝게 변경 (0x15 -> 0x40)
                             ),
                             start = Offset(0f, 0f),
                             end = Offset(0f, Float.POSITIVE_INFINITY)
@@ -238,8 +257,8 @@ fun GlassSurface(
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0x608BB2F0), // 더 밝은 반투명 청색
-                                    Color.Transparent   // 완전 투명
+                                    Color(0x608BB2F0),  // 더 밝게 변경 (0x30 -> 0x60)
+                                    Color.Transparent    // 완전 투명
                                 ),
                                 startY = 0f,
                                 endY = Float.POSITIVE_INFINITY
@@ -257,8 +276,8 @@ fun GlassSurface(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    Color(0x60BBDEFB), // 더 밝고 더 뚜렷한 하이라이트
-                                    Color.Transparent   // 완전 투명
+                                    Color(0x50BBDEFB),  // 더 밝게 변경 (0x25 -> 0x50)
+                                    Color.Transparent    // 완전 투명
                                 )
                             )
                         )
@@ -274,8 +293,8 @@ fun GlassSurface(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    Color(0x15BBDEFB), // 매우 희미한 하이라이트
-                                    Color.Transparent   // 완전 투명
+                                    Color(0x30BBDEFB),  // 더 밝게 변경 (0x10 -> 0x30)
+                                    Color.Transparent    // 완전 투명
                                 )
                             )
                         )

@@ -14,7 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,12 +26,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.ui.components.backgrounds.GlassSurface
+import com.example.fe.ui.components.backgrounds.StarryBackground
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 
 // 가계부 항목 데이터 클래스
 data class TransactionItem(
@@ -57,6 +63,14 @@ fun CalendarScreen(
     var scrollOffset by remember { mutableStateOf(0f) }
     val lazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    
+    // 위로 가기 버튼 표시 여부 (스크롤 위치에 따라 결정)
+    val showScrollToTopButton by remember {
+        derivedStateOf {
+            // 스크롤 위치가 일정 이상이면 버튼 표시
+            lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 200
+        }
+    }
     
     // 현재 선택된 연월
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
@@ -121,9 +135,20 @@ fun CalendarScreen(
         }
     }
     
+    // 배경과 콘텐츠를 함께 배치
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
+        // 배경 (스크롤에 따라 움직임)
+        StarryBackground(
+            scrollOffset = scrollOffset,
+            starCount = 150,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // 빈 Box - 배경만 표시
+        }
+        
+        // 실제 스크롤 가능한 콘텐츠
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -335,6 +360,39 @@ fun CalendarScreen(
             // 하단 여백
             item {
                 Spacer(modifier = Modifier.height(80.dp))
+            }
+        }
+        
+        // 위로 가기 버튼
+        AnimatedVisibility(
+            visible = showScrollToTopButton,
+            enter = fadeIn() + slideInVertically { it * 2 },
+            exit = fadeOut() + slideOutVertically { it * 2 },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
+        ) {
+            // 유리 효과가 적용된 둥근 버튼
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                    .clickable {
+                        coroutineScope.launch {
+                            // 맨 위로 부드럽게 스크롤
+                            lazyListState.animateScrollToItem(0)
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                // 화살표 위로 아이콘
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowUp,
+                    contentDescription = "맨 위로 가기",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
             }
         }
     }

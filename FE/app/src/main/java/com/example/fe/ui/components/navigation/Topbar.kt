@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,64 +45,69 @@ fun TopBar(
             .height(60.dp),
         color = Color.Black
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
-            if (showBackButton) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
+                if (showBackButton) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "뒤로가기",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable { onBackClick() }
+                    )
+                } else {
+                    // 뒤로가기 버튼 없을 때 동일한 공간 유지
+                    Spacer(modifier = Modifier.width(28.dp))
+                }
+
+                // 중앙 정렬을 위한 여백
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 로그아웃 버튼
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "뒤로가기",
+                    imageVector = Icons.Default.ExitToApp,
+                    contentDescription = "로그아웃",
                     tint = Color.White,
                     modifier = Modifier
                         .size(28.dp)
-                        .clickable { onBackClick() }
+                        .clickable { onLogoutClick() }
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-            }
 
-            // 제목 (기본값은 "RE")
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // 프로필 아이콘
+                Box(
+                    modifier = Modifier.padding(top = 0.dp, bottom = 4.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clickable { onProfileClick() },
+                        painter = painterResource(id = R.drawable.ic_person),
+                        contentDescription = "프로필",
+                        tint = Color.White
+                    )
+                }
+            }
+            
+            // 중앙에 제목 배치
             Text(
                 text = title,
                 color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Box(
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .weight(1f)
+                    .align(Alignment.Center),
+                textAlign = TextAlign.Center
             )
-
-            // 로그아웃 버튼
-            Icon(
-                imageVector = Icons.Default.ExitToApp,
-                contentDescription = "로그아웃",
-                tint = Color.White,
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable { onLogoutClick() }
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // 프로필 아이콘
-            Box(
-                modifier = Modifier.padding(top = 0.dp, bottom = 4.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable { onProfileClick() },
-                    painter = painterResource(id = R.drawable.ic_person),
-                    contentDescription = "프로필",
-                    tint = Color.White
-                )
-            }
         }
     }
 }
