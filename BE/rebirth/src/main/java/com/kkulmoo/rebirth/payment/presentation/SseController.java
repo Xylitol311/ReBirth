@@ -1,6 +1,6 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
-import com.kkulmoo.rebirth.payment.application.service.PaymentEncryption;
+import com.kkulmoo.rebirth.payment.application.service.PaymentOfflineEncryption;
 import com.kkulmoo.rebirth.payment.application.service.PaymentService;
 import com.kkulmoo.rebirth.payment.application.service.SseService;
 import com.kkulmoo.rebirth.payment.application.service.WebClientService;
@@ -19,14 +19,14 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class SseController {
     private final SseService sseService;
     private final PaymentService paymentService;
-    private final PaymentEncryption paymentEncryption;
-    private final WebClientService webClientService;
+    private final PaymentOfflineEncryption paymentOfflineEncryption;
 
-    public SseController(SseService sseService, PaymentService paymentService, PaymentEncryption paymentEncryption, WebClientService webClientService) {
+
+    public SseController(SseService sseService, PaymentService paymentService, PaymentOfflineEncryption paymentOfflineEncryption) {
         this.sseService = sseService;
         this.paymentService = paymentService;
-        this.paymentEncryption = paymentEncryption;
-        this.webClientService = webClientService;
+        this.paymentOfflineEncryption = paymentOfflineEncryption;
+
     }
 
     // 특정 유저 SSE 구독
@@ -51,7 +51,7 @@ public class SseController {
 
         //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
         String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
-        String[] tokenInfo = paymentEncryption.validateOneTimeToken(realToken);
+        String[] tokenInfo = paymentOfflineEncryption.validateOneTimeToken(realToken);
 
         log.info(realToken);
         log.info(tokenInfo[0]);
@@ -73,7 +73,8 @@ public class SseController {
         //2-2. permanent는 웹 클라이언트로 카드사에 넘기기 & 값 받
         log.info(permanentToken);
         CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder().token(permanentToken).amount(createTransactionRequestDTO.getAmount()).merchantName(createTransactionRequestDTO.getMerchantName()).build();
-        CardTransactionDTO cardTransactionDTO = webClientService.checkPermanentToken(dataToCardsa).block();
+        CardTransactionDTO cardTransactionDTO = paymentService.transactionToCardsa(dataToCardsa);
+
 
         //3. 받은 값으로 아래 데이터 갱신하기
         // 값 최종 업데이트 해주기 ( 이거 어디어디 해줘야 하는데... ) -> 나중으로 우선 미루기
