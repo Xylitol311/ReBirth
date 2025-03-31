@@ -33,7 +33,7 @@ class PaymentViewModel : ViewModel() {
     val selectedCardId: StateFlow<String?> = _selectedCardId
     
     // 사용자 ID (실제 앱에서는 로그인 정보에서 가져와야 함)
-    private val userId = "1" // 임시 사용자 ID
+    private val userId = "2" // 임시 사용자 ID
     
     // 결제 화면 진입 시 호출 - 모든 카드의 토큰 요청 및 SSE 연결 시작
     fun initializePaymentProcess() {
@@ -185,8 +185,8 @@ class PaymentViewModel : ViewModel() {
     fun getTokenForCard(cardId: String): String? {
         // 카드 ID 매핑 (앱 ID -> 서버 ID)
         val serverCardId = when(cardId) {
-            "card1" -> "tes_card_unique_number"
-            "card2" -> "000"
+            "card1" -> "000"
+            "card2" -> "f662c4d2-6ec2-473c-9c07-de23530211ea"
             else -> cardId
         }
         

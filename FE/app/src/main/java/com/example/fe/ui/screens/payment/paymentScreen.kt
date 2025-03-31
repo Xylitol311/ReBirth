@@ -88,12 +88,12 @@ fun PaymentScreen(
     val cards = remember {
         listOf(
             PaymentCardInfo(
-                id = "tes_card_unique_number",
+                id = "000",
                 cardNumber = "8801062318551",
                 cardName = "토스 신한카드 Mr.Life"
             ),
             PaymentCardInfo(
-                id = "000",
+                id = "f662c4d2-6ec2-473c-9c07-de23530211ea",
                 cardNumber = "8801062318552",
                 cardName = "삼성카드 taptap O"
             ),
