@@ -65,6 +65,19 @@ public class PaymentService {
         if(cardInfo.isEmpty()) return null;
 
         List<PaymentTokenResponseDTO> disposableTokensResponse = new ArrayList<>();
+
+
+        // 추천카드의 고유번호는 000으로, 영구토큰 대신 rebirth로
+        String realRecommendToken = paymentOfflineEncryption.generateOneTimeToken("rebirth", userId);
+        String shortRecommendToken = realRecommendToken.substring(0,20);
+
+        //추천 카드에 대해서도 따로 db에 저장해서 가져오기
+        disposableTokensResponse.add((PaymentTokenResponseDTO.builder().
+                token(shortRecommendToken).cardName("추천카드").
+                cardConstellationInfo("추천카드").
+                cardImgUrl("추천카드").build()));
+
+
         for(String[] pt : cardInfo) {
 
             // 영구 토큰 별로 일회용 토큰 생성
@@ -85,15 +98,7 @@ public class PaymentService {
             disposableTokenRepository.saveToken(shortToken,realToken);
         }
 
-        // 추천카드의 고유번호는 000으로, 영구토큰 대신 rebirth로
-        String realRecommendToken = paymentOfflineEncryption.generateOneTimeToken("rebirth", userId);
-        String shortRecommendToken = realRecommendToken.substring(0,20);
 
-        //추천 카드에 대해서도 따로 db에 저장해서 가져오기
-        disposableTokensResponse.add((PaymentTokenResponseDTO.builder().
-                token(shortRecommendToken).cardName("추천카드").
-                cardConstellationInfo("추천카드").
-                cardImgUrl("추천카드").build()));
 
         // 얘도 redis에 저장하기
         disposableTokenRepository.saveToken(shortRecommendToken,realRecommendToken);
@@ -108,6 +113,15 @@ public class PaymentService {
         if(cardInfo.isEmpty()) return null;
 
         List<PaymentTokenResponseDTO> disposableTokensResponse = new ArrayList<>();
+
+        // 추천카드의 고유번호는 000으로, 영구토큰 대신 rebirth로
+        String realRecommendToken = paymentOnlineEncryption.generateOnlineToken(merchantName,amount,"rebirth");
+
+        //추천 카드에 대해서도 따로 db에 저장해서 가져오기
+        disposableTokensResponse.add((PaymentTokenResponseDTO.builder().
+                token(realRecommendToken).cardName("추천카드").
+                cardConstellationInfo("추천카드").
+                cardImgUrl("추천카드").build()));
         for(String[] pt : cardInfo) {
 
             // 영구 토큰 별로 일회용 토큰 생성
@@ -123,14 +137,7 @@ public class PaymentService {
 
         }
 
-        // 추천카드의 고유번호는 000으로, 영구토큰 대신 rebirth로
-        String realRecommendToken = paymentOnlineEncryption.generateOnlineToken(merchantName,amount,"rebirth");
 
-        //추천 카드에 대해서도 따로 db에 저장해서 가져오기
-        disposableTokensResponse.add((PaymentTokenResponseDTO.builder().
-                token(realRecommendToken).cardName("추천카드").
-                cardConstellationInfo("추천카드").
-                cardImgUrl("추천카드").build()));
 
         return disposableTokensResponse;
     }
