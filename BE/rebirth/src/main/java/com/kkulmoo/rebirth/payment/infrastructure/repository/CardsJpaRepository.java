@@ -1,6 +1,6 @@
 package com.kkulmoo.rebirth.payment.infrastructure.repository;
 
-import com.kkulmoo.rebirth.payment.infrastructure.entity.CardsEntity;
+import com.kkulmoo.rebirth.shared.entity.CardsEntity;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -6,7 +6,6 @@ import com.kkulmoo.rebirth.payment.domain.repository.DisposableTokenRepository;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
-import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
