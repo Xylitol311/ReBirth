@@ -23,7 +23,7 @@ import java.util.List;
 
 
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin
 @RestController
 @RequestMapping("/api/payment")
 public class PaymentController {
