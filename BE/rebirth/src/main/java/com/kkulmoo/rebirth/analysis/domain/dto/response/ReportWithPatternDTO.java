@@ -24,9 +24,12 @@ public class ReportWithPatternDTO {
     @JsonProperty("total_group_benefit_average")
     int totalGroupBenefitAverage;
 
+    @JsonProperty("group_name")
+    String groupName;
+
     @JsonProperty("report_description")
     String reportDescription;
 
-    @JsonProperty("consumption_pattern")
-    ConsumptionPatternEntity consumptionPattern;
+    @JsonProperty("consumption_patterns")
+    ConsumptionPatternDTO consumptionPattern;
 }

@@ -88,7 +88,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionsEnt
             "AND t2.createdAt BETWEEN :startDateTime AND :endDateTime " +
             "AND ct2.status = '승인' " +
             "GROUP BY c.categoryId " +
-            "ORDER BY SUM(t2.amount) DESC " +
+            "ORDER BY SUM(t2.amount) ASC " +
             "LIMIT 1 " +
             "), " +
             "(" +

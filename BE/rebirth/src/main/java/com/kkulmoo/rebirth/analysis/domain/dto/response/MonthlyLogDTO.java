@@ -14,9 +14,9 @@ public class MonthlyLogDTO {
     @JsonProperty("day")
     int day;
 
-    @JsonProperty("plus")
-    int plus;
-
     @JsonProperty("minus")
     int minus;
+
+    @JsonProperty("plus")
+    int plus;
 }

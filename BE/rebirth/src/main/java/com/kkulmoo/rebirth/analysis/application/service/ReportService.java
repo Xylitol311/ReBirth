@@ -363,29 +363,37 @@ public class ReportService {
         MonthlyTransactionSummaryEntity preSummary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(userId, preYear, preMonth);
         int minSpending = 0;
         int maxSpending = 0;
-        if (summary.getTotalSpending() >= 0 && summary.getTotalSpending() <= 500000) {
+        String groupName = "";
+        if (-summary.getTotalSpending() >= 0 && summary.getTotalSpending() <= 500000) {
             maxSpending = 500000;
-        } else if (summary.getTotalSpending() > 500001 && summary.getTotalSpending() <= 1000000) {
+            groupName = "50만원 이하";
+        } else if (-summary.getTotalSpending() > 500001 && summary.getTotalSpending() <= 1000000) {
             minSpending = 500001;
             maxSpending = 1000000;
-        } else if (summary.getTotalSpending() > 1000001 && summary.getTotalSpending() <= 1500000) {
+            groupName = "50만원 ~ 100만원";
+        } else if (-summary.getTotalSpending() > 1000001 && summary.getTotalSpending() <= 1500000) {
             minSpending = 1000001;
             maxSpending = 1500000;
-        } else if (summary.getTotalSpending() > 1500001 && summary.getTotalSpending() <= 2000000) {
+            groupName = "100만원 ~ 150만원";
+        } else if (-summary.getTotalSpending() > 1500001 && summary.getTotalSpending() <= 2000000) {
             minSpending = 1500001;
             maxSpending = 2000000;
-        } else if (summary.getTotalSpending() > 2000001 && summary.getTotalSpending() <= 2500000) {
+            groupName = "150만원 ~ 200만원";
+        } else if (-summary.getTotalSpending() > 2000001 && summary.getTotalSpending() <= 2500000) {
             minSpending = 2000001;
             maxSpending = 2500000;
-        } else if (summary.getTotalSpending() > 2500001 && summary.getTotalSpending() <= 3000000) {
+            groupName = "200만원 ~ 250만원";
+        } else if (-summary.getTotalSpending() > 2500001 && summary.getTotalSpending() <= 3000000) {
             minSpending = 2500001;
             maxSpending = 3000000;
+            groupName = "250만원 ~ 300만원";
         } else {
             minSpending = 3000001;
             maxSpending = 2100000000;
+            groupName = "300만원 이상";
         }
 
-        double totalGroupBenefitAverage = monthlyTransactionSummaryJpaRepository.getGroupBenefitAverage(minSpending, maxSpending);
+        double totalGroupBenefitAverage = monthlyTransactionSummaryJpaRepository.getGroupBenefitAverage(year, month, minSpending, maxSpending);
 
         ReportWithPatternDTO result = ReportWithPatternDTO
                 .builder()
@@ -393,8 +401,9 @@ public class ReportService {
                 .totalBenefitAmount(summary.getReceivedBenefitAmount())
                 .totalGroupBenefitAverage((int) totalGroupBenefitAverage)
                 .preTotalSpendingAmount(preSummary.getTotalSpending())
+                .groupName(groupName)
                 .reportDescription(report.getReportDescription())
-                .consumptionPattern(pattern)
+                .consumptionPattern(new ConsumptionPatternDTO(pattern))
                 .build();
 
         return result;
