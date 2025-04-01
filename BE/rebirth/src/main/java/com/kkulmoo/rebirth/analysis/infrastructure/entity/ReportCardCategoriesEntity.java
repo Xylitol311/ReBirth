@@ -21,14 +21,13 @@ public class ReportCardCategoriesEntity {
     @Column(name = "report_category_id")
     private int reportCategoryId;
 
-    @Column(name = "report_card_id")
-    private int reportCardId;
+//    @Column(name = "report_card_id")
+    @JoinColumn(name = "report_card_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ReportCardsEntity reportCard;
 
     @Column(name = "category_id")
     private int categoryId;
-
-    @Column(name = "merchant_id")
-    private int merchantId;
 
     @Column(name = "amount")
     private int amount;

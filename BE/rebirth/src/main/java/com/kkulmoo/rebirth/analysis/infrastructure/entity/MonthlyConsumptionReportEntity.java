@@ -17,9 +17,13 @@ import java.time.LocalDateTime;
 public class MonthlyConsumptionReportEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "report_id")
     private int reportId;
+
+    @OneToOne
+    @MapsId  // reportId를 다른 테이블의 기본 키와 공유
+    @JoinColumn(name = "report_id")  // 외래 키 매핑
+    private MonthlyTransactionSummaryEntity report;  // 1대1 관계 엔티티
 
     @Column(name = "consumption_pattern_id")
     private String consumptionPatternId;

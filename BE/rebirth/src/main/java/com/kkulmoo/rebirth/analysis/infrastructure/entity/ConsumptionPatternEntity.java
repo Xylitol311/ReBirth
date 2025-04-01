@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "consumption_pattern")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Data
 public class ConsumptionPatternEntity {
 
     @Id
@@ -25,6 +27,6 @@ public class ConsumptionPatternEntity {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "img_url")
-    private String imgUrl;
+//    @Column(name = "img_url")
+//    private String imgUrl;
 }
