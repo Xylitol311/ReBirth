@@ -35,14 +35,17 @@ public class BenefitTemplateEntity {
 	@Enumerated(EnumType.STRING)
 	private BenefitType benefitType;
 
-	@Column(name = "benefit_method", nullable = false)
-	private Short benefitMethod;
+	@Column(name = "merchant_filter_type", nullable = false)
+	private Short merchantFilterType;
+
+	@Column(name = "benefit_condition_type", nullable = false)
+	private Short benefitConditionType;
 
 	@Column(name = "performance_range", nullable = false)
 	private Integer[] performanceRange;
 
-	@Column(name = "performance_range_by_benefit")
-	private Double[] performanceRangeByBenefit;
+	@Column(name = "benefits_by_section")
+	private Double[] benefitsBySection;
 
 	@Column(name = "merchant_info", nullable = false)
 	private Boolean merchantInfo;
