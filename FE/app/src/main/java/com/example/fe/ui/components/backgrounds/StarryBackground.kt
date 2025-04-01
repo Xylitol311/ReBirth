@@ -182,48 +182,55 @@ fun StarryBackground(
     }
 }
 
-// 글래스 효과를 가진 표면 컴포저블
+// 글래스 효과를 가진 표면 컴포저블 수정
 @Composable
 fun GlassSurface(
     modifier: Modifier = Modifier,
     cornerRadius: Float = 16f,
-    color: Color = Color(0x70FFFFFF),  // 더 밝게 변경 (0x30 -> 0x70)
-    borderColor: Color = Color(0x90FFFFFF),  // 더 밝게 변경 (0x70 -> 0x90)
+    isTopPanel: Boolean = false, // 상단 패널 여부를 결정하는 매개변수 추가
     blurRadius: Float = 10f,
     content: @Composable BoxScope.() -> Unit
 ) {
-    // 배경과 컨텐츠를 분리하여 배경만 블러 처리
     Box(modifier = modifier) {
         // 배경 레이어 (블러 효과 적용)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(cornerRadius.dp))
-                .blur(radius = 8.dp)  // 블러 강도 약간 감소 (10.dp -> 8.dp)
+                .blur(radius = 8.dp)
                 .background(
                     brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0x70145B8C),  // 더 밝게 변경 (0x50 -> 0x70)
-                            Color(0x601E3A5F)   // 더 밝게 변경 (0x40 -> 0x60)
-                        ),
+                        colors = if (isTopPanel) {
+                            // 상단 패널은 하단 패널과 유사한 색상으로 설정
+                            listOf(
+                                Color(0x70203F64),
+                                Color(0x70183050)
+                            )
+                        } else {
+                            // 하단 패널 색상
+                            listOf(
+                                Color(0x70203F64),
+                                Color(0x70183050)
+                            )
+                        },
                         start = Offset(0f, 0f),
                         end = Offset(0f, Float.POSITIVE_INFINITY)
                     ),
                     shape = RoundedCornerShape(cornerRadius.dp)
                 )
         )
-        
+
         // 테두리와 컨텐츠 레이어 (블러 없음)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(cornerRadius.dp))
                 .border(
-                    width = 0.5.dp,  // 테두리 그대로 유지
+                    width = 1.dp,
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0x8590CAF9),  // 더 밝게 변경 (0x55 -> 0x85)
-                            Color(0x7064B5F6)   // 더 밝게 변경 (0x30 -> 0x70)
+                            Color(0xFF00E1FF),  // 밝은 하늘색
+                            Color(0x8000E1FF)   // 투명한 하늘색
                         ),
                         start = Offset(0f, 0f),
                         end = Offset(0f, Float.POSITIVE_INFINITY)
@@ -231,7 +238,7 @@ fun GlassSurface(
                     shape = RoundedCornerShape(cornerRadius.dp)
                 )
         ) {
-            // 유리 효과를 위한 그라디언트 오버레이
+            // 유리 효과를 위한 배경
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -239,10 +246,19 @@ fun GlassSurface(
                     .clip(RoundedCornerShape((cornerRadius - 1).dp))
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color(0x503F51B5),  // 더 밝게 변경 (0x20 -> 0x50)
-                                Color(0x402B5BDF)   // 더 밝게 변경 (0x15 -> 0x40)
-                            ),
+                            colors = if (isTopPanel) {
+                                // 상단 패널은 하단 패널과 유사한 색상으로 설정
+                                listOf(
+                                    Color(0x50203F64),
+                                    Color(0x50183050)
+                                )
+                            } else {
+                                // 하단 패널 색상
+                                listOf(
+                                    Color(0x50203F64),
+                                    Color(0x50183050)
+                                )
+                            },
                             start = Offset(0f, 0f),
                             end = Offset(0f, Float.POSITIVE_INFINITY)
                         )
@@ -257,49 +273,15 @@ fun GlassSurface(
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0x608BB2F0),  // 더 밝게 변경 (0x30 -> 0x60)
-                                    Color.Transparent    // 완전 투명
+                                    Color(0x30FFFFFF),  // 반투명 흰색
+                                    Color.Transparent
                                 ),
                                 startY = 0f,
                                 endY = Float.POSITIVE_INFINITY
                             )
                         )
                 )
-                
-                // 왼쪽 상단 밝은 부분 (추가 반사 효과)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.4f)
-                        .fillMaxHeight(0.3f)
-                        .padding(5.dp)
-                        .align(Alignment.TopStart)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0x50BBDEFB),  // 더 밝게 변경 (0x25 -> 0x50)
-                                    Color.Transparent    // 완전 투명
-                                )
-                            )
-                        )
-                )
-                
-                // 오른쪽 하단 희미한 반짝임 (추가 반사 효과)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.3f)
-                        .fillMaxHeight(0.2f)
-                        .padding(5.dp)
-                        .align(Alignment.BottomEnd)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0x30BBDEFB),  // 더 밝게 변경 (0x10 -> 0x30)
-                                    Color.Transparent    // 완전 투명
-                                )
-                            )
-                        )
-                )
-                
+
                 // 내용 (블러 없음)
                 content()
             }

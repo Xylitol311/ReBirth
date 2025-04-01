@@ -55,19 +55,22 @@ data class DailySummary(
     val expense: Int = 0
 )
 
+val brightRed = Color(0xFFFF6B6B)
+val brightGreen = Color(0xFF69F0AE)
+
 @Composable
 fun CalendarScreen(
     modifier: Modifier = Modifier,
     onScrollOffsetChange: (Float) -> Unit = {}
 ) {
+    var selectedTabIndex by remember { mutableStateOf(0) }
     var scrollOffset by remember { mutableStateOf(0f) }
     val lazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     
-    // 위로 가기 버튼 표시 여부 (스크롤 위치에 따라 결정)
+    // 위로 가기 버튼 표시 여부
     val showScrollToTopButton by remember {
         derivedStateOf {
-            // 스크롤 위치가 일정 이상이면 버튼 표시
             lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 200
         }
     }
@@ -125,6 +128,9 @@ fun CalendarScreen(
         )
     }
     
+    // 현재 연월 저장
+    val currentMonth = remember { YearMonth.now() }
+
     // 스크롤 오프셋 변경 감지 및 콜백 호출
     LaunchedEffect(lazyListState) {
         snapshotFlow { 
@@ -135,264 +141,402 @@ fun CalendarScreen(
         }
     }
     
-    // 배경과 콘텐츠를 함께 배치
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // 배경 (스크롤에 따라 움직임)
         StarryBackground(
             scrollOffset = scrollOffset,
             starCount = 150,
             modifier = Modifier.fillMaxSize()
         ) {
-            // 빈 Box - 배경만 표시
-        }
-        
-        // 실제 스크롤 가능한 콘텐츠
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            state = lazyListState
-        ) {
-            // 상단 타이틀
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "가계부",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                state = lazyListState
+            ) {
+                // 상단 탭
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
                     
-                    Button(
-                        onClick = { /* 리포트 화면으로 이동 */ },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF3F51B5)
-                        ),
-                        shape = RoundedCornerShape(8.dp)
+                    // 탭 바
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "월별 소비 리포트 보러 가기",
-                            fontSize = 12.sp,
-                            color = Color.White
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            
-            // 달력 영역
-            item {
-                GlassSurface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    cornerRadius = 16f
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        // 연월 표시 및 이전/다음 버튼
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        // 왼쪽 탭 (가계부)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { selectedTabIndex = 0 },
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            IconButton(
-                                onClick = {
-                                    currentYearMonth = currentYearMonth.minusMonths(1)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.KeyboardArrowLeft,
-                                    contentDescription = "이전 달",
-                                    tint = Color.White
-                                )
-                            }
-                            
                             Text(
-                                text = "${currentYearMonth.monthValue}월 ${currentYearMonth.year}",
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
+                                text = "가계부",
+                                color = if (selectedTabIndex == 0) Color.White else Color.Gray,
+                                fontSize = 16.sp,
+                                fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier.padding(vertical = 8.dp)
                             )
                             
-                            IconButton(
-                                onClick = {
-                                    currentYearMonth = currentYearMonth.plusMonths(1)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.KeyboardArrowRight,
-                                    contentDescription = "다음 달",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // 요일 헤더
-                        val daysOfWeek = listOf("일", "월", "화", "수", "목", "금", "토")
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            daysOfWeek.forEach { day ->
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 4.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = day,
-                                        color = when(day) {
-                                            "일" -> Color(0xFFFF5252)
-                                            "토" -> Color(0xFF448AFF)
-                                            else -> Color.White
-                                        },
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold
+                            Box(
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .height(2.dp)
+                                    .background(
+                                        color = if (selectedTabIndex == 0) Color.White else Color.Transparent
                                     )
-                                }
-                            }
+                            )
                         }
                         
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        // 달력 그리드
-                        CalendarGrid(
-                            yearMonth = currentYearMonth,
-                            selectedDate = selectedDate,
-                            dailySummaries = dailySummaries,
-                            onDateSelected = { date ->
-                                selectedDate = date
-                                // 해당 날짜의 거래 내역으로 스크롤
-                                dateIndexMap[date]?.let { index ->
-                                    coroutineScope.launch {
-                                        lazyListState.animateScrollToItem(index)
-                                    }
-                                }
-                            }
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            
-            // 월간 요약
-            item {
-                GlassSurface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    cornerRadius = 16f
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "${monthlySummary.expense}원 소비",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Text(
-                            text = "최다 소비 카테고리: 카페",
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
-                        
-                        Text(
-                            text = "지난달보다 ${3000}원 더 소비중",
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
-                        
-                        Text(
-                            text = "13일 수요일",
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            
-            // 일자별 거래 내역
-            transactionsByDate.keys.sorted().forEachIndexed { index, date ->
-                // 인덱스 맵에 저장
-                dateIndexMap[date] = index + 3 // 상단 아이템 3개 고려 (제목, 달력, 월간 요약)
-                
-                item {
-                    // 일자 헤더
-                    Text(
-                        text = formatDateHeader(date),
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    
-                    // 해당 일자의 거래 내역
-                    transactionsByDate[date]?.forEach { transaction ->
-                        TransactionListItem(transaction = transaction)
+                        // 오른쪽 탭 (소비 리포트)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { selectedTabIndex = 1 },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "소비 리포트",
+                                color = if (selectedTabIndex == 1) Color.White else Color.Gray,
+                                fontSize = 16.sp,
+                                fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                            
+                            Box(
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .height(2.dp)
+                                    .background(
+                                        color = if (selectedTabIndex == 1) Color.White else Color.Transparent
+                                    )
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))
                 }
+                
+                when (selectedTabIndex) {
+                    0 -> {
+                        // 기존 달력 내용
+                        item {
+                            GlassSurface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                cornerRadius = 16f
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    // 연월 표시 및 이전/다음 버튼
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                currentYearMonth = currentYearMonth.minusMonths(1)
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardArrowLeft,
+                                                contentDescription = "이전 달",
+                                                tint = Color.White
+                                            )
+                                        }
+                                        
+                                        Text(
+                                            text = "${currentYearMonth.monthValue}월 ${currentYearMonth.year}",
+                                            color = Color.White,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        
+                                        // 현재 월이 아닐 때만 다음 달 버튼 표시
+                                        if (currentYearMonth.isBefore(currentMonth)) {
+                                            IconButton(
+                                                onClick = {
+                                                    currentYearMonth = currentYearMonth.plusMonths(1)
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.KeyboardArrowRight,
+                                                    contentDescription = "다음 달",
+                                                    tint = Color.White
+                                                )
+                                            }
+                                        } else {
+                                            // 버튼 공간 유지를 위한 빈 Box
+                                            Box(modifier = Modifier.size(48.dp))
+                                        }
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    
+                                    // 요일 헤더
+                                    val daysOfWeek = listOf("일", "월", "화", "수", "목", "금", "토")
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        daysOfWeek.forEach { day ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .padding(vertical = 4.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = day,
+                                                    color = when(day) {
+                                                        "일" -> Color(0xFFFF5252)
+                                                        "토" -> Color(0xFF448AFF)
+                                                        else -> Color.White
+                                                    },
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    
+                                    // 달력 그리드
+                                    CalendarGrid(
+                                        yearMonth = currentYearMonth,
+                                        selectedDate = selectedDate,
+                                        dailySummaries = dailySummaries,
+                                        onDateSelected = { date ->
+                                            selectedDate = date
+                                            // 해당 날짜의 거래 내역으로 스크롤
+                                            dateIndexMap[date]?.let { index ->
+                                                coroutineScope.launch {
+                                                    lazyListState.animateScrollToItem(index)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // 월간 요약
+                        item {
+                            GlassSurface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                cornerRadius = 16f
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(20.dp) // padding도 조금 여유 있게
+                                ) {
+                                    Text(
+                                        text = "이번 달 총 소비",
+                                        color = Color.Gray,
+                                        fontSize = 16.sp, // ← 키움
+                                        fontWeight = FontWeight.Medium
+                                    )
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = "${formatAmount(monthlySummary.expense)}원",
+                                        color = Color.White,
+                                        fontSize = 28.sp, // ← 크게 강조
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "최다 소비 카테고리",
+                                            color = Color.White,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = "카페",
+                                            color = Color(0xFFFFF176),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "지난달 대비",
+                                            color = Color.White,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = "+3,000원",
+                                            color = brightRed,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(20.dp))
+                        }
+
+
+                        // 일자별 거래 내역
+                        transactionsByDate.keys.sorted().forEachIndexed { index, date ->
+                            // 인덱스 맵에 저장
+                            dateIndexMap[date] = index + 3 // 상단 아이템 3개 고려 (제목, 달력, 월간 요약)
+                            
+                            item {
+                                // 일자 헤더
+                                Text(
+                                    text = formatDateHeader(date),
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                                
+                                // 해당 일자의 거래 내역
+                                transactionsByDate[date]?.forEach { transaction ->
+                                    TransactionListItem(transaction = transaction)
+                                }
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
+                        
+                        // 하단 여백
+                        item {
+                            Spacer(modifier = Modifier.height(80.dp))
+                        }
+                    }
+                    1 -> {
+                        // 소비 리포트 내용
+                        item {
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                // 월 선택 영역
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            currentYearMonth = currentYearMonth.minusMonths(1)
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "<",
+                                            color = Color.White,
+                                            fontSize = 24.sp
+                                        )
+                                    }
+                                    
+                                    Text(
+                                        text = "${currentYearMonth.monthValue}월 ${currentYearMonth.year}",
+                                        color = Color.White,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    
+                                    // 현재 월이 아닐 때만 다음 달 버튼 표시
+                                    if (currentYearMonth.isBefore(currentMonth)) {
+                                        IconButton(
+                                            onClick = {
+                                                currentYearMonth = currentYearMonth.plusMonths(1)
+                                            }
+                                        ) {
+                                            Text(
+                                                text = ">",
+                                                color = Color.White,
+                                                fontSize = 24.sp
+                                            )
+                                        }
+                                    } else {
+                                        // 버튼 공간 유지를 위한 빈 Box
+                                        Box(modifier = Modifier.size(48.dp))
+                                    }
+                                }
+                                
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                // 소비 분석 리포트 제목
+                                Text(
+                                    text = "지난 1개월의 소비를 분석했어요",
+                                    color = Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                        
+                        // 소비 리포트 내용 추가
+                        item {
+                            GlassSurface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                cornerRadius = 16f
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    // 리포트 내용 추가
+                                }
+                            }
+                        }
+                    }
+                }
             }
             
-            // 하단 여백
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
-            }
-        }
-        
-        // 위로 가기 버튼
-        AnimatedVisibility(
-            visible = showScrollToTopButton,
-            enter = fadeIn() + slideInVertically { it * 2 },
-            exit = fadeOut() + slideOutVertically { it * 2 },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
-        ) {
-            // 유리 효과가 적용된 둥근 버튼
-            Box(
+            // 위로 가기 버튼
+            AnimatedVisibility(
+                visible = showScrollToTopButton,
+                enter = fadeIn() + slideInVertically { it * 2 },
+                exit = fadeOut() + slideOutVertically { it * 2 },
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
-                    .clickable {
-                        coroutineScope.launch {
-                            // 맨 위로 부드럽게 스크롤
-                            lazyListState.animateScrollToItem(0)
-                        }
-                    },
-                contentAlignment = Alignment.Center
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
             ) {
-                // 화살표 위로 아이콘
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowUp,
-                    contentDescription = "맨 위로 가기",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
+                // 유리 효과가 적용된 둥근 버튼
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                        .clickable {
+                            coroutineScope.launch {
+                                // 맨 위로 부드럽게 스크롤
+                                lazyListState.animateScrollToItem(0)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 화살표 위로 아이콘
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowUp,
+                        contentDescription = "맨 위로 가기",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
         }
     }
@@ -520,7 +664,7 @@ fun CalendarDay(
                     Text(
                         text = "+${formatAmount(summary.income)}",
                         fontSize = 12.sp, // 글자 크기 증가
-                        color = Color(0xFF4CAF50),
+                        color = brightRed,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -529,7 +673,7 @@ fun CalendarDay(
                     Text(
                         text = "-${formatAmount(summary.expense)}",
                         fontSize = 12.sp, // 글자 크기 증가
-                        color = Color(0xFFFF5252),
+                        color = brightGreen,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -566,7 +710,7 @@ fun TransactionListItem(transaction: TransactionItem) {
             ) {
                 Text(
                     text = transaction.category.take(1),
-                    color = if (isIncome) Color(0xFF4CAF50) else Color(0xFFFF5252),
+                    color = if (isIncome) brightGreen else brightRed,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -595,7 +739,7 @@ fun TransactionListItem(transaction: TransactionItem) {
             Text(
                 text = if (isIncome) "+${formatAmount(transaction.amount)}원"
                       else "-${formatAmount(-transaction.amount)}원",
-                color = if (isIncome) Color(0xFF4CAF50) else Color(0xFFFF5252),
+                color = if (isIncome) brightGreen else brightRed,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )

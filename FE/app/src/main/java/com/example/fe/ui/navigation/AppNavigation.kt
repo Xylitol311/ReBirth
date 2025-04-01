@@ -57,13 +57,17 @@ import com.example.fe.ui.screens.myCard.CardDetailScreen
 import com.example.fe.ui.screens.myCard.CardManagementScreen
 import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
 import com.example.fe.ui.screens.cardRecommend.CardInfo
+import com.example.fe.ui.screens.mypage.MyPageScreen
+import com.example.fe.ui.screens.onboard.OnboardingScreen
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
+    const val ONBOARDING = "onboarding"  // 온보딩/로그인 화면 경로 추가
     const val HOME_DETAIL = "home_detail"
     const val CARD_DETAIL = "card_detail/{cardId}"
     const val CARD_MANAGEMENT = "card_management"
     const val CARD_DETAIL_INFO = "card_detail_info/{cardId}"
+    const val MY_PAGE = "my_page"
 }
 
 @Composable
@@ -75,6 +79,15 @@ fun AppNavigation() {
     val viewModel: OnboardingViewModel = viewModel(
         factory = OnboardingViewModelFactory(context)
     )
+
+    // 로그아웃 처리 함수
+    val handleLogout = {
+        viewModel.logout()
+        // 로그인 화면으로 이동하고 백스택 클리어
+        navController.navigate(NavRoutes.ONBOARDING) {
+            popUpTo(0) { inclusive = true }
+        }
+    }
 
     // 현재 경로 추적
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -190,10 +203,17 @@ fun AppNavigation() {
                                 navController.popBackStack()
                             }
                         },
-                        onLogoutClick = {
-                            // 로그아웃 처리
-                            viewModel.logout()
-                        }
+                        onLogoutClick = handleLogout
+                    )
+                }
+                currentRoute == NavRoutes.MY_PAGE -> {  // 마이페이지 TopBar
+                    TopBar(
+                        title = "마이페이지",
+                        showBackButton = true,
+                        onBackClick = {
+                            navController.popBackStack()
+                        },
+                        onLogoutClick = handleLogout
                     )
                 }
                 // 카드 상세 화면일 때 TopBar 변경
@@ -209,20 +229,16 @@ fun AppNavigation() {
                             animationCounter++
                             navController.popBackStack()
                         },
-                        onLogoutClick = {
-                            // 로그아웃 처리
-                            viewModel.logout()
-                        }
+                        onLogoutClick = handleLogout
                     )
                 }
                 else -> {
                     TopBar(
-                        onProfileClick = { /* 프로필 화면으로 이동 */ },
-                        onLogoutClick = {
-                            // 로그아웃 처리
-                            viewModel.logout()
-                        }
-                    ) // 기본 TopBar
+                        onProfileClick = {
+                            navController.navigate(NavRoutes.MY_PAGE)
+                        },
+                        onLogoutClick = handleLogout
+                    )
                 }
             }
         },
@@ -272,6 +288,13 @@ fun AppNavigation() {
                     navController = navController,
                     startDestination = BottomNavItem.Home.route
                 ) {
+                    // 온보딩/로그인 화면 추가
+                    composable(NavRoutes.ONBOARDING) {
+                        OnboardingScreen(
+                            navController = navController,
+                            viewModel = viewModel
+                        )
+                    }
                     composable(BottomNavItem.Home.route) {
                         HomeScreen(
                             navController = navController
@@ -307,6 +330,21 @@ fun AppNavigation() {
                         )
                     }
                     composable(NavRoutes.HOME_DETAIL) {
+                        // 홈 디테일 화면으로 이동할 때 애니메이션 값 가져오기
+                        val transitionDirection = navController.currentBackStackEntry?.savedStateHandle?.get<Int>("transitionDirection") ?: 1
+                        val backgroundMovement = navController.currentBackStackEntry?.savedStateHandle?.get<Float>("backgroundMovement") ?: 1500f
+                        
+                        // 애니메이션 값이 있으면 적용
+                        LaunchedEffect(transitionDirection, backgroundMovement) {
+                            if (transitionDirection != 0) {
+                                cumulativeOffset += transitionDirection * backgroundMovement
+                                animationCounter++
+                                // 사용 후 초기화
+                                navController.currentBackStackEntry?.savedStateHandle?.set("transitionDirection", 0)
+                                navController.currentBackStackEntry?.savedStateHandle?.set("backgroundMovement", 0f)
+                            }
+                        }
+                        
                         HomeDetailScreen(
                             onBackClick = {
                                 navController.popBackStack()
@@ -354,6 +392,13 @@ fun AppNavigation() {
                                     "대중교통 10% 할인"
                                 )
                             ),
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                    composable(NavRoutes.MY_PAGE) {
+                        MyPageScreen(
                             onBackClick = {
                                 navController.popBackStack()
                             }

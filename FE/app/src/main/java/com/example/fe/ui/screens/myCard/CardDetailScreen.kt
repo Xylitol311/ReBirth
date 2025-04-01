@@ -432,8 +432,6 @@ fun TransactionsContent(transactions: List<TransactionItem>) {
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 cornerRadius = 16f,
-                color = Color(0x55FFFFFF),  // 패널 더 밝게 조정
-                borderColor = Color(0x65FFFFFF)  // 테두리도 더 밝게
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp)  // 패딩 값 키움 (16.dp -> 24.dp)
@@ -489,8 +487,6 @@ fun TransactionsContent(transactions: List<TransactionItem>) {
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
                     cornerRadius = 16f,
-                    color = Color(0x55FFFFFF),  // 패널 더 밝게 조정
-                    borderColor = Color(0x65FFFFFF)  // 테두리도 더 밝게
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp)  // 패딩 값 키움 (16.dp -> 24.dp)
@@ -608,8 +604,6 @@ fun BenefitsContent(benefits: List<BenefitItem>) {
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 cornerRadius = 16f,
-                color = Color(0x55FFFFFF),  // 패널 더 밝게 조정
-                borderColor = Color(0x65FFFFFF)  // 테두리도 더 밝게
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp)  // 패딩 값 키움 (16.dp -> 24.dp)

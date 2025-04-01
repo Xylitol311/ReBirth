@@ -93,14 +93,24 @@ fun HomeHeader(
 fun HomeScreen(
     navController: NavController
 ) {
+    val scrollState = rememberScrollState()
+    var scrollOffset by remember { mutableStateOf(0f) }
+    
+    // 스크롤 오프셋 변경 감지
+    LaunchedEffect(scrollState) {
+        snapshotFlow { scrollState.value.toFloat() }.collect { offset ->
+            scrollOffset = offset
+        }
+    }
+    
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        StarryBackground {
+        StarryBackground(scrollOffset = scrollOffset) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp, vertical = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
