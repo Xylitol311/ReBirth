@@ -3,6 +3,7 @@ package com.kkulmoo.rebirth.analysis.infrastructure.repository;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.DailyTransactionsDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogInfoDTO;
+import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlySpendingByCategoryAndCardDTO;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.TransactionsEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,10 +16,10 @@ import java.util.List;
 @Repository
 public interface TransactionsJpaRepository extends JpaRepository<TransactionsEntity, Integer> {
 
-    @Query("SELECT c.categoryId, cd.cardId, " +
-            "SUM(t.amount) AS totalSpending, " +
-            "SUM(ct.benefitAmount) AS totalBenefit, " +
-            "COUNT(t.transactionId) AS transactionCount " +
+    @Query("SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlySpendingByCategoryAndCardDTO(c.categoryId, cd.cardId, " +
+            "CAST(SUM(t.amount) AS int), " +
+            "CAST(SUM(ct.benefitAmount) AS int), " +
+            "CAST(COUNT(t.transactionId) AS int)) " +
             "FROM TransactionsEntity t " +
             "JOIN CardTransactionsEntity ct ON t.transactionId = ct.transactionId " +
             "JOIN CardsEntity cd ON ct.cardUniqueNumber = cd.cardUniqueNumber " +
@@ -26,11 +27,11 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionsEnt
             "JOIN SubcategoryEntity sc ON m.subcategory.subcategoryId = sc.subcategoryId " +
             "JOIN CategoryEntity c ON sc.category.categoryId = c.categoryId " +
             "WHERE t.userId = :userId " +
-            "AND FUNCTION('YEAR', t.createdAt) = :year " +
-            "AND FUNCTION('MONTH', t.createdAt) = :month " +
+            "AND YEAR(t.createdAt) = :year " +
+            "AND MONTH(t.createdAt) = :month " +
             "AND ct.status = '승인' " +
             "GROUP BY c.categoryId, cd.cardId")
-    List<Object[]> getMonthlySpendingByCategoryAndCard(
+    List<MonthlySpendingByCategoryAndCardDTO> getMonthlySpendingByCategoryAndCard(
             @Param("userId") int userId,
             @Param("year") int year,
             @Param("month") int month);

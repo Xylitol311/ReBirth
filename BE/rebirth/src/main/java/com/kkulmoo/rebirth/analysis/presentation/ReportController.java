@@ -26,7 +26,7 @@ public class ReportController {
     @PostMapping("/frommydata")
     public ResponseEntity<ResponseDTO> getReportFromMyData(//@AuthenticationPrincipal(expression = "userId") Integer userId,
                                                            @RequestParam(value = "userId") Integer userId) {
-        UserEntity user = userJpaRepository.getById(userId);
+        UserEntity user = userJpaRepository.getReferenceById(userId);
         reportService.startWithMyData(user);
         ResponseDTO responseDTO = ResponseDTO
                 .builder()

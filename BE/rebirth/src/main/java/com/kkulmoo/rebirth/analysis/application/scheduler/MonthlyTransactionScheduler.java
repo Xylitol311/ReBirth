@@ -1,14 +1,13 @@
 package com.kkulmoo.rebirth.analysis.application.scheduler;
 
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
-import com.kkulmoo.rebirth.analysis.domain.repository.MonthlyTransactionSummaryRepository;
-import com.kkulmoo.rebirth.analysis.domain.repository.ReportCardCategoriesRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.MonthlyConsumptionReportEntity;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.MonthlyTransactionSummaryEntity;
-import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardCategoriesEntity;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardsEntity;
-import com.kkulmoo.rebirth.analysis.infrastructure.repository.*;
-import com.kkulmoo.rebirth.card.infrastructure.entity.BenefitTemplateEntity;
+import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyConsumptionReportJpaRepository;
+import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyTransactionSummaryJpaRepository;
+import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
+import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardsJpaRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
 import com.kkulmoo.rebirth.shared.entity.CardsEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
@@ -30,12 +29,9 @@ public class MonthlyTransactionScheduler {
 
     private final UserJpaRepository userJpaRepository;
     private final ReportCardsJpaRepository reportCardsJpaRepository;
-    private final ReportCardCategoriesRepository reportCardCategoriesRepository;
     private final ReportCardCategoriesJpaRepository reportCardCategoriesJpaRepository;
     private final CardsJpaRepository cardsJpaRepository;
-    private final BenefitTemplateJpaRepository benefitTemplateJpaRepository;
     private final MonthlyConsumptionReportJpaRepository monthlyConsumptionReportJpaRepository;
-    private final MonthlyTransactionSummaryRepository monthlyTransactionSummaryRepository;
     private final MonthlyTransactionSummaryJpaRepository monthlyTransactionSummaryJpaRepository;
 
 

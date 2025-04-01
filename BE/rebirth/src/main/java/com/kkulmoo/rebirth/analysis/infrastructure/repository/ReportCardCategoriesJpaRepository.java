@@ -2,6 +2,7 @@ package com.kkulmoo.rebirth.analysis.infrastructure.repository;
 
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardCategoriesEntity;
+import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardsEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,9 +13,11 @@ import java.util.List;
 @Repository
 public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportCardCategoriesEntity, Integer> {
 
-    @Query("SELECT c.categoryName, SUM(rcc.amount), SUM(rcc.receivedBenefitAmount) " +
+    @Query("SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO(c.categoryName, " +
+            "CAST(SUM(rcc.amount) AS int), " +
+            "CAST(SUM(rcc.receivedBenefitAmount) AS int)) " +
             "FROM ReportCardCategoriesEntity rcc " +
-            "JOIN ReportCardsEntity rc ON rcc.reportCardId = rc.reportCardId " +
+            "JOIN ReportCardsEntity rc ON rcc.reportCard.reportCardId = rc.reportCardId " +
             "JOIN MonthlyTransactionSummaryEntity mts ON rc.reportId = mts.reportId " +
             "JOIN CategoryEntity c ON rcc.categoryId = c.categoryId " +
             "WHERE mts.userId = :userId " +
@@ -28,7 +31,7 @@ public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportC
             @Param("month") int month
     );
 
-    ReportCardCategoriesEntity getByReportCardIdAndCategoryId(int reportCardId, int categoryId);
+    ReportCardCategoriesEntity getByReportCardAndCategoryId(ReportCardsEntity reportCard, int categoryId);
 
-    List<ReportCardCategoriesEntity> getByReportCardId(int reportCardId);
+    List<ReportCardCategoriesEntity> getByReportCard(ReportCardsEntity reportCard);
 }

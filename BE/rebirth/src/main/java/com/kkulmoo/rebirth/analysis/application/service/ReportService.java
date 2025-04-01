@@ -1,10 +1,7 @@
 package com.kkulmoo.rebirth.analysis.application.service;
 
 import com.kkulmoo.rebirth.analysis.application.scheduler.MonthlyTransactionScheduler;
-import com.kkulmoo.rebirth.analysis.domain.dto.response.CardCategoryDTO;
-import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCardDTO;
-import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
-import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportWithPatternDTO;
+import com.kkulmoo.rebirth.analysis.domain.dto.response.*;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.*;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.*;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
@@ -13,6 +10,7 @@ import com.kkulmoo.rebirth.shared.entity.CardsEntity;
 import com.kkulmoo.rebirth.transactions.infrastructure.CategoryEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,16 +42,16 @@ public class ReportService {
         int month = now.getMonthValue();
 
         MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
-        List<Object[]> monthlyTransactions = transactionsJpaRepository.getMonthlySpendingByCategoryAndCard(user.getUserId(), year, month);
+        List<MonthlySpendingByCategoryAndCardDTO> monthlyTransactions = transactionsJpaRepository.getMonthlySpendingByCategoryAndCard(user.getUserId(), year, month);
 
         Map<Integer, int[]> countByCard = new HashMap<>();
-        for (Object[] monthlyTransaction : monthlyTransactions) {
-            ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), (Integer) monthlyTransaction[1]);
+        for (MonthlySpendingByCategoryAndCardDTO monthlyTransaction : monthlyTransactions) {
+            ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), monthlyTransaction.getCardId());
             if (reportCard == null) {
                 ReportCardsEntity newReportCard = ReportCardsEntity
                         .builder()
                         .reportId(report.getReportId())
-                        .cardId((Integer) monthlyTransaction[1])
+                        .cardId((Integer) monthlyTransaction.getCardId())
                         .monthBenefitAmount(0)
                         .monthSpendingAmount(0)
                         .createdAt(now)
@@ -71,36 +69,36 @@ public class ReportService {
             }
 
             // 그냥 결제 단건 혜택만 고려
-            ReportCardCategoriesEntity reportCardCategory = reportCardCategoriesJpaRepository.getByReportCardIdAndCategoryId(reportCard.getReportCardId(), (Integer) monthlyTransaction[0]);
+            ReportCardCategoriesEntity reportCardCategory = reportCardCategoriesJpaRepository.getByReportCardAndCategoryId(reportCard, monthlyTransaction.getCategoryId());
 
             if (reportCardCategory == null) {
                 ReportCardCategoriesEntity newReportCardCategory = ReportCardCategoriesEntity
                         .builder()
-                        .reportCardId(reportCard.getReportCardId())
-                        .categoryId((Integer) monthlyTransaction[0])
+                        .reportCard(reportCard)
+                        .categoryId(monthlyTransaction.getCategoryId())
                         .amount(0)
                         .receivedBenefitAmount(0)
                         .count(0)
                         .createdAt(now)
                         .build();
 
-                int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCardId();
+                int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCard().getReportCardId();
                 reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
             }
 
-            reportCardCategory.setAmount((Integer) monthlyTransaction[2]); // 결제 금액
-            reportCardCategory.setReceivedBenefitAmount((Integer) monthlyTransaction[3]); // 혜택 금액
-            reportCardCategory.setCount((Integer) monthlyTransaction[4]); // 결제 횟수
+            reportCardCategory.setAmount(monthlyTransaction.getTotalSpending()); // 결제 금액
+            reportCardCategory.setReceivedBenefitAmount(monthlyTransaction.getTotalBenefit()); // 혜택 금액
+            reportCardCategory.setCount(monthlyTransaction.getTransactionCount()); // 결제 횟수
 
-            if (!countByCard.containsKey((Integer) monthlyTransaction[1])) {
-                countByCard.put((Integer) monthlyTransaction[1], new int[]{(Integer) monthlyTransaction[2], (Integer) monthlyTransaction[3], (Integer) monthlyTransaction[4]});
+            if (!countByCard.containsKey(monthlyTransaction.getCardId())) {
+                countByCard.put(monthlyTransaction.getCardId(), new int[]{monthlyTransaction.getTotalSpending(), monthlyTransaction.getTotalBenefit(), monthlyTransaction.getTransactionCount()});
             } else {
-                int[] chk = countByCard.get((Integer) monthlyTransaction[1]);
-                chk[0] += (Integer) monthlyTransaction[2];
-                chk[1] += (Integer) monthlyTransaction[3];
-                chk[2] += (Integer) monthlyTransaction[4];
+                int[] chk = countByCard.get(monthlyTransaction.getCardId());
+                chk[0] += monthlyTransaction.getTotalSpending();
+                chk[1] += monthlyTransaction.getTotalBenefit();
+                chk[2] += monthlyTransaction.getTransactionCount();
 
-                countByCard.put((Integer) monthlyTransaction[1], chk);
+                countByCard.put((Integer) monthlyTransaction.getCardId(), chk);
             }
         }
 
@@ -121,7 +119,7 @@ public class ReportService {
         report.setReceivedBenefitAmount(total[1]);
     }
 
-    @Transactional
+//    @Transactional
     public void startWithMyData(UserEntity user) {
         for (int i = 0; i < 6; i++) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
@@ -136,6 +134,7 @@ public class ReportService {
                     .receivedBenefitAmount(0)
                     .build();
 
+            System.out.println("여기 옴?");
             int reportId = monthlyTransactionSummaryJpaRepository.save(monthlyTransactionSummary).getReportId();
             MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getReferenceById(reportId);
             List<CardsEntity> cards = cardsJpaRepository.findByUserId(user.getUserId());
@@ -155,16 +154,16 @@ public class ReportService {
 
             }
 
-            List<Object[]> monthlyTransactions = transactionsJpaRepository.getMonthlySpendingByCategoryAndCard(user.getUserId(), year, month);
+            List<MonthlySpendingByCategoryAndCardDTO> monthlyTransactions = transactionsJpaRepository.getMonthlySpendingByCategoryAndCard(user.getUserId(), year, month);
 
             Map<Integer, int[]> countByCard = new HashMap<>();
-            for (Object[] monthlyTransaction : monthlyTransactions) {
-                ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), (Integer) monthlyTransaction[1]);
+            for (MonthlySpendingByCategoryAndCardDTO monthlyTransaction : monthlyTransactions) {
+                ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), monthlyTransaction.getCardId());
                 if (reportCard == null) {
                     ReportCardsEntity newReportCard = ReportCardsEntity
                             .builder()
                             .reportId(report.getReportId())
-                            .cardId((Integer) monthlyTransaction[1])
+                            .cardId(monthlyTransaction.getCardId())
                             .monthBenefitAmount(0)
                             .monthSpendingAmount(0)
                             .createdAt(now)
@@ -173,38 +172,44 @@ public class ReportService {
                     reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
 
                 }
-
+                System.out.println("리포트카드 : "+reportCard );
                 // 그냥 결제 단건 혜택만 고려
-                ReportCardCategoriesEntity reportCardCategory = reportCardCategoriesJpaRepository.getByReportCardIdAndCategoryId(reportCard.getReportCardId(), (Integer) monthlyTransaction[0]);
+                ReportCardCategoriesEntity reportCardCategory = reportCardCategoriesJpaRepository.getByReportCardAndCategoryId(reportCard, monthlyTransaction.getCategoryId());
 
                 if (reportCardCategory == null) {
                     ReportCardCategoriesEntity newReportCardCategory = ReportCardCategoriesEntity
                             .builder()
-                            .reportCardId(reportCard.getReportCardId())
-                            .categoryId((Integer) monthlyTransaction[0])
+                            .reportCard(reportCard)
+                            .categoryId(monthlyTransaction.getCategoryId())
                             .amount(0)
                             .receivedBenefitAmount(0)
                             .count(0)
                             .createdAt(now)
                             .build();
 
-                    int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCardId();
-                    reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
+                    int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCategoryId();
+
+                    System.out.println("오잉?? : "+reportCardCategoryId);
+//                    reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
+                    reportCardCategory = reportCardCategoriesJpaRepository.findById(reportCardCategoryId)
+                            .orElseThrow(() -> new EntityNotFoundException("Entity not found after saving: " + newReportCardCategory.getReportCard().getReportCardId()));
                 }
+                System.out.println("엥?? : "+monthlyTransaction);
+                System.out.println("앙?? : "+reportCardCategory);
 
-                reportCardCategory.setAmount((Integer) monthlyTransaction[2]); // 결제 금액
-                reportCardCategory.setReceivedBenefitAmount((Integer) monthlyTransaction[3]); // 혜택 금액
-                reportCardCategory.setCount((Integer) monthlyTransaction[4]); // 결제 횟수
+                reportCardCategory.setAmount(monthlyTransaction.getTotalSpending()); // 결제 금액
+                reportCardCategory.setReceivedBenefitAmount(monthlyTransaction.getTotalBenefit()); // 혜택 금액
+                reportCardCategory.setCount(monthlyTransaction.getTransactionCount()); // 결제 횟수
 
-                if (!countByCard.containsKey((Integer) monthlyTransaction[1])) {
-                    countByCard.put((Integer) monthlyTransaction[1], new int[]{(Integer) monthlyTransaction[2], (Integer) monthlyTransaction[3], (Integer) monthlyTransaction[4]});
+                if (!countByCard.containsKey(monthlyTransaction.getCardId())) {
+                    countByCard.put(monthlyTransaction.getCardId(), new int[]{ monthlyTransaction.getTotalSpending(), monthlyTransaction.getTotalBenefit(), monthlyTransaction.getTransactionCount()});
                 } else {
-                    int[] chk = countByCard.get((Integer) monthlyTransaction[1]);
-                    chk[0] += (Integer) monthlyTransaction[2];
-                    chk[1] += (Integer) monthlyTransaction[3];
-                    chk[2] += (Integer) monthlyTransaction[4];
+                    int[] chk = countByCard.get(monthlyTransaction.getCardId());
+                    chk[0] += monthlyTransaction.getTotalSpending();
+                    chk[1] += monthlyTransaction.getTotalBenefit();
+                    chk[2] += monthlyTransaction.getTransactionCount();
 
-                    countByCard.put((Integer) monthlyTransaction[1], chk);
+                    countByCard.put(monthlyTransaction.getCardId(), chk);
                 }
             }
 
@@ -238,7 +243,7 @@ public class ReportService {
             // AI 요약
             OpenAiChatModel model = OpenAiChatModel.builder()
                     .baseUrl("http://langchain4j.dev/demo/openai/v1")
-                    .apiKey("demo")
+//                    .apiKey("demo")
                     .modelName("gpt-4o-mini")
                     .build();
 
@@ -257,22 +262,23 @@ public class ReportService {
 
             String answer = model.chat(question);
             String consumptionPatternId = "";
-            if (pattern[2] > 0.5) consumptionPatternId = consumptionPatternId.concat("E"); // 외향형
+            if (pattern[2] > 50) consumptionPatternId = consumptionPatternId.concat("E"); // 외향형
             else consumptionPatternId = consumptionPatternId.concat("I"); // 내향헝
-            if (pattern[0] > 0.5) consumptionPatternId = consumptionPatternId.concat("O"); // 과소비형
-            else consumptionPatternId = consumptionPatternId.concat("C"); // 절약형
-            if (pattern[1] > 0.5) consumptionPatternId = consumptionPatternId.concat("V"); // 변동형
+            if (pattern[0] > 50) consumptionPatternId = consumptionPatternId.concat("B"); // 과소비형
+            else consumptionPatternId = consumptionPatternId.concat("M"); // 절약형
+            if (pattern[1] > 50) consumptionPatternId = consumptionPatternId.concat("V"); // 변동형
             else consumptionPatternId = consumptionPatternId.concat("S"); // 일관형
+
             MonthlyConsumptionReportEntity monthlyConsumptionReport = MonthlyConsumptionReportEntity
                     .builder()
-                    .reportId(report.getReportId())
+                    .report(report)
                     .consumptionPatternId(consumptionPatternId)
                     .overConsumption(pattern[0])
                     .variation(pattern[1])
                     .extrovert(pattern[2])
                     .reportDescription(answer)
                     .build();
-
+            System.out.println("설마? "+monthlyConsumptionReport);
             monthlyConsumptionReportJpaRepository.save(monthlyConsumptionReport);
         }
 
@@ -295,7 +301,10 @@ public class ReportService {
         // 과소비 계산
         int overConsumption = Math.min(100, 50 * report.getTotalSpending() / monthlyIncome);
         // 변동성 계산
-        int variation = Math.abs((preReport.getTotalSpending() - report.getTotalSpending()) / (report.getTotalSpending()));
+        int variation = 50;
+        if(report.getTotalSpending() != 0) {
+        variation = Math.abs((preReport.getTotalSpending() - report.getTotalSpending()) / (report.getTotalSpending()));
+        }
         variation = Math.min(100, variation);
 
         // 외향성 계산
@@ -319,7 +328,11 @@ public class ReportService {
         for (ReportCategoryDTO spending : spendingByCategory) {
             if (extrovertCategories.containsKey(spending.getCategory())) extrovertSpendAmount += spending.getAmount();
         }
-        int extrovert = extrovertSpendAmount / report.getTotalSpending();
+
+        int extrovert = 50;
+        if(report.getTotalSpending() != 0) {
+            extrovert = extrovertSpendAmount / report.getTotalSpending();
+        }
 
         int[] result = new int[3];
 
@@ -395,7 +408,7 @@ public class ReportService {
         for (ReportCardsEntity reportCard : reportCards) {
             List<CardCategoryDTO> cardCategories = new ArrayList<>();
             int totalCount = 0;
-            List<ReportCardCategoriesEntity> reportCardCategories = reportCardCategoriesJpaRepository.getByReportCardId(reportCard.getReportCardId());
+            List<ReportCardCategoriesEntity> reportCardCategories = reportCardCategoriesJpaRepository.getByReportCard(reportCard);
             for (ReportCardCategoriesEntity reportCardCategory : reportCardCategories) {
                 CategoryEntity category = categoryJpaRepository.getReferenceById(reportCardCategory.getCategoryId());
                 CardCategoryDTO cardCategory = CardCategoryDTO
