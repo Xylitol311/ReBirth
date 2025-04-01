@@ -58,6 +58,7 @@ import androidx.compose.runtime.mutableStateListOf
 import com.example.fe.ui.screens.myCard.CardItem
 import com.example.fe.ui.screens.myCard.CardItemWithVisibility
 import com.example.fe.ui.screens.myCard.CardOrderManager
+import androidx.compose.foundation.layout.fillMaxHeight
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -120,11 +121,26 @@ fun MyCardScreen(
     // 스크롤 오프셋 (별 배경 이동을 위해)
     var scrollOffset by remember { mutableStateOf(0f) }
 
+    // 애니메이션이 적용된 스크롤 오프셋 추가
+    val animatedScrollOffset by animateFloatAsState(
+        targetValue = scrollOffset,
+        // 더 빠른 애니메이션으로 변경하여 지연 느낌 감소
+        animationSpec = tween(durationMillis = 0, easing = EaseInOut),
+        label = "animatedScrollOffset"
+    )
+
+    // 페이저 스냅 동작 개선을 위한 설정
+    val flingBehavior = androidx.compose.foundation.pager.PagerDefaults.flingBehavior(
+        state = pagerState,
+        snapPositionalThreshold = 0.1f // 더 낮은 값으로 설정하여 더 빠르게 스냅되도록 함
+    )
+
     // 카드 슬라이드에 따른 배경 이동 계산
     LaunchedEffect(pagerState) {
         snapshotFlow {
-            pagerState.currentPage * 800f + pagerState.currentPageOffsetFraction * 1200f
-        }.distinctUntilChanged().collect { offset: Float ->
+            // 배경이 카드의 2배 속도로 움직이도록 계수 조정
+            pagerState.currentPage * 1000f + pagerState.currentPageOffsetFraction * 1600f
+        }.collect { offset: Float ->
             scrollOffset = offset
             onScrollOffsetChange(offset)
         }
@@ -154,7 +170,7 @@ fun MyCardScreen(
     
     // 카드 등장 애니메이션 값
     val cardsAppearTranslationY by animateFloatAsState(
-        targetValue = if (cardsAppeared) 0f else 800f, // 아래에서 올라오는 효과
+        targetValue = if (cardsAppeared) 0f else 800f, // 더 아래에서 올라오는 효과
         animationSpec = tween(700, easing = EaseInOut),
         label = "cardsAppearTranslationY"
     )
@@ -186,7 +202,7 @@ fun MyCardScreen(
         StarryBackground(
             scrollOffset = 0f, // 세로 스크롤 오프셋은 0으로 고정
             starCount = 150,
-            horizontalOffset = scrollOffset, // 가로 스크롤 오프셋 전달
+            horizontalOffset = animatedScrollOffset, // 애니메이션이 적용된 오프셋 사용
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
@@ -276,7 +292,7 @@ fun MyCardScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 370.dp)
+                .padding(bottom = 460.dp)  // 카드 이름 위치 올림
                 .graphicsLayer {
                     alpha = if (isNavigating) uiAlpha else cardsAppearAlpha
                     translationY = if (isNavigating) uiTranslationY else cardsAppearTranslationY
@@ -286,7 +302,7 @@ fun MyCardScreen(
             if (realCards.isNotEmpty()) {
                 Text(
                     text = realCards[currentRealCardIndex].name,
-                    fontSize = 16.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFE0E0E0),
                     textAlign = TextAlign.Center
@@ -298,100 +314,118 @@ fun MyCardScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 30.dp)
+                .padding(bottom = 20.dp)  // 하단 패딩 줄임
                 .graphicsLayer {
                     // 등장 애니메이션 적용
                     translationY = cardsAppearTranslationY
                     alpha = cardsAppearAlpha
                 },
-            contentAlignment = Alignment.BottomCenter
+            contentAlignment = Alignment.BottomCenter  // 하단 중앙 정렬로 변경
         ) {
-            HorizontalPager(
-                state = pagerState,
-                pageSpacing = 0.dp,
-                contentPadding = PaddingValues(start = 85.dp, end = 75.dp),
-                userScrollEnabled = !isNavigating // 네비게이션 중에는 스크롤 불가
-            ) { page ->
-                // 현재 페이지와의 거리 계산
-                val pageOffset = (
-                        (pagerState.currentPage - page) + pagerState
-                            .currentPageOffsetFraction
-                        ).absoluteValue
-
-                // 현재 카드는 더 크게, 다른 카드는 작게
-                val baseScale = if (page == pagerState.currentPage) 1.2f else 0.9f
-                
-                // 각 카드에 대한 애니메이션 결정
-                val isSelected = isNavigating && page == navigatingCardPage
-                val isNonSelected = isNavigating && page != navigatingCardPage
-                
-                // 모든 카드의 투명도 애니메이션 - 동일한 속도로
-                val cardAlpha by animateFloatAsState(
-                    targetValue = if (isNavigating) 0f else 1f,
-                    animationSpec = tween(300, easing = EaseInOut),
-                    label = "cardAlpha"
-                )
-                
-                // 선택된 카드의 Z-Index
-                val zIndex by animateFloatAsState(
-                    targetValue = if (isSelected) 100f else 0f,
-                    animationSpec = tween(100),
-                    label = "zIndex"
-                )
-                
-                // 선택된 카드 스케일 - 약간 확대
-                val selectedScale by animateFloatAsState(
-                    targetValue = if (isSelected) 1.0f else baseScale,
-                    animationSpec = tween(300),
-                    label = "selectedScale"
-                )
-                
-                // 카드 이미지 - res/drawable의 card.png 사용
+            // 중앙 정렬을 위한 Box
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                // 오프셋 적용을 위한 추가 컨테이너
                 Box(
                     modifier = Modifier
-                        .width(240.dp)
-                        .height(340.dp)
-                        .padding(8.dp)
-                        .zIndex(zIndex)
-                        .clickable(enabled = !isNavigating) {
-                            // 현재 페이지가 아닌 경우 해당 카드로 스크롤
-                            if (page != pagerState.currentPage) {
-                                // 코루틴 스코프 필요
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(page)
-                                }
-                            } else {
-                                // 현재 카드(중앙에 있는 카드)만 클릭 시 상세 화면으로 이동
-                                isNavigating = true
-                                navigatingCardPage = page
-
-                                // 페이드 아웃 후 상세 화면으로 이동
-                                coroutineScope.launch {
-                                    // 페이드 아웃 애니메이션 완료 대기
-                                    delay(300)
-                                    onCardClick(realCards[page])
-                                }
-                            }
+                        .align(Alignment.BottomCenter)  // 하단 중앙으로 변경
+                        .padding(bottom = 40.dp)  // 하단 여백 줄임
+                        .graphicsLayer {
+                            translationX = 0f
                         }
-                        .graphicsLayer(
-                            scaleX = selectedScale,
-                            scaleY = selectedScale,
-                            alpha = cardAlpha,
-                            clip = false,
-                            cameraDistance = 12f * density
-                        )
                 ) {
-                    // 카드 이미지 (세로로 회전된 상태 유지)
-                    Image(
-                        painter = painterResource(id = R.drawable.card),
-                        contentDescription = "카드 이미지",
-                        contentScale = ContentScale.FillWidth,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer(
-                                rotationZ = 90f // 세로로 회전
+                    HorizontalPager(
+                        state = pagerState,
+                        pageSpacing = 0.dp,
+                        flingBehavior = flingBehavior,
+                        contentPadding = PaddingValues(start = 100.dp, end = 100.dp),
+                        userScrollEnabled = !isNavigating,
+                        pageSize = androidx.compose.foundation.pager.PageSize.Fixed(280.dp),
+                        key = { it }
+                    ) { page ->
+                        // 현재 페이지와의 거리 계산
+                        val pageOffset = (
+                                (pagerState.currentPage - page) + pagerState
+                                    .currentPageOffsetFraction
+                                ).absoluteValue
+        
+                        // 현재 카드는 더 크게, 다른 카드는 작게 (이전 값으로 복원)
+                        val baseScale = if (page == pagerState.currentPage) 1.3f else 0.85f
+                        
+                        // 각 카드에 대한 애니메이션 결정
+                        val isSelected = isNavigating && page == navigatingCardPage
+                        val isNonSelected = isNavigating && page != navigatingCardPage
+                        
+                        // 모든 카드의 투명도 애니메이션 - 동일한 속도로
+                        val cardAlpha by animateFloatAsState(
+                            targetValue = if (isNavigating) 0f else 1f,
+                            animationSpec = tween(300, easing = EaseInOut),
+                            label = "cardAlpha"
+                        )
+                        
+                        // 선택된 카드의 Z-Index
+                        val zIndex by animateFloatAsState(
+                            targetValue = if (isSelected) 100f else 0f,
+                            animationSpec = tween(100),
+                            label = "zIndex"
+                        )
+                        
+                        // 선택된 카드 스케일 - 약간 확대
+                        val selectedScale by animateFloatAsState(
+                            targetValue = if (isSelected) 1.0f else baseScale,
+                            animationSpec = tween(300),
+                            label = "selectedScale"
+                        )
+                        
+                        // 카드 이미지 - res/drawable의 card.png 사용
+                        Box(
+                            modifier = Modifier
+                                .width(280.dp)
+                                .height(400.dp)
+                                .zIndex(zIndex)
+                                .clickable(enabled = !isNavigating) {
+                                    // 현재 페이지가 아닌 경우 해당 카드로 스크롤
+                                    if (page != pagerState.currentPage) {
+                                        // 코루틴 스코프 필요
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(page)
+                                        }
+                                    } else {
+                                        // 현재 카드(중앙에 있는 카드)만 클릭 시 상세 화면으로 이동
+                                        isNavigating = true
+                                        navigatingCardPage = page
+    
+                                        // 페이드 아웃 후 상세 화면으로 이동
+                                        coroutineScope.launch {
+                                            // 페이드 아웃 애니메이션 완료 대기
+                                            delay(300)
+                                            onCardClick(realCards[page])
+                                        }
+                                    }
+                                }
+                                .graphicsLayer(
+                                    scaleX = selectedScale,
+                                    scaleY = selectedScale,
+                                    alpha = cardAlpha,
+                                    clip = false,
+                                    cameraDistance = 12f * density
+                                )
+                        ) {
+                            // 카드 이미지 (세로로 회전된 상태 유지)
+                            Image(
+                                painter = painterResource(id = R.drawable.card),
+                                contentDescription = "카드 이미지",
+                                contentScale = ContentScale.FillWidth,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer(
+                                        rotationZ = 90f // 세로로 회전
+                                    )
                             )
-                    )
+                        }
+                    }
                 }
             }
         }

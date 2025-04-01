@@ -18,9 +18,53 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.random.Random
+
+// 추가 임포트
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.draw.drawWithContent
+
+// 글래스 서피스를 위한 로컬 컴포지션 객체
+val LocalStarryBackgroundState = compositionLocalOf { StarryBackgroundState() }
+
+// 스타리 배경 상태를 저장하기 위한 클래스
+class StarryBackgroundState {
+    var isInitialized = false
+    internal var stars: List<Star> = emptyList()  // internal로 변경하여 같은 모듈 내에서만 접근 가능하게 함
+    var time: Float = 0f
+    var backgroundColor = Color(0xFF0A0A1A)
+}
+
+// Star 클래스를 internal로 변경하여 같은 모듈 내에서 접근 가능하게 함
+internal data class Star(
+    val x: Float,
+    val y: Float,
+    val size: Float,
+    val alpha: Float,
+    val flickerSpeed: Float, // 반짝임 속도 (고정값)
+    val shouldTwinkle: Boolean // 반짝일지 여부 (10%만 true)
+)
 
 @Composable
 fun StarryBackground(
@@ -30,6 +74,9 @@ fun StarryBackground(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
+    // 글로벌 상태 저장
+    val starryBackgroundState = remember { StarryBackgroundState() }
+    
     // 별들의 위치와 크기를 저장
     val stars = remember {
         List(starCount) {
@@ -46,6 +93,14 @@ fun StarryBackground(
         }
     }
     
+    // 캔버스 크기 상태
+    var canvasSize by remember { mutableStateOf(IntSize(0, 0)) }
+    
+    // 상태를 글로벌 상태에 저장
+    starryBackgroundState.stars = stars
+    starryBackgroundState.isInitialized = true
+    starryBackgroundState.backgroundColor = Color(0xFF0A0A1A)
+    
     // 애니메이션 적용된 가로 오프셋 - 더 빠른 애니메이션
     val animatedHorizontalOffset by animateFloatAsState(
         targetValue = horizontalOffset,
@@ -57,6 +112,9 @@ fun StarryBackground(
     // 별의 상태를 업데이트하기 위한 시간 값
     var time by remember { mutableStateOf(0f) }
     
+    // 시간 값을 글로벌 상태에 저장
+    starryBackgroundState.time = time
+    
     // 느린 속도로 시간 업데이트 (500ms마다)
     LaunchedEffect(Unit) {
         while (true) {
@@ -65,46 +123,169 @@ fun StarryBackground(
         }
     }
     
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFF0A0A1A))
-    ) {
-        // 별이 빛나는 배경
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val canvasWidth = size.width
-            val canvasHeight = size.height
+    CompositionLocalProvider(LocalStarryBackgroundState provides starryBackgroundState) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color(0xFF0A0A1A))
+        ) {
+            // 별이 빛나는 배경
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged { canvasSize = it }
+            ) {
+                val canvasWidth = size.width
+                val canvasHeight = size.height
+                
+                // 스크롤 오프셋 (픽셀 단위로 변환)
+                val pixelScrollOffset = scrollOffset / 1000f * canvasHeight
+                
+                // 복제할 세트의 수 (위 아래로 각각 하나씩)
+                val repeatSets = 3
+                
+                // 3세트의 별을 그림 (현재 위치, 위, 아래)
+                for (setIndex in -1 until repeatSets - 1) {
+                    stars.forEach { star ->
+                        // 기본 y 위치 계산
+                        val baseY = star.y * canvasHeight
+                        
+                        // 세트별 오프셋 계산
+                        val setOffset = setIndex * canvasHeight
+                        
+                        // 최종 y 위치 (세트 오프셋 + 기본 위치 - 스크롤 오프셋)
+                        val finalY = baseY + setOffset - (pixelScrollOffset % canvasHeight)
+                        
+                        // 각 세트별 x 위치 계산 및 가로 방향 오프셋 적용
+                        val xOffset = (animatedHorizontalOffset / (canvasWidth * 0.5f)) * canvasWidth
+                        val xPos = (star.x * canvasWidth - xOffset) % canvasWidth
+                        // 음수 처리
+                        val adjustedX = if (xPos < 0) xPos + canvasWidth else xPos
+                        
+                        // 별이 화면 내에 있을 때만 그리기
+                        if (finalY >= -100 && finalY <= canvasHeight + 100) {
+                            drawStar(
+                                center = Offset(adjustedX, finalY),
+                                radius = star.size,
+                                color = Color.White,
+                                time = time,
+                                star = star
+                            )
+                        }
+                    }
+                }
+            }
             
-            // 별 그리기
-            stars.forEach { star ->
-                // 스크롤 오프셋에 따라 별의 위치 조정 (수직)
-                val yOffset = (scrollOffset / 1000f) % 1f
-                
-                // 가로 방향 이동에 따른 별의 위치 조정 (수평)
-                val xOffset = (animatedHorizontalOffset / (canvasWidth * 0.5f))
-                
-                // 최종 별 위치 계산 (무한 스크롤을 위해 모듈로 연산)
-                val x = (star.x - xOffset) % 1f
-                // 음수 처리 (모듈로 연산 결과가 음수일 경우)
-                val adjustedX = if (x < 0) x + 1f else x
-                
-                // 별의 실제 화면 좌표
-                val xPos = adjustedX * canvasWidth
-                val yPos = (star.y - yOffset) % 1f * canvasHeight
-                
-                // 별 그리기
-                drawStar(
-                    center = Offset(xPos, yPos),
-                    radius = star.size,
-                    color = Color.White,
-                    time = time,
-                    star = star
+            // 내용 표시
+            content()
+        }
+    }
+}
+
+// 글래스 효과를 가진 표면 컴포저블 수정
+@Composable
+fun GlassSurface(
+    modifier: Modifier = Modifier,
+    cornerRadius: Float = 16f,
+    isTopPanel: Boolean = false, // 상단 패널 여부를 결정하는 매개변수 추가
+    blurRadius: Float = 10f,
+    content: @Composable BoxScope.() -> Unit
+) {
+    Box(modifier = modifier) {
+        // 배경 레이어 (블러 효과 적용)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(cornerRadius.dp))
+                .blur(radius = 8.dp)
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = if (isTopPanel) {
+                            // 상단 패널은 하단 패널과 유사한 색상으로 설정
+                            listOf(
+                                Color(0x70203F64),
+                                Color(0x70183050)
+                            )
+                        } else {
+                            // 하단 패널 색상
+                            listOf(
+                                Color(0x70203F64),
+                                Color(0x70183050)
+                            )
+                        },
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, Float.POSITIVE_INFINITY)
+                    ),
+                    shape = RoundedCornerShape(cornerRadius.dp)
                 )
+        )
+
+        // 테두리와 컨텐츠 레이어 (블러 없음)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(cornerRadius.dp))
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFF00E1FF),  // 밝은 하늘색
+                            Color(0x8000E1FF)   // 투명한 하늘색
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, Float.POSITIVE_INFINITY)
+                    ),
+                    shape = RoundedCornerShape(cornerRadius.dp)
+                )
+        ) {
+            // 유리 효과를 위한 배경
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(1.dp)
+                    .clip(RoundedCornerShape((cornerRadius - 1).dp))
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = if (isTopPanel) {
+                                // 상단 패널은 하단 패널과 유사한 색상으로 설정
+                                listOf(
+                                    Color(0x50203F64),
+                                    Color(0x50183050)
+                                )
+                            } else {
+                                // 하단 패널 색상
+                                listOf(
+                                    Color(0x50203F64),
+                                    Color(0x50183050)
+                                )
+                            },
+                            start = Offset(0f, 0f),
+                            end = Offset(0f, Float.POSITIVE_INFINITY)
+                        )
+                    )
+            ) {
+                // 유리 반사 효과 (상단에 밝은 부분)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.15f)
+                        .align(Alignment.TopCenter)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0x30FFFFFF),  // 반투명 흰색
+                                    Color.Transparent
+                                ),
+                                startY = 0f,
+                                endY = Float.POSITIVE_INFINITY
+                            )
+                        )
+                )
+
+                // 내용 (블러 없음)
+                content()
             }
         }
-        
-        // 내용 표시
-        content()
     }
 }
 
@@ -154,12 +335,3 @@ private fun DrawScope.drawStar(
         )
     }
 }
-
-private data class Star(
-    val x: Float,
-    val y: Float,
-    val size: Float,
-    val alpha: Float,
-    val flickerSpeed: Float, // 반짝임 속도 (고정값)
-    val shouldTwinkle: Boolean // 반짝일지 여부 (10%만 true)
-)

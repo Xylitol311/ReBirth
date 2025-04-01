@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,114 +39,96 @@ import kotlinx.coroutines.delay
 import com.example.fe.ui.screens.home.components.HomeUsedMoney
 import com.example.fe.ui.screens.home.components.HomeTransaction
 import com.example.fe.ui.screens.home.components.HomeRecCard
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.fe.ui.navigation.NavRoutes
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+
+val LightBlue = Color(0xFFADD8E6)
 
 @Composable
-fun HomeScreenContent(
-    modifier: Modifier = Modifier,
-    onScrollOffsetChange: (Float) -> Unit = {},
-    onNavigateToDetail: () -> Unit = {}
+fun HomeHeader(
+    userName: String = "김싸피님",
+    modifier: Modifier = Modifier
 ) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 64.dp, vertical = 16.dp)
+    ) {
+        // 행성 이미지를 오른쪽 상단에 배치
+        Image(
+            painter = painterResource(id = R.drawable.earth),
+            contentDescription = "Earth",
+            modifier = Modifier
+                .size(100.dp)
+                .align(Alignment.TopEnd)
+        )
+        
+        // 텍스트를 왼쪽 하단에 배치
+        Column(
+            modifier = Modifier
+                .padding(top = 40.dp)
+                .align(Alignment.BottomStart)
+        ) {
+            Text(
+                text = userName,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                color = LightBlue
+            )
+            Text(
+                text = "당신의 행성에서는\n어떤 소비가 있었을까요?",
+                fontSize = 24.sp,
+                color = Color.White,
+                lineHeight = 32.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(
+    navController: NavController
+) {
+    val scrollState = rememberScrollState()
     var scrollOffset by remember { mutableStateOf(0f) }
     
-    // 코루틴 스코프 추가
-    val coroutineScope = rememberCoroutineScope()
-    
-    // 스크롤 상태
-    val lazyListState = rememberLazyListState()
-    
     // 스크롤 오프셋 변경 감지
-    LaunchedEffect(lazyListState) {
-        snapshotFlow { 
-            lazyListState.firstVisibleItemIndex * 1000f + 
-            (lazyListState.firstVisibleItemScrollOffset.toFloat())
-        }.collect { offset ->
+    LaunchedEffect(scrollState) {
+        snapshotFlow { scrollState.value.toFloat() }.collect { offset ->
             scrollOffset = offset
-            onScrollOffsetChange(offset)
         }
     }
     
-    // 화면 전환 애니메이션을 위한 상태
-    val isNavigating = remember { mutableStateOf(false) }
-
-    // 애니메이션 값
-    val contentAlpha by animateFloatAsState(
-        targetValue = if (isNavigating.value) 0f else 1f,
-        animationSpec = tween(300),
-        label = "contentAlpha"
-    )
-    
-    // 배경과 콘텐츠를 함께 배치
-    Box(modifier = Modifier.fillMaxSize()) {
-        // 배경 (스크롤에 따라 움직임)
-        StarryBackground(
-            scrollOffset = scrollOffset,
-            starCount = 150,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // 빈 Box - 배경만 표시
-        }
-        
-        // 실제 스크롤 가능한 콘텐츠
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .graphicsLayer(alpha = contentAlpha),
-            state = lazyListState
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        StarryBackground(scrollOffset = scrollOffset) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 헤더 (사용자 이름과 행성)
+                HomeHeader()
                 
-                // 지구 이미지와 메시지
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 24.dp)
-                ) {
-    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = "당신의 행성에서는",
-                            color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "어떤 소비가 이뤄졌을까요?",
-                            color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    
-                    Image(
-                        painter = painterResource(id = R.drawable.earth),
-                        contentDescription = "Earth",
-                        modifier = Modifier.size(100.dp)
-                    )
-                }
-                
-                // 이번 달 소비 카드 (컴포넌트로 분리)
+                // 이번 달 소비 금액
                 HomeUsedMoney(
                     onDetailClick = {
-                        // 페이드아웃 시작
-                        isNavigating.value = true
-                        // 약간의 지연 후 네비게이션
-                        coroutineScope.launch {
-                            delay(200)
-                            onNavigateToDetail()
-                        }
+                        navController.navigate(NavRoutes.HOME_DETAIL)
                     }
                 )
                 
-                // 거래 내역 및 혜택 카드 (컴포넌트로 분리)
+                // 혜택을 놓친 거래 내역
                 HomeTransaction()
                 
-                // 카드 추천 섹션 (컴포넌트로 분리)
+                // 추천 카드
                 HomeRecCard()
-                
-                // 하단 여백
-                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
@@ -157,7 +137,7 @@ fun HomeScreenContent(
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    HomeScreenContent()
+    HomeScreen(navController = rememberNavController())
 }
 
 @Composable
@@ -175,11 +155,9 @@ fun CategorySpendingItem(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 아이콘과 카테고리명 그룹
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 카테고리 아이콘
             Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = category,
@@ -187,7 +165,6 @@ fun CategorySpendingItem(
                 modifier = Modifier.size(24.dp)
             )
             
-            // 카테고리명
             Text(
                 text = category,
                 fontSize = 16.sp,
@@ -196,11 +173,9 @@ fun CategorySpendingItem(
             )
         }
         
-        // 금액과 혜택 정보 그룹
         Column(
             horizontalAlignment = Alignment.End
         ) {
-            // 소비 금액
             Text(
                 text = "${amount}원",
                 fontSize = 16.sp,
@@ -208,21 +183,18 @@ fun CategorySpendingItem(
                 fontWeight = FontWeight.Medium
             )
             
-            // 혜택 정보
             if (isGoodTab) {
-                // 잘함 탭 - 받은 혜택 표시 (파란색)
                 Text(
                     text = "${benefit}원 혜택",
                     fontSize = 14.sp,
-                    color = Color(0xFF4285F4), // 파란색
+                    color = Color(0xFF4285F4),
                     modifier = Modifier.padding(top = 4.dp)
                 )
             } else {
-                // 아쉬움 탭 - 놓친 혜택 표시 (빨간색)
                 Text(
                     text = "혜택 0원",
                     fontSize = 14.sp,
-                    color = Color(0xFFFF5252), // 빨간색
+                    color = Color(0xFFFF5252),
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -232,16 +204,13 @@ fun CategorySpendingItem(
 
 @Composable
 fun CategorySpendingList(selectedTabIndex: Int) {
-    // 카테고리별 소비 데이터 (아이콘 리소스 ID 추가)
     val categories = listOf(
         Quadruple("카페", 45000, 2500, R.drawable.ic_coffee),
         Quadruple("식당", 32000, 1800, R.drawable.ic_restaurant),
         Quadruple("쇼핑", 25000, 1500, R.drawable.ic_shopping)
     )
     
-    // 선택된 탭에 따라 다른 내용 표시
     if (selectedTabIndex == 0) {
-        // 아쉬움 탭
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -257,7 +226,6 @@ fun CategorySpendingList(selectedTabIndex: Int) {
             }
         }
     } else {
-        // 잘함 탭
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -276,5 +244,4 @@ fun CategorySpendingList(selectedTabIndex: Int) {
     }
 }
 
-// 4개 값을 담는 데이터 클래스 추가
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
