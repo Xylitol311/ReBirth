@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CardJpaRepository extends JpaRepository<CardEntity, String> {
 	List<CardEntity> findByUserCIAndDeletedAtIsNull(String userCI);
+
+	boolean existsByCardUniqueNumberAndUserCI(String cardUniqueNumber, String userCI);
+
 }

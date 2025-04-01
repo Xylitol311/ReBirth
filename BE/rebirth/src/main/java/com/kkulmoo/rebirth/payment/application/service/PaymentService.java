@@ -34,15 +34,15 @@ public class PaymentService {
 
     public List<String[]> getAllUsersPermanentTokenAndTemplateId(int userId){
 
-        List<Cards> userCards = cardsRepository.findByUserId(userId);
+        List<paymentCard> userCards = cardsRepository.findByUserId(userId);
 
         if(userCards.isEmpty()) return null;
 
         List<String[]> userPTs = new ArrayList<>();
-        for(Cards cards : userCards){
+        for(paymentCard paymentCard : userCards){
 
-            if(cards.getPermanentToken()== null) continue;
-            String[] tokenAndCUN = {String.valueOf(cards.getCardTemplateId()), cards.getPermanentToken()};
+            if(paymentCard.getPermanentToken()== null) continue;
+            String[] tokenAndCUN = {String.valueOf(paymentCard.getCardTemplateId()), paymentCard.getPermanentToken()};
             userPTs.add(tokenAndCUN);
         }
 

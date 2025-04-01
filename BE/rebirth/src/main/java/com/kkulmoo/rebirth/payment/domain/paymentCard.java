@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class Cards {
+public class paymentCard {
 
     private int cardId;
 
@@ -28,7 +28,7 @@ public class Cards {
 
     private LocalDateTime deletedAt; // Soft Delete 적용
 
-    private Short isExpired;
+    private Boolean isExpired;
 
     private int annualFee;
 

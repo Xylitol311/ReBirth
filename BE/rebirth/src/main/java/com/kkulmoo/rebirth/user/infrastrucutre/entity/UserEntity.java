@@ -1,19 +1,12 @@
 package com.kkulmoo.rebirth.user.infrastrucutre.entity;
 
-import java.time.LocalDateTime;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -55,8 +48,8 @@ public class UserEntity {
 	@Column(name = "deleted_at")
 	private LocalDateTime deletedAt;
 
-	@Column(name = "latest_load_data_at")
-	private LocalDateTime latestLoadDataAt;
+	@Column(name = "bank_latest_load_data_at")
+	private LocalDateTime bankLatestLoadDataAt;
 
 	@Column(name = "average_monthly_income")
 	private int averageMonthlyIncome;

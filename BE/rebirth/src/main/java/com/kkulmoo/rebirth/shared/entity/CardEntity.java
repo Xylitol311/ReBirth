@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor // 이 부분 추가
-public class CardsEntity {
+public class CardEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "card_id")
@@ -27,23 +27,11 @@ public class CardsEntity {
 	@Column(name = "card_unique_number", nullable = false)
 	private String cardUniqueNumber;
 
-	@Column(name = "card_number")
-	private String cardNumber;
-
-	@Column(name = "expiry_date")
-	private LocalDate expiryDate;
+	@Column(name = "account_number")
+	private String accountNumber;
 
 	@Column(name = "card_order", nullable = false)
 	private Short cardOrder;
-
-	@Column(name = "created_at", nullable = false)
-	private LocalDateTime createdAt;
-
-	@Column(name = "deleted_at")
-	private LocalDateTime deletedAt;
-
-	@Column(name = "is_expried", nullable = false)
-	private Short isExpired;
 
 	@Column(name = "annual_fee", nullable = false)
 	private Integer annualFee;
@@ -54,10 +42,26 @@ public class CardsEntity {
 	@Column(name = "payment_card_order")
 	private Short paymentCardOrder;
 
+	@Column(name = "spending_tier")
+	private Short spendingTier;
+
+	@Column(name = "expiry_date")
+	private LocalDate expiryDate;
+
+	@Column(name = "is_expired", nullable = false)
+	private Boolean isExpired;
+
+	@Column(name = "created_at", nullable = false)
+	private LocalDateTime createdAt;
+
 	@Column(name = "payment_created_at")
 	private LocalDateTime paymentCreatedAt;
 
-	@Column(name = "spending_tier")
-	private Short spendingTier;
+	@Column(name = "deleted_at")
+	private LocalDateTime deletedAt;
+
+	@Column(name = "latest_load_data_at")
+	private LocalDateTime latestLoadDataAt;
+
 }
 

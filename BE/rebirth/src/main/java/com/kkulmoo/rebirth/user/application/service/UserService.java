@@ -1,34 +1,19 @@
 package com.kkulmoo.rebirth.user.application.service;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.kkulmoo.rebirth.common.exception.UserAlreadyDeletedException;
 import com.kkulmoo.rebirth.common.exception.UserDeletionException;
 import com.kkulmoo.rebirth.common.exception.UserNotFoundException;
-import com.kkulmoo.rebirth.user.application.eventDTO.MyDataEvent;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.domain.UserRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-	private final ApplicationEventPublisher eventPublisher;
 	private final UserRepository userRepository;
-
-	@Transactional
-	public void loadMyData(Integer userId) {
-		User user = userRepository.findByUserId(new UserId(userId));
-		eventPublisher.publishEvent(new MyDataEvent(user));
-
-
-
-	}
 
 	public void deleteUser(Integer userId) {
 		UserId userIdObj = new UserId(userId);
@@ -46,10 +31,8 @@ public class UserService {
 			throw new UserAlreadyDeletedException("이미 삭제된 사용자입니다. ID: " + userId);
 		}
 
-		// 사용자에 삭제 표시
 		user.delete();
 
-		// 사용자 정보 업데이트
 		boolean isUpdated = userRepository.update(user);
 
 		// 업데이트 실패 시 예외 AuthService처리

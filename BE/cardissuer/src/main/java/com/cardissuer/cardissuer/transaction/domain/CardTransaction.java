@@ -14,12 +14,12 @@ import lombok.Getter;
 public class CardTransaction {
 
 	private Integer transactionId;
-	private CardUniqueNumber cardUniqueNumber;
-	private String accountNumber;
+	private String cardUniqueNumber ;
 	private Integer amount;
+	private String benefitType;
+	private Integer benefitAmount;
 	private LocalDateTime createdAt;
 	private String merchantName;
 	private String approvalCode;
-	private String description;
 
 }

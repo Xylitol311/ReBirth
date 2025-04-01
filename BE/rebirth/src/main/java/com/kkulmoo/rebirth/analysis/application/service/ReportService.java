@@ -5,9 +5,10 @@ import com.kkulmoo.rebirth.analysis.domain.dto.response.*;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.*;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.*;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
+import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
-import com.kkulmoo.rebirth.shared.entity.CardsEntity;
-import com.kkulmoo.rebirth.transactions.infrastructure.CategoryEntity;
+import com.kkulmoo.rebirth.transactions.infrastructure.entity.CategoryEntity;
+import com.kkulmoo.rebirth.transactions.infrastructure.repository.TransactionsJpaRepository;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import jakarta.persistence.EntityNotFoundException;
@@ -137,8 +138,8 @@ public class ReportService {
             System.out.println("여기 옴?");
             int reportId = monthlyTransactionSummaryJpaRepository.save(monthlyTransactionSummary).getReportId();
             MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getReferenceById(reportId);
-            List<CardsEntity> cards = cardsJpaRepository.findByUserId(user.getUserId());
-            for (CardsEntity card : cards) {
+            List<CardEntity> cards = cardsJpaRepository.findByUserId(user.getUserId());
+            for (CardEntity card : cards) {
 
                 ReportCardsEntity reportCardsEntity = ReportCardsEntity
                         .builder()

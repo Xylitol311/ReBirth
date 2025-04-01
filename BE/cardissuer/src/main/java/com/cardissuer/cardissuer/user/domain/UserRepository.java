@@ -9,6 +9,8 @@ import com.cardissuer.cardissuer.user.domain.User;
 import com.cardissuer.cardissuer.user.infrastructure.UserEntity;
 
 public interface UserRepository {
-	Optional<User> findByUserApiKey(String userApiKey);
+	Optional<User> findByUserCI(String userCI);
 	User save(User user);
+	boolean existsByUserCI(String userCI);
+
 }

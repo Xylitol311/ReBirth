@@ -49,31 +49,16 @@ public class CardService {
 		return cardRepository.save(card);
 	}
 
-	// 도메인 객체를 엔티티로 변환
-	private CardEntity convertToEntity(Card card) {
-		return CardEntity.builder()
-			.cardUniqueNumber(card.getCardUniqueNumber().getValue())
-			.userCI(card.getUserCI())
-			.accountNumber(card.getAccountNumber())
-			.cardNumber(card.getCardNumber())
-			.cardName(card.getCardName())
-			.expiryDate(card.getExpiryDate())
-			.cvc(card.getCvc())
-			.cardPassword(card.getCardPassword())
-			.createdAt(card.getCreatedAt())
-			.deletedAt(card.getDeletedAt())
-			.build();
-	}
 
 	@Transactional
 	public PermanentToken getPermanentToken(
-		String userAPiKey,
+		String userCI,
 		PermanentTokenRequest permanentTokenRequest) {
 		//영구토큰 받기
 		CardUniqueNumber cardUniqueNumber = CardUniqueNumber.of(permanentTokenRequest.getCardUniqueNumber());
 
 		//User꺼내기
-		Optional<User> optionalUser = userRepository.findByUserApiKey(userAPiKey);
+		Optional<User> optionalUser = userRepository.findByUserCI(userCI);
 		Optional<Card> optionalCard = cardRepository.findByCardUniqueNumber(
 			cardUniqueNumber
 		);
@@ -130,8 +115,8 @@ public class CardService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<CardResponse> getCardsByUserApiKey(String userApiKey) {
-		Optional<User> optionalUser = userRepository.findByUserApiKey(userApiKey);
+	public List<CardResponse> getCardsByUserCI(String userCI) {
+		Optional<User> optionalUser = userRepository.findByUserCI(userCI);
 
 		// Optional에서 User를 안전하게 꺼내서 사용
 		if (optionalUser.isPresent()) {
@@ -148,7 +133,7 @@ public class CardService {
 				})
 				.collect(Collectors.toList());
 		} else {
-			throw new UserNotFoundException("User not found with API key: " + userApiKey);
+			throw new UserNotFoundException("User not found with API key: " + userCI);
 		}
 	}
 }

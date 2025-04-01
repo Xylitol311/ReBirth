@@ -3,7 +3,7 @@ package com.kkulmoo.rebirth.analysis.application.service;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.DailyTransactionsDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogInfoDTO;
-import com.kkulmoo.rebirth.analysis.infrastructure.repository.TransactionsJpaRepository;
+import com.kkulmoo.rebirth.transactions.infrastructure.repository.TransactionsJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +15,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class BudgetLogService {
-
 
     private final TransactionsJpaRepository transactionsJpaRepository;
 

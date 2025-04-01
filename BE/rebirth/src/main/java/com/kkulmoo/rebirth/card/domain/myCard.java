@@ -9,20 +9,22 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class Card {
+public class myCard {
 	private Integer cardId;
 	private UserId userId;
 	private Integer cardTemplateId;
-	private String cardNumber;
 	private String cardUniqueNumber;
-	private LocalDate expiryDate;
+	private String accountNumber;
 	private Short cardOrder;
-	private Short isExpired;
+	private Integer annualFee;
 	private String permanentToken;
 	private Short paymentCardOrder;
-	private Integer annualFee;
+	private Short spendingTier;
+	private Short payCount;
+	private LocalDate expiryDate;
+	private Boolean isExpired;
 	private LocalDateTime paymentCreatedAt;
 	private LocalDateTime createdAt;
 	private LocalDateTime deletedAt;
-
+	private LocalDateTime latestLoadDataAt;
 }
