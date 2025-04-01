@@ -20,7 +20,7 @@ public class UserEntityMapper {
 		}
 
 		return User.builder()
-			.userId(new UserId(userEntity.getUserId().intValue()))
+			.userId(new UserId(userEntity.getUserId()))
 			.consumptionPatternId(userEntity.getConsumptionPatternId())
 			.userName(userEntity.getUserName())
 			.hashedPinNumber(userEntity.getHashedPinNumber())
@@ -40,7 +40,7 @@ public class UserEntityMapper {
 		}
 
 		return UserEntity.builder()
-			.userId(user.getUserId() != null ? Long.valueOf(user.getUserId().getValue()) : null)
+			.userId(user.getUserId() != null ? user.getUserId().getValue() : null)
 			.consumptionPatternId(user.getConsumptionPatternId())
 			.userName(user.getUserName())
 			.hashedPinNumber(user.getHashedPinNumber())

@@ -57,5 +57,7 @@ public class CardsEntity {
 	@Column(name = "payment_created_at")
 	private LocalDateTime paymentCreatedAt;
 
+	@Column(name = "spending_tier")
+	private Short spendingTier;
 }
 

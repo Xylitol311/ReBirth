@@ -26,7 +26,7 @@ public class UserEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "user_id")
-	private Long userId;
+	private int userId;
 
 	@Column(name = "consumption_pattern_id")
 	private String consumptionPatternId;
@@ -57,6 +57,9 @@ public class UserEntity {
 
 	@Column(name = "latest_load_data_at")
 	private LocalDateTime latestLoadDataAt;
+
+	@Column(name = "average_monthly_income")
+	private int averageMonthlyIncome;
 
 	@PrePersist
 	protected void onCreate() {
