@@ -23,12 +23,14 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 
 @Composable
 fun HomeUsedMoney(
+    modifier: Modifier = Modifier,
     onDetailClick: () -> Unit = {}
 ) {
     GlassSurface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 8.dp),
+        cornerRadius = 16f
     ) {
         Column(
             modifier = Modifier.padding(48.dp)
@@ -87,11 +89,14 @@ fun HomeUsedMoney(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = Color.Transparent,
                 contentColor = Color.White,
+                divider = { /* 구분선 제거 */ },
                 indicator = { tabPositions ->
+                    // 선택된 탭 위치에 맞춰 인디케이터 표시
                     Box(
                         modifier = Modifier
                             .tabIndicatorOffset(tabPositions[selectedTabIndex])
                             .height(2.dp)
+                            .padding(horizontal = 16.dp)
                             .background(color = Color.White)
                     )
                 }
@@ -99,12 +104,22 @@ fun HomeUsedMoney(
                 Tab(
                     selected = selectedTabIndex == 0,
                     onClick = { selectedTabIndex = 0 },
-                    text = { Text("혜택이 아쉬운 소비") }
+                    text = { 
+                        Text(
+                            "혜택이 아쉬운 소비",
+                            fontSize = 16.sp
+                        ) 
+                    }
                 )
                 Tab(
                     selected = selectedTabIndex == 1,
                     onClick = { selectedTabIndex = 1 },
-                    text = { Text("혜택을 잘 받은 소비") }
+                    text = { 
+                        Text(
+                            "혜택을 잘 받은 소비",
+                            fontSize = 16.sp
+                        ) 
+                    }
                 )
             }
             

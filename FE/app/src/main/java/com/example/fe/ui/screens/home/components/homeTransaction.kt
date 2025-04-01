@@ -28,14 +28,14 @@ import com.example.fe.ui.components.cards.HorizontalCardLayout
 import com.example.fe.ui.components.backgrounds.GlassSurface
 
 @Composable
-fun HomeTransaction() {
+fun HomeTransaction(
+    modifier: Modifier = Modifier
+) {
     GlassSurface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        cornerRadius = 16f,
-        color = Color(0x55FFFFFF),
-        borderColor = Color(0x65FFFFFF)
+        cornerRadius = 16f
     ) {
         Column(
             modifier = Modifier.padding(24.dp)

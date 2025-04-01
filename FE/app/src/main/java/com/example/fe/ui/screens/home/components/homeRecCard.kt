@@ -60,14 +60,14 @@ data class CardRecommendation(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HomeRecCard() {
+fun HomeRecCard(
+    modifier: Modifier = Modifier
+) {
     GlassSurface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        cornerRadius = 16f,
-        color = Color(0x55FFFFFF),
-        borderColor = Color(0x65FFFFFF)
+        cornerRadius = 16f
     ) {
         Column(
             modifier = Modifier.padding(24.dp)
