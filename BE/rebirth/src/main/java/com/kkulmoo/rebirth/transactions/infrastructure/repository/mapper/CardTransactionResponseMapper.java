@@ -3,7 +3,7 @@ package com.kkulmoo.rebirth.transactions.infrastructure.repository.mapper;
 import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionResponse;
 import com.kkulmoo.rebirth.transactions.domain.CardBenefitType;
 import com.kkulmoo.rebirth.transactions.domain.Status;
-import com.kkulmoo.rebirth.transactions.infrastructure.entity.CardTransactionsEntity;
+import com.kkulmoo.rebirth.transactions.infrastructure.entity.CardTransactionEntity;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.TransactionEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,8 +26,8 @@ public class CardTransactionResponseMapper {
     }
 
     // CardTransactionResponse -> CardTransactionEntity 변환
-    public CardTransactionsEntity toCardTransactionEntity(CardTransactionResponse response, Integer transactionId) {
-        return CardTransactionsEntity.builder()
+    public CardTransactionEntity toCardTransactionEntity(CardTransactionResponse response, Integer transactionId) {
+        return CardTransactionEntity.builder()
                 .transactionId(transactionId)
                 .cardUniqueNumber(response.getCardUniqueNumber())
                 .status(Status.fromApprovalCode(response.getApprovalCode()))
@@ -45,11 +45,11 @@ public class CardTransactionResponseMapper {
     }
 
     // TransactionResponse 리스트 + 저장된 TransactionEntity 리스트 -> CardTransactionEntity 리스트 변환
-    public List<CardTransactionsEntity> toCardTransactionEntities(
+    public List<CardTransactionEntity> toCardTransactionEntities(
             List<CardTransactionResponse> responses,
             List<TransactionEntity> savedTransactions) {
 
-        List<CardTransactionsEntity> cardEntities = new ArrayList<>();
+        List<CardTransactionEntity> cardEntities = new ArrayList<>();
 
         for (int i = 0; i < responses.size(); i++) {
             cardEntities.add(toCardTransactionEntity(

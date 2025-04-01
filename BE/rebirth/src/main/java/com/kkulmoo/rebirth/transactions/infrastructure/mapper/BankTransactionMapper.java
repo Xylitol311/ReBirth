@@ -1,7 +1,7 @@
 package com.kkulmoo.rebirth.transactions.infrastructure.mapper;
 
 import com.kkulmoo.rebirth.transactions.domain.BankTransactions;
-import com.kkulmoo.rebirth.transactions.infrastructure.entity.BankTransactionsEntity;
+import com.kkulmoo.rebirth.transactions.infrastructure.entity.BankTransactionEntity;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 public class BankTransactionMapper {
 
     // Convert DTO to Entity
-    public static BankTransactionsEntity toEntity(BankTransactions dto) {
+    public static BankTransactionEntity toEntity(BankTransactions dto) {
 
 
-        return BankTransactionsEntity.builder()
+        return BankTransactionEntity.builder()
                 .transactionId(dto.getTransactionsId())
                 .cardCompanyId(dto.getCardCompanyId())
                 .bankTransactionType(dto.getBankTransactionType())
@@ -21,7 +21,7 @@ public class BankTransactionMapper {
     }
 
     // Convert Entity to DTO
-    public static BankTransactions toDto(BankTransactionsEntity entity) {
+    public static BankTransactions toDto(BankTransactionEntity entity) {
 
         return BankTransactions.builder()
                 .TransactionsId(entity.getTransactionId())
@@ -32,7 +32,7 @@ public class BankTransactionMapper {
     }
 
     // Convert a list of DTOs to a list of Entities
-    public static List<BankTransactionsEntity> toEntityList(List<BankTransactions> dtoList) {
+    public static List<BankTransactionEntity> toEntityList(List<BankTransactions> dtoList) {
 
         return dtoList.stream()
                 .map(BankTransactionMapper::toEntity)
@@ -40,7 +40,7 @@ public class BankTransactionMapper {
     }
 
     // Convert a list of Entities to a list of DTOs
-    public static List<BankTransactions> toDtoList(List<BankTransactionsEntity> entityList) {
+    public static List<BankTransactions> toDtoList(List<BankTransactionEntity> entityList) {
 
         return entityList.stream()
                 .map(BankTransactionMapper::toDto)
