@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "consumption_pattern")
+@Table(name = "consumption_patterns")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
