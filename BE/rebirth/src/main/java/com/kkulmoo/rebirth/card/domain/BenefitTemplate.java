@@ -19,11 +19,13 @@ public class BenefitTemplate {
 
     private BenefitType benefitType;
 
-    private Short benefitMethod;
+    private Short merchantFilterType;
+
+    private Short benefitConditionType;
 
     private Integer[] performanceRange;
 
-    private Double[] performanceRangeByBenefit;
+    private Double[] benefitsBySection;
 
     private Boolean merchantInfo;
 
@@ -38,4 +40,6 @@ public class BenefitTemplate {
     private DiscountType discountType;
 
     private String additionalInfo;
+
+
 }
