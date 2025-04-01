@@ -2,6 +2,7 @@ package com.cardissuer.cardissuer.transaction.infrastrucuture;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
@@ -18,15 +19,21 @@ public class CardTransactionRepositoryImpl implements CardTransactionRepository 
 	private final CardTransactionMapper cardTransactionMapper;
 
 	@Override
-	public List<CardTransactionEntity> findByCard_UserCIAndCreatedAtAfterOrderByCreatedAtDesc(String userId,
-		Timestamp timestamp) {
-		return cardTransactionJpaRepository.findByCard_UserCIAndCreatedAtAfterOrderByCreatedAtDesc(userId, timestamp);
+	public List<CardTransaction> findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
+			String cardUniqueNumber,
+			Timestamp timestamp) {
+		List<CardTransactionEntity> entities = cardTransactionJpaRepository
+				.findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
+						cardUniqueNumber, timestamp);
 
+		// 엔티티를 도메인 객체로 변환
+		return entities.stream()
+				.map(cardTransactionMapper::toDomain)
+				.collect(Collectors.toList());
 	}
 
 	@Override
-	public CardTransaction save(CardTransaction cardTransaction) {
-		CardTransactionEntity savedEntity = cardTransactionJpaRepository.save(cardTransactionMapper.toEntity(cardTransaction));
-		return cardTransactionMapper.toDomain(savedEntity);
+	public void save(CardTransaction cardTransaction) {
+		cardTransactionJpaRepository.save(cardTransactionMapper.toEntity(cardTransaction));
 	}
 }

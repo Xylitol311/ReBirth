@@ -73,5 +73,10 @@ public class CardRepositoryImpl implements CardRepository {
 		System.out.println(card.getAccountNumber());
 		return cardEntityMapper.toDomain(cardJpaRepository.save(cardEntityMapper.toEntity(card)));
 	}
+
+	@Override
+	public Boolean existsByCardUniqueNumberAndUserCI(String cardUniqueNumber, String userCI) {
+		return  cardJpaRepository.existsByCardUniqueNumberAndUserCI(cardUniqueNumber,userCI);
+	}
 }
 

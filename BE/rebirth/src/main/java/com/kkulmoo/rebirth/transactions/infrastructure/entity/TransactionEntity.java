@@ -1,37 +1,35 @@
-package com.kkulmoo.rebirth.analysis.infrastructure.entity;
+package com.kkulmoo.rebirth.transactions.infrastructure.entity;
+
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transactions")
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionsEntity {
-
+public class TransactionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "transaction_id")
-    private int transactionId;
+    private Integer transactionId;
 
-    @Column(name = "user_id")
-    private int userId;
+    @Column(name = "userId")
+    private Integer userId;
 
     @Column(name = "amount")
-    private int amount;
+    private Integer amount;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    @Column(name = "approval_number")
+    private String approvalNumber;
 }

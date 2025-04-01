@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 
 import com.cardissuer.cardissuer.cards.infrastructure.CardEntity;
 
+
 @Entity
 @Builder
 @NoArgsConstructor
@@ -33,10 +34,6 @@ public class CardTransactionEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "transaction_id")
 	private Integer transactionId;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "card_unique_number", referencedColumnName = "card_unique_number", insertable = false, updatable = false)
-	private CardEntity card;
 
 	@Column(name = "card_unique_number", nullable = false)
 	private String cardUniqueNumber;
@@ -50,5 +47,13 @@ public class CardTransactionEntity {
 	@Column(name = "merchant_name", length = 50, nullable = false)
 	private String merchantName;
 
+	@Column(name = "benefit_amount")
+	private Integer benefitAmount;
+
+	@Column(name = "benefit_type", length = 20)
+	private String benefitType;
+
+	@Column(name = "approval_code", length = 50)
+	private String approvalCode;
 
 }

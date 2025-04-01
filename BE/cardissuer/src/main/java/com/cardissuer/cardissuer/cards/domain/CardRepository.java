@@ -25,4 +25,6 @@ public interface CardRepository {
 	void updateToken(PermanentToken permanentToken);
 
 	Card save(Card card);
+
+	Boolean existsByCardUniqueNumberAndUserCI(String cardUniqueNumber, String UserCI);
 }

@@ -1,4 +1,4 @@
-package com.kkulmoo.rebirth.transactions.infrastructure;
+package com.kkulmoo.rebirth.transactions.infrastructure.entity;
 
 import java.util.List;
 

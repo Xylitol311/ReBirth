@@ -1,19 +1,21 @@
 package com.kkulmoo.rebirth.card.domain;
 
+import com.kkulmoo.rebirth.user.domain.UserId;
+
 import java.util.List;
 import java.util.Optional;
 
-import com.kkulmoo.rebirth.user.domain.UserId;
-
 public interface CardRepository {
-	Card save(Card card);
+	myCard save(myCard myCard);
 
-	Optional<Card> findById(Integer cardId);
+	Optional<myCard> findById(Integer cardId);
 
-	List<Card> findByUserId(UserId userId);
+	List<myCard> findByUserId(UserId userId);
+
+	List<myCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers);
 	// 필요한 다른 메서드들
 
-	Optional<Card> findByCardUniqueNumber(String cardUniqueNumber);
+	Optional<myCard> findByCardUniqueNumber(String cardUniqueNumber);
 
 	Optional<CardTemplate> findCardTemplateByCardName (String cardName);
 }

@@ -9,7 +9,7 @@ import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyTransaction
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardsJpaRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
-import com.kkulmoo.rebirth.shared.entity.CardsEntity;
+import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.repository.UserJpaRepository;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -71,8 +71,8 @@ public class MonthlyTransactionScheduler {
 
         int reportId = monthlyTransactionSummaryJpaRepository.save(monthlyTransactionSummary).getReportId();
         MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getReferenceById(reportId);
-        List<CardsEntity> cards = cardsJpaRepository.getByUserId(user.getUserId());
-        for(CardsEntity card : cards) {
+        List<CardEntity> cards = cardsJpaRepository.getByUserId(user.getUserId());
+        for(CardEntity card : cards) {
 
             createReportCards(card, report);
 
@@ -81,7 +81,7 @@ public class MonthlyTransactionScheduler {
     }
 
     @Transactional
-    public void createReportCards(CardsEntity card, MonthlyTransactionSummaryEntity report) {
+    public void createReportCards(CardEntity card, MonthlyTransactionSummaryEntity report) {
         // 카드별 혜택, 사용금액 0,
         ReportCardsEntity reportCardsEntity = ReportCardsEntity
                 .builder()

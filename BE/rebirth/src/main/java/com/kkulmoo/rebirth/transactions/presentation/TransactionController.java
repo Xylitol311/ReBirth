@@ -1,4 +1,4 @@
-package com.kkulmoo.rebirth.transactions;
+package com.kkulmoo.rebirth.transactions.presentation;
 
 import org.springframework.web.bind.annotation.RestController;
 

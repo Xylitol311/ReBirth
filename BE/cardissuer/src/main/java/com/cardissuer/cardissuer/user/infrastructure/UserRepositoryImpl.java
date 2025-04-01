@@ -16,7 +16,7 @@ public class UserRepositoryImpl implements UserRepository {
 	private final UserJpaRepository userJpaRepository;
 
 	@Override
-	public Optional<User> findByUserApiKey(String userCI) {
+	public Optional<User> findByUserCI(String userCI) {
 		return userJpaRepository.findByUserCI(userCI)
 			.map(userEntityMapper::toDomain);
 	}
@@ -27,5 +27,10 @@ public class UserRepositoryImpl implements UserRepository {
 		UserEntity userEntity = userEntityMapper.toEntity(user);
 		UserEntity savedEntity = userJpaRepository.save(userEntity);
 		return userEntityMapper.toDomain(savedEntity);
+	}
+
+	@Override
+	public boolean existsByUserCI(String userCI) {
+		return userJpaRepository.existsByUserCI(userCI);
 	}
 }

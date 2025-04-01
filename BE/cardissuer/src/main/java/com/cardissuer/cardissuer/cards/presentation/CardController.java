@@ -3,6 +3,7 @@ package com.cardissuer.cardissuer.cards.presentation;
 
 import java.util.List;
 
+import com.cardissuer.cardissuer.cards.presentation.dto.CardDataRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,40 +27,36 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CardController {
 
-	private final CardService cardService;
+    private final CardService cardService;
 
-	@PostMapping("/tokens")
-	public ResponseEntity<?> getPermanentToken(
-		@RequestBody PermanentTokenRequest permanentTokenRequest) {
+    @PostMapping("/tokens")
+    public ResponseEntity<?> getPermanentToken(
+            @RequestBody PermanentTokenRequest permanentTokenRequest) {
 
-		String userCI = permanentTokenRequest.getUserCI();
-		System.out.println(userCI);
-		PermanentToken token = cardService.getPermanentToken(userCI, permanentTokenRequest);
-		return ResponseEntity.ok(token);
+        String userCI = permanentTokenRequest.getUserCI();
+        System.out.println(userCI);
+        PermanentToken token = cardService.getPermanentToken(userCI, permanentTokenRequest);
+        return ResponseEntity.ok(token);
 
-	}
+    }
 
-	@GetMapping
-	public ResponseEntity<List<CardResponse>> getUserCards(
-		@RequestHeader("Authorization") String authorizationHeader)
-	{
-		String userAPI = authorizationHeader.replace("Bearer ", "");
-		// 사용자의 모든 카드 목록 조회
-		List<CardResponse> cardDetail = cardService.getCardsByUserApiKey(userAPI);
-		return ResponseEntity.ok(cardDetail);
-	}
+    @PostMapping
+    public ResponseEntity<List<CardResponse>> getUserCards(@RequestBody CardDataRequest cardDataRequest) {
+        List<CardResponse> cardDetail = cardService.getCardsByUserCI(cardDataRequest.getUserCI());
+        return ResponseEntity.ok(cardDetail);
+    }
 
-	@PostMapping
-	public ResponseEntity<?> createCard(@RequestBody CardCreateRequest request) {
-		try {
+    @PostMapping
+    public ResponseEntity<?> createCard(@RequestBody CardCreateRequest request) {
+        try {
 
-			// 모든 정보를 cardService에 넘겨서 처리
-			Card savedCard = cardService.createCard(request);
-			// 성공 응답 반환
-			return ResponseEntity.status(HttpStatus.CREATED).body("카드가 성공적으로 생성되었습니다");
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body("카드 생성 중 오류 발생: " + e.getMessage());
-		}
-	}
+            // 모든 정보를 cardService에 넘겨서 처리
+            cardService.createCard(request);
+            // 성공 응답 반환
+            return ResponseEntity.status(HttpStatus.CREATED).body("카드가 성공적으로 생성되었습니다");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("카드 생성 중 오류 발생: " + e.getMessage());
+        }
+    }
 }

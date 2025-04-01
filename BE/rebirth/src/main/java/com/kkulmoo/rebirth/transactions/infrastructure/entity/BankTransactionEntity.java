@@ -1,11 +1,12 @@
-package com.kkulmoo.rebirth.analysis.infrastructure.entity;
+package com.kkulmoo.rebirth.transactions.infrastructure.entity;
 
-import com.kkulmoo.rebirth.analysis.domain.enums.TransactionType;
+import com.kkulmoo.rebirth.transactions.domain.BankTransactionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 
 @Entity
 @Table(name = "bank_transactions")
@@ -13,23 +14,20 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BankTransactionsEntity {
-
+public class BankTransactionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "transaction_id")
-    private int transactionId;
+    private Integer transactionId;
 
     @Column(name = "card_company_id")
-    private int cardCompanyId;
+    private Short cardCompanyId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type")
-    private TransactionType transactionType;
+    private BankTransactionType bankTransactionType;
 
-    @Column(name = "account_number", length = 30)
+    @Column(name = "account_number")
     private String accountNumber;
 
-    @Column(name = "transaction_memo", length = 30)
-    private String transactionMemo;
 }

@@ -9,7 +9,11 @@ import com.cardissuer.cardissuer.transaction.infrastrucuture.CardTransactionEnti
 
 @Repository
 public interface CardTransactionRepository {
-	List<CardTransactionEntity> findByCard_UserCIAndCreatedAtAfterOrderByCreatedAtDesc(String userId, Timestamp timestamp);
 
-	CardTransaction save (CardTransaction card);
+	List<CardTransaction> findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
+			String cardUniqueNumber,
+			Timestamp timestamp
+	);
+
+	void save (CardTransaction card);
 }
