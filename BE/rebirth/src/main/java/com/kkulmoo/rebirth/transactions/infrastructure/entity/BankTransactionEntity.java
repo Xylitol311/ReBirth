@@ -20,9 +20,6 @@ public class BankTransactionEntity {
     @Column(name = "transaction_id")
     private Integer transactionId;
 
-    @Column(name = "card_company_id")
-    private Short cardCompanyId;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type")
     private BankTransactionType bankTransactionType;

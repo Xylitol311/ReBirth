@@ -19,7 +19,5 @@ import lombok.NoArgsConstructor;
 public class TransactionHistoryRequestDTO {
 	private String userKey;              // 사용자 키
 	private String accountNumber;        // 계좌번호
-
-	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-	private LocalDateTime timestamp;     // 조회 시작 시간
+	private LocalDateTime timestamp;     // 조회 시간 기준
 }

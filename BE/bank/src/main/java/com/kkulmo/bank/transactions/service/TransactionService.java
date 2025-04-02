@@ -31,7 +31,7 @@ public class TransactionService {
 
 		// 계좌를 비관적 락으로 가져옴
 		AccountEntity account = accountService.getAccountWithPessimisticLock(
-			transactionDTO.getUserId(), transactionDTO.getAccountNumber());
+			transactionDTO.getUserCI(), transactionDTO.getAccountNumber());
 
 		String typeStr = transactionDTO.getType();
 		if (typeStr == null || typeStr.isEmpty()) {

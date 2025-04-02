@@ -20,7 +20,7 @@ public class TransactionDTO {
 	// 클라이언트로부터 전달받는 필드
 	private String accountNumber;  // 계좌번호
 	private Long amount;  // 금액
-	private String userId;
+	private String userCI;
 	private String type;  // 입금, 이체, 체크카드
 	private String description;  // 설명
 	private LocalDateTime createdAt;

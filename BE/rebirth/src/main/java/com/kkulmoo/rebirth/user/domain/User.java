@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -16,6 +17,7 @@ public class User {
 	private final String phoneSerialNumber;
 	private final String userApiKey;
 	private final LocalDateTime createdAt;
+	private final List<String> bankAccounts;
 	private LocalDateTime updatedAt;
 	private LocalDateTime deletedAt;
 	private LocalDateTime bankLatestLoadDataAt;
