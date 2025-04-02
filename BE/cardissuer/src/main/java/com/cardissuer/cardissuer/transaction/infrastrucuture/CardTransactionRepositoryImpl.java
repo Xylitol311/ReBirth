@@ -1,15 +1,12 @@
 package com.cardissuer.cardissuer.transaction.infrastrucuture;
+import com.cardissuer.cardissuer.transaction.domain.CardTransaction;
+import com.cardissuer.cardissuer.transaction.domain.CardTransactionRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Repository;
-
-import com.cardissuer.cardissuer.transaction.domain.CardTransaction;
-import com.cardissuer.cardissuer.transaction.domain.CardTransactionRepository;
-
-import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
@@ -22,7 +19,7 @@ public class CardTransactionRepositoryImpl implements CardTransactionRepository 
 	public List<CardTransaction> findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
 			String cardUniqueNumber,
 			Timestamp timestamp) {
-		List<CardTransactionEntity> entities = cardTransactionJpaRepository
+		List<com.cardissuer.cardissuer.transaction.infrastrucuture.CardTransactionEntity> entities = cardTransactionJpaRepository
 				.findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
 						cardUniqueNumber, timestamp);
 

@@ -2,7 +2,9 @@ package com.kkulmoo.rebirth.transactions.infrastructure.repository;
 
 import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionResponse;
 import com.kkulmoo.rebirth.transactions.domain.TransactionRepository;
+import com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto.BankTransactionResponse;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.TransactionEntity;
+import com.kkulmoo.rebirth.transactions.infrastructure.repository.mapper.BankTransactionMapper;
 import com.kkulmoo.rebirth.transactions.infrastructure.repository.mapper.CardTransactionResponseMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -16,6 +18,7 @@ public class TransactionsRepositoryImpl implements TransactionRepository {
     private final CardTransactionsJpaRepository cardTransactionsJpaRepository;
     private final TransactionsJpaRepository transactionsJpaRepository;
     private final CardTransactionResponseMapper responseMapper;
+    private final BankTransactionMapper bankTransactionMapper;
 
     @Override
     public void saveAllCardTransactions(List<CardTransactionResponse> transactionResponses) {
@@ -33,5 +36,21 @@ public class TransactionsRepositoryImpl implements TransactionRepository {
         );
     }
 
+    @Override
+    public void saveAllBankTransactions(List<BankTransactionResponse> transactionResponses) {
+        if (transactionResponses == null || transactionResponses.isEmpty()) {
+            return;
+        }
+
+        // 1. 먼저 TransactionEntity 리스트를 생성하여 저장
+        List<TransactionEntity> transactionEntities = transactionsJpaRepository.saveAll(
+                bankTransactionMapper.toTransactionEntities(transactionResponses)
+        );
+
+        // 2. 저장된 TransactionEntity 리스트를 기반으로 BankTransactionEntity 리스트 생성 및 저장
+        bankTransactionsJpaRepository.saveAll(
+                bankTransactionMapper.toBankTransactionEntities(transactionResponses, transactionEntities)
+        );
+    }
 }
 

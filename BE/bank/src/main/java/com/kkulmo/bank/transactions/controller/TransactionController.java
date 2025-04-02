@@ -33,7 +33,7 @@ public class TransactionController {
 	 */
 	@PostMapping
 	public ResponseEntity<TransactionDTO> createTransaction(@RequestBody TransactionDTO transactionDTO) {
-		System.out.println("들어오는지 안오는ㄴ지");
+		System.out.println("거래내역 생성중입니다.");
 		return ResponseEntity.ok(transactionService.createTransaction(transactionDTO));
 	}
 
@@ -56,4 +56,5 @@ public class TransactionController {
 			)
 		);
 	}
+
 }

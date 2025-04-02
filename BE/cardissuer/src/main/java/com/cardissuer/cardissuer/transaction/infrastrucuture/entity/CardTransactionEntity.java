@@ -1,5 +1,4 @@
-package com.cardissuer.cardissuer.transaction.infrastrucuture;
-
+package com.cardissuer.cardissuer.transaction.infrastrucuture.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

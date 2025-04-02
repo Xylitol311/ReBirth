@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -19,7 +20,7 @@ public class UserEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "user_id")
-	private int userId;
+	private Integer userId;
 
 	@Column(name = "consumption_pattern_id")
 	private String consumptionPatternId;
@@ -39,6 +40,9 @@ public class UserEntity {
 	@Column(name = "user_api_key", length = 40)
 	private String userApiKey;
 
+	@Column(name = "bank_accounts")
+	private List<String> bankAccounts;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
 
@@ -54,13 +58,4 @@ public class UserEntity {
 	@Column(name = "average_monthly_income")
 	private int averageMonthlyIncome;
 
-	@PrePersist
-	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-	}
-
-	@PreUpdate
-	protected void onUpdate() {
-		updatedAt = LocalDateTime.now();
-	}
 }

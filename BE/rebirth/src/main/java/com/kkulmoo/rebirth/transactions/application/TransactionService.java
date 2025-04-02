@@ -3,16 +3,18 @@ package com.kkulmoo.rebirth.transactions.application;
 import com.kkulmoo.rebirth.card.application.CardPort;
 import com.kkulmoo.rebirth.card.application.CardService;
 import com.kkulmoo.rebirth.card.domain.myCard;
+import com.kkulmoo.rebirth.transactions.application.dto.BankTransactionRequest;
 import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionRequest;
 import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionResponse;
-import com.kkulmoo.rebirth.transactions.domain.MerchantCache;
 import com.kkulmoo.rebirth.transactions.domain.TransactionRepository;
+import com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto.BankTransactionResponse;
 import com.kkulmoo.rebirth.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,8 +24,25 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final CardPort cardPort;
+    private final BankPort bankPort;
     private final CardService cardService;
-    private final MerchantCache merchantCache;
+
+
+    // 입력할 때부터 어느 시간 기준으로 넣을 것인지 고민을 해야한다.
+    public void getBankTransactionByMyData(User user, LocalDateTime timestamp){
+        Mono<List<BankTransactionResponse>> bankTransaction = bankPort.getBankTransaction(
+                BankTransactionRequest.builder()
+                        .userCI(user.getUserApiKey())
+                        .bankAccounts(user.getBankAccounts())
+                        .timestamp(timestamp)
+                        .build()
+        );
+
+
+
+
+
+    }
 
     // card내역 가져오기.
     // 카드사에게 이사람이 누구인지 이사람의 어떤 카드의 결제내역을 얻고 싶은지 요청을해야한다.

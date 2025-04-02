@@ -14,7 +14,6 @@ public class BankTransactionMapper {
 
         return BankTransactionEntity.builder()
                 .transactionId(dto.getTransactionsId())
-                .cardCompanyId(dto.getCardCompanyId())
                 .bankTransactionType(dto.getBankTransactionType())
                 .accountNumber(dto.getAccountNumber())
                 .build();
@@ -25,7 +24,6 @@ public class BankTransactionMapper {
 
         return BankTransactions.builder()
                 .TransactionsId(entity.getTransactionId())
-                .cardCompanyId(entity.getCardCompanyId())
                 .bankTransactionType(entity.getBankTransactionType())
                 .accountNumber(entity.getAccountNumber())
                 .build();
