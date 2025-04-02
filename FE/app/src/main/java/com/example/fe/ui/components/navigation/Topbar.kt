@@ -1,22 +1,21 @@
 package com.example.fe.ui.components.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.R
 
+// starry 배경 색상 정의
+private val StarryBackgroundColor = Color(0xFF0A0A1A)
+
 @Composable
 fun TopBar(
     title: String = "",
@@ -38,77 +40,84 @@ fun TopBar(
     onProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
-    Surface(
+    Column(
         modifier = Modifier
+            .background(StarryBackgroundColor)
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .height(60.dp),
-        color = Color.Black
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // 왼쪽 영역 (뒤로가기 버튼 또는 RE 로고)
+        // 상태바 영역 (starry 배경색과 동일하게)
+        Spacer(
+            modifier = Modifier
+                .statusBarsPadding()
+                .fillMaxWidth()
+                .background(StarryBackgroundColor)
+        )
+        
+        // 실제 탑바 컨텐츠
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .background(StarryBackgroundColor)
+                .padding(top = 8.dp) // 모든 컨텐츠를 아래로 내림
+        ) {
+            // 중앙에 RE 로고 배치
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .align(Alignment.Center)
+            )
+            
+            // 왼쪽 및 오른쪽 아이콘 배치
             Row(
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 16.dp),
+                    .fillMaxWidth()
+                    .align(Alignment.Center)
+                    .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
                 if (showBackButton) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "뒤로가기",
                         tint = Color.White,
                         modifier = Modifier
-                            .size(28.dp)
+                            .size(26.dp)
                             .clickable { onBackClick() }
                     )
                 } else {
-                    Text(
-                        text = "RE",
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    // 뒤로가기 버튼 없을 때 동일한 공간 유지
+                    Spacer(modifier = Modifier.width(26.dp))
                 }
-            }
-            
-            // 중앙 영역 (타이틀)
-            if (title.isNotEmpty()) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-            
-            // 오른쪽 영역 (로그아웃 및 프로필 버튼)
-            Row(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+
+                // 중앙 영역
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 로그아웃 버튼
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = "로그아웃",
                     tint = Color.White,
                     modifier = Modifier
-                        .size(28.dp)
+                        .size(26.dp)
                         .clickable { onLogoutClick() }
                 )
-                
+
                 Spacer(modifier = Modifier.width(16.dp))
-                
+
+                // 프로필 아이콘
                 Icon(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable { onProfileClick() },
                     painter = painterResource(id = R.drawable.ic_person),
                     contentDescription = "프로필",
-                    tint = Color.White
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clickable { onProfileClick() }
                 )
             }
         }

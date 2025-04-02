@@ -30,12 +30,8 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("카드 선택", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
-                    }
-                }
+                title = { /* 타이틀 제거 */ },
+                navigationIcon = { /* 뒤로가기 버튼 제거 */ }
             )
         },
         bottomBar = {
@@ -50,9 +46,11 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
                         navController.navigate("security_setup")
                     },
                     enabled = selectedCards.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
                 ) {
-                    Text("다음")
+                    Text("다음", fontSize = 22.sp)
                 }
             }
         }
@@ -60,15 +58,15 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
                 .fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("연결할 카드를 선택해주세요", fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("연결할 카드를 선택해주세요", fontSize = 28.sp)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 items(cardList) { card ->
                     CardItem(
                         cardName = card,
@@ -97,25 +95,30 @@ fun CardItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(12.dp),
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 이미지 부분: 그냥 예시용
         Image(
             painter = painterResource(id = R.drawable.card),
             contentDescription = "카드 이미지",
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier.size(60.dp)
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(20.dp))
 
-        Text(text = cardName, fontSize = 16.sp, modifier = Modifier.weight(1f))
+        Text(
+            text = cardName, 
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
 
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "선택됨",
-                tint = Color(0xFF1976D2)
+                tint = Color(0xFF1976D2),
+                modifier = Modifier.size(32.dp)
             )
         }
     }

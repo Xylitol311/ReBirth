@@ -1,35 +1,20 @@
 package com.example.fe.ui.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,6 +28,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material3.TabPosition
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Tab
+import com.example.fe.ui.components.backgrounds.GlassSurface
+import androidx.compose.foundation.clickable
 
 @Composable
 fun HomeDetailScreen(
@@ -51,7 +42,7 @@ fun HomeDetailScreen(
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("카드별", "카테고리별")
-    
+
     // 코루틴 스코프 추가
     val coroutineScope = rememberCoroutineScope()
     
@@ -134,96 +125,89 @@ fun HomeDetailScreen(
             )
         ).sortedByDescending { it.usageAmount }
     }
-    
-    // 배경과 콘텐츠를 함께 배치
+
     Box(modifier = Modifier.fillMaxSize()) {
-        // 배경
         StarryBackground(
             scrollOffset = 0f,
             starCount = 150,
             modifier = Modifier.fillMaxSize()
         ) {
-            // 빈 Box - 배경만 표시
-        }
-        
-        // 실제 콘텐츠 - TopBar 제거
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer(alpha = contentAlpha) // 페이드 효과 적용
-                .padding(top = 56.dp) // TopBar 높이만큼 패딩 추가
-        ) {
-            // 나머지 콘텐츠
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                // 총 사용 금액 카드
-                Card(
+                // 총 사용 금액 카드 - isTopPanel = true로 설정
+                GlassSurface(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(200.dp)
                         .padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(16.dp)
+                    cornerRadius = 16f,
+                    isTopPanel = true  // 상단 패널임을 명시
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(16.dp)
+                            .padding(24.dp)
                             .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
                         Text(
                             text = "총 사용 금액",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center,
+                            fontSize = 16.sp,
+                            color = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-                        
+
                         Text(
                             text = "125,000원",
-                            fontSize = 32.sp,
+                            fontSize = 36.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            textAlign = TextAlign.Center,
+                            color = Color.White,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-                        
+
                         Text(
                             text = "받은 혜택 6,000원",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
+                            fontSize = 16.sp,
+                            color = Color(0xFF4CAF50)
                         )
                     }
                 }
                 
                 // 탭 선택
-                TabRow(
-                    selectedTabIndex = selectedTabIndex,
-                    containerColor = Color(0xFF2D2A57),
-                    contentColor = Color.White,
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .padding(vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     tabs.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTabIndex == index,
-                            onClick = { selectedTabIndex = index },
-                            text = {
-                                Text(
-                                    text = title,
-                                    fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal
-                                )
-                            },
-                            modifier = Modifier.background(
-                                if (selectedTabIndex == index) Color(0xFF2D2A57) else Color(0xFF1A1834)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { selectedTabIndex = index },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = title,
+                                color = if (selectedTabIndex == index) Color.White else Color.Gray,
+                                fontSize = 16.sp,
+                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier.padding(vertical = 8.dp)
                             )
-                        )
+                            
+                            // 인디케이터
+                            Box(
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .height(2.dp)
+                                    .background(
+                                        color = if (selectedTabIndex == index) Color.White else Color.Transparent
+                                    )
+                            )
+                        }
                     }
                 }
                 
@@ -239,87 +223,86 @@ fun HomeDetailScreen(
 
 @Composable
 fun CardUsageList(cardUsages: List<CardUsage>) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-    ) {
+    LazyColumn {
         items(cardUsages) { cardUsage ->
             CardUsageItem(cardUsage)
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
 fun CardUsageItem(cardUsage: CardUsage) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        shape = RoundedCornerShape(16.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        // 카드 이미지 - 높이를 동적으로 조정하기 위해 AspectRatio 사용
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .width(80.dp)  // 너비 줄임
+                .aspectRatio(0.63f)  // 카드 비율 (가로:세로 = 1:1.6)
+                .clip(RoundedCornerShape(12.dp))
         ) {
-            // 카드 이미지 (세로 레이아웃)
-            VerticalCardLayout(
-                cardImage = painterResource(id = cardUsage.cardImage),
-                height = 120.dp,
-                width = 80.dp,
-                cornerRadius = 8.dp
+            Image(
+                painter = painterResource(id = cardUsage.cardImage),
+                contentDescription = "Card Image",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF6200EE)), // 보라색 배경 (카드에 맞게)
+                contentScale = ContentScale.Fit
             )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            // 카드 정보
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // 글래스 서피스는 크기 유지
+        GlassSurface(
+            modifier = Modifier.weight(1f),
+            cornerRadius = 12f
+        ) {
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.padding(16.dp)
             ) {
                 Text(
                     text = cardUsage.cardName,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
-                
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 4.dp),
+                        .padding(bottom = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "사용 금액",
                         fontSize = 14.sp,
-                        color = Color.Gray
+                        color = Color.White.copy(alpha = 0.7f)
                     )
-                    
                     Text(
                         text = "${cardUsage.usageAmount}원",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = Color.White
                     )
                 }
-                
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 4.dp),
+                        .padding(bottom = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "받은 혜택",
                         fontSize = 14.sp,
-                        color = Color.Gray
+                        color = Color.White.copy(alpha = 0.7f)
                     )
-                    
                     Text(
                         text = "${cardUsage.benefit}원",
                         fontSize = 14.sp,
@@ -327,7 +310,7 @@ fun CardUsageItem(cardUsage: CardUsage) {
                         color = Color(0xFF4CAF50)
                     )
                 }
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -335,14 +318,13 @@ fun CardUsageItem(cardUsage: CardUsage) {
                     Text(
                         text = "연회비",
                         fontSize = 14.sp,
-                        color = Color.Gray
+                        color = Color.White.copy(alpha = 0.7f)
                     )
-                    
                     Text(
                         text = "${cardUsage.annualFee}원",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = Color.White
                     )
                 }
             }
@@ -352,26 +334,19 @@ fun CardUsageItem(cardUsage: CardUsage) {
 
 @Composable
 fun CategoryUsageList(categoryUsages: List<CategoryUsage>) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-    ) {
+    LazyColumn {
         items(categoryUsages) { categoryUsage ->
             CategoryUsageItem(categoryUsage)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
 fun CategoryUsageItem(categoryUsage: CategoryUsage) {
-    Card(
+    GlassSurface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        shape = RoundedCornerShape(16.dp)
+        cornerRadius = 16f
     ) {
         Column(
             modifier = Modifier
@@ -390,14 +365,14 @@ fun CategoryUsageItem(categoryUsage: CategoryUsage) {
                     text = categoryUsage.category,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = Color.White
                 )
                 
                 Text(
                     text = "전체 소비의 ${categoryUsage.percentage.toInt()}%",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2D2A57)
+                    color = Color.White
                 )
             }
             
@@ -408,16 +383,15 @@ fun CategoryUsageItem(categoryUsage: CategoryUsage) {
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp)),
-                color = Color(0xFF2D2A57),
-                trackColor = Color(0xFFE0E0E0)
+                color = Color(0xFF00E1FF),
+                trackColor = Color(0x33FFFFFF)
             )
             
             Spacer(modifier = Modifier.height(16.dp))
-
+            
             HorizontalDivider(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                color = Color(0xFFE0E0E0)
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0x33FFFFFF)
             )
             
             // 소비 금액과 혜택
@@ -431,7 +405,7 @@ fun CategoryUsageItem(categoryUsage: CategoryUsage) {
                     Text(
                         text = "소비 금액",
                         fontSize = 14.sp,
-                        color = Color.Gray,
+                        color = Color.White.copy(alpha = 0.7f),
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     
@@ -439,7 +413,7 @@ fun CategoryUsageItem(categoryUsage: CategoryUsage) {
                         text = "${categoryUsage.usageAmount}원",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = Color.White
                     )
                 }
                 
@@ -447,7 +421,7 @@ fun CategoryUsageItem(categoryUsage: CategoryUsage) {
                     Text(
                         text = "받은 혜택",
                         fontSize = 14.sp,
-                        color = Color.Gray,
+                        color = Color.White.copy(alpha = 0.7f),
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     
