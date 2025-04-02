@@ -29,8 +29,9 @@ class OnboardingViewModel(private val context: Context) : ViewModel() {
 
     // 상태를 Observable State로 관리
     var isLoggedIn by mutableStateOf(false)
-        private set
+    var hasPinAuth: Boolean = false
 
+    var hasFingerprintAuth: Boolean = false // 추가된 프로퍼티
     var hasBiometricAuth by mutableStateOf(false)
     var hasPatternAuth by mutableStateOf(false)
 

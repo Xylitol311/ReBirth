@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fe.ui.navigation.AppNavigation
 import com.example.fe.ui.navigation.OnboardingNavHost
@@ -17,7 +18,7 @@ import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
 import com.example.fe.ui.screens.splash.SplashScreen
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
