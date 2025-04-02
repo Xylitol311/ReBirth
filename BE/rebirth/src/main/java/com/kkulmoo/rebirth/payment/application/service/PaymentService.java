@@ -1,11 +1,12 @@
 package com.kkulmoo.rebirth.payment.application.service;
 import com.kkulmoo.rebirth.payment.domain.*;
-import com.kkulmoo.rebirth.payment.domain.repository.CardTemplateRepository;
-import com.kkulmoo.rebirth.payment.domain.repository.CardsRepository;
-import com.kkulmoo.rebirth.payment.domain.repository.DisposableTokenRepository;
+import com.kkulmoo.rebirth.payment.domain.repository.*;
+import com.kkulmoo.rebirth.payment.infrastructure.dto.MerchantJoinDto;
+import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 
 //
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
 
     private final CardsRepository cardsRepository;
@@ -21,16 +23,8 @@ public class PaymentService {
     private final CardTemplateRepository cardTemplateRepository;
     private final PaymentOnlineEncryption paymentOnlineEncryption;
     private final WebClientService webClientService;
-
-    public PaymentService(CardsRepository cardsRepository, DisposableTokenRepository disposableTokenRepository, PaymentOfflineEncryption paymentOfflineEncryption, CardTemplateRepository cardTemplateRepository, PaymentOnlineEncryption paymentOnlineEncryption, WebClientService webClientService) {
-        this.cardsRepository = cardsRepository;
-        this.disposableTokenRepository = disposableTokenRepository;
-        this.paymentOfflineEncryption = paymentOfflineEncryption;
-        this.cardTemplateRepository = cardTemplateRepository;
-        this.paymentOnlineEncryption = paymentOnlineEncryption;
-        this.webClientService = webClientService;
-    }
-
+    private final MerchantJoinRepository merchantJoinRepository;
+    private final CardJoinRepository cardJoinRepository;
 
     public List<String[]> getAllUsersPermanentTokenAndTemplateId(int userId){
 
@@ -53,10 +47,10 @@ public class PaymentService {
     // cardInfo(영구토큰과 카드 탬플릿 아이디) -> 0 : 카드 탬플릿 아이디 1: 영구토큰
     // disposableTokens -> 0: 고유번호 1:일회용 토큰
 
-//    String token;
-//    String cardName;
-//    String cardImgUrl;
-//    Json cardConstellationInfo;
+    //    String token;
+    //    String cardName;
+    //    String cardImgUrl;
+    //    Json cardConstellationInfo;
     public List<PaymentTokenResponseDTO> createDisposableToken(List<String[]> cardInfo, int userId) throws Exception {
 
         // 일회용 토큰 : 복호화 가능한 key, 영구토큰, 만료시간, 서명(HMAC)
@@ -179,6 +173,14 @@ public class PaymentService {
 */
     public String recommendPaymentCard(Integer userId, int amount, String merchantName){
         String permanentToken = "";
+        // 1. 가맹점 이름으로 가맹점 id, 카테고리 대분류, 소분류 id 가져오기
+        MerchantJoinDto merchantJoinData = merchantJoinRepository.findMerchantJoinDataByMerchantName(merchantName);
+
+        // 2. userId를 기반으로 갖고 있는 카드 목록과 카드별 카드 템플릿 ID, 실적 구간, 영구토큰 가져오기
+        List<MyCardDto> myCardDtos = cardJoinRepository.findMyCardIdAndTemplateIdByUserId(userId);
+
+        // 3. 카드 템플릿 ID 기반으로 혜택 템플릿 조회해서 특정 가맹점, 특정 카테고리가 일치하거나 전체 가맹점인 혜택 전부 가져오기
+
 
         return permanentToken;
     }
