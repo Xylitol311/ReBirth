@@ -46,13 +46,16 @@ import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.delay
 import android.util.Log
 import com.example.fe.ui.screens.payment.components.PaymentAutoSection
+import androidx.compose.material3.IconButton
+import com.example.fe.ui.screens.payment.components.PaymentAddCardSection
 
 // 카드 정보 데이터 클래스
 data class PaymentCardInfo(
     val cardName: String,
     val cardImageUrl: String = "",
     val constellationInfo: String = "{}",
-    val cardImage: Int = R.drawable.card // 기본 이미지 (URL 로딩 실패 시 사용)
+    val cardImage: Int = R.drawable.card, // 기본 이미지 (URL 로딩 실패 시 사용)
+    val token: String = "" // 토큰 정보 추가
 )
 
 @Composable
@@ -60,7 +63,8 @@ fun PaymentScreen(
     modifier: Modifier = Modifier,
     onScrollOffsetChange: (Float) -> Unit = {},
     viewModel: PaymentViewModel = viewModel(),
-    onNavigateToHome: () -> Unit = {}
+    onNavigateToHome: () -> Unit = {},
+    onShowQRScanner: () -> Unit = {}
 ) {
 
     // 스크롤 오프셋 추적 (우주 배경 효과용)
@@ -84,8 +88,11 @@ fun PaymentScreen(
     var selectedCardIndex by remember { mutableStateOf(-1) } // 초기값은 자동 카드(-1)
     var selectedCard by remember { mutableStateOf<PaymentCardInfo?>(null) }
     
-    // 카드 추가 모드인지 여부 (인덱스 -1이 선택되었을 때)
-    var isAddCardMode = selectedCardIndex == -1
+    // 자동 카드 추천 모드인지 여부
+    var showAutoCardMode by remember { mutableStateOf(true) } // 초기값은 true
+    
+    // 카드 추가 모드인지 여부
+    var showAddCardMode by remember { mutableStateOf(false) }
     
     // 바코드/QR 코드 갱신 트리거
     var refreshTrigger by remember { mutableStateOf(0) }
@@ -95,26 +102,30 @@ fun PaymentScreen(
     var isTimerActive by remember { mutableStateOf(false) }
     var timerResetTrigger by remember { mutableStateOf(0) }
     
-    // 화면 진입 시 카드 추가 화면으로 스크롤
+    // 이전 상태 저장 변수 추가
+    var previousCardIndex by remember { mutableStateOf(-1) }
+    var previousAutoCardMode by remember { mutableStateOf(true) }
+    
+    // 화면 진입 시 초기화
     LaunchedEffect(Unit) {
         Log.d("PaymentScreen", "화면 초기화 시작")
         viewModel.initializePaymentProcess()
         
         // 카드 추가 화면으로 스크롤 (첫 번째 항목)
         lazyListState.scrollToItem(0)
-        Log.d("PaymentScreen", "첫 번째 항목으로 스크롤")
         
-        // 카드 추가 모드로 설정
-        selectedCardIndex = -1 // 카드 추가 화면은 -1 인덱스로 표현
-        isAddCardMode = true
-        selectedCard = null
-        Log.d("PaymentScreen", "초기 상태 설정: selectedCardIndex=$selectedCardIndex, isAddCardMode=$isAddCardMode")
+        // 상태 일관성 유지
+        selectedCardIndex = -1
+        showAutoCardMode = true
+        showAddCardMode = false
+        selectedCard = null  // 명시적으로 null 설정
+        
     }
     
     // 타이머 활성화 여부
-    LaunchedEffect(selectedCard, isAddCardMode, isTimerActive, timerResetTrigger) {
+    LaunchedEffect(selectedCard, showAutoCardMode, isTimerActive, timerResetTrigger) {
         // 카드가 선택되었거나 자동 카드 모드이고 타이머가 활성화된 경우에 타이머 작동
-        if ((selectedCard != null || isAddCardMode) && isTimerActive) {
+        if ((selectedCard != null || showAutoCardMode) && isTimerActive) {
             remainingTime = 60 // 타이머 초기화
             while (remainingTime > 0) {
                 delay(1000) // 1초 대기
@@ -133,8 +144,8 @@ fun PaymentScreen(
     }
     
     // 카드 선택 시 타이머 활성화
-    LaunchedEffect(selectedCard, isAddCardMode) {
-        if (selectedCard != null || isAddCardMode) {
+    LaunchedEffect(selectedCard, showAutoCardMode) {
+        if (selectedCard != null || showAutoCardMode) {
             isTimerActive = true
         } else {
             isTimerActive = false
@@ -171,7 +182,7 @@ fun PaymentScreen(
                     .fillMaxWidth()
                     .height(screenHeight * 0.25f)
             ) {
-                if (!isAddCardMode) {
+                if (!showAutoCardMode && selectedCard != null) {
                     // 일반 카드 모드 - 카드별 별자리 표시
                     DynamicZodiacView(
                         cardId = selectedCard!!.cardName,
@@ -190,8 +201,14 @@ fun PaymentScreen(
                             .align(Alignment.BottomCenter)
                             .padding(bottom = 8.dp)
                     )
+                } else if (selectedCardIndex == -2) { // 카드 추가 모드
+                    // 카드 추가 안내 별자리 표시
+                    ConstellationCarousel(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    
                 } else {
-                    // 카드 추가 모드 - 랜덤 별자리 캐러셀
+                    // 자동 카드 추천 모드 - 랜덤 별자리 캐러셀
                     ConstellationCarousel(
                         modifier = Modifier.fillMaxSize()
                     )
@@ -199,103 +216,181 @@ fun PaymentScreen(
             }
             
             // 2. 중간 영역 (바코드/QR 또는 안내 메시지)
-            if (!isAddCardMode) {
-                // 일반 카드 모드 - 바코드 및 QR 코드
-                if (selectedCard != null) {
-                    // 선택된 카드의 토큰 가져오기
-                    val cardToken = viewModel.getTokenForCard(selectedCard!!.cardName)
-                    Log.d("PaymentScreen", "Card: ${selectedCard!!.cardName}, Token: $cardToken")
+            if (selectedCardIndex == -2 || (selectedCardIndex >= apiCards.size && selectedCardIndex <= apiCards.size + 1)) {
+                // 카드 추가 안내 문구
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "당신만의 별자리를 추가해보세요",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        Text(
+                            text = "혜택을 챙겨드릴 카드를 등록해주세요",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+            } else {
+                // 일반 모드 - 바코드/QR 표시
+                // 자동 카드 추천 모드
+                if (showAutoCardMode) {
+                    val autoToken = viewModel.getAutoCardToken()
                     
+                    // autoToken이 null이 아닐 때만 PaymentAutoSection 표시
+                    if (autoToken != null) {
+                        PaymentAutoSection(
+                            remainingTime = remainingTime,
+                            refreshTrigger = refreshTrigger,
+                            onRefresh = { 
+                                refreshTrigger++
+                                viewModel.refreshTokens()
+                                remainingTime = 60
+                                isTimerActive = true
+                                Log.d("PaymentScreen", "자동 결제 토큰 새로고침: refreshTrigger=$refreshTrigger")
+                            },
+                            paymentToken = autoToken,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                    } else {
+                        // 토큰이 없을 경우 대체 UI 표시
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "카드 정보를 불러오는 중...",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                } else if (selectedCard != null) {
+                    // 선택된 카드가 있는 경우
                     PaymentBarcodeQRSection(
                         remainingTime = remainingTime,
                         refreshTrigger = refreshTrigger,
                         onRefresh = {
                             refreshTrigger++
                             viewModel.refreshTokens()
-                            remainingTime = 60 // 타이머 리셋
-                            isTimerActive = true // 타이머 활성화
-                            Log.d("PaymentScreen", "토큰 새로고침: refreshTrigger=$refreshTrigger, 타이머 리셋")
+                            remainingTime = 60
+                            isTimerActive = true
+                            Log.d("PaymentScreen", "결제 토큰 새로고침: refreshTrigger=$refreshTrigger")
                         },
-                        paymentToken = cardToken,
+                        paymentToken = viewModel.getTokenForCard(selectedCard!!.cardName),
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
-            } else {
-                // 자동 결제 모드
-                // 자동 결제용 토큰 가져오기 (추천카드 토큰)
-                val autoToken = viewModel.getAutoCardToken()
-                
-                PaymentAutoSection(
-                    refreshTrigger = refreshTrigger,
-                    onRefresh = {
-                        refreshTrigger++
-                        viewModel.refreshTokens()
-                        remainingTime = 60
-                        isTimerActive = true
-                        Log.d("PaymentScreen", "자동 결제 토큰 새로고침: refreshTrigger=$refreshTrigger")
-                    },
-                    paymentToken = autoToken,
-                    remainingTime = remainingTime,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                )
             }
             
-            // 3. 카드 슬라이더 영역
+            // 카드 선택 처리 함수
+            val onCardSelected = { index: Int ->
+                try {
+                    when (index) {
+                        -1 -> { // 자동 카드
+                            selectedCardIndex = -1
+                            showAutoCardMode = true
+                            showAddCardMode = false
+                            selectedCard = null
+                        }
+                        -2 -> { // 카드 추가 (스크롤만으로는 화면 전환 안함)
+                            selectedCardIndex = -2
+                            showAutoCardMode = false
+                            showAddCardMode = false
+                            selectedCard = null
+                        }
+                        else -> { // 실제 카드
+                            // 카드 추가 버튼의 인덱스가 cards.size와 같거나 1 크면 카드 추가로 처리
+                            if (index >= apiCards.size && index <= apiCards.size + 1) {
+                                // 카드 추가 버튼으로 처리
+                                selectedCardIndex = -2
+                                showAutoCardMode = false
+                                showAddCardMode = false
+                                selectedCard = null
+                                Log.d("PaymentScreen", "카드 추가 버튼 선택: index=$index")
+                            } else if (index >= 0 && index < apiCards.size) {
+                                // 실제 카드 선택
+                                selectedCardIndex = index
+                                showAutoCardMode = false
+                                showAddCardMode = false
+                                selectedCard = apiCards[index]
+                                
+                                // null 체크 추가
+                                if (selectedCard != null) {
+                                    viewModel.selectCard(selectedCard!!.cardName)
+                                    val cardToken = viewModel.getTokenForCard(selectedCard!!.cardName)
+                                    remainingTime = 60
+                                    isTimerActive = true
+                                    refreshTrigger++
+                                } else {
+                                    Log.e("PaymentScreen", "선택된 카드가 null입니다: index=$index")
+                                }
+                            } else {
+                                // 범위를 벗어난 인덱스는 로그만 남기고 상태 변경 안함
+                                Log.e("PaymentScreen", "인덱스 범위 오류: $index, 카드 수: ${apiCards.size}")
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("PaymentScreen", "카드 선택 중 오류 발생", e)
+                }
+            }
+
+            // 카드 추가 버튼 클릭 핸들러
+            val onAddCardButtonClick = {
+                // 현재 상태 저장
+                previousCardIndex = selectedCardIndex
+                previousAutoCardMode = showAutoCardMode
+                // 카드 추가 모드 활성화
+                showAddCardMode = true
+            }
+
+            // 카드 슬라이더 영역
             PaymentCardScroll(
                 cards = apiCards,
                 cardWidth = cardWidth,
                 horizontalPadding = horizontalPadding,
                 lazyListState = lazyListState,
-                onCardIndexSelected = { index ->
-                    try {
-                        if (index == -1) {
-                            // 자동 카드 선택 모드
-                            isAddCardMode = true
-                            selectedCard = null
-                            selectedCardIndex = -1
-                            
-                            // 자동 카드 토큰 가져오기
-                            val autoToken = viewModel.getAutoCardToken()
-                            
-                            Log.d("PaymentScreen", "자동 카드 선택: 토큰=$autoToken")
-                            
-                            // 타이머 리셋 및 코드 갱신
-                            remainingTime = 60
-                            isTimerActive = true
-                            refreshTrigger++
-                        } else if (index >= 0 && index < apiCards.size) {
-                            // 실제 카드 선택
-                            isAddCardMode = false
-                            selectedCardIndex = index
-                            selectedCard = apiCards[index]
-                            
-                            // 선택된 카드 정보 ViewModel에 전달
-                            viewModel.selectCard(selectedCard!!.cardName)
-                            
-                            // 선택된 카드의 토큰 가져오기
-                            val cardToken = viewModel.getTokenForCard(selectedCard!!.cardName)
-                            
-                            Log.d("PaymentScreen", "카드 선택: 인덱스=$index, 카드이름=${selectedCard!!.cardName}, 토큰=$cardToken")
-                            
-                            // 카드 변경 시 타이머 리셋 및 코드 갱신
-                            remainingTime = 60
-                            isTimerActive = true
-                            refreshTrigger++
-                        } else {
-                            // 범위를 벗어난 인덱스는 무시
-                            Log.w("PaymentScreen", "Invalid card index: $index")
-                        }
-                    } catch (e: Exception) {
-                        Log.e("PaymentScreen", "Error selecting card", e)
-                    }
-                },
+                onCardIndexSelected = { index -> onCardSelected(index) },
+                onAddCardButtonClick = onAddCardButtonClick, // 카드 추가 버튼 클릭 핸들러 전달
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // 카메라 아이콘 클릭 시 QR 스캐너 표시
+            IconButton(
+                onClick = onShowQRScanner,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_camera),
+                    contentDescription = "QR 스캔",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
         
         // 결제 상태에 따른 오버레이 UI
@@ -526,4 +621,36 @@ fun PaymentScreen(
             }
         }
     }
+
+    // 카드 추가 모드 오버레이
+    if (showAddCardMode) {
+        PaymentAddCardSection(
+            onClose = { 
+                // 카드 추가 모드 종료 시 이전 상태로 돌아감
+                showAddCardMode = false
+                
+                // 이전에 카드 추가 영역이었다면 그대로 유지
+                if (previousCardIndex == -2 || 
+                    (previousCardIndex >= apiCards.size && previousCardIndex <= apiCards.size + 1)) {
+                    selectedCardIndex = -2
+                    showAutoCardMode = false
+                    selectedCard = null
+                } else {
+                    // 그 외의 경우 이전 상태로 복원
+                    selectedCardIndex = previousCardIndex
+                    showAutoCardMode = previousAutoCardMode
+                }
+            },
+            onAddCardComplete = {
+                // 카드 추가 완료 후 자동 카드 모드로 돌아감
+                selectedCardIndex = -1
+                showAutoCardMode = true
+                showAddCardMode = false
+                // 카드 목록 새로고침
+                viewModel.refreshTokens()
+            },
+            viewModel = viewModel
+        )
+    }
+    
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -37,6 +38,10 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.padding
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -57,6 +62,9 @@ fun QRScannerScreen(
     // 권한 요청 다이얼로그 표시 여부
     var showPermissionDialog by remember { mutableStateOf(!cameraPermissionState.status.isGranted) }
     
+    // 상태 바 높이 가져오기
+    val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
+    
     // 권한 요청 효과
     LaunchedEffect(Unit) {
         if (!cameraPermissionState.status.isGranted) {
@@ -74,7 +82,7 @@ fun QRScannerScreen(
     // 권한 요청 다이얼로그
     if (showPermissionDialog) {
         Dialog(
-            onDismissRequest = { 
+            onDismissRequest = {
                 // 권한이 없으면 화면 닫기
                 if (!cameraPermissionState.status.isGranted) {
                     onClose()
@@ -152,56 +160,15 @@ fun QRScannerScreen(
         }
     }
     
-    // 전체 화면 컨테이너
+    // 전체 화면 모드로 설정
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // 상단 바 - 항상 표시되도록 수정
+        // 카메라 미리보기 - 전체 화면으로 표시
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .background(Color(0xFF2D2A57))
-                .align(Alignment.TopCenter)
-        ) {
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "뒤로 가기",
-                    tint = Color.White
-                )
-            }
-            
-            Text(
-                text = "QR 결제",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Center)
-            )
-            
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier.align(Alignment.CenterEnd)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "닫기",
-                    tint = Color.White
-                )
-            }
-        }
-        
-        // 카메라 미리보기 - 상단 바 아래에 표시되도록 수정
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 56.dp) // 상단 바 높이만큼 패딩 추가
+            modifier = Modifier.fillMaxSize()
         ) {
             if (cameraPermissionState.status.isGranted) {
                 AndroidView(
@@ -266,7 +233,7 @@ fun QRScannerScreen(
                         .align(Alignment.Center)
                 )
                 
-                // 안내 텍스트
+                // 안내 텍스트 - 하단에 위치
                 Text(
                     text = "QR 코드를 스캔해주세요",
                     color = Color.White,
@@ -304,6 +271,35 @@ fun QRScannerScreen(
                     }
                 }
             }
+        }
+        
+        // 상단 바 - 상태 바 높이만큼 패딩 추가
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = statusBarPadding.calculateTopPadding())
+                .height(56.dp)
+                .background(Color.Transparent)
+                .align(Alignment.TopCenter)
+        ) {
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로 가기",
+                    tint = Color.White
+                )
+            }
+            
+            Text(
+                text = "QR 결제",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
     }
 }

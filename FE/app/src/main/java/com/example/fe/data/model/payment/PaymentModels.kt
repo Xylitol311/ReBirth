@@ -1,6 +1,6 @@
 package com.example.fe.data.model.payment
 
-// SSE 상태 열거형
+import java.util.Date
 
 // SSE 이벤트 데이터 클래스
 data class PaymentEvent(
@@ -14,17 +14,21 @@ data class PaymentEvent(
     }
 }
 
-
-// 얼마결제됐는지
-// 가맹점
-// 결제 번호
-// 결제 승인 내역 : status
-// 결제 시간
-// 한번 결제 했을 때 혜택 얼마나 봤는지?
-
 // API 응답 래퍼 클래스
 data class ApiResponse<T>(
     val success: Boolean,
     val message: String,
     val data: T
 )
+
+data class QRPaymentResponse(
+    val merchantName: String,
+    val amount: Int,
+    val paymentTokenResponseDTO: List<TokenInfo>
+)
+
+data class PaymentResult(
+    val amount: Int,
+    val createdAt: String,
+    val approvalCode: String
+) 

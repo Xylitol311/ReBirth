@@ -54,6 +54,7 @@ import androidx.compose.runtime.collectAsState
 import com.example.fe.ui.screens.payment.components.QRScannerScreen
 import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
 import com.example.fe.ui.screens.payment.PaymentViewModel
+import com.example.fe.ui.screens.payment.components.PaymentResultPopup
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
@@ -140,9 +141,12 @@ fun AppNavigation() {
         }
     )
 
+    // ViewModel을 상위 Composable 함수에서 가져오기
+    val paymentViewModel: PaymentViewModel = viewModel()
+    
     // QR 스캐너 표시 여부
     var showQRScanner by remember { mutableStateOf(false) }
-
+    
     // 결제 정보 화면 표시 여부
     var showPaymentInfo by remember { mutableStateOf(false) }
 
@@ -182,15 +186,21 @@ fun AppNavigation() {
         label = "bottomPadding"
     )
 
+    // 결제 결과 팝업 표시
+    var showPaymentResultPopup by remember { mutableStateOf(false) }
+    val paymentResult by paymentViewModel.paymentResult.collectAsState()
+
     Scaffold(
         topBar = {
-            TopBar(
-                title = title,
-                showBackButton = showBackButton,
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
+            if (topBarVisible) {  // QR 스캐너 화면에서는 TopBar 숨김
+                TopBar(
+                    title = title,
+                    showBackButton = showBackButton,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         },
         bottomBar = {
             // QR 스캐너가 표시될 때는 네비게이션 바 숨김
@@ -357,31 +367,23 @@ fun AppNavigation() {
                     }
 
                     composable(
-                        route = "payment",
+                        route = BottomNavItem.Payment.route,
                         enterTransition = { fadeIn() },
                         exitTransition = { fadeOut() }
                     ) {
-                        // showQRScanner 상태를 AppNavigation에서 관리하는 방법
-                        var showQRScanner by remember { mutableStateOf(false) }
-                        
                         PaymentScreen(
-                            onScrollOffsetChange = { scrollOffset = it },
-                            onNavigateToHome = { navController.navigate("home") }
-                        )
-                        
-                        // QR 스캐너 화면 (오버레이로 표시)
-                        if (showQRScanner) {
-                            QRScannerScreen(
-                                onClose = { showQRScanner = false },
-                                onQRCodeScanned = { qrCode ->
-                                    // QR 코드 스캔 결과 처리
-                                    Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
-                                    scannedQRCode = qrCode
-                                    showQRScanner = false
-                                    showPaymentInfo = true  // 결제 정보 화면 표시
+                            onScrollOffsetChange = { offset ->
+                                scrollOffset = offset
+                            },
+                            onNavigateToHome = {
+                                navController.navigate(BottomNavItem.Home.route) {
+                                    popUpTo(BottomNavItem.Home.route) { inclusive = true }
                                 }
-                            )
-                        }
+                            },
+                            onShowQRScanner = {
+                                showQRScanner = true  // QR 스캐너 표시
+                            }
+                        )
                     }
 
                     composable(
@@ -530,21 +532,21 @@ fun AppNavigation() {
                 onQRCodeScanned = { qrCode ->
                     // QR 코드 스캔 결과 처리
                     Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
-                    scannedQRCode = qrCode
+                    // 이미 가져온 ViewModel 사용
+                    paymentViewModel.sendQRToken(qrCode)
                     showQRScanner = false
                     showPaymentInfo = true  // 결제 정보 화면 표시
                 }
             )
         }
-
+        
         // 결제 정보 화면 (오버레이로 표시)
         if (showPaymentInfo) {
-            // 더미 데이터 제거하고 ViewModel에서 카드 정보 가져오기
-            val paymentViewModel: PaymentViewModel = viewModel()
             val cards by paymentViewModel.cards.collectAsState()
+            val paymentState by paymentViewModel.paymentState.collectAsState()
             
             PaymentInfoScreen(
-                cards = cards,  // API에서 가져온 카드 목록 사용
+                cards = cards,
                 onClose = { showPaymentInfo = false },
                 onPaymentComplete = {
                     // 결제 완료 후 홈 화면으로 이동
@@ -552,10 +554,22 @@ fun AppNavigation() {
                     navController.navigate("home") {
                         popUpTo("home") { inclusive = true }
                     }
+                    
+                    // 결제 결과 팝업 표시
+                    showPaymentResultPopup = true
                 },
                 onScrollOffsetChange = { offset ->
                     scrollOffset = offset
-                }
+                },
+                viewModel = paymentViewModel
+            )
+        }
+
+        // 결제 결과 팝업 표시
+        if (showPaymentResultPopup && paymentResult != null) {
+            PaymentResultPopup(
+                paymentResult = paymentResult!!,
+                onDismiss = { showPaymentResultPopup = false }
             )
         }
     }

@@ -1,6 +1,7 @@
 package com.example.fe.ui.screens.payment.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
 import com.example.fe.ui.components.cards.HorizontalCardLayout
 import com.example.fe.ui.screens.payment.PaymentCardInfo
@@ -49,6 +53,7 @@ fun PaymentCardScroll(
     horizontalPadding: Dp,
     lazyListState: LazyListState,
     onCardIndexSelected: (Int) -> Unit,
+    onAddCardButtonClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val snapBehavior = rememberSnapFlingBehavior(lazyListState = lazyListState)
@@ -69,7 +74,7 @@ fun PaymentCardScroll(
                 
                 // 인덱스가 범위를 벗어나지 않도록 확인
                 val index = closestItem?.index ?: 0
-                index // 인덱스 그대로 사용 (0: 카드 추가, 1~N: 실제 카드)
+                index // 인덱스 그대로 사용 (0: 자동 카드, 1~N: 실제 카드, N+1: 카드 추가)
             } catch (e: Exception) {
                 // 예외 발생 시 기본값 반환
                 0
@@ -79,8 +84,15 @@ fun PaymentCardScroll(
     
     // 선택된 카드 인덱스가 변경되면 콜백 호출
     LaunchedEffect(selectedCardIndex) {
-        // 카드 추가 화면은 -1로 표현, 실제 카드는 0부터 시작하도록 변환
-        val adjustedIndex = if (selectedCardIndex == 0) -1 else selectedCardIndex - 1
+        // 인덱스 변환: 
+        // 0 -> -1 (자동 카드)
+        // 1~N -> 0~(N-1) (실제 카드)
+        // N+1 이상 -> -2 (카드 추가)
+        val adjustedIndex = when {
+            selectedCardIndex == 0 -> -1 // 자동 카드
+            selectedCardIndex >= cards.size + 1 -> -2 // 카드 추가 (N+1 이상)
+            else -> selectedCardIndex - 1 // 실제 카드
+        }
         onCardIndexSelected(adjustedIndex)
     }
     
@@ -99,12 +111,12 @@ fun PaymentCardScroll(
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
         ) {
-            // 카드 추가 버튼을 첫 번째 항목으로 배치
+            // 자동 카드 추천 항목 (첫 번째 항목)
             item {
                 PaymentAddCardItem(
                     cardWidth = cardWidth,
                     centeredness = calculateCenteredness(0, lazyListState, selectedCardIndex),
-                    onClick = { onCardIndexSelected(-1) } // 카드 추가는 -1 인덱스로 표현
+                    onClick = { onCardIndexSelected(-1) } // 자동 카드는 -1 인덱스로 표현
                 )
             }
             
@@ -119,6 +131,22 @@ fun PaymentCardScroll(
                     onClick = { onCardIndexSelected(index) } // 실제 카드는 0부터 시작
                 )
             }
+            
+            // 카드 추가 버튼 (마지막 항목)
+            item {
+                AddCardButton(
+                    cardWidth = cardWidth,
+                    centeredness = calculateCenteredness(cards.size + 1, lazyListState, selectedCardIndex),
+                    onClick = { 
+                        // 인덱스 선택 (스크롤 이동용)
+                        onCardIndexSelected(cards.size + 1)
+                    },
+                    onAddCardClick = {
+                        // 카드 추가 버튼 클릭 시 카드 추가 화면 열기
+                        onAddCardButtonClick()
+                    }
+                )
+            }
         }
         
         // 카드 인디케이터
@@ -128,7 +156,7 @@ fun PaymentCardScroll(
                 .padding(top = 16.dp)
                 .fillMaxWidth()
         ) {
-            // 카드 추가 인디케이터
+            // 자동 카드 인디케이터
             Box(
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
@@ -152,6 +180,17 @@ fun PaymentCardScroll(
                         )
                 )
             }
+            
+            // 카드 추가 인디케이터
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .size(if (selectedCardIndex == cards.size + 1) 10.dp else 8.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (selectedCardIndex == cards.size + 1) Color.White else Color.White.copy(alpha = 0.5f)
+                    )
+            )
         }
     }
 }
@@ -239,6 +278,79 @@ fun PaymentAddCardItem(
             color = Color.White.copy(alpha = lerp(0.8f, 1f, centeredness)),
             textAlign = TextAlign.Center
         )
+    }
+}
+
+// 카드 추가 버튼 컴포넌트 수정
+@Composable
+fun AddCardButton(
+    cardWidth: Dp,
+    centeredness: Float,
+    onClick: () -> Unit, // 스크롤 이동용
+    onAddCardClick: () -> Unit // 카드 추가 화면 열기용
+) {
+    // 전체 영역을 감싸는 Box 추가
+    Box(
+        modifier = Modifier
+            .width(cardWidth)
+            .padding(horizontal = 12.dp)
+            .height(200.dp)
+            // 테두리 추가
+            .border(
+                width = 2.dp,
+                color = Color(0xFF4CAF50).copy(alpha = lerp(0.5f, 0.8f, centeredness)),
+                shape = RoundedCornerShape(16.dp)
+            )
+            // 배경색 추가 (약간 투명하게)
+            .background(
+                color = Color(0xFF1A1A2E).copy(alpha = lerp(0.3f, 0.5f, centeredness)),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .graphicsLayer {
+                val scale = lerp(0.85f, 1f, centeredness)
+                scaleX = scale
+                scaleY = scale
+                alpha = lerp(0.7f, 1f, centeredness)
+            }
+            // 전체 영역 클릭 시 두 가지 동작 수행
+            .clickable { 
+                onClick() // 스크롤 이동
+                onAddCardClick() // 카드 추가 화면 열기
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // 카드 추가 UI - 이 부분을 클릭하면 카드 추가 화면이 열림
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF4CAF50).copy(alpha = lerp(0.5f, 0.7f, centeredness))),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "카드 추가",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // 텍스트
+            Text(
+                text = "새 카드 추가",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = lerp(0.8f, 1f, centeredness)),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 

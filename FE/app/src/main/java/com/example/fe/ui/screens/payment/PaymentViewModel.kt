@@ -3,7 +3,9 @@ package com.example.fe.ui.screens.payment
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.fe.data.model.payment.PaymentResult
 import com.example.fe.data.model.payment.TokenInfo
+import com.example.fe.data.network.api.QRTokenRequest
 import com.example.fe.data.repository.PaymentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +37,21 @@ class PaymentViewModel : ViewModel() {
     
     // 사용자 ID (실제 앱에서는 로그인 정보에서 가져와야 함)
     private val userId = "2" // 임시 사용자 ID
+    
+    // QR 토큰 전송 및 결제 정보 가져오기
+    private val _paymentInfo = MutableStateFlow<PaymentInfo?>(null)
+    val paymentInfo: StateFlow<PaymentInfo?> = _paymentInfo
+
+    // 결제 결과 저장
+    private val _paymentResult = MutableStateFlow<PaymentResult?>(null)
+    val paymentResult: StateFlow<PaymentResult?> = _paymentResult
+
+    // 결제 정보 데이터 클래스
+    data class PaymentInfo(
+        val merchantName: String = "가맹점",
+        val amount: Int = 0,
+        val cards: List<PaymentCardInfo> = emptyList()
+    )
     
     // 결제 화면 진입 시 호출 - 모든 카드의 토큰 요청 및 SSE 연결 시작
     fun initializePaymentProcess() {
@@ -200,5 +217,124 @@ class PaymentViewModel : ViewModel() {
     // 추천 카드 토큰 가져오기
     fun getAutoCardToken(): String? {
         return _cardTokens.value.find { it.cardName == "추천카드" }?.token
+    }
+
+    // 사용자 ID 가져오기 (현재는 하드코딩된 값 반환)
+    private fun getUserId(): Int {
+        return 2  // 임시로 고정된 사용자 ID 반환
+    }
+
+    // QR 토큰 전송
+    fun sendQRToken(qrToken: String) {
+        viewModelScope.launch {
+            try {
+                val userId = getUserId() // 사용자 ID 가져오기
+                val response = paymentRepository.sendQRToken(QRTokenRequest(qrToken, userId))
+                
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val paymentResponse = response.body()?.data
+                    
+                    if (paymentResponse != null) {
+                        // 카드 정보 변환
+                        val cardInfoList = paymentResponse.paymentTokenResponseDTO.map { tokenInfo ->
+                            PaymentCardInfo(
+                                cardName = tokenInfo.cardName ?: "",
+                                cardImageUrl = tokenInfo.cardImgUrl ?: "",
+                                constellationInfo = tokenInfo.cardConstellationInfo ?: "{}",
+                                token = tokenInfo.token ?: ""
+                            )
+                        }
+                        
+                        // 결제 정보 업데이트
+                        _paymentInfo.value = PaymentInfo(
+                            merchantName = paymentResponse.merchantName,
+                            amount = paymentResponse.amount,
+                            cards = cardInfoList
+                        )
+                        
+                        // 카드 목록 업데이트
+                        _cards.value = cardInfoList
+                        
+                        // 결제 상태 업데이트
+                        _paymentState.value = PaymentState.Ready
+                    } else {
+                        _paymentState.value = PaymentState.Error("결제 정보가 없습니다")
+                    }
+                } else {
+                    // 오류 처리
+                    _paymentState.value = PaymentState.Error("QR 토큰 처리 실패: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                // 예외 처리
+                _paymentState.value = PaymentState.Error("QR 토큰 처리 중 오류 발생: ${e.message}")
+            }
+        }
+    }
+
+    // 결제 완료 요청
+    fun completePayment(token: String) {
+        viewModelScope.launch {
+            try {
+                _paymentState.value = PaymentState.Processing
+                
+                val response = paymentRepository.completePayment(token)
+                
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val result = response.body()?.data
+                    
+                    if (result != null) {
+                        // 결제 결과 저장
+                        _paymentResult.value = result
+                        
+                        // 결제 상태 업데이트
+                        _paymentState.value = PaymentState.Completed
+                        
+                        // 로그 출력
+                        Log.d("PaymentViewModel", "결제 완료: ${result.approvalCode}, 금액: ${result.amount}, 시간: ${result.createdAt}")
+                    } else {
+                        _paymentState.value = PaymentState.Error("결제 결과가 없습니다")
+                    }
+                } else {
+                    // 오류 처리
+                    _paymentState.value = PaymentState.Error("결제 처리 실패: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                // 예외 처리
+                _paymentState.value = PaymentState.Error("결제 처리 중 오류 발생: ${e.message}")
+            }
+        }
+    }
+
+    // 카드 추가 함수
+    fun addCard(cardName: String, cardNumber: String, expiryDate: String, cvv: String) {
+        viewModelScope.launch {
+            try {
+                _paymentState.value = PaymentState.Loading
+                
+                // 카드 추가 API 호출 (실제 구현 필요)
+                // 예시: paymentRepository.addCard(userId, cardName, cardNumber, expiryDate, cvv)
+                
+                // 임시 구현: 로컬에서만 카드 추가 (실제로는 API 호출 후 응답 처리 필요)
+                val newCard = PaymentCardInfo(
+                    cardName = cardName,
+                    cardImageUrl = "", // 기본 이미지 사용
+                    constellationInfo = "{}" // 기본 별자리 정보
+                )
+                
+                // 카드 목록에 추가 (임시 구현)
+                val currentCards = _cards.value.toMutableList()
+                currentCards.add(newCard)
+                _cards.value = currentCards
+                
+                // 상태 업데이트
+                _paymentState.value = PaymentState.Ready
+                
+                // 토스트 메시지 표시 (실제 앱에서는 Context 필요)
+                // Toast.makeText(context, "카드가 추가되었습니다", Toast.LENGTH_SHORT).show()
+                
+            } catch (e: Exception) {
+                _paymentState.value = PaymentState.Error("카드 추가 실패: ${e.message}")
+            }
+        }
     }
 } 
