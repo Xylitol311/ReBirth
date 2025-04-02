@@ -10,6 +10,7 @@ import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.CategoryEntity;
 import com.kkulmoo.rebirth.transactions.infrastructure.repository.TransactionsJpaRepository;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
+import com.kkulmoo.rebirth.user.infrastrucutre.repository.UserJpaRepository;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class ReportService {
     private final CategoryJpaRepository categoryJpaRepository;
     private final MonthlyConsumptionReportJpaRepository monthlyConsumptionReportJpaRepository;
     private final ConsumptionPatternJpaRepository consumptionPatternJpaRepository;
+    private final UserJpaRepository userJpaRepository;
 
     @Transactional
     public void updateMonthlyTransactionSummary(UserEntity user) {
@@ -312,13 +314,20 @@ public class ReportService {
                 mcr.setConsumptionPatternId(consumptionPatternId);
                 mcr.setOverConsumption(pattern[0]);
                 mcr.setVariation(pattern[1]);
-                mcr.setReportId(pattern[2]);
+                mcr.setExtrovert(pattern[2]);
                 mcr.setReportDescription(answer);
 
                 mcr = monthlyConsumptionReportJpaRepository.save(mcr);
             }
         }
-
+        LocalDateTime now = LocalDateTime.now().minusMonths(1);
+        int year = now.getYear();
+        int month = now.getMonthValue();
+        MonthlyTransactionSummaryEntity mts = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
+        MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(mts);
+        UserEntity nowUser = userJpaRepository.getReferenceById(user.getUserId());
+        nowUser.setConsumptionPatternId(mcr.getConsumptionPatternId());
+        nowUser = userJpaRepository.save(nowUser);
     }
 
     @Transactional
@@ -340,7 +349,7 @@ public class ReportService {
         // 변동성 계산
         int variation = 50;
         if(report.getTotalSpending() != 0) {
-        variation = Math.abs((preReport.getTotalSpending() - report.getTotalSpending()) / (report.getTotalSpending()));
+        variation = Math.abs(100*(preReport.getTotalSpending() - report.getTotalSpending()) / (report.getTotalSpending()));
         }
         variation = Math.min(100, variation);
 
@@ -366,9 +375,9 @@ public class ReportService {
             if (extrovertCategories.containsKey(spending.getCategory())) extrovertSpendAmount += spending.getAmount();
         }
 
-        int extrovert = 50;
+        int extrovert = 0;
         if(report.getTotalSpending() != 0) {
-            extrovert = extrovertSpendAmount / report.getTotalSpending();
+            extrovert = 100*extrovertSpendAmount / report.getTotalSpending();
         }
 
         int[] result = new int[3];
