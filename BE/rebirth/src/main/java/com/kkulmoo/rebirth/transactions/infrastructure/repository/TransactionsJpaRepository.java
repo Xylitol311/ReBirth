@@ -68,11 +68,10 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
                 WHERE t.userId = :userId
                 AND YEAR(t.createdAt) = :year
                 AND MONTH(t.createdAt) = :month
-                AND DAY(t.createdAt) = :day
                 AND ct.status = '승인'
                 ORDER BY t.createdAt DESC
             """)
-    List<DailyTransactionsDTO> getDailyTransactions(int userId, int year, int month, int day);
+    List<DailyTransactionsDTO> getMonthlyTransactions(int userId, int year, int month);
 
 
     @Query("SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogInfoDTO(" +

@@ -61,12 +61,6 @@ public class ReportService {
                 reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
 
 
-//                // 보유카드의 카드 템플릿을 확인하여, 실적구간을 고려한 혜택 템플릿을 모두 가져옴
-//                CardEntity card = cardsJpaRepository.findById(monthlyTransaction[1]);
-//                List<BenefitTemplateEntity> benefitTemplates = benefitTemplateJpaRepository.getByCardTemplateIdAndSpendingTier(card.getCardTemplateId, card.getSpendingTier);
-//                for(BenefitTemplateEntity benefit : benefitTemplates) {
-//                    ReportCardCategoriesEntity reportCardCategories = monthlyTransactionScheduler.createReportCardCategories(reportCard,benefit);
-//                }
             }
 
             // 그냥 결제 단건 혜택만 고려
@@ -83,8 +77,11 @@ public class ReportService {
                         .createdAt(now)
                         .build();
 
-                int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCard().getReportCardId();
-                reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
+                int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCategoryId();
+//                reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
+
+                reportCardCategory = reportCardCategoriesJpaRepository.findById(reportCardCategoryId)
+                        .orElseThrow(() -> new EntityNotFoundException("Entity not found after saving: " + newReportCardCategory.getReportCard().getReportCardId()));
             }
 
             reportCardCategory.setAmount(monthlyTransaction.getTotalSpending()); // 결제 금액
@@ -99,7 +96,7 @@ public class ReportService {
                 chk[1] += monthlyTransaction.getTotalBenefit();
                 chk[2] += monthlyTransaction.getTransactionCount();
 
-                countByCard.put((Integer) monthlyTransaction.getCardId(), chk);
+                countByCard.put(monthlyTransaction.getCardId(), chk);
             }
         }
 
@@ -135,7 +132,6 @@ public class ReportService {
                     .receivedBenefitAmount(0)
                     .build();
 
-            System.out.println("여기 옴?");
             int reportId = monthlyTransactionSummaryJpaRepository.save(monthlyTransactionSummary).getReportId();
             MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getReferenceById(reportId);
             List<CardEntity> cards = cardsJpaRepository.findByUserId(user.getUserId());
@@ -173,7 +169,7 @@ public class ReportService {
                     reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
 
                 }
-                System.out.println("리포트카드 : "+reportCard );
+
                 // 그냥 결제 단건 혜택만 고려
                 ReportCardCategoriesEntity reportCardCategory = reportCardCategoriesJpaRepository.getByReportCardAndCategoryId(reportCard, monthlyTransaction.getCategoryId());
 
@@ -190,13 +186,10 @@ public class ReportService {
 
                     int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCategoryId();
 
-                    System.out.println("오잉?? : "+reportCardCategoryId);
 //                    reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
                     reportCardCategory = reportCardCategoriesJpaRepository.findById(reportCardCategoryId)
                             .orElseThrow(() -> new EntityNotFoundException("Entity not found after saving: " + newReportCardCategory.getReportCard().getReportCardId()));
                 }
-                System.out.println("엥?? : "+monthlyTransaction);
-                System.out.println("앙?? : "+reportCardCategory);
 
                 reportCardCategory.setAmount(monthlyTransaction.getTotalSpending()); // 결제 금액
                 reportCardCategory.setReceivedBenefitAmount(monthlyTransaction.getTotalBenefit()); // 혜택 금액

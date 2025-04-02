@@ -20,7 +20,7 @@ public interface MonthlyTransactionSummaryJpaRepository extends JpaRepository<Mo
 
     @Query("SELECT COALESCE(AVG(ms.receivedBenefitAmount), 0) " +
             "FROM MonthlyTransactionSummaryEntity ms " +
-            "WHERE ms.totalSpending BETWEEN :minSpending AND :maxSpending " +
+            "WHERE ABS(ms.totalSpending) BETWEEN :minSpending AND :maxSpending " +
             "AND ms.year = :year " +
             "AND ms.month = :month")
     Double getGroupBenefitAverage(@Param("year") int year,

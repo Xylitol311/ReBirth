@@ -23,8 +23,8 @@ public class BudgetLogService {
         return monthlyLogs;
     }
 
-    public List<DailyTransactionsDTO> getDailyTransactions(int userId, int year, int month, int day) {
-        List<DailyTransactionsDTO> monthlyTransactions = transactionsJpaRepository.getDailyTransactions(userId, year, month, day);
+    public List<DailyTransactionsDTO> getMonthlyTransactions(int userId, int year, int month) {
+        List<DailyTransactionsDTO> monthlyTransactions = transactionsJpaRepository.getMonthlyTransactions(userId, year, month);
         return monthlyTransactions;
     }
 

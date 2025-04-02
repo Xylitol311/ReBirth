@@ -35,15 +35,14 @@ public class BudgetLogController {
     }
 
     @GetMapping("/transaction")
-    public ResponseEntity<ResponseDTO> getDailyTransactions(@RequestParam("userId") int userId,
-                                                              @RequestParam("year") int year,
-                                                              @RequestParam("month") int month,
-                                                              @RequestParam("day") int day) {
+    public ResponseEntity<ResponseDTO> getMonthlyTransactions(@RequestParam("userId") int userId,
+                                                            @RequestParam("year") int year,
+                                                            @RequestParam("month") int month) {
 
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
-        result.setMessage("일일 거래 내역 조회 완료");
-        List<DailyTransactionsDTO> monthlyLogs = budgetLogService.getDailyTransactions(userId, year, month,day);
+        result.setMessage("월별 거래 내역 조회 완료");
+        List<DailyTransactionsDTO> monthlyLogs = budgetLogService.getMonthlyTransactions(userId, year, month);
         result.setData(monthlyLogs);
         return ResponseEntity.ok().body(result);
     }
