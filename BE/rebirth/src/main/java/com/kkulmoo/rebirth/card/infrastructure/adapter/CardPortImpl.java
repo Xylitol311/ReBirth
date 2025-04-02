@@ -38,7 +38,7 @@ public class CardPortImpl implements CardPort {
             List<CardApiResponse> cardList = cardIssuerAPIClient.post()
                     .uri("/cards")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(CardDataRequest.builder().userCI(user.getUserApiKey()))
+                    .bodyValue(CardDataRequest.builder().userCI(user.getUserCI()))
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<CardApiResponse>>() {
                     })
