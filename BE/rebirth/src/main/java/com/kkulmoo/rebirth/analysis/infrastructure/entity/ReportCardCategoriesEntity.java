@@ -19,7 +19,7 @@ public class ReportCardCategoriesEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "report_category_id")
-    private int reportCategoryId;
+    private Integer reportCategoryId;
 
 //    @Column(name = "report_card_id")
     @JoinColumn(name = "report_card_id")
@@ -27,16 +27,16 @@ public class ReportCardCategoriesEntity {
     private ReportCardsEntity reportCard;
 
     @Column(name = "category_id")
-    private int categoryId;
+    private Integer categoryId;
 
     @Column(name = "amount")
-    private int amount;
+    private Integer amount;
 
     @Column(name = "received_benefit_amount")
-    private int receivedBenefitAmount;
+    private Integer receivedBenefitAmount;
 
     @Column(name = "count")
-    private int count;
+    private Integer count;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

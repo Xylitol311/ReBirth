@@ -38,7 +38,6 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.createTransaction(transactionDTO));
     }
 
-
     /**
      * 계좌별 거래 내역 조회 API
      * 특정 시간 이후의 모든 거래 기록을 가져옴

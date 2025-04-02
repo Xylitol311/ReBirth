@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.transactions.domain;
 
+import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,7 +18,7 @@ public class CardTransactions {
     // 승인, 거절, 취소
     Status status;
     // 받은 혜택
-    CardBenefitType cardBenefitType;
+    BenefitType cardBenefitType;
     // 받은 혜택 금액
     Integer benefitAmount;
 }

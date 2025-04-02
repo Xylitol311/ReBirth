@@ -19,22 +19,22 @@ public class MonthlyTransactionSummaryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "report_id")
-    private int reportId;
+    private Integer reportId;
 
     @Column(name = "user_id")
-    private int userId;
+    private Integer userId;
 
     @Column(name = "year")
-    private int year;
+    private Integer year;
 
     @Column(name = "month")
-    private int month;
+    private Integer month;
 
     @Column(name = "total_spending")
-    private int totalSpending;
+    private Integer totalSpending;
 
     @Column(name = "received_benefit_amount")
-    private int receivedBenefitAmount;
+    private Integer receivedBenefitAmount;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

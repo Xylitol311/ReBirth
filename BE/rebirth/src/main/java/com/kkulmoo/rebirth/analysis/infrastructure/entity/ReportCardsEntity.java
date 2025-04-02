@@ -19,22 +19,22 @@ public class ReportCardsEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "report_card_id")
-    private int reportCardId;
+    private Integer reportCardId;
 
     @Column(name = "card_id")
-    private int cardId;
+    private Integer cardId;
 
     @Column(name = "report_id")
-    private int reportId;
+    private Integer reportId;
 
     @Column(name = "month_spending_amount")
-    private int monthSpendingAmount;
+    private Integer monthSpendingAmount;
 
     @Column(name = "month_benefit_amount")
-    private int monthBenefitAmount;
+    private Integer monthBenefitAmount;
 
     @Column(name = "spending_tier")
-    private int spendingTier;
+    private Short spendingTier;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

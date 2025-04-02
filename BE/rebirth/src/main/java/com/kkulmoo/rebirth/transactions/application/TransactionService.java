@@ -49,7 +49,7 @@ public class TransactionService {
     public void getBankTransactionByMyData(User user, LocalDateTime timestamp) {
         Mono<List<BankTransactionResponse>> bankTransaction = bankPort.getBankTransaction(
                 BankTransactionRequest.builder()
-                        .userCI(user.getUserApiKey())
+                        .userCI(user.getUserCI())
                         .bankAccounts(user.getBankAccounts())
                         .timestamp(timestamp)
                         .build()
@@ -68,7 +68,7 @@ public class TransactionService {
 
         Mono<List<CardTransactionResponse>> cardTransaction = cardPort.getCardTransaction(CardTransactionRequest.builder()
                 .cards(myCardList)
-                .userCI(user.getUserApiKey())
+                .userCI(user.getUserCI())
                 .build());
 
         cardTransaction.subscribe(transactions -> {
