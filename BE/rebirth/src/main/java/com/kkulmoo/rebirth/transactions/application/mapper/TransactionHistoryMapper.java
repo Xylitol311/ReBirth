@@ -25,7 +25,7 @@ public class TransactionHistoryMapper {
                 .currentPage(transactionsSlice.getNumber())
                 .pageSize(transactionsSlice.getSize())
                 .hasMore(transactionsSlice.hasNext())
-                .build();;
+                .build();
 
         // 응답 데이터 생성 및 반환
         return TransactionHistoryResponseData.builder()
