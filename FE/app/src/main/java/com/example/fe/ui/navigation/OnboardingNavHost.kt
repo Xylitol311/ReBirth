@@ -4,11 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.app.ui.security.SecuritySetupScreen
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.OnboardingScreen
 import com.example.fe.ui.screens.onboard.AuthScreen
 import com.example.fe.ui.screens.onboard.CardSelectScreen
-import com.example.fe.ui.screens.onboard.SecuritySetupScreen
+
 import com.example.fe.ui.screens.onboard.RegistrationCompleteScreen
 
 @Composable
