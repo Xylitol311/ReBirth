@@ -123,20 +123,30 @@ public class ReportService {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
             int year = now.getYear();
             int month = now.getMonthValue();
-            MonthlyTransactionSummaryEntity monthlyTransactionSummary = MonthlyTransactionSummaryEntity
-                    .builder()
-                    .userId(user.getUserId())
-                    .year(year)
-                    .month(month)
-                    .totalSpending(0)
-                    .receivedBenefitAmount(0)
-                    .build();
+            MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);;
+//            MonthlyTransactionSummaryEntity monthlyTransactionSummary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
+            if (report == null) {
+                MonthlyTransactionSummaryEntity monthlyTransactionSummary = MonthlyTransactionSummaryEntity
+                        .builder()
+                        .userId(user.getUserId())
+                        .year(year)
+                        .month(month)
+                        .totalSpending(0)
+                        .receivedBenefitAmount(0)
+                        .build();
 
-            int reportId = monthlyTransactionSummaryJpaRepository.save(monthlyTransactionSummary).getReportId();
-            MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getReferenceById(reportId);
+                int reportId = monthlyTransactionSummaryJpaRepository.save(monthlyTransactionSummary).getReportId();
+                report = monthlyTransactionSummaryJpaRepository.getReferenceById(reportId);
+
+            } else {
+                report.setTotalSpending(0);
+                report.setReceivedBenefitAmount(0);
+
+                report = monthlyTransactionSummaryJpaRepository.save(report);
+            }
             List<CardEntity> cards = cardsJpaRepository.findByUserId(user.getUserId());
             for (CardEntity card : cards) {
-
+                ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), card.getCardId());
                 ReportCardsEntity reportCardsEntity = ReportCardsEntity
                         .builder()
                         .cardId(card.getCardId())
@@ -146,8 +156,17 @@ public class ReportService {
                         .createdAt(report.getCreatedAt())
                         .spendingTier(card.getSpendingTier())
                         .build();
-                int reportCardId = reportCardsJpaRepository.save(reportCardsEntity).getReportCardId();
-                ReportCardsEntity reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
+                if (reportCard == null) {
+                    int reportCardId = reportCardsJpaRepository.save(reportCardsEntity).getReportCardId();
+                    reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
+
+                } else {
+                    reportCard.setMonthSpendingAmount(0);
+                    reportCard.setMonthBenefitAmount(0);
+
+                    reportCard = reportCardsJpaRepository.save(reportCard);
+
+                }
 
             }
 
@@ -168,6 +187,11 @@ public class ReportService {
                     int reportCardId = reportCardsJpaRepository.save(newReportCard).getReportCardId();
                     reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
 
+                } else {
+                    reportCard.setMonthSpendingAmount(0);
+                    reportCard.setMonthBenefitAmount(0);
+
+                    reportCard = reportCardsJpaRepository.save(reportCard);
                 }
 
                 // 그냥 결제 단건 혜택만 고려
@@ -189,6 +213,12 @@ public class ReportService {
 //                    reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
                     reportCardCategory = reportCardCategoriesJpaRepository.findById(reportCardCategoryId)
                             .orElseThrow(() -> new EntityNotFoundException("Entity not found after saving: " + newReportCardCategory.getReportCard().getReportCardId()));
+                } else {
+                    reportCardCategory.setAmount(0);
+                    reportCardCategory.setReceivedBenefitAmount(0);
+                    reportCardCategory.setCount(0);
+
+                    reportCardCategory = reportCardCategoriesJpaRepository.save(reportCardCategory);
                 }
 
                 reportCardCategory.setAmount(monthlyTransaction.getTotalSpending()); // 결제 금액
@@ -262,18 +292,31 @@ public class ReportService {
             else consumptionPatternId = consumptionPatternId.concat("M"); // 절약형
             if (pattern[1] > 50) consumptionPatternId = consumptionPatternId.concat("V"); // 변동형
             else consumptionPatternId = consumptionPatternId.concat("S"); // 일관형
+            MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(report);
+            System.out.println(mcr);
+            if (mcr == null) {
 
-            MonthlyConsumptionReportEntity monthlyConsumptionReport = MonthlyConsumptionReportEntity
-                    .builder()
-                    .report(report)
-                    .consumptionPatternId(consumptionPatternId)
-                    .overConsumption(pattern[0])
-                    .variation(pattern[1])
-                    .extrovert(pattern[2])
-                    .reportDescription(answer)
-                    .build();
-            System.out.println("설마? "+monthlyConsumptionReport);
-            monthlyConsumptionReportJpaRepository.save(monthlyConsumptionReport);
+                MonthlyConsumptionReportEntity monthlyConsumptionReport = MonthlyConsumptionReportEntity
+                        .builder()
+                        .report(report)
+                        .consumptionPatternId(consumptionPatternId)
+                        .overConsumption(pattern[0])
+                        .variation(pattern[1])
+                        .extrovert(pattern[2])
+                        .reportDescription(answer)
+                        .build();
+                System.out.println("설마? "+monthlyConsumptionReport);
+                monthlyConsumptionReportJpaRepository.save(monthlyConsumptionReport);
+            } else {
+                mcr.setReport(report);
+                mcr.setConsumptionPatternId(consumptionPatternId);
+                mcr.setOverConsumption(pattern[0]);
+                mcr.setVariation(pattern[1]);
+                mcr.setReportId(pattern[2]);
+                mcr.setReportDescription(answer);
+
+                mcr = monthlyConsumptionReportJpaRepository.save(mcr);
+            }
         }
 
     }
