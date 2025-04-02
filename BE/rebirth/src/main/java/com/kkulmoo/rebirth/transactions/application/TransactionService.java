@@ -3,14 +3,18 @@ package com.kkulmoo.rebirth.transactions.application;
 import com.kkulmoo.rebirth.card.application.CardPort;
 import com.kkulmoo.rebirth.card.application.CardService;
 import com.kkulmoo.rebirth.card.domain.myCard;
-import com.kkulmoo.rebirth.transactions.application.dto.BankTransactionRequest;
-import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionRequest;
-import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionResponse;
+import com.kkulmoo.rebirth.transactions.application.dto.*;
+import com.kkulmoo.rebirth.transactions.application.mapper.TransactionHistoryMapper;
 import com.kkulmoo.rebirth.transactions.domain.TransactionRepository;
 import com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto.BankTransactionResponse;
+import com.kkulmoo.rebirth.transactions.presentation.CardHistoryTransactionRequest;
+import com.kkulmoo.rebirth.transactions.presentation.TransactionHistoryDto;
 import com.kkulmoo.rebirth.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -26,10 +30,23 @@ public class TransactionService {
     private final CardPort cardPort;
     private final BankPort bankPort;
     private final CardService cardService;
+    private final TransactionHistoryMapper mapper;
 
+    public TransactionHistoryResponseData getCardTransactionHistory(CardHistoryTransactionRequest request) {
+        Pageable pageable = PageRequest.of(request.getPage(), request.getPageSize());
+
+        CardTransactionQueryParams params = new CardTransactionQueryParams(
+                request.getCardId(), request.getYear(), request.getMonth(), pageable
+        );
+
+        Slice<TransactionHistoryDto> transactions =
+                transactionRepository.getCardTransactionHistoryByCardId(params);
+
+        return mapper.toResponseData(transactions);
+    }
 
     // 입력할 때부터 어느 시간 기준으로 넣을 것인지 고민을 해야한다.
-    public void getBankTransactionByMyData(User user, LocalDateTime timestamp){
+    public void getBankTransactionByMyData(User user, LocalDateTime timestamp) {
         Mono<List<BankTransactionResponse>> bankTransaction = bankPort.getBankTransaction(
                 BankTransactionRequest.builder()
                         .userCI(user.getUserApiKey())
@@ -38,15 +55,13 @@ public class TransactionService {
                         .build()
         );
 
-
-
-
-
+        // Subscribe to the Mono to get the actual List
+        bankTransaction.subscribe(transactionRepository::saveAllBankTransactions);
     }
 
     // card내역 가져오기.
     // 카드사에게 이사람이 누구인지 이사람의 어떤 카드의 결제내역을 얻고 싶은지 요청을해야한다.
-    public void getCardTransactionByMyData(User user, List<String> CardUniqueNumbers){
+    public void getCardTransactionByMyData(User user, List<String> CardUniqueNumbers) {
 
         // CardUniqueNumbers
         List<myCard> myCardList = cardService.getMyCardListByCardUniqueNumbers(CardUniqueNumbers);
@@ -60,9 +75,9 @@ public class TransactionService {
             if (!transactions.isEmpty()) {
                 List<CardTransactionResponse> transactionsWithUserId = transactions.stream()
                         .map(transaction ->
-                                        transaction.withUserIdAndMerchantId(user.getUserId()
-                                        ,transaction.getMerchantName())
-                                )
+                                transaction.withUserIdAndMerchantId(user.getUserId()
+                                        , transaction.getMerchantName())
+                        )
                         .toList();
                 // 한 번에 모든 트랜잭션 저장
                 transactionRepository.saveAllCardTransactions(transactionsWithUserId);

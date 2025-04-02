@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface CardJpaRepository extends JpaRepository<CardEntity,Integer> {
+
 	List<CardEntity> findByUserId(Integer userId);
 
 	@Query("SELECT c FROM CardEntity c WHERE c.cardUniqueNumber IN :cardUniqueNumbers")

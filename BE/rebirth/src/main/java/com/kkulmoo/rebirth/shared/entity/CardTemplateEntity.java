@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "card_templates")
 @Getter
@@ -42,5 +44,8 @@ public class CardTemplateEntity {
 
     @Column(name = "card_constellation_info", columnDefinition = "JSONB")
     private String cardConstellationInfo;
+
+    @Column(name = "performance_range")
+    private List<Integer> performanceRange;
 }
 

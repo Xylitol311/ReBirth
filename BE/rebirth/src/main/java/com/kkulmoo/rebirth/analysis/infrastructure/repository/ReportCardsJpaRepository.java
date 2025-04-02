@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReportCardsJpaRepository extends JpaRepository<ReportCardsEntity, Integer> {
@@ -12,4 +13,6 @@ public interface ReportCardsJpaRepository extends JpaRepository<ReportCardsEntit
     ReportCardsEntity getByReportIdAndCardId(int reportId, int cardId);
 
     List<ReportCardsEntity> getByReportId(int reportId);
+
+    Optional<ReportCardsEntity> findTopByCardIdOrderByCreatedAtDesc(Integer cardId);
 }

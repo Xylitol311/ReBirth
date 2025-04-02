@@ -5,6 +5,9 @@ import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogInfoDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlySpendingByCategoryAndCardDTO;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.TransactionEntity;
+import com.kkulmoo.rebirth.transactions.presentation.TransactionHistoryDto;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +18,28 @@ import java.util.List;
 
 @Repository
 public interface TransactionsJpaRepository extends JpaRepository<TransactionEntity, Integer> {
+
+
+    @Query("SELECT new com.kkulmoo.rebirth.transactions.presentation.TransactionHistoryDto(" +
+            "t.createdAt, " +                     // 거래일시
+            "c.categoryName, " +                  // 가맹점 카테고리 이름
+            "t.amount, " +                         // 거래금액
+            "m.merchantName, " +                  // 가맹점 이름
+            "ct.benefitAmount) " +                // 혜택금액
+            "FROM TransactionEntity t " +
+            "LEFT JOIN CardTransactionEntity ct ON t.transactionId = ct.transactionId " +
+            "LEFT JOIN MerchantEntity m ON ct.merchantId = m.merchantId " +
+            "LEFT JOIN m.subcategory s " +        // subcategory 조인
+            "LEFT JOIN s.category c " +           // category 조인
+            "WHERE t.userId = :userId " +
+            "AND EXTRACT(YEAR FROM t.createdAt) = :year AND EXTRACT(MONTH FROM t.createdAt) = :month " +
+            "ORDER BY t.createdAt DESC")
+    Slice<TransactionHistoryDto> findTransactionsByUserIdYearMonth(
+            @Param("userId") Integer userId,
+            @Param("year") Integer year,
+            @Param("month") Integer month,
+            Pageable pageable);
+
 
     @Query("SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlySpendingByCategoryAndCardDTO(c.categoryId, cd.cardId, " +
             "CAST(SUM(t.amount) AS int), " +
