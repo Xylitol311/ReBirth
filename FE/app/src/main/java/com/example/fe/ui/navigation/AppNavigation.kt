@@ -1,72 +1,59 @@
 package com.example.fe.ui.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
+import android.util.Log
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.navigation.NavController
-import androidx.navigation.NavOptions
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
 import com.example.fe.ui.screens.calendar.CalendarScreen
+import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
+import com.example.fe.ui.screens.cardRecommend.CardInfo
 import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
+import com.example.fe.ui.screens.home.HomeDetailScreen
+import com.example.fe.ui.screens.home.HomeScreen
+import com.example.fe.ui.screens.myCard.CardDetailScreen
+import com.example.fe.ui.screens.myCard.CardItem
+import com.example.fe.ui.screens.myCard.CardManagementScreen
 import com.example.fe.ui.screens.myCard.MyCardScreen
+import com.example.fe.ui.screens.mypage.MyPageScreen
+import com.example.fe.ui.screens.onboard.OnboardingScreen
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
 import com.example.fe.ui.screens.payment.PaymentScreen
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fe.ui.screens.home.HomeScreen
-import com.example.fe.ui.screens.home.HomeDetailScreen
-import kotlinx.coroutines.launch
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import android.util.Log
-import androidx.compose.runtime.collectAsState
-import com.example.fe.ui.screens.payment.components.QRScannerScreen
-import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
 import com.example.fe.ui.screens.payment.PaymentViewModel
+import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
 import com.example.fe.ui.screens.payment.components.PaymentResultPopup
+import com.example.fe.ui.screens.payment.components.QRScannerScreen
 import kotlinx.coroutines.delay
-import com.example.fe.ui.screens.myCard.CardItem
-import com.example.fe.ui.screens.myCard.CardDetailScreen
-import com.example.fe.ui.screens.myCard.CardManagementScreen
-import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
-import com.example.fe.ui.screens.cardRecommend.CardInfo
-import com.example.fe.ui.screens.mypage.MyPageScreen
-import com.example.fe.ui.screens.onboard.OnboardingScreen
-
+import kotlinx.coroutines.launch
 // 네비게이션 경로 상수 추가
 object NavRoutes {
     const val ONBOARDING = "onboarding"  // 온보딩/로그인 화면 경로 추가
@@ -80,6 +67,7 @@ object NavRoutes {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
     
     // 로그아웃을 위한 ViewModel
     val viewModel: OnboardingViewModel = viewModel(
