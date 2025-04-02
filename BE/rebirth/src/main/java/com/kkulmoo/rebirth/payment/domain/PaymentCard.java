@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class paymentCard {
+public class PaymentCard {
 
     private int cardId;
 
