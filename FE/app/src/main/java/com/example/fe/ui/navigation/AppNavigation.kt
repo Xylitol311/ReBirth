@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +50,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fe.ui.screens.home.HomeScreen
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import kotlinx.coroutines.launch
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import android.util.Log
+import androidx.compose.runtime.collectAsState
+import com.example.fe.ui.screens.payment.components.QRScannerScreen
+import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
+import com.example.fe.ui.screens.payment.PaymentViewModel
+import com.example.fe.ui.screens.payment.components.PaymentResultPopup
 import kotlinx.coroutines.delay
 import com.example.fe.ui.screens.myCard.CardItem
 import com.example.fe.ui.screens.myCard.CardDetailScreen
@@ -72,7 +79,6 @@ object NavRoutes {
 
 @Composable
 fun AppNavigation() {
-    val context = LocalContext.current
     val navController = rememberNavController()
     
     // 로그아웃을 위한 ViewModel
@@ -124,7 +130,6 @@ fun AppNavigation() {
         animationSpec = tween(300),
         label = "contentAlpha"
     )
-
     // 탭 인덱스 맵
     val tabIndices = mapOf(
         BottomNavItem.Home.route to 0,
@@ -153,6 +158,18 @@ fun AppNavigation() {
         }
     )
 
+    // ViewModel을 상위 Composable 함수에서 가져오기
+    val paymentViewModel: PaymentViewModel = viewModel()
+    
+    // QR 스캐너 표시 여부
+    var showQRScanner by remember { mutableStateOf(false) }
+    
+    // 결제 정보 화면 표시 여부
+    var showPaymentInfo by remember { mutableStateOf(false) }
+
+    // 스캔된 QR 코드
+    var scannedQRCode by remember { mutableStateOf("") }
+
     // 네비게이션 바 애니메이션을 위한 상태
     val shouldShowBottomBar = bottomBarVisible && currentRoute != NavRoutes.HOME_DETAIL && 
                           currentRoute?.startsWith("card_detail") != true
@@ -180,6 +197,10 @@ fun AppNavigation() {
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomPadding"
     )
+
+    // 결제 결과 팝업 표시
+    var showPaymentResultPopup by remember { mutableStateOf(false) }
+    val paymentResult by paymentViewModel.paymentResult.collectAsState()
 
     Scaffold(
         topBar = {
@@ -316,6 +337,9 @@ fun AppNavigation() {
                                 navController.navigate(BottomNavItem.Home.route) {
                                     popUpTo(BottomNavItem.Home.route) { inclusive = true }
                                 }
+                            },
+                            onShowQRScanner = {
+                                showQRScanner = true  // QR 스캐너 표시
                             }
                         )
                     }
@@ -406,6 +430,54 @@ fun AppNavigation() {
                     }
                 }
             }
+        }
+        
+        // QR 스캐너 화면 (오버레이로 표시)
+        if (showQRScanner) {
+            QRScannerScreen(
+                onClose = { showQRScanner = false },
+                onQRCodeScanned = { qrCode ->
+                    // QR 코드 스캔 결과 처리
+                    Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
+                    // 이미 가져온 ViewModel 사용
+                    paymentViewModel.sendQRToken(qrCode)
+                    showQRScanner = false
+                    showPaymentInfo = true  // 결제 정보 화면 표시
+                }
+            )
+        }
+        
+        // 결제 정보 화면 (오버레이로 표시)
+        if (showPaymentInfo) {
+            val cards by paymentViewModel.cards.collectAsState()
+            val paymentState by paymentViewModel.paymentState.collectAsState()
+            
+            PaymentInfoScreen(
+                cards = cards,
+                onClose = { showPaymentInfo = false },
+                onPaymentComplete = {
+                    // 결제 완료 후 홈 화면으로 이동
+                    showPaymentInfo = false
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                    
+                    // 결제 결과 팝업 표시
+                    showPaymentResultPopup = true
+                },
+                onScrollOffsetChange = { offset ->
+                    scrollOffset = offset
+                },
+                viewModel = paymentViewModel
+            )
+        }
+
+        // 결제 결과 팝업 표시
+        if (showPaymentResultPopup && paymentResult != null) {
+            PaymentResultPopup(
+                paymentResult = paymentResult!!,
+                onDismiss = { showPaymentResultPopup = false }
+            )
         }
     }
 }

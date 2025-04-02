@@ -46,7 +46,7 @@ data class ConnectionJSON(
 )
 
 /**
- * 별자리 데이터를 JSON으로 변환 (간소화 버전)
+ * 별자리 데이터를 JSON으로 변환 (상대적 위치와 크기 사용)
  */
 fun constellationToJSON(
     constellation: Constellation,
@@ -56,10 +56,10 @@ fun constellationToJSON(
     val starsJSON = constellation.stars.mapIndexed { index, star ->
         StarJSON(
             id = "star_$index",
-            x = star.x,
-            y = star.y,
-            size = star.size * 7.0f,
-            brightness = if (index == constellation.centralStarIndex) 1.0f else 0.7f + (star.size - 0.5f) * 0.3f,
+            x = star.x,  // 상대적 위치 그대로 저장 (0.0~1.0)
+            y = star.y,  // 상대적 위치 그대로 저장 (0.0~1.0)
+            size = star.size,  // 상대적 크기 그대로 저장
+            brightness = if (index == constellation.centralStarIndex) 1.0f else 0.7f + (star.size / 0.02f) * 0.3f,  // 크기 비율에 맞게 조정
             color = "#FFFFFF"
         )
     }
@@ -86,15 +86,15 @@ fun constellationToJSON(
 }
 
 /**
- * JSON을 별자리 데이터로 변환
+ * JSON을 별자리 데이터로 변환 (상대적 위치와 크기 사용)
  */
 fun jsonToConstellation(zodiacJSON: ZodiacJSON): Constellation {
     // 별 데이터 변환
     val stars = zodiacJSON.stars.map { starJSON ->
         Star(
-            x = starJSON.x,
-            y = starJSON.y,
-            size = starJSON.size / 7.0f // 크기 역변환
+            x = starJSON.x,  // 상대적 위치 그대로 사용
+            y = starJSON.y,  // 상대적 위치 그대로 사용
+            size = starJSON.size  // 상대적 크기 그대로 사용
         )
     }
     

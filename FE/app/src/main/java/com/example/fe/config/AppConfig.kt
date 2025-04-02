@@ -12,12 +12,12 @@ object AppConfig {
         
         // API 엔드포인트
         object Endpoints {
-            // 결제 관련 엔드포인트 (토큰 요청 및 SSE 연결 모두 이 엔드포인트 사용)
+            // 결제 관련 엔드포인트
             const val PAYMENT_TOKEN = "api/payment/disposabletoken"
-            
+            const val PAYMENT_EVENTS = "api/payment/sse/subscribe"
         }
     }
-    
+
     // 앱 설정
     object App {
         // 앱 버전

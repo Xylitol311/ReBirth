@@ -34,7 +34,7 @@ private val StarryBackgroundColor = Color(0xFF0A0A1A)
 
 @Composable
 fun TopBar(
-    title: String = "RE",
+    title: String = "",
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
