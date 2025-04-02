@@ -28,7 +28,7 @@ public class MonthlyConsumptionReportEntity {
     @Column(name = "consumption_pattern_id")
     private String consumptionPatternId;
 
-    @Column(name = "report_description")
+    @Column(name = "report_description", columnDefinition = "TEXT")
     private String reportDescription;
 
     @Column(name = "over_consumption")

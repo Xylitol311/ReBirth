@@ -1,12 +1,15 @@
 package com.kkulmoo.rebirth.transactions.infrastructure.repository;
 
+import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionQueryParams;
 import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionResponse;
 import com.kkulmoo.rebirth.transactions.domain.TransactionRepository;
 import com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto.BankTransactionResponse;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.TransactionEntity;
 import com.kkulmoo.rebirth.transactions.infrastructure.repository.mapper.BankTransactionMapper;
 import com.kkulmoo.rebirth.transactions.infrastructure.repository.mapper.CardTransactionResponseMapper;
+import com.kkulmoo.rebirth.transactions.presentation.TransactionHistoryDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,6 +22,16 @@ public class TransactionsRepositoryImpl implements TransactionRepository {
     private final TransactionsJpaRepository transactionsJpaRepository;
     private final CardTransactionResponseMapper responseMapper;
     private final BankTransactionMapper bankTransactionMapper;
+
+
+    @Override
+    public Slice<TransactionHistoryDto> getCardTransactionHistoryByCardId(CardTransactionQueryParams params) {
+        return transactionsJpaRepository.findTransactionsByUserIdYearMonth(
+                params.getCardId(),
+                params.getYear(),
+                params.getMonth(),
+                params.getPageable());
+    }
 
     @Override
     public void saveAllCardTransactions(List<CardTransactionResponse> transactionResponses) {
@@ -54,3 +67,4 @@ public class TransactionsRepositoryImpl implements TransactionRepository {
     }
 }
 
+//

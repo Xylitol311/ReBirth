@@ -49,7 +49,7 @@ public class CardEntity {
 	private LocalDate expiryDate;
 
 	@Column(name = "is_expired", nullable = false)
-	private Boolean isExpired;
+	private Short isExpired;
 
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
@@ -62,6 +62,5 @@ public class CardEntity {
 
 	@Column(name = "latest_load_data_at")
 	private LocalDateTime latestLoadDataAt;
-
 }
 

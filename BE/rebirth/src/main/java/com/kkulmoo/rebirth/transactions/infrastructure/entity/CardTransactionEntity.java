@@ -1,7 +1,7 @@
 package com.kkulmoo.rebirth.transactions.infrastructure.entity;
 
 
-import com.kkulmoo.rebirth.transactions.domain.CardBenefitType;
+import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
 import com.kkulmoo.rebirth.transactions.domain.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -21,9 +21,6 @@ public class CardTransactionEntity {
     @Column(name = "transaction_id")
     private Integer transactionId;
 
-    @Column(name = "card_company_id")
-    private Short cardCompanyId;
-
     @Column(name = "merchant_id")
     private Integer merchantId;
 
@@ -31,12 +28,12 @@ public class CardTransactionEntity {
     private String cardUniqueNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private Status status;
+    @Column(name = "benefit_type")
+    private BenefitType cardBenefitType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "benefit_type")
-    private CardBenefitType cardBenefitType;
+    @Column(name = "status")
+    private Status status;
 
     @Column(name = "benefit_amount")
     private Integer benefitAmount;

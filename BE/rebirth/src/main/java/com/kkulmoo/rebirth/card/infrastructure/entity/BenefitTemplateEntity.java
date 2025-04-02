@@ -1,6 +1,6 @@
 package com.kkulmoo.rebirth.card.infrastructure.entity;
 
-import com.kkulmoo.rebirth.card.domain.BenefitType;
+import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
 import com.kkulmoo.rebirth.card.domain.DiscountType;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import jakarta.persistence.*;
@@ -43,25 +43,25 @@ public class BenefitTemplateEntity {
 	private Short benefitConditionType;
 
 	@Column(name = "performance_range", nullable = false)
-	private Integer[] performanceRange;
+	private List<Integer> performanceRange;
 
 	@Column(name = "benefits_by_section")
-	private Double[] benefitsBySection;
+	private List<Double> benefitsBySection;
 
 	@Column(name = "merchant_info", nullable = false)
 	private Boolean merchantInfo;
 
 	@Column(name = "merchant_list")
-	private String[] merchantList;
+	private List<String> merchantList;
 
 	@Column(name = "payment_range")
-	private Integer[] paymentRange;
+	private List<Integer> paymentRange;
 
 	@Column(name = "benefit_usage_limit")
-	private Short[] benefitUsageLimit;
+	private List<Short> benefitUsageLimit;
 
 	@Column(name = "benefit_usage_amount")
-	private Short[] benefitUsageAmount;
+	private List<Short> benefitUsageAmount;
 
 	@Column(name = "discount_type")
 	@Enumerated(EnumType.STRING)

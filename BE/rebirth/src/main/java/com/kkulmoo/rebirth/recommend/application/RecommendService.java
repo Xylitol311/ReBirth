@@ -43,16 +43,16 @@ public class RecommendService {
            for(BenefitTemplateEntity benefitForCategory : benefitsForCategory) {
                System.out.println("으잉? "+benefitForCategory);
                double score = 0;
-               if(benefitForCategory.getDiscountType().equals(DiscountType.percent)) {
-                   score = avgAmountByCategory.getAvgTotalSpending()*benefitForCategory.getBenefitsBySection()[0]/100.0;
+               if(benefitForCategory.getDiscountType().equals(DiscountType.PERCENT)) {
+                   score = avgAmountByCategory.getAvgTotalSpending()*benefitForCategory.getBenefitsBySection().get(0)/100.0;
                    if(benefitForCategory.getBenefitUsageAmount()!=null) {
-                       score = Math.min(score,benefitForCategory.getBenefitUsageAmount()[0]);
+                       score = Math.min(score,benefitForCategory.getBenefitUsageAmount().get(0));
                    }
                } else {
-                   double percent = benefitForCategory.getBenefitsBySection()[0]/benefitForCategory.getPaymentRange()[0]/100.0;
+                   double percent = benefitForCategory.getBenefitsBySection().get(0)/benefitForCategory.getPaymentRange().get(0)/100.0;
                    score = avgAmountByCategory.getAvgTotalSpending()*percent;
                    if(benefitForCategory.getBenefitUsageAmount()!=null) {
-                       score = Math.min(score,benefitForCategory.getBenefitUsageAmount()[0]);
+                       score = Math.min(score,benefitForCategory.getBenefitUsageAmount().get(0));
                    }
                }
                int cardId = benefitForCategory.getCardTemplate().getCardTemplateId();

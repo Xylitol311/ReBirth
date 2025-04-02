@@ -1,8 +1,8 @@
 package com.kkulmoo.rebirth.card.domain;
 
 public enum CardType {
-    신용("CREDIT"),
-    체크("DEBIT");
+    CREDIT("신용"),
+    DEBIT("체크");
 
     private final String description;
 

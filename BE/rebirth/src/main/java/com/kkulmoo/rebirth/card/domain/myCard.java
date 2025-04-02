@@ -22,7 +22,7 @@ public class myCard {
 	private Short spendingTier;
 	private Short payCount;
 	private LocalDate expiryDate;
-	private Boolean isExpired;
+	private Short isExpired;
 	private LocalDateTime paymentCreatedAt;
 	private LocalDateTime createdAt;
 	private LocalDateTime deletedAt;

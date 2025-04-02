@@ -31,14 +31,20 @@ public class UserEntity {
 	@Column(name = "hashed_pin_number", nullable = false, length = 64)
 	private String hashedPinNumber;
 
+	@Column(name = "hashed_pattern_number", length = 64)
+	private String hashedPatternNumber;
+
+	@Column(name = "birth" , length = 6)
+	private String monthdaybirth;
+
 	@Column(name = "phone_number", nullable = false, length = 15)
 	private String phoneNumber;
 
 	@Column(name = "phone_serial_number", length = 100)
 	private String phoneSerialNumber;
 
-	@Column(name = "user_api_key", length = 40)
-	private String userApiKey;
+	@Column(name = "user_ci", nullable = false)
+	private String userCI;
 
 	@Column(name = "bank_accounts")
 	private List<String> bankAccounts;
@@ -56,6 +62,6 @@ public class UserEntity {
 	private LocalDateTime bankLatestLoadDataAt;
 
 	@Column(name = "average_monthly_income")
-	private int averageMonthlyIncome;
+	private Integer averageMonthlyIncome;
 
 }
