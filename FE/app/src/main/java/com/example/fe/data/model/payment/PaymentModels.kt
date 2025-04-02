@@ -31,4 +31,4 @@ data class PaymentResult(
     val amount: Int,
     val createdAt: String,
     val approvalCode: String
-) 
+)

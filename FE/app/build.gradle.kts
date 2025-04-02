@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0"
+    id("kotlin-kapt")
 }
 
 android {
@@ -95,4 +96,18 @@ dependencies {
     implementation("com.google.mlkit:text-recognition:16.0.0")
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
 
+    // ViewModel
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    // Compose
+    implementation ("androidx.compose.runtime:runtime:1.5.4")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.5.4")
+    
+    // Hilt (의존성 주입)
+    implementation ("com.google.dagger:hilt-android:2.48")
+    kapt ("com.google.dagger:hilt-android-compiler:2.48")
+    implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
+    
+    // Flow
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }
