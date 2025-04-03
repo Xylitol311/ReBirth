@@ -19,7 +19,6 @@ fun PinLoginScreen(
 ) {
     val context = LocalContext.current
     var currentStep by remember { mutableStateOf(PinStep.PIN) }
-
     Scaffold(
         //상단 및 하단바 없음
 

@@ -21,9 +21,10 @@ fun OnboardingNavHost(viewModel: OnboardingViewModel) {
         composable("onboarding") { OnboardingScreen(navController, viewModel) }
         composable("auth") { AuthScreen(navController, viewModel) }
         composable("card_select") { CardSelectScreen(navController, viewModel) }
-//        composable("security_setup") { SecuritySetupScreen(navController, viewModel) }
         composable("additional_security_setup") { AdditionalSecurityScreen(navController, viewModel) }
         composable("pin_setup") { PinSetupScreen(navController, viewModel) }
         composable("registration_complete") { RegistrationCompleteScreen(navController, viewModel) }
+
+
     }
 }
