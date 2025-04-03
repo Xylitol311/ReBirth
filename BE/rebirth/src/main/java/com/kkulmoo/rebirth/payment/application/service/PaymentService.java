@@ -198,17 +198,24 @@ public class PaymentService {
                     merchantJoinData.getMerchantId()
             );
             for (BenefitInfo benefitInfo : benefitInfos) {
+                // 쿠폰 혜택의 경우 서비스에서 계산하지 않으므로 통과
+                if (benefitInfo.getBenefitType().toString().equals("쿠폰")) continue;
+
                 // 유저가 받은 해당 혜택 현황 가져오기
                 UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitId(userId, benefitInfo.getBenefitId());
+
                 // 해당 혜택의 적용 금액 계산
                 int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
+
                 // 계산된 결과를 객체로 생성(카드 영구토큰, 혜택 금액, 혜택 id)
                 CalculatedBenefitDto calculatedBenefit = CalculatedBenefitDto.builder()
                         .myCardId(myCardDto.getCardId())
                         .permanentToken(myCardDto.getPermanentToken())
                         .benefitId(benefitInfo.getBenefitId())
                         .benefitAmount(discountAmount)
+                        .benefitType(benefitInfo.getBenefitType().toString())
                         .build();
+
                 // 우선순위 큐에 추가
                 benefitQueue.add(calculatedBenefit);
             }

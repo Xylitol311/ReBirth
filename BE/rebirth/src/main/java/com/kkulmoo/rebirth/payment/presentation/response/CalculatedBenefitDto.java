@@ -12,4 +12,5 @@ public class CalculatedBenefitDto {
     private final String permanentToken;
     private final Integer benefitId;
     private final int benefitAmount;
+    private final String benefitType;
 }
