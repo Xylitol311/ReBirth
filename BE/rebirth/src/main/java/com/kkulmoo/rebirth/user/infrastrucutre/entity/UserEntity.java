@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
 
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -46,7 +48,8 @@ public class UserEntity {
 	@Column(name = "user_ci", nullable = false)
 	private String userCI;
 
-	@Column(name = "bank_accounts")
+	@Column(name = "bank_accounts", columnDefinition = "text[]")
+	@JdbcTypeCode(Types.ARRAY)
 	private List<String> bankAccounts;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
