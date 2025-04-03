@@ -40,13 +40,13 @@ public class CardController {
 
     }
 
-    @PostMapping
+    @PostMapping("/list")
     public ResponseEntity<List<CardResponse>> getUserCards(@RequestBody CardDataRequest cardDataRequest) {
         List<CardResponse> cardDetail = cardService.getCardsByUserCI(cardDataRequest.getUserCI());
         return ResponseEntity.ok(cardDetail);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<?> createCard(@RequestBody CardCreateRequest request) {
         try {
 

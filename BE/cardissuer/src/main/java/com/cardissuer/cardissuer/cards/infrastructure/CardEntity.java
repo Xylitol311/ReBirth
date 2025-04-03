@@ -42,7 +42,7 @@ public class CardEntity {
 	private String cardName;
 
 	@Column(name = "expiry_date")
-	private Date expiryDate;
+	private String expiryDate;
 
 	@Column(name = "cvc")
 	private String cvc;
