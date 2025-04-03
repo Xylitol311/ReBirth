@@ -12,8 +12,6 @@ import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequest
 import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -181,7 +179,6 @@ public class PaymentService {
      * 4. 가장 혜택이 큰 혜택 id를 통해 보유 카드의 영구 토큰을 반환
      */
     public CalculatedBenefitDto recommendPaymentCard(Integer userId, int amount, String merchantName) {
-        String permanentToken = "이게 반환됐다고? 망했습니다 :)";
         // 1. 가맹점 이름으로 가맹점 id, 카테고리 대분류, 소분류 id 가져오기
         MerchantJoinDto merchantJoinData = merchantJoinRepository.findMerchantJoinDataByMerchantName(merchantName);
 
@@ -234,7 +231,7 @@ public class PaymentService {
             return 0;
 
         Double benefit = 0.0;
-        int result = 0;
+        int result;
         int spendingTier = userCardBenefit.getSpendingTier(); // 현재 혜택의 실적 구간
 
         // <<혜택 계산 (실적 단일/구간의 경우 userCardBenefit에 있는 실적 구간으로 혜택 파악 가능)>>
