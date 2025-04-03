@@ -32,13 +32,11 @@ public class CardTransactionController {
     }
 
     @PostMapping("/getMyData")
-    public ResponseEntity<?> getMyCardTransactions(CardTransactionRequest cardTransactionRequest) {
-        LocalDateTime localDateTime = cardTransactionRequest.getFromDate();
-        Timestamp timestamp = Timestamp.valueOf(localDateTime);
+    public ResponseEntity<?> getMyCardTransactions(@RequestBody  CardTransactionRequest cardTransactionRequest) {
         return ResponseEntity.ok(cardTransactionService.getTransactionsByUserCIAndCardUniqueNumberAfterTimestamp(
                 cardTransactionRequest.getUserCI(),
                 cardTransactionRequest.getCardUniqueNumber(),
-                timestamp
+                cardTransactionRequest.getFromDate() // Timestamp.valueOf() 호출 제거
         ));
     }
 }

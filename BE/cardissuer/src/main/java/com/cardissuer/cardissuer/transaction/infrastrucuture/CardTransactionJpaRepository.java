@@ -1,6 +1,7 @@
 package com.cardissuer.cardissuer.transaction.infrastrucuture;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.cardissuer.cardissuer.transaction.infrastrucuture.entity.CardTransactionEntity;
@@ -13,7 +14,7 @@ public interface CardTransactionJpaRepository extends JpaRepository<CardTransact
 
 	List<CardTransactionEntity> findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
 			String cardUniqueNumber,
-			Timestamp timestamp
+			LocalDateTime fromDate
 	);
 
 }

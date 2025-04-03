@@ -34,7 +34,11 @@ public class MyDataService {
 
     @Transactional
     public void getMyTransactionData(Integer userId) {
-        cardService.findByUserId(new UserId(userId));
+        User user = userRepository.findByUserId(new UserId(userId));
+
+        List<myCard> myCardsList = cardService.findByUserId(new UserId(userId));
+
+        loadMyTransactionByCards(user, myCardsList);
     }
 
 
@@ -47,7 +51,9 @@ public class MyDataService {
         // 추출한 카드 고유 번호 리스트를 이용해 거래내역 가져오기
         transactionService.getCardTransactionByMyData(user, cardUniqueNumbers);
 
+        cardService.updateCardsLastLoadTime(cards);
     }
+
 
     @Transactional
     public void loadMyBankTransaction() {

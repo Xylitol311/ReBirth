@@ -34,7 +34,7 @@ public class CardController {
             @RequestBody PermanentTokenRequest permanentTokenRequest) {
 
         String userCI = permanentTokenRequest.getUserCI();
-        System.out.println(userCI);
+        System.out.println(userCI+ "의 토큰을 가져오는 중");
         PermanentToken token = cardService.getPermanentToken(userCI, permanentTokenRequest);
         return ResponseEntity.ok(token);
 

@@ -77,4 +77,16 @@ public class ReportController {
 
         return ResponseEntity.ok().body(result);
     }
+
+    @GetMapping("/test")
+    public ResponseEntity<ResponseDTO> testTransaction(@RequestParam int userId) {
+        ResponseDTO result = new ResponseDTO();
+        result.setSuccess(true);
+        UserEntity user = userJpaRepository.getReferenceById(userId);
+        reportService.updateMonthlyTransactionSummary(user);
+        result.setMessage("트랜잭션 갱신 완료");
+
+
+        return ResponseEntity.ok().body(result);
+    }
 }

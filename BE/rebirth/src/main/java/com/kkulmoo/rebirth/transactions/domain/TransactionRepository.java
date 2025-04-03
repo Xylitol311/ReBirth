@@ -12,4 +12,5 @@ public interface TransactionRepository {
     void saveAllCardTransactions(List<CardTransactionResponse> transactionResponse);
     void saveAllBankTransactions(List<BankTransactionResponse> transactionResponse);
     Slice<TransactionHistoryDto> getCardTransactionHistoryByCardId(CardTransactionQueryParams params);
+
 }
