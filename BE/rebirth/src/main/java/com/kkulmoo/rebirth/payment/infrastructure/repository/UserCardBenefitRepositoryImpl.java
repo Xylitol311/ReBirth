@@ -17,7 +17,7 @@ public class UserCardBenefitRepositoryImpl implements UserCardBenefitRepository 
     @Override
     public UserCardBenefit findByUserIdAndBenefitId(Integer userId, Integer benefitId) {
         UserCardBenefitEntity entity = userCardBenefitJpaRepository
-                .findById_UserIdAndId_BenefitTemplateId(userId, benefitId)
+                .findByUserIdAndBenefitTemplateId(userId, benefitId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "UserCardBenefit not found for userId " + userId + " and benefitId " + benefitId));
         return userCardBenefitEntityMapper.toUserCardBenefit(entity);

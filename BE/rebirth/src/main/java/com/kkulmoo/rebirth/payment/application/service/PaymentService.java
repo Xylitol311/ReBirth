@@ -1,6 +1,7 @@
 package com.kkulmoo.rebirth.payment.application.service;
 
 import com.kkulmoo.rebirth.card.domain.BenefitRepository;
+import com.kkulmoo.rebirth.card.domain.DiscountType;
 import com.kkulmoo.rebirth.payment.application.BenefitInfo;
 import com.kkulmoo.rebirth.payment.domain.CardTemplate;
 import com.kkulmoo.rebirth.payment.domain.PaymentCard;
@@ -237,7 +238,7 @@ public class PaymentService {
         if (userCardBenefit.getSpendingTier() == 0)
             return 0;
 
-        Double benefit = 0.0;
+        double benefit = 0.0;
         int result;
         int spendingTier = userCardBenefit.getSpendingTier(); // 현재 혜택의 실적 구간
 
@@ -274,8 +275,14 @@ public class PaymentService {
         if (userCardBenefit.getBenefitAmount() >= totalAbleBenefitAmout)
             return 0;
         // 남은 받을 수 있는 혜택과 이번에 받게 될 혜택 중 더 작은 값을 받을 수 있음.
-        result = Math.min((int)(amount * benefit), totalAbleBenefitAmout - userCardBenefit.getBenefitAmount());
-
+        // 할인혜택 타입이 금액이라면 계산 없이 반환
+        if (benefitInfo.getDiscountType()== DiscountType.AMOUNT){
+            result = Math.min((int) benefit, totalAbleBenefitAmout - userCardBenefit.getBenefitAmount());
+        }
+        // 퍼센트라면 계산 후 반환
+        else {
+            result = Math.min((int) (amount * benefit), totalAbleBenefitAmout - userCardBenefit.getBenefitAmount());
+        }
         return result;
     }
 
