@@ -53,7 +53,7 @@ public class CardTransactionService {
         BankTransactionResponseDTO bankResult = bankAPI.createTransaction(bankTransactionCreateDTO.builder()
                 .accountNumber(card.getAccountNumber())
                 .amount(transactionAmount)
-                .userId(card.getUserCI())
+                .userCI(card.getUserCI())
                 .type("TXN")
                 .createdAt(createTransactionRequest.getCreatedAt())
                 .build());
