@@ -31,11 +31,19 @@ class PaymentRepository {
             if (response.isSuccessful && response.body() != null) {
                 val apiResponse = response.body()!!
                 if (apiResponse.success) {
-                    Result.success(apiResponse.data)
+                    // API 응답에서 data가 null일 때 빈 리스트 반환
+                    if (apiResponse.data == null) {
+                        Log.e("PaymentRepository", "API response data is null, returning empty list")
+                        Result.success(emptyList())
+                    } else {
+                        Result.success(apiResponse.data)
+                    }
                 } else {
+                    Log.e("PaymentRepository", "API error: ${apiResponse.message}")
                     Result.failure(Exception("API error: ${apiResponse.message}"))
                 }
             } else {
+                Log.e("PaymentRepository", "Failed to get payment token: ${response.code()}")
                 Result.failure(Exception("Failed to get payment token: ${response.code()}"))
             }
         } catch (e: Exception) {

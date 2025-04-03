@@ -34,7 +34,7 @@ data class PaymentEvent(
 data class ApiResponse<T>(
     val success: Boolean,
     val message: String,
-    val data: T
+    val data: T? = null
 )
 
 // 토큰 정보 클래스

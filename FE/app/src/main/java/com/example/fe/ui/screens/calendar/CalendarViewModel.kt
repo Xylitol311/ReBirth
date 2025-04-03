@@ -90,34 +90,20 @@ class CalendarViewModel : ViewModel() {
     
     /**
      * 리포트 탭에서 이전 월로 이동 가능한지 여부
-     * 6개월 내에서만 이동 가능
+     * 이전 제한을 제거하고 항상 이동 가능하도록 변경
      */
     fun canNavigateToPreviousReportMonth(): Boolean {
-        val earliestAvailableMonth = getEarliestAvailableReportMonth(YearMonth.now())
-        return selectedReportYearMonth.isAfter(earliestAvailableMonth)
+        // 제한 없이 항상 이전 월로 이동 가능
+        return true
     }
     
     /**
      * 리포트 탭에서 다음 월로 이동 가능한지 여부
-     * 가장 최근 리포트(현재 월의 이전 월)까지만 이동 가능
+     * 이전 제한을 제거하고 현재 월 이전까지 이동 가능하도록 변경
      */
     fun canNavigateToNextReportMonth(): Boolean {
-        val latestAvailableMonth = getLatestAvailableReportMonth(YearMonth.now())
-        return selectedReportYearMonth.isBefore(latestAvailableMonth)
-    }
-    
-    /**
-     * 현재 월에 따른 가장 오래된 리포트 월 반환 (6개월 전)
-     */
-    private fun getEarliestAvailableReportMonth(currentYearMonth: YearMonth): YearMonth {
-        return currentYearMonth.minusMonths(6)
-    }
-    
-    /**
-     * 현재 월에 따른 가장 최근 리포트 월 반환 (이전 월)
-     */
-    private fun getLatestAvailableReportMonth(currentYearMonth: YearMonth): YearMonth {
-        return getPreviousMonth(currentYearMonth)
+        // 현재 월 이전까지만 이동 가능 (미래 데이터는 없으므로)
+        return selectedReportYearMonth.isBefore(YearMonth.now())
     }
     
     /**
@@ -129,21 +115,17 @@ class CalendarViewModel : ViewModel() {
     
     /**
      * 주어진 달력 월에 적합한 리포트 월 결정
-     * 현재 월보다 미래면 가장 최근 리포트, 너무 오래된 월이면 가장 오래된 리포트 반환
+     * 모든 제한을 제거하고 항상 달력과 동일한 월을 리포트로 사용
+     * 단, 미래 월은 현재 월을 리포트로 사용
      */
     private fun determineReportMonthForCalendarMonth(calendarMonth: YearMonth): YearMonth {
         val currentYearMonth = YearMonth.now()
-        val latestReportMonth = getPreviousMonth(currentYearMonth)
-        val earliestReportMonth = getEarliestAvailableReportMonth(currentYearMonth)
         
         return when {
-            // 현재 월 또는 미래 월의 달력이면 가장 최근 리포트 반환
-            calendarMonth.isAfter(latestReportMonth) || calendarMonth.equals(currentYearMonth) -> latestReportMonth
+            // 미래 월의 달력이면 현재 월 리포트 반환 (미래 데이터는 없으므로)
+            calendarMonth.isAfter(currentYearMonth) -> currentYearMonth
             
-            // 너무 오래된 월이면 가장 오래된 리포트 반환
-            calendarMonth.isBefore(earliestReportMonth) -> earliestReportMonth
-            
-            // 그 외의 경우 해당 월의 리포트 반환
+            // 현재 월 포함 과거 월은 그대로 동일한 월의 리포트 반환
             else -> calendarMonth
         }
     }
@@ -161,7 +143,11 @@ class CalendarViewModel : ViewModel() {
             // 가계부 -> 소비 리포트: 현재 달력 월에 맞는 리포트 결정 및 로드
             val reportMonth = determineReportMonthForCalendarMonth(selectedYearMonth)
             selectedReportYearMonth = reportMonth
+            
+            // 모든 달에 대해 리포트 로드 (현재 달 포함)
             loadReportWithPattern(reportMonth)
+            
+            // 카드 및 카테고리 리포트는 항상 로드
             loadReportCards(reportMonth)
             loadReportCategories(reportMonth)
             
@@ -181,7 +167,11 @@ class CalendarViewModel : ViewModel() {
         if (canNavigateToPreviousReportMonth()) {
             val newReportMonth = selectedReportYearMonth.minusMonths(1)
             selectedReportYearMonth = newReportMonth
+            
+            // 모든 달에 대해 리포트 로드 (현재 달 포함)
             loadReportWithPattern(newReportMonth)
+            
+            // 카드 및 카테고리 리포트는 항상 로드
             loadReportCards(newReportMonth)
             loadReportCategories(newReportMonth)
             
@@ -196,7 +186,11 @@ class CalendarViewModel : ViewModel() {
         if (canNavigateToNextReportMonth()) {
             val newReportMonth = selectedReportYearMonth.plusMonths(1)
             selectedReportYearMonth = newReportMonth
+            
+            // 모든 달에 대해 리포트 로드 (현재 달 포함)
             loadReportWithPattern(newReportMonth)
+            
+            // 카드 및 카테고리 리포트는 항상 로드
             loadReportCards(newReportMonth)
             loadReportCategories(newReportMonth)
             
@@ -218,7 +212,11 @@ class CalendarViewModel : ViewModel() {
             if (selectedTabIndex == 1) {
                 val reportMonth = determineReportMonthForCalendarMonth(yearMonth)
                 selectedReportYearMonth = reportMonth
+                
+                // 모든 달에 대해 리포트 로드 (현재 달 포함)
                 loadReportWithPattern(reportMonth)
+                
+                // 카드 및 카테고리 리포트는 항상 로드
                 loadReportCards(reportMonth)
                 loadReportCategories(reportMonth)
                 
@@ -243,13 +241,11 @@ class CalendarViewModel : ViewModel() {
     
     /**
      * 현재 연월 기준으로 다음 달로 이동
+     * 미래 제한을 제거하고 자유롭게 이동 가능하도록 변경
      */
     fun navigateToNextMonth() {
-        // 현재 달 이후로는 이동 불가
-        if (selectedYearMonth.isBefore(YearMonth.now()) || 
-            selectedYearMonth.equals(YearMonth.now())) {
-            selectYearMonth(selectedYearMonth.plusMonths(1))
-        }
+        // 제한 없이 항상 다음 달로 이동 가능
+        selectYearMonth(selectedYearMonth.plusMonths(1))
     }
     
     /**
@@ -347,18 +343,27 @@ class CalendarViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                Log.d(TAG, "Loading report for $yearMonth")
+                val currentYearMonth = YearMonth.now()
+                val isCurrentMonth = yearMonth.year == currentYearMonth.year && 
+                                    yearMonth.monthValue == currentYearMonth.monthValue
+                
+                Log.d(TAG, "Loading report for $yearMonth (Current month: ${isCurrentMonth})")
                 repository.getReportWithPattern(yearMonth).fold(
                     onSuccess = { data ->
                         _reportData.value = data
-                        Log.d(TAG, "Successfully loaded report data")
-                        // data 객체의 toString() 메서드를 통해 로그 출력
-                        Log.d(TAG, "Report data: $data")
+                        Log.d(TAG, "Successfully loaded report data for $yearMonth (Current month: ${isCurrentMonth})")
+                        Log.d(TAG, "Report data: Total spending: ${data.totalSpendingAmount}, Benefits: ${data.totalBenefitAmount}")
+                        if (isCurrentMonth) {
+                            Log.d(TAG, "현재 달 리포트 데이터 로드 성공! 데이터: $data")
+                        }
                     },
                     onFailure = { e ->
-                        Log.e(TAG, "Error loading report: ${e.message}", e)
+                        Log.e(TAG, "Error loading report for $yearMonth: ${e.message}", e)
                         _error.value = e.message ?: "리포트를 불러오는 중 오류가 발생했습니다."
                         _reportData.value = null
+                        if (isCurrentMonth) {
+                            Log.e(TAG, "현재 달 리포트 데이터 로드 실패! 오류: ${e.message}")
+                        }
                     }
                 )
             } catch (e: Exception) {
