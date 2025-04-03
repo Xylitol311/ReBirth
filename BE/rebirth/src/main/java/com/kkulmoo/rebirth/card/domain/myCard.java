@@ -16,6 +16,7 @@ public class myCard {
 	private String cardUniqueNumber;
 	private String accountNumber;
 	private Short cardOrder;
+	private String cardName;
 	private Integer annualFee;
 	private String permanentToken;
 	private Short paymentCardOrder;
@@ -35,5 +36,10 @@ public class myCard {
 	// 결제 카드 순서 변경 메소드
 	public void changePaymentCardOrder(Short newOrder) {
 		this.paymentCardOrder = newOrder;
+	}
+
+	public myCard updateLatestLoadDataAt() {
+		this.latestLoadDataAt = LocalDateTime.now();
+		return this;
 	}
 }

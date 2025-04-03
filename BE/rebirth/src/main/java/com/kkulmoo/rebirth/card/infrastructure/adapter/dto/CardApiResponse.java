@@ -7,5 +7,5 @@ public class CardApiResponse {
 
 	private String cardUniqueNumber;
 	private String cardName;
-
+	private String cardNumber;
 }
