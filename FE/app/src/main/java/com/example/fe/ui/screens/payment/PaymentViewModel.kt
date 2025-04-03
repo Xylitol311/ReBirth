@@ -63,6 +63,13 @@ class PaymentViewModel : ViewModel() {
             paymentRepository.getPaymentTokens(userId)
                 .onSuccess { tokens ->
                     Log.e("PaymentViewModel", "initializePaymentProcess getPaymentTokens success")
+                    // API 응답에서 토큰 값이 null일 경우 대비
+                    if (tokens == null) {
+                        Log.e("PaymentViewModel", "Tokens from API is null")
+                        _paymentState.value = PaymentState.Error("결제 토큰을 가져올 수 없습니다")
+                        return@onSuccess
+                    }
+                    
                     _cardTokens.value = tokens
                     
                     // API 응답에서 카드 정보 추출 (추천 카드 제외)
