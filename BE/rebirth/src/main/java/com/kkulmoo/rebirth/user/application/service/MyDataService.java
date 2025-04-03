@@ -58,9 +58,6 @@ public class MyDataService {
     @Transactional
     public void loadMyBankTransaction() {
         // todo: 은행 거래내역 가져오기
-        // 그러면 어떤 계좌를 부를것인가를 고민해야한다.
-        // card에서 가져온 계좌? 아니면 모든 계좌를 업데이트?
-        // 계좌만 업데이트됐는데... 카드 거래내역이 업데이트 안되면 어떡해?
     }
 
 }
