@@ -4,4 +4,5 @@ public interface UserRepository{
 	User findByUserId(UserId userid);
 	boolean update(User user);
 	User save(User user);
+	User findByPhoneSerialNumber(String userCi);
 }

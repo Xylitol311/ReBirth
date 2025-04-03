@@ -1,5 +1,9 @@
 package com.kkulmoo.rebirth.user.domain;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,10 +13,13 @@ import java.util.List;
 @Getter
 @Builder
 public class User {
+
 	private final UserId userId;
 	private final String consumptionPatternId;
 	private final String userName;
 	private final String hashedPinNumber;
+	private final String hashedPatternNumber;
+	private final String monthdaybirth;
 	private final String phoneNumber;
 	private final String phoneSerialNumber;
 	private final String userCI;
@@ -21,6 +28,7 @@ public class User {
 	private LocalDateTime updatedAt;
 	private LocalDateTime deletedAt;
 	private LocalDateTime bankLatestLoadDataAt;
+	private final int averageMonthlyIncome;
 
 	public void delete() {
 		this.deletedAt = LocalDateTime.now();
