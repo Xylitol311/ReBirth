@@ -1,12 +1,17 @@
 package com.kkulmoo.rebirth.card.application;
 
+import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardsEntity;
+import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardsJpaRepository;
+import com.kkulmoo.rebirth.card.application.dto.CardResponse;
 import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.CardTemplate;
 import com.kkulmoo.rebirth.card.domain.myCard;
 import com.kkulmoo.rebirth.card.infrastructure.adapter.dto.CardApiResponse;
 import com.kkulmoo.rebirth.common.exception.CardProcessingException;
+import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,14 +28,53 @@ import java.util.stream.Collectors;
 public class CardService {
     private final CardRepository cardRepository;
     private final CardPort cardPort; // 인터페이스 의존
+    private final ReportCardsJpaRepository reportCardsJpaRepository;
 
+    public List<CardResponse> findCardsAndBenefitByUserId(UserId userId) {
+
+        List<myCard> userCards = findByUserId(userId);
+
+        List<CardResponse> responses = new ArrayList<>();
+
+        for (myCard card : userCards) {
+            CardTemplateEntity template = cardRepository.findCardTemplateEntityById(card.getCardTemplateId())
+                    .orElseThrow(() -> new EntityNotFoundException("카드 템플릿을 찾을 수 없습니다: " + card.getCardTemplateId()));
+
+            ReportCardsEntity latestReport = reportCardsJpaRepository
+                    .findTopByCardIdOrderByCreatedAtDesc(card.getCardId())
+                    .orElse(null);
+
+            List<Integer> performanceRange = template.getPerformanceRange();
+            Integer maxSpending = performanceRange.isEmpty() ? null : performanceRange.get(performanceRange.size() - 1);
+
+            Integer maxBenefitAmount = 0; // 아직 계산 못함.
+
+            Integer totalSpending = (latestReport != null) ? latestReport.getMonthSpendingAmount() : 0;
+            Integer receivedBenefitAmount = (latestReport != null) ? latestReport.getMonthBenefitAmount() : 0;
+
+
+            responses.add(CardResponse.builder()
+                    .cardId(card.getCardId())
+                    .cardImgUrl(template.getCardImgUrl())
+                    .cardName(template.getCardName())
+                    .totalSpending(totalSpending)
+                    .maxSpending(maxSpending)
+                    .performanceRange(performanceRange)
+                    .receivedBenefitAmount(receivedBenefitAmount)
+                    .maxBenefitAmount(maxBenefitAmount)
+                    .build());
+
+        }
+        return responses;
+    }
+
+    // 카드 정보만 가져오는 경우
+    public List<myCard> findByUserId(UserId userId) {
+        return cardRepository.findByUserId(userId);
+    }
 
     public List<myCard> getMyCardListByCardUniqueNumbers(List<String> cardUniqueNumbers) {
         return cardRepository.findByCardUniqueNumbers(cardUniqueNumbers);
-    }
-
-    public List<myCard> findByUserId(UserId userId){
-        return cardRepository.findByUserId(userId);
     }
 
     // 모든 카드데이터 불러오기.

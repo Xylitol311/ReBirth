@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @JsonFormat(shape= JsonFormat.Shape.OBJECT)
 public enum BenefitType {
 
-    discount("할인"),
-    mileage("적립"),
-    coupon("쿠폰");
+    DISCOUNT("할인"),
+    MILEAGE("적립"),
+    COUPON("쿠폰");
 
     final private String value;
 

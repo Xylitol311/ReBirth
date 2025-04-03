@@ -28,7 +28,7 @@ public class PaymentCard {
 
     private LocalDateTime deletedAt; // Soft Delete 적용
 
-    private Boolean isExpired;
+    private Short isExpired;
 
     private int annualFee;
 

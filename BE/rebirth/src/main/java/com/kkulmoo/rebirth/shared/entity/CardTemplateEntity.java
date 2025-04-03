@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "card_templates")
 @Getter
@@ -19,7 +21,7 @@ public class CardTemplateEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "card_template_id", nullable = false)
-    private int cardTemplateId;
+    private Integer cardTemplateId;
 
     @Column(name = "card_company_id", nullable = false)
     private Short cardCompanyId;
@@ -27,11 +29,11 @@ public class CardTemplateEntity {
     @Column(name = "card_name", length = 100, nullable = false)
     private String cardName;
 
-    @Column(name = "card_img_url", length = 255, nullable = false)
+    @Column(name = "card_img_url", nullable = false)
     private String cardImgUrl;
 
     @Column(name = "annual_fee", nullable = false)
-    private int annualFee;
+    private Integer annualFee;
 
     @Column(name = "card_detail_info", columnDefinition = "TEXT")
     private String cardDetailInfo;
@@ -42,5 +44,7 @@ public class CardTemplateEntity {
 
     @Column(name = "card_constellation_info", columnDefinition = "JSONB")
     private String cardConstellationInfo;
-}
 
+    @Column(name = "performance_range")
+    private List<Integer> performanceRange;
+}

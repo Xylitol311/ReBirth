@@ -1,6 +1,7 @@
 package com.kkulmoo.rebirth.card.domain;
 
 
+import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
 import lombok.Builder;
 import lombok.Getter;
 

@@ -1,7 +1,7 @@
 package com.kkulmoo.rebirth.transactions.infrastructure.repository.mapper;
 
+import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
 import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionResponse;
-import com.kkulmoo.rebirth.transactions.domain.CardBenefitType;
 import com.kkulmoo.rebirth.transactions.domain.Status;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.CardTransactionEntity;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.TransactionEntity;
@@ -32,7 +32,7 @@ public class CardTransactionResponseMapper {
                 .cardUniqueNumber(response.getCardUniqueNumber())
                 .status(Status.fromApprovalCode(response.getApprovalCode()))
                 .cardBenefitType(response.getBenefitType() != null ?
-                        CardBenefitType.valueOf(response.getBenefitType()) : null)
+                        BenefitType.valueOf(response.getBenefitType()) : null)
                 .benefitAmount(response.getBenefitAmount())
                 .build();
     }

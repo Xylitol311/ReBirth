@@ -6,6 +6,7 @@ import com.kkulmoo.rebirth.card.domain.myCard;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardEntityMapper;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardTemplateJpaRepository;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
+import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -22,6 +23,12 @@ public class CardRepositoryImpl implements CardRepository {
 	private final CardJpaRepository cardJpaRepository;
 	private final CardEntityMapper cardEntityMapper;
 	private final CardTemplateJpaRepository cardTemplateJpaRepository;
+
+	@Override
+	public Optional<CardTemplateEntity>findCardTemplateEntityById(Integer templateId){
+		return cardTemplateJpaRepository.findById(templateId);
+	}
+
 
 	@Override
 	public myCard save(myCard myCard) {
@@ -65,5 +72,7 @@ public class CardRepositoryImpl implements CardRepository {
 	public Optional<CardTemplate> findCardTemplateByCardName(String cardName) {
 		return null;
 	}
+
+
 
 }

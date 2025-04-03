@@ -34,7 +34,6 @@ public class AccountService {
 		AccountEntity account = AccountEntity.builder()
 			.accountNumber(accountDTO.getAccountNumber())
 			.userId(userId)
-			.balance(0L) // 초기 잔액
 			// 설정
 			.createdAt(accountDTO.getCreatedAt() != null ? accountDTO.getCreatedAt() : LocalDateTime.now())
 			.build();
@@ -45,8 +44,6 @@ public class AccountService {
 		// 5. DTO 변환 후 반환
 		return convertToDTO(savedAccount);
 	}
-
-
 
 
 	public boolean validateAccountOwnership(String userKey, String accountNumber) {
@@ -85,7 +82,6 @@ public class AccountService {
 		return AccountDTO.builder()
 			.accountNumber(account.getAccountNumber())
 			.userId(account.getUserId())
-			.balance(account.getBalance())
 			.createdAt(account.getCreatedAt())
 			.build();
 	}
@@ -94,7 +90,6 @@ public class AccountService {
 		return AccountEntity.builder()
 			.accountNumber(accountDTO.getAccountNumber())
 			.userId(accountDTO.getUserId())
-			.balance(accountDTO.getBalance())
 			.build();
 	}
 }

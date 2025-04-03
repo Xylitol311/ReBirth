@@ -14,6 +14,5 @@ import lombok.Setter;
 public class AccountDTO {
 	private String accountNumber;
 	private String userId;
-	private Long balance;
 	private LocalDateTime createdAt;
 }

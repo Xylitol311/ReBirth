@@ -13,6 +13,8 @@ public class BankAPI {
 	private final WebClient bankAPIClient;
 
 	public BankTransactionResponseDTO createTransaction(bankTransactionCreateDTO dto) {
+		System.out.println("뱅크 요청중.");
+		System.out.println(dto.toString());
 		return bankAPIClient.post()
 			.uri("/api/transactions")
 			.bodyValue(dto)
