@@ -43,7 +43,6 @@ public class CardService {
                 .createdAt(request.getCreatedAt())
                 .build();
 
-
         System.out.println(request.getAccountNumber());
         // 엔티티로 변환하여 저장하고 다시 도메인 객체로 변환
         Card save = cardRepository.save(card);
@@ -58,13 +57,11 @@ public class CardService {
     public PermanentToken getPermanentToken(
             String userCI,
             PermanentTokenRequest permanentTokenRequest) {
-        //영구토큰 받기
-        CardUniqueNumber cardUniqueNumber = CardUniqueNumber.of(permanentTokenRequest.getCardUniqueNumber());
 
         //User꺼내기
         Optional<User> optionalUser = userRepository.findByUserCI(userCI);
-        Optional<Card> optionalCard = cardRepository.findByCardUniqueNumber(
-                cardUniqueNumber
+        Optional<Card> optionalCard = cardRepository.findByCardNumber(
+                permanentTokenRequest.getCardNumber()
         );
 
         if (!optionalUser.isPresent()) {
@@ -84,7 +81,7 @@ public class CardService {
         }
 
         Optional<PermanentToken> existingToken = cardRepository.findTokenByCardUniqueNumber(
-                permanentTokenRequest.getCardUniqueNumber());
+                card.getCardUniqueNumber().getValue());
 
         return existingToken.get();
     }
