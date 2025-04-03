@@ -1,7 +1,5 @@
 package com.example.fe.ui.screens.onboard.auth
 
-
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,8 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,7 +19,7 @@ import com.example.fe.ui.screens.onboard.screen.setup.AdditionalSecurityStep
 
 
 @Composable
-fun PatternAuth(
+fun LoginPatternAuth(
     currentStep: AdditionalSecurityStep,
     onPatternConfirmed: (List<Int>) -> Unit,
     onStepChange: (AdditionalSecurityStep) -> Unit
@@ -39,7 +36,7 @@ fun PatternAuth(
         Spacer(modifier = Modifier.weight(0.1f))
 
         Text(
-            if (currentStep == AdditionalSecurityStep.PATTERN) "패턴을 설정해주세요"
+            if (currentStep == AdditionalSecurityStep.PATTERN) "패턴을 입력해주세요"
             else "패턴을 다시 입력해주세요",
             fontSize = 28.sp,
             fontWeight = FontWeight.Medium

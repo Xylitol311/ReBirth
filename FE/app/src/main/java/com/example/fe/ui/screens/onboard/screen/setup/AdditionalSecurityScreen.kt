@@ -1,4 +1,4 @@
-package com.example.app.ui.security
+package com.example.fe.ui.screens.onboard.screen.setup
 
 import android.content.Context
 import android.content.ContextWrapper
@@ -25,145 +25,13 @@ import com.example.fe.R
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.auth.FingerprintAuth
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
-import com.example.fe.ui.screens.onboard.auth.PinAuth
 import com.example.fe.ui.screens.onboard.components.AuthMethodOption
 
 
-enum class SecurityStep { PIN, PIN_CONFIRM, METHOD, PATTERN, PATTERN_CONFIRM, DONE }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SecuritySetupScreen(
-    navController: NavController,
-    viewModel: OnboardingViewModel
-) {
-    val context = LocalContext.current
-    var currentStep by remember { mutableStateOf(SecurityStep.PIN) }
-    val activity = remember { context.findActivity() }
-    var savedPattern by remember { mutableStateOf<List<Int>?>(null) }
+enum class AdditionalSecurityStep { METHOD, PATTERN, PATTERN_CONFIRM, DONE }
 
-    Scaffold(
-
-        //상단바
-        //PIN_CONFIRM하고 PATTERN_CONFIRM 일때만 상단바
-        topBar = {
-            SecuritySetupTopBar(currentStep) {
-                when (currentStep) {
-                    SecurityStep.PIN_CONFIRM -> currentStep = SecurityStep.PIN
-                    SecurityStep.PATTERN_CONFIRM -> currentStep = SecurityStep.PATTERN
-                    else -> {}
-                }
-            }
-        }
-    )
-    //본문
-    { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-            //조건에 따라 다른 화면 표시
-            when (currentStep) {
-
-                //PIN 관련 화면일 때
-                SecurityStep.PIN, SecurityStep.PIN_CONFIRM -> PinAuth(
-                    currentStep = currentStep,
-                    onPinConfirmed = { currentStep = SecurityStep.METHOD },
-                    onStepChange = { currentStep = it }
-                )
-
-                //지문 인식 또는 패턴 인증 방식 선택하기
-                SecurityStep.METHOD -> SecurityMethodSelection(
-                    onFingerprintSelected = {
-                        val biometricManager = BiometricManager.from(context)
-                        when (biometricManager.canAuthenticate(BIOMETRIC_STRONG)) {
-                            BiometricManager.BIOMETRIC_SUCCESS -> {
-                                activity?.let {
-                                    FingerprintAuth.authenticate(it) { success ->
-                                        if (success) {
-                                            viewModel.hasFingerprintAuth = true
-                                            currentStep = SecurityStep.DONE
-                                        }
-                                    }
-                                } ?: Toast.makeText(context, "생체인증을 사용할 수 없습니다", Toast.LENGTH_SHORT).show()
-                            }
-                            else -> Toast.makeText(context, "지문 인증이 불가능합니다. 패턴 인증을 사용하세요.", Toast.LENGTH_LONG).show()
-                        }
-                    },
-                    onPatternSelected = {
-                        currentStep = SecurityStep.PATTERN
-
-                                        },
-                    onSkip = {
-                        navController.navigate("registration_complete") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
-                    }
-                )
-
-                SecurityStep.PATTERN -> PatternAuth(
-
-                    currentStep = currentStep,
-                    onPatternConfirmed = {
-                        Log.d("PatternAUTH","savedPattern11 : $savedPattern / it : $it")
-                        savedPattern = it
-                        currentStep = SecurityStep.PATTERN_CONFIRM
-                    },
-                    onStepChange = { currentStep = it }
-                )
-
-                SecurityStep.PATTERN_CONFIRM -> PatternAuth(
-                    currentStep = currentStep,
-                    onPatternConfirmed = {
-                        Log.d("PatternAUTH","savedPattern : $savedPattern / it : $it")
-                        // 리스트 내용을 명시적으로 비교
-                        if (savedPattern != null && it.size == savedPattern!!.size &&
-                            it.zip(savedPattern!!).all { (a, b) -> a == b }) {
-                            viewModel.hasPatternAuth = true
-                            currentStep = SecurityStep.DONE
-                        } else {
-                            Toast.makeText(context, "패턴이 틀렸습니다. 다시 시도하세요.", Toast.LENGTH_SHORT).show()
-                            currentStep = SecurityStep.PATTERN
-                        }
-                    },
-                    onStepChange = { currentStep = it }
-                )
-
-                SecurityStep.DONE -> SecurityCompleteScreen {
-                    navController.navigate("registration_complete") {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SecuritySetupTopBar(currentStep: SecurityStep, onBack: () -> Unit) {
-    TopAppBar(
-        title = {},
-        navigationIcon = {
-            when (currentStep) {
-                SecurityStep.PIN_CONFIRM, SecurityStep.PATTERN_CONFIRM -> {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.size(54.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "뒤로가기",
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                }
-                else -> {}
-            }
-        }
-    )
-}
-
-
+// Helper function to find FragmentActivity from context
 fun Context.findActivity(): FragmentActivity? {
     var currentContext = this
     var level = 0
@@ -177,6 +45,106 @@ fun Context.findActivity(): FragmentActivity? {
     }
     Log.e("FingerAuth", "FragmentActivity를 찾지 못함")
     return null
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdditionalSecurityScreen(
+    navController: NavController,
+    viewModel: OnboardingViewModel
+) {
+    val context = LocalContext.current
+    var currentStep by remember { mutableStateOf(AdditionalSecurityStep.METHOD) }
+    val activity = remember { context.findActivity() }
+    var savedPattern by remember { mutableStateOf<List<Int>?>(null) }
+
+    Scaffold(
+        topBar = {
+            if (currentStep == AdditionalSecurityStep.PATTERN_CONFIRM) {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        IconButton(
+                            onClick = { currentStep = AdditionalSecurityStep.PATTERN },
+                            modifier = Modifier.size(54.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ArrowBack,
+                                contentDescription = "뒤로가기",
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                )
+            }
+        }
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            when (currentStep) {
+                AdditionalSecurityStep.METHOD -> SecurityMethodSelection(
+                    onFingerprintSelected = {
+                        val biometricManager = BiometricManager.from(context)
+                        when (biometricManager.canAuthenticate(BIOMETRIC_STRONG)) {
+                            BiometricManager.BIOMETRIC_SUCCESS -> {
+                                // Fixed the issue with `it` by using the activity variable
+                                if (activity != null) {
+                                    FingerprintAuth.authenticate(activity) { success ->
+                                        if (success) {
+                                            viewModel.hasFingerprintAuth = true
+                                            currentStep = AdditionalSecurityStep.DONE
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(context, "생체인증을 사용할 수 없습니다", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            else -> Toast.makeText(context, "지문 인증이 불가능합니다. 패턴 인증을 사용하세요.", Toast.LENGTH_LONG).show()
+                        }
+                    },
+                    onPatternSelected = {
+                        currentStep = AdditionalSecurityStep.PATTERN
+                    },
+                    onSkip = {
+                        navController.navigate("registration_complete") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        }
+                    }
+                )
+                AdditionalSecurityStep.PATTERN -> PatternAuth(
+                    currentStep = AdditionalSecurityStep.PATTERN, // Need to use SecurityStep enum here
+                    onPatternConfirmed = {
+                        Log.d("PatternAUTH","savedPattern11 : $savedPattern / it : $it")
+                        savedPattern = it
+                        currentStep = AdditionalSecurityStep.PATTERN_CONFIRM
+                    },
+                    onStepChange = { _ -> }
+                )
+
+                AdditionalSecurityStep.PATTERN_CONFIRM -> PatternAuth(
+                    currentStep = AdditionalSecurityStep.PATTERN_CONFIRM, // Need to use SecurityStep enum here
+                    onPatternConfirmed = {
+                        Log.d("PatternAUTH","savedPattern : $savedPattern / it : $it")
+                        // 리스트 내용을 명시적으로 비교
+                        if (savedPattern != null && it.size == savedPattern!!.size &&
+                            it.zip(savedPattern!!).all { (a, b) -> a == b }) {
+                            viewModel.hasPatternAuth = true
+                            currentStep = AdditionalSecurityStep.DONE
+                        } else {
+                            Toast.makeText(context, "패턴이 틀렸습니다. 다시 시도하세요.", Toast.LENGTH_SHORT).show()
+                            currentStep = AdditionalSecurityStep.PATTERN
+                        }
+                    },
+                    onStepChange = { _ -> }
+                )
+
+                AdditionalSecurityStep.DONE -> SecurityCompleteScreen {
+                    navController.navigate("registration_complete") {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

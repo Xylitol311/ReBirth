@@ -363,7 +363,7 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                 Button(
                     onClick = {
                         showAgreement = false
-                        navController.navigate("card_select")
+                        navController.navigate("pin_setup")
                     },
                     enabled = checkedItems.size == agreementItems.size,
                     modifier = Modifier
