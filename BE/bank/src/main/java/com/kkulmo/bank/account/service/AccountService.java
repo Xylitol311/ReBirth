@@ -46,8 +46,6 @@ public class AccountService {
 	}
 
 
-
-
 	public boolean validateAccountOwnership(String userKey, String accountNumber) {
 		// 계좌번호로 계좌 조회
 		AccountEntity account = accountRepository.findById(accountNumber)
