@@ -3,7 +3,7 @@ package com.example.fe.ui.screens.onboard.auth
 import android.widget.Toast
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.app.ui.security.SecurityStep
+
 import com.example.fe.ui.screens.onboard.components.NumberPad
 import com.example.fe.ui.screens.onboard.components.PinDots
 
@@ -14,12 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.fe.ui.screens.onboard.screen.setup.PinStep
 
 @Composable
 fun PinAuth(
-    currentStep: SecurityStep,
+    currentStep: PinStep,
     onPinConfirmed: () -> Unit,
-    onStepChange: (SecurityStep) -> Unit
+    onStepChange: (PinStep) -> Unit
 ) {
     val context = LocalContext.current
     var pinInput by remember { mutableStateOf("") }
@@ -36,7 +37,7 @@ fun PinAuth(
         Spacer(modifier = Modifier.weight(0.1f))
 
         Text(
-            if (currentStep == SecurityStep.PIN) "비밀번호를 설정해주세요"
+            if (currentStep == PinStep.PIN) "비밀번호를 설정해주세요"
             else "비밀번호를 다시 입력해주세요",
             fontSize = 28.sp,
             fontWeight = FontWeight.Medium
@@ -44,20 +45,20 @@ fun PinAuth(
 
         Spacer(modifier = Modifier.weight(0.15f))
 
-        PinDots(if (currentStep == SecurityStep.PIN) pinInput.length else confirmInput.length)
+        PinDots(if (currentStep == PinStep.PIN) pinInput.length else confirmInput.length)
 
         Spacer(modifier = Modifier.weight(0.3f))
 
         NumberPad(
-            numbers = if (currentStep == SecurityStep.PIN) pinShuffledNumbers else confirmShuffledNumbers,
-            input = if (currentStep == SecurityStep.PIN) pinInput else confirmInput,
+            numbers = if (currentStep == PinStep.PIN) pinShuffledNumbers else confirmShuffledNumbers,
+            input = if (currentStep == PinStep.PIN) pinInput else confirmInput,
             onInputChange = { newInput ->
-                if (currentStep == SecurityStep.PIN) pinInput = newInput else confirmInput = newInput
+                if (currentStep == PinStep.PIN) pinInput = newInput else confirmInput = newInput
             },
             onComplete = {
-                if (currentStep == SecurityStep.PIN) {
+                if (currentStep == PinStep.PIN) {
                     if (pinInput.length == 6) {
-                        onStepChange(SecurityStep.PIN_CONFIRM)
+                        onStepChange(PinStep.PIN_CONFIRM)
                     }
                 } else {
                     if (confirmInput.length == 6) {

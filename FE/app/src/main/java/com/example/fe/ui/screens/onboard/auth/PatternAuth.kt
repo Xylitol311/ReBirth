@@ -17,13 +17,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.app.ui.security.SecurityStep
 import com.example.fe.ui.screens.onboard.components.PatternGrid
+import com.example.fe.ui.screens.onboard.screen.setup.AdditionalSecurityStep
+
+
 @Composable
 fun PatternAuth(
-    currentStep: SecurityStep,
+    currentStep: AdditionalSecurityStep,
     onPatternConfirmed: (List<Int>) -> Unit,
-    onStepChange: (SecurityStep) -> Unit
+    onStepChange: (AdditionalSecurityStep) -> Unit
 ) {
     val context = LocalContext.current
     // 불필요한 내부 상태 제거
@@ -37,7 +39,7 @@ fun PatternAuth(
         Spacer(modifier = Modifier.weight(0.1f))
 
         Text(
-            if (currentStep == SecurityStep.PATTERN) "패턴을 설정해주세요"
+            if (currentStep == AdditionalSecurityStep.PATTERN) "패턴을 설정해주세요"
             else "패턴을 다시 입력해주세요",
             fontSize = 28.sp,
             fontWeight = FontWeight.Medium

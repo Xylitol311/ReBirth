@@ -43,7 +43,7 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
             ) {
                 Button(
                     onClick = {
-                        navController.navigate("security_setup")
+                        navController.navigate("additional_security_setup")
                     },
                     enabled = selectedCards.isNotEmpty(),
                     modifier = Modifier
