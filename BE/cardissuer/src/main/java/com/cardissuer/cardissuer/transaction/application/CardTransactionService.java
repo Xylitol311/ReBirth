@@ -13,15 +13,12 @@ import com.cardissuer.cardissuer.cards.domain.Card;
 import com.cardissuer.cardissuer.cards.domain.CardRepository;
 import com.cardissuer.cardissuer.cards.domain.CardUniqueNumber;
 import com.cardissuer.cardissuer.cards.domain.PermanentToken;
-import com.cardissuer.cardissuer.cards.infrastructure.PermanentTokenEntity;
 import com.cardissuer.cardissuer.common.exception.UserNotFoundException;
 import com.cardissuer.cardissuer.transaction.domain.CardTransaction;
 import com.cardissuer.cardissuer.transaction.domain.CardTransactionRepository;
 import com.cardissuer.cardissuer.transaction.infrastrucuture.BankAPI;
 import com.cardissuer.cardissuer.transaction.infrastrucuture.BankTransactionResponseDTO;
-import com.cardissuer.cardissuer.transaction.infrastrucuture.CardTransactionEntity;
 import com.cardissuer.cardissuer.transaction.presentation.CreateTransactionRequest;
-import com.cardissuer.cardissuer.user.domain.User;
 import com.cardissuer.cardissuer.user.domain.UserRepository;
 
 import lombok.RequiredArgsConstructor;

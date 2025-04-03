@@ -1,5 +1,6 @@
 package com.cardissuer.cardissuer.transaction.infrastrucuture;
 
+import com.cardissuer.cardissuer.transaction.infrastrucuture.entity.CardTransactionEntity;
 import org.mapstruct.Mapper;
 
 import com.cardissuer.cardissuer.cards.domain.CardUniqueNumber;
