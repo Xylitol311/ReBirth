@@ -10,6 +10,7 @@ import androidx.navigation.NavController
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.auth.PinAuth
 import com.example.fe.ui.screens.onboard.components.login.saveLoginMethod
+import kotlinx.coroutines.launch
 
 enum class PinStep { PIN, PIN_CONFIRM, DONE }
 
@@ -21,6 +22,7 @@ fun PinSetupScreen(
 ) {
     val context = LocalContext.current
     var currentStep by remember { mutableStateOf(PinStep.PIN) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -47,9 +49,13 @@ fun PinSetupScreen(
             when (currentStep) {
                 PinStep.PIN, PinStep.PIN_CONFIRM -> PinAuth(
                     currentStep = if (currentStep == PinStep.PIN) PinStep.PIN else PinStep.PIN_CONFIRM,
-                    onPinConfirmed = {
+                    onPinConfirmed = { pin ->
                         viewModel.hasPinAuth = true
-                        currentStep = PinStep.DONE
+                        viewModel.setUserPin(pin)
+                        scope.launch {
+                            saveLoginMethod(context, "pin")
+                            currentStep = PinStep.DONE
+                        }
                     },
                     onStepChange = {
                         currentStep = when (it) {
@@ -62,7 +68,6 @@ fun PinSetupScreen(
 
                 PinStep.DONE -> {
                     LaunchedEffect(Unit) {
-                        saveLoginMethod(context, "pin")
                         navController.navigate("card_select")
                     }
                 }

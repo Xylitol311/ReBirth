@@ -19,7 +19,7 @@ import com.example.fe.ui.screens.onboard.screen.setup.PinStep
 @Composable
 fun PinAuth(
     currentStep: PinStep,
-    onPinConfirmed: () -> Unit,
+    onPinConfirmed: (String) -> Unit,
     onStepChange: (PinStep) -> Unit
 ) {
     val context = LocalContext.current
@@ -63,7 +63,7 @@ fun PinAuth(
                 } else {
                     if (confirmInput.length == 6) {
                         if (pinInput == confirmInput) {
-                            onPinConfirmed()
+                            onPinConfirmed(pinInput)
                         } else {
                             Toast.makeText(
                                 context,

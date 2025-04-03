@@ -10,27 +10,25 @@ import androidx.navigation.NavController
 import com.example.fe.ui.screens.onboard.auth.PinLoginAuth
 import com.example.fe.ui.screens.onboard.screen.setup.PinStep
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PinLoginScreen(
     navController: NavController,
-    viewModel: OnboardingViewModel
+    viewModel: OnboardingViewModel,
+    onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
     var currentStep by remember { mutableStateOf(PinStep.PIN) }
     Scaffold(
         //상단 및 하단바 없음
-
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-                PinLoginAuth(
-                    onSuccessfulLogin = {
-                        navController.navigate("home")
-                    }
-
-                )
+            PinLoginAuth(
+                onSuccessfulLogin = {
+                    onLoginSuccess()
+                },
+                viewModel = viewModel
+            )
         }
     }
 }

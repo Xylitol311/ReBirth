@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,8 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.ui.screens.onboard.components.PatternGrid
-import com.example.fe.ui.screens.onboard.screen.setup.AdditionalSecurityStep
-
+import com.example.fe.ui.screens.onboard.screen.setup.security.AdditionalSecurityStep
 
 @Composable
 fun LoginPatternAuth(
@@ -25,7 +24,6 @@ fun LoginPatternAuth(
     onStepChange: (AdditionalSecurityStep) -> Unit
 ) {
     val context = LocalContext.current
-    // 불필요한 내부 상태 제거
 
     Column(
         modifier = Modifier
@@ -36,33 +34,24 @@ fun LoginPatternAuth(
         Spacer(modifier = Modifier.weight(0.1f))
 
         Text(
-            if (currentStep == AdditionalSecurityStep.PATTERN) "패턴을 입력해주세요"
-            else "패턴을 다시 입력해주세요",
+            "패턴을 입력해주세요",
             fontSize = 28.sp,
             fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.weight(0.15f))
 
         PatternGrid(
             onPatternComplete = { pattern ->
-                if (pattern is List<*> && pattern.all { it is Int }) {
-                    val validPattern = pattern.filterIsInstance<Int>()
-
-                    if (validPattern.size < 4) {
-                        Toast.makeText(
-                            context,
-                            "최소 4개 이상의 점을 연결해주세요",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@PatternGrid
-                    }
-
-                    // 패턴을 부모 컴포넌트로 전달
-                    onPatternConfirmed(validPattern)
+                if (pattern.size >= 4) {
+                    onPatternConfirmed(pattern)
+                } else {
+                    Toast.makeText(context, "패턴이 너무 짧습니다", Toast.LENGTH_SHORT).show()
                 }
             },
             showConfirmButton = false
         )
+
+        Spacer(modifier = Modifier.weight(0.05f))
     }
 }
