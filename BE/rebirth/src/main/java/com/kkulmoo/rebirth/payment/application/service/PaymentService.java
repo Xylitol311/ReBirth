@@ -183,7 +183,7 @@ public class PaymentService {
         MerchantJoinDto merchantJoinData = merchantJoinRepository.findMerchantJoinDataByMerchantName(merchantName);
 
         // 2. userId를 기반으로 갖고 있는 카드 목록과 카드별 카드 템플릿 ID, 실적 구간, 영구토큰 가져오기
-        List<MyCardDto> myCardDtos = cardJoinRepository.findMyCardIdAndTemplateIdByUserId(userId);
+        List<MyCardDto> myCardDtos = cardJoinRepository.findMyCardsIdAndTemplateIdsByUserId(userId);
 
         Queue<CalculatedBenefitDto> benefitQueue = new PriorityQueue<>(
                 Comparator.comparingInt(CalculatedBenefitDto::getBenefitAmount).reversed()
@@ -191,7 +191,7 @@ public class PaymentService {
 
         for (MyCardDto myCardDto : myCardDtos) {
             // 유저가 가진 카드의 혜택 정보 가져오기
-            List<BenefitInfo> benefitInfos = benefitRepository.findByMerchantFilter(
+            List<BenefitInfo> benefitInfos = benefitRepository.findBenefitsByMerchantFilter(
                     myCardDto.getCardTemplateId(),
                     merchantJoinData.getCategoryId(),
                     merchantJoinData.getSubCategoryId(),

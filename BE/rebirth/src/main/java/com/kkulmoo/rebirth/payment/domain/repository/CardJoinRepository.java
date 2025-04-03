@@ -5,5 +5,5 @@ import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
 import java.util.List;
 
 public interface CardJoinRepository {
-    List<MyCardDto> findMyCardIdAndTemplateIdByUserId(Integer userId);
+    List<MyCardDto> findMyCardsIdAndTemplateIdsByUserId(Integer userId);
 }

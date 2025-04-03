@@ -15,5 +15,5 @@ public interface CardJoinJpaRepository extends JpaRepository<CardEntity, Integer
             "FROM CardEntity c " +
             "WHERE c.userId = :userId"
     )
-    List<MyCardDto> findMyCardIdAndTemplateIdByUserId(Integer userId);
+    List<MyCardDto> findMyCardsIdAndTemplateIdsByUserId(Integer userId);
 }

@@ -16,7 +16,7 @@ public interface BenefitJpaRepository extends JpaRepository<BenefitTemplateEntit
             "    OR (b.merchantFilterType = 2 AND (:subcategoryId MEMBER OF b.subcategoryIds OR :categoryId MEMBER OF b.categoryIds)) " +
             "    OR (b.merchantFilterType = 3 AND :merchantId MEMBER OF b.merchantList) " +
             ")")
-    List<BenefitTemplateEntity> findBenefitByTypeCondition(
+    List<BenefitTemplateEntity> findBenefitsByTypeCondition(
             @Param("cardTemplateId") int cardTemplateId,
             @Param("categoryId") int categoryId,
             @Param("subcategoryId") int subcategoryId,
