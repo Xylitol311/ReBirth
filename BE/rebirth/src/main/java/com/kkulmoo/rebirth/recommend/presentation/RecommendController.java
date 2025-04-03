@@ -5,6 +5,7 @@ import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategori
 import com.kkulmoo.rebirth.recommend.application.RecommendService;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardForCategoryDTO;
+import com.kkulmoo.rebirth.recommend.domain.dto.response.Top3CardDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,24 +22,24 @@ public class RecommendController {
 
     private final RecommendService recommendService;
 
-    @GetMapping("/top3forall")
+    @GetMapping("/top3")
     public ResponseEntity<ResponseDTO> top3ForAll(@RequestParam Integer userId) {
 
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
-        result.setMessage("전체 top3 카드 추천 완료");
-        List<RecommendCardDTO> data = recommendService.calculateRecommendCardForAll(userId);
-        List<RecommendCardDTO> subList = data.subList(0, Math.min(3, data.size()));
-        result.setData(subList);
+        result.setMessage("전체 top3 카드 추천");
+        Top3CardDTO data = recommendService.calculateRecommendCardForAll(userId);
+
+        result.setData(data);
         return ResponseEntity.ok().body(result);
     }
 
-    @GetMapping("/top3forcategory")
+    @GetMapping("/category")
     public ResponseEntity<ResponseDTO> top3ForCategory(@RequestParam Integer userId) {
 
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
-        result.setMessage("카테고리별 top3 카드 추천 완료");
+        result.setMessage("카테고리별 top3 카드 추천");
         List<RecommendCardForCategoryDTO> data = recommendService.calculateRecommendCardForCategory(userId);
         result.setData(data);
         return ResponseEntity.ok().body(result);

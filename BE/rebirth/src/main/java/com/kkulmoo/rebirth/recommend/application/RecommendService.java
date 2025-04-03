@@ -9,6 +9,7 @@ import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.AvgAmountByCategoryDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardForCategoryDTO;
+import com.kkulmoo.rebirth.recommend.domain.dto.response.Top3CardDTO;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import lombok.RequiredArgsConstructor;
@@ -26,21 +27,20 @@ public class RecommendService {
     private final CardsJpaRepository cardsJpaRepository;
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
 
-    public List<RecommendCardDTO> calculateRecommendCardForAll(Integer userId) {
+    public Top3CardDTO calculateRecommendCardForAll(Integer userId) {
 
         // 전체 카드 중 사용자에게 맞는 카드 추천
         // 1. 우선 사용자가 가장 많이 사용하는 카테고리 5개에 대한 소비 내역을 들고 오자.
         //  - 3개월 기반이니까 3개월 카테고리별 평균으로 가져오면 좋을 듯
         List<AvgAmountByCategoryDTO> avgAmountByCategoryList = reportCardCategoriesJpaRepository.getCategorySpendingLast3Months(userId);
-
+        int totalSpending = 0;
         // 2. 가져온 카테고리에 해당하는 혜택 템플릿 다 가져오자. 보유 여부 관계 없이
         Map<Integer,Double> scoreForCards = new HashMap<>();
         for(AvgAmountByCategoryDTO avgAmountByCategory : avgAmountByCategoryList) {
            List<BenefitTemplateEntity> benefitsForCategory = benefitTemplateJpaRepository.findByCategoryId(avgAmountByCategory.getCategoryId());
-
+           totalSpending += avgAmountByCategory.getTotalSpending();
            // 3. 템플릿 하나하나 보면서 카테고리별 점수 계산, 맵에다 카드별로 점수 합산
            for(BenefitTemplateEntity benefitForCategory : benefitsForCategory) {
-               System.out.println("으잉? "+benefitForCategory);
                double score = 0;
                if(benefitForCategory.getDiscountType().equals(DiscountType.PERCENT)) {
                    score = avgAmountByCategory.getAvgTotalSpending()*benefitForCategory.getBenefitsBySection().get(0)/100.0;
@@ -79,12 +79,17 @@ public class RecommendService {
                     .build();
 
             cards.add(card);
-            System.out.println(cardTemplate.getCardName()+" "+score);
         }
 
         Collections.sort(cards, Comparator.comparing(RecommendCardDTO::getScore).reversed());
+        List<RecommendCardDTO> subList = cards.subList(0, Math.min(3, cards.size()));
+        Top3CardDTO top3CardDTO = Top3CardDTO
+                .builder()
+                .amount(totalSpending)
+                .recommendCards(subList)
+                .build();
 
-        return cards;
+        return top3CardDTO;
     }
 
     public List<RecommendCardForCategoryDTO> calculateRecommendCardForCategory(Integer userId) {
@@ -99,7 +104,6 @@ public class RecommendService {
 
             // 3. 템플릿 하나하나 보면서 카테고리별 점수 계산, 맵에다 카드별로 점수 합산
             for(BenefitTemplateEntity benefitForCategory : benefitsForCategory) {
-                System.out.println("으잉? "+benefitForCategory);
                 double score = 0;
                 if(benefitForCategory.getDiscountType().equals(DiscountType.PERCENT)) {
                     score = avgAmountByCategory.getAvgTotalSpending()*benefitForCategory.getBenefitsBySection().get(0)/100.0;
@@ -137,7 +141,6 @@ public class RecommendService {
                         .build();
 
                 cards.add(card);
-                System.out.println(cardTemplate.getCardName()+" "+score);
             }
             Collections.sort(cards, Comparator.comparing(RecommendCardDTO::getScore).reversed());
             List<RecommendCardDTO> recommendCards = cards.subList(0, Math.min(3, cards.size()));
@@ -145,6 +148,7 @@ public class RecommendService {
                     .builder()
                     .categoryId(avgAmountByCategory.getCategoryId())
                     .categoryName(avgAmountByCategory.getCategoryName())
+                    .amount(avgAmountByCategory.getTotalSpending())
                     .recommendCards(recommendCards)
                     .build();
 
