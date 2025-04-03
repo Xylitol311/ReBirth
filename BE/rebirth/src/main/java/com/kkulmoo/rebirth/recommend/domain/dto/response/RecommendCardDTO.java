@@ -11,22 +11,16 @@ import lombok.*;
 @Builder
 public class RecommendCardDTO {
 
-    @JsonProperty("card_id")
     private Integer cardId;
 
-    @JsonProperty("card_name")
     private String cardName;
 
-    @JsonProperty("card_info")
     private String cardInfo;
 
-    @JsonProperty("img_url")
     private String imgUrl;
 
-    @JsonProperty("score")
     private Integer score;
 
-    @JsonProperty("constellation")
     private String constellation;
 
 }

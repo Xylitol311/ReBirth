@@ -11,11 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-public class RecommendCardForCategoryDTO {
-
-    private Integer categoryId;
-
-    private String categoryName;
+public class Top3CardDTO {
 
     private Integer amount;
 

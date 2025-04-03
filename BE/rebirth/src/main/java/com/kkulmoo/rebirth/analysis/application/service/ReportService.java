@@ -307,7 +307,7 @@ public class ReportService {
                         .extrovert(pattern[2])
                         .reportDescription(answer)
                         .build();
-                System.out.println("설마? "+monthlyConsumptionReport);
+
                 monthlyConsumptionReportJpaRepository.save(monthlyConsumptionReport);
             } else {
                 mcr.setReport(report);
