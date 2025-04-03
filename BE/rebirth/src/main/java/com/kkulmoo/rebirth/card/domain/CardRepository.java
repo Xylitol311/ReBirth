@@ -3,6 +3,7 @@ package com.kkulmoo.rebirth.card.domain;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.UserId;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,5 +23,8 @@ public interface CardRepository {
 
 	Optional<CardTemplate> findCardTemplateByCardName (String cardName);
 
+	List<myCard> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds);
+
+	void saveAll(Collection<myCard> cards);
 
 }

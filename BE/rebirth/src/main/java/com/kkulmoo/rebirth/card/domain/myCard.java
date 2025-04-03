@@ -27,4 +27,13 @@ public class myCard {
 	private LocalDateTime createdAt;
 	private LocalDateTime deletedAt;
 	private LocalDateTime latestLoadDataAt;
+
+	public void changeCardOrder(Short newOrder) {
+		this.cardOrder = newOrder;
+	}
+
+	// 결제 카드 순서 변경 메소드
+	public void changePaymentCardOrder(Short newOrder) {
+		this.paymentCardOrder = newOrder;
+	}
 }

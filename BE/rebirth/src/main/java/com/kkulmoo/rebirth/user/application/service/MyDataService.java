@@ -49,6 +49,7 @@ public class MyDataService {
 
     }
 
+
     @Transactional
     public void loadMyBankTransaction() {
         // todo: 은행 거래내역 가져오기

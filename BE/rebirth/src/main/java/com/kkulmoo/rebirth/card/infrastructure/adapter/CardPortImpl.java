@@ -36,7 +36,7 @@ public class CardPortImpl implements CardPort {
 
             // WebClient로 API 호출 후 바로 List<CardApiResponse>로 반환
             List<CardApiResponse> cardList = cardIssuerAPIClient.post()
-                    .uri("/cards")
+                    .uri("/api/cards/list")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(CardDataRequest.builder().userCI(user.getUserCI()))
                     .retrieve()
