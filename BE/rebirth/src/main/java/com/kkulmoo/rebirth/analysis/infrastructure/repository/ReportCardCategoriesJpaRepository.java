@@ -53,6 +53,7 @@ public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportC
     AND mts.user_id = :userId
     GROUP BY rcc.category_id, c.category_name
     ORDER BY avg_total_spending DESC
+    LIMIT 5
     """, nativeQuery = true)
     List<AvgAmountByCategoryDTO> getCategorySpendingLast3Months(Integer userId);
 }

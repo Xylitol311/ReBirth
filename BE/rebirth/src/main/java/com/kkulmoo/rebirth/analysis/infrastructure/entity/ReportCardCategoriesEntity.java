@@ -21,7 +21,6 @@ public class ReportCardCategoriesEntity {
     @Column(name = "report_category_id")
     private Integer reportCategoryId;
 
-//    @Column(name = "report_card_id")
     @JoinColumn(name = "report_card_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private ReportCardsEntity reportCard;

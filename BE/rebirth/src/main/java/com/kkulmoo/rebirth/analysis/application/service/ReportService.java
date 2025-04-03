@@ -54,7 +54,7 @@ public class ReportService {
                 ReportCardsEntity newReportCard = ReportCardsEntity
                         .builder()
                         .reportId(report.getReportId())
-                        .cardId((Integer) monthlyTransaction.getCardId())
+                        .cardId(monthlyTransaction.getCardId())
                         .monthBenefitAmount(0)
                         .monthSpendingAmount(0)
                         .createdAt(now)
@@ -80,7 +80,7 @@ public class ReportService {
                         .build();
 
                 int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCategoryId();
-//                reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
+
 
                 reportCardCategory = reportCardCategoriesJpaRepository.findById(reportCardCategoryId)
                         .orElseThrow(() -> new EntityNotFoundException("Entity not found after saving: " + newReportCardCategory.getReportCard().getReportCardId()));
@@ -119,14 +119,14 @@ public class ReportService {
         report.setReceivedBenefitAmount(total[1]);
     }
 
-//    @Transactional
+    @Transactional
     public void startWithMyData(UserEntity user) {
         for (int i = 0; i < 6; i++) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
             int year = now.getYear();
             int month = now.getMonthValue();
-            MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);;
-//            MonthlyTransactionSummaryEntity monthlyTransactionSummary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
+            MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
+
             if (report == null) {
                 MonthlyTransactionSummaryEntity monthlyTransactionSummary = MonthlyTransactionSummaryEntity
                         .builder()
