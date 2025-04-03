@@ -41,6 +41,4 @@ public class BenefitInfo {
     private List<Short> benefitUsageAmount;
 
     private DiscountType discountType;
-
-    private Integer discountAmount;
 }
