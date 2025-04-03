@@ -16,6 +16,8 @@ public interface CardRepository {
 
 	Optional<Card> findByCardUniqueNumber(CardUniqueNumber cardUniqueNumber);
 
+	Optional<Card> findByCardNumber(String cardNumber);
+
 	void updateCard(Card card);
 
 	Optional<PermanentToken> findTokenByCardUniqueNumber(String cardUniqueNumber);

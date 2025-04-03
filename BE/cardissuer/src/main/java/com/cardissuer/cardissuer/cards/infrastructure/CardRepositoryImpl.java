@@ -33,6 +33,12 @@ public class CardRepositoryImpl implements CardRepository {
 	}
 
 	@Override
+	public Optional<Card> findByCardNumber(String cardNumber) {
+		Optional<CardEntity> cardEntity = cardJpaRepository.findByCardNumber(cardNumber);
+		return cardEntity.map(cardEntityMapper::toDomain);
+	}
+
+	@Override
 	public Optional<Card> findByCardUniqueNumber(CardUniqueNumber cardUniqueNumber) {
 		System.out.println(cardUniqueNumber.getValue());
 		System.out.println("다들어오고 있어요");
