@@ -5,6 +5,7 @@ import com.kkulmoo.rebirth.card.application.CardService;
 import com.kkulmoo.rebirth.card.domain.myCard;
 import com.kkulmoo.rebirth.transactions.application.dto.*;
 import com.kkulmoo.rebirth.transactions.application.mapper.TransactionHistoryMapper;
+import com.kkulmoo.rebirth.transactions.domain.MerchantCache;
 import com.kkulmoo.rebirth.transactions.domain.TransactionRepository;
 import com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto.BankTransactionResponse;
 import com.kkulmoo.rebirth.transactions.presentation.CardHistoryTransactionRequest;
@@ -31,6 +32,7 @@ public class TransactionService {
     private final BankPort bankPort;
     private final CardService cardService;
     private final TransactionHistoryMapper mapper;
+    private final MerchantCache merchantCache;
 
     public TransactionHistoryResponseData getCardTransactionHistory(CardHistoryTransactionRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getPageSize());
@@ -74,9 +76,14 @@ public class TransactionService {
         cardTransaction.subscribe(transactions -> {
             if (!transactions.isEmpty()) {
                 List<CardTransactionResponse> transactionsWithUserId = transactions.stream()
+                        .peek(transaction -> {
+                            // 각 개별 트랜잭션 로깅
+                            log.info("개별 트랜잭션: {}", transaction.toString());
+                        })
                         .map(transaction ->
-                                transaction.withUserIdAndMerchantId(user.getUserId()
-                                        , transaction.getMerchantName())
+                                transaction.withUserIdAndMerchantNameAndMerchantId(user.getUserId()
+                                        , transaction.getMerchantName()
+                                                , merchantCache.getMerchantIdByName(transaction.getMerchantName()))
                         )
                         .toList();
                 // 한 번에 모든 트랜잭션 저장
@@ -87,6 +94,7 @@ public class TransactionService {
             log.error("카드 거래내역 처리 중 오류 발생: {}", error.getMessage(), error);
         });
     }
+
 
     // bank내역 가져오기.
 }

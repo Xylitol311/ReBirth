@@ -4,6 +4,7 @@ import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.CardTemplate;
 import com.kkulmoo.rebirth.card.domain.myCard;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardEntityMapper;
+import com.kkulmoo.rebirth.card.infrastructure.mapper.CardTemplateMapper;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardTemplateJpaRepository;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
@@ -24,6 +25,7 @@ public class CardRepositoryImpl implements CardRepository {
     private final CardJpaRepository cardJpaRepository;
     private final CardEntityMapper cardEntityMapper;
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
+    private final CardTemplateMapper cardTemplateMapper;
 
     @Override
     public Optional<CardTemplateEntity> findCardTemplateEntityById(Integer templateId) {
@@ -66,12 +68,14 @@ public class CardRepositoryImpl implements CardRepository {
 
     @Override
     public Optional<myCard> findByCardUniqueNumber(String cardUniqueNumber) {
-        return Optional.empty();
+        return cardJpaRepository.findByCardUniqueNumber(cardUniqueNumber)
+                .map(cardEntityMapper::toCard);
     }
 
     @Override
     public Optional<CardTemplate> findCardTemplateByCardName(String cardName) {
-        return null;
+        return cardTemplateJpaRepository.findByCardName(cardName)
+                .map(cardTemplateMapper::toDomain); // Entity를 Domain 객체로 변환
     }
 
     @Override
@@ -90,4 +94,10 @@ public class CardRepositoryImpl implements CardRepository {
 
         cardJpaRepository.saveAll(entities);
     }
+
+    @Override
+    public Integer countByUserId(UserId userId) {
+        return cardJpaRepository.countByUserId(userId.getValue());
+    }
+
 }

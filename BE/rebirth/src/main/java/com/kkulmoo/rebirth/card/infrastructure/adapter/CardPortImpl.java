@@ -12,6 +12,7 @@ import com.kkulmoo.rebirth.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -30,15 +31,23 @@ public class CardPortImpl implements CardPort {
     @Qualifier("cardIssuerAPIClient") // 또는 secondApiClient 중 적절한 것 선택
     private final WebClient cardIssuerAPIClient;
 
+    @Value("${api.cardissuer.base-url}")
+    private String firstApiBaseUrl;
+
     @Override
     public List<CardApiResponse> fetchCardData(User user) {
         try {
+
+            String endpoint = firstApiBaseUrl + "/api/cards/list";
+            log.info("카드 API 요청 URL: {}", endpoint);
+            log.info("요청 바디: {}", CardDataRequest.builder().userCI(user.getUserCI()).toString());
+
 
             // WebClient로 API 호출 후 바로 List<CardApiResponse>로 반환
             List<CardApiResponse> cardList = cardIssuerAPIClient.post()
                     .uri("/api/cards/list")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(CardDataRequest.builder().userCI(user.getUserCI()))
+                    .bodyValue(CardDataRequest.builder().userCI(user.getUserCI()).build())
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<CardApiResponse>>() {
                     })
@@ -67,7 +76,7 @@ public class CardPortImpl implements CardPort {
                             .build();
 
                     return cardIssuerAPIClient.post()
-                            .uri("/transactions/search")
+                            .uri("/api/transactions/getMyData")
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(singleRequest)
                             .retrieve()
