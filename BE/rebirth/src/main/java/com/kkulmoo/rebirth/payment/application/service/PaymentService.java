@@ -9,11 +9,13 @@ import com.kkulmoo.rebirth.payment.domain.repository.*;
 import com.kkulmoo.rebirth.payment.infrastructure.dto.MerchantJoinDto;
 import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
+import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,6 +23,7 @@ import java.util.*;
 //
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
     private final CardsRepository cardsRepository;
@@ -177,17 +180,16 @@ public class PaymentService {
      * 3-3. 구해진 혜택량과 혜택id를 포함한 객체를 우선순위 큐에 저장.(정렬은 혜택량 기준)
      * 4. 가장 혜택이 큰 혜택 id를 통해 보유 카드의 영구 토큰을 반환
      */
-    public String recommendPaymentCard(Integer userId, int amount, String merchantName) {
-        String permanentToken = "이게 반환됐다고? ㅅㄱ 망함!";
+    public CalculatedBenefitDto recommendPaymentCard(Integer userId, int amount, String merchantName) {
+        String permanentToken = "이게 반환됐다고? 망했습니다 :)";
         // 1. 가맹점 이름으로 가맹점 id, 카테고리 대분류, 소분류 id 가져오기
         MerchantJoinDto merchantJoinData = merchantJoinRepository.findMerchantJoinDataByMerchantName(merchantName);
 
         // 2. userId를 기반으로 갖고 있는 카드 목록과 카드별 카드 템플릿 ID, 실적 구간, 영구토큰 가져오기
         List<MyCardDto> myCardDtos = cardJoinRepository.findMyCardIdAndTemplateIdByUserId(userId);
 
-        // 3. 카드 템플릿 ID 기반으로 혜택 템플릿 조회해서 특정 가맹점, 특정 카테고리가 일치하거나 전체 가맹점인 혜택 전부 가져오기
-        Queue<CalculatedBenefit> benefitQueue = new PriorityQueue<>(
-                Comparator.comparingInt(CalculatedBenefit::getBenefitAmount).reversed()
+        Queue<CalculatedBenefitDto> benefitQueue = new PriorityQueue<>(
+                Comparator.comparingInt(CalculatedBenefitDto::getBenefitAmount).reversed()
         );
 
         for (MyCardDto myCardDto : myCardDtos) {
@@ -204,7 +206,12 @@ public class PaymentService {
                 // 해당 혜택의 적용 금액 계산
                 int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
                 // 계산된 결과를 객체로 생성(카드 영구토큰, 혜택 금액, 혜택 id)
-                CalculatedBenefit calculatedBenefit = new CalculatedBenefit(myCardDto.getPermanentToken(), benefitInfo.getBenefitId(), discountAmount);
+                CalculatedBenefitDto calculatedBenefit = CalculatedBenefitDto.builder()
+                        .myCardId(myCardDto.getCardId())
+                        .permanentToken(myCardDto.getPermanentToken())
+                        .benefitId(benefitInfo.getBenefitId())
+                        .benefitAmount(discountAmount)
+                        .build();
                 // 우선순위 큐에 추가
                 benefitQueue.add(calculatedBenefit);
             }
@@ -212,41 +219,78 @@ public class PaymentService {
 
         // 우선순위 큐에서 혜택 금액이 가장 큰 항목의 permanentToken 반환
         if (!benefitQueue.isEmpty()) {
-            CalculatedBenefit bestBenefit = benefitQueue.peek();
-            permanentToken = bestBenefit.getPermanentToken();
+            return benefitQueue.poll();
         }
 
-        return permanentToken;
+        // 예외 처리 필요
+        log.error("혜택 계산 실패. 로직이 끝났으나 결과값 없음");
+        return null;
     }
 
-    // 혜택 계산 결과(예시)를 구하는 메서드 (실제 로직에 맞게 구현)
+    // 혜택 금액 계산 메서드
     private int calculateBenefitAmount(BenefitInfo benefitInfo, int amount, UserCardBenefit userCardBenefit) {
-        // 1. 혜택 계산 구분 방식이 1,3인 경우, userCardBenefit에서 가져온 실적 구간 정보 확인해서 해당하는 혜택 계산.
-        // => 최종 적용되는 혜택 금액 계산
+        // 최소 실적조차 못 채운 경우
+        if (userCardBenefit.getSpendingTier() == 0)
+            return 0;
+
+        Double benefit = 0.0;
         int result = 0;
-        // 전월 실적 조건
+        int spendingTier = userCardBenefit.getSpendingTier(); // 현재 혜택의 실적 구간
 
-        // 건당 결제 금액
-        // 복합(실적 먼저 파악 후 건당 결제 금액 고려)
+        // <<혜택 계산 (실적 단일/구간의 경우 userCardBenefit에 있는 실적 구간으로 혜택 파악 가능)>>
+        // 조건이 없거나 실적 조건인 경우
+        if (benefitInfo.getBenefitConditionType() == 4 ||
+                benefitInfo.getBenefitConditionType() == 1) {
+            // benefitInfo.getBenefitConditionType() <= 실적 구간을 이용해 혜택 계산
+            benefit = benefitInfo.getBenefitsBySection().get(spendingTier - 1);
+        }
 
+        // 건당 결제 금액 조건
+        if (benefitInfo.getBenefitConditionType() == 2) {
+            benefit = calculateBenefit(benefitInfo, amount);
+        }
 
+        // 복합 (전월 실적 먼저 확인하고 결제 구간 계산)
+        if (benefitInfo.getBenefitConditionType() == 3 && spendingTier >= 1) {
+            benefit = calculateBenefit(benefitInfo, amount);
+        }
 
-        // 2. 제한 한도 확인 -> 최종 혜택량 구하기.
-        // 2-1. 이미 한도를 다 채운 경우 => 0
-        // 2-2. 한도가 얼마 안 남아서 이번에 혜택에서 일부를 빼야 하는 경우 => 뺀 금액
-        // 2-3. 한도가 여유가 있어서 한번에 다 받을 수 있는 경우 => 1 금액
-        // 3. 구해진 혜택량 반환
+        // 받을 수 있는 헤택이 없는 경우
+        if (benefit == 0) return 0;
 
+        // <<제한 한도 확인 -> 최종 혜택량 구하기>>
+        // 횟수 체크
+        if (userCardBenefit.getBenefitCount() >=
+                benefitInfo.getBenefitUsageLimit().get(spendingTier - 1))
+            return 0;
 
-        // 예시: 단순하게 benefitsBySection의 첫번째 값을 정수로 변환해서 사용
+        // 금액 체크
+        // 이미 받을 수 있는 혜택을 다 받은 경우
+        int totalAbleBenefitAmout = benefitInfo.getBenefitUsageAmount().get(spendingTier - 1);// 받을 수 있는 총 혜택
+        if (userCardBenefit.getBenefitAmount() >= totalAbleBenefitAmout)
+            return 0;
+        // 남은 받을 수 있는 혜택과 이번에 받게 될 혜택 중 더 작은 값을 받을 수 있음.
+        result = Math.min((int)(amount * benefit), totalAbleBenefitAmout - userCardBenefit.getBenefitAmount());
+
         return result;
     }
 
-    @AllArgsConstructor
-    @Getter
-    private static class CalculatedBenefit {
-        private final String permanentToken;
-        private final Integer benefitId;
-        private final int benefitAmount;
+    // 결제 구간 기준 혜택 금액 계산
+    private double calculateBenefit(BenefitInfo benefitInfo, int amount) {
+        double benefit = 0.0;
+        int rangeIdx = 0; // 결제 금액 구간을 저장할 Index 변수
+        for (int idx = 0; idx < benefitInfo.getPaymentRange().size(); idx++) {
+            // 결제 금액이 구간 시작 기준 금액 이상이면 해당 구간 인덱스 저장.
+            if (benefitInfo.getPaymentRange().get(idx) < amount) {
+                rangeIdx = ++idx;
+                break;
+            }
+        }
+
+        // 결제 기준 금액을 달성한 경우
+        if (rangeIdx != 0)
+            benefit = benefitInfo.getBenefitsBySection().get(rangeIdx - 1);
+
+        return benefit;
     }
 }

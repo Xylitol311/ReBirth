@@ -6,6 +6,7 @@ import com.kkulmoo.rebirth.payment.application.service.PaymentService;
 import com.kkulmoo.rebirth.payment.application.service.SseService;
 import com.kkulmoo.rebirth.payment.application.service.WebClientService;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
+import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -63,7 +64,10 @@ public class SseController {
 
         //1. 추천 카드 일경우 로직 작성
         if(permanentToken.equals("rebirth")){
+            // 추천카드 정보 받아오기
+            CalculatedBenefitDto calculatedBenefitDto = paymentService.recommendPaymentCard(userId, createTransactionRequestDTO.getAmount(), permanentToken);
 
+            permanentToken = calculatedBenefitDto.getPermanentToken();
         }
 
         //2. 추천 카드가 아닐 경우 해당 카드로 정보 검색

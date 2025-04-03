@@ -17,6 +17,7 @@ public class BenefitRepositoryImpl implements BenefitRepository {
     @Override
     public List<BenefitInfo> findByMerchantFilter(int cardTemplateId, int categoryId, int subcategoryId, int merchantId) {
         List<BenefitTemplateEntity> benefitTemplateEntities = benefitJpaRepository.findBenefitByTypeCondition(cardTemplateId, categoryId, subcategoryId, merchantId);
+
         List<BenefitInfo> benefitInfos = new ArrayList<>();
         for (BenefitTemplateEntity benefitTemplateEntity : benefitTemplateEntities) {
             BenefitInfo benefitInfo = BenefitInfo.builder()
