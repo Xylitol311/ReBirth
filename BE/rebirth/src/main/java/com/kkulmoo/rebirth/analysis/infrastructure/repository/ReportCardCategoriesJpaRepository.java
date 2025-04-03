@@ -15,7 +15,7 @@ import java.util.List;
 public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportCardCategoriesEntity, Integer> {
 
     @Query("SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO(c.categoryName, " +
-            "CAST(SUM(rcc.amount) AS int), " +
+            "CAST(ABS(SUM(rcc.amount)) AS int), " +
             "CAST(SUM(rcc.receivedBenefitAmount) AS int)) " +
             "FROM ReportCardCategoriesEntity rcc " +
             "JOIN ReportCardsEntity rc ON rcc.reportCard.reportCardId = rc.reportCardId " +
@@ -25,7 +25,7 @@ public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportC
             "AND mts.year = :year " +
             "AND mts.month = :month " +
             "GROUP BY c.categoryName " +
-            "ORDER BY SUM(rcc.amount) DESC")
+            "ORDER BY ABS(SUM(rcc.amount)) DESC")
     List<ReportCategoryDTO> getTotalSpendingByCategoryNameAndUser(
             @Param("userId") int userId,
             @Param("year") int year,
