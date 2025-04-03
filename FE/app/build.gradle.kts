@@ -42,7 +42,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -71,6 +70,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.okhttp3:okhttp-sse:4.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    implementation("com.launchdarkly:okhttp-eventsource:4.1.0")
     implementation("com.google.accompanist:accompanist-pager:0.30.1")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.30.1")
     implementation("androidx.biometric:biometric:1.1.0")
@@ -80,4 +80,34 @@ dependencies {
 //    implementation("io.ktor:ktor-server-netty:2.3.4")
 //    implementation("io.ktor:ktor-server-host-common:2.3.4")
 
+    // CameraX 의존성
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
+    
+    // QR 코드 스캔을 위한 ML Kit
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    
+    // 권한 요청을 위한 라이브러리
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+    // ML Kit 카드 스캐너
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
+
+    // ViewModel
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    // Compose
+    implementation ("androidx.compose.runtime:runtime:1.5.4")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.5.4")
+    
+    // Hilt (의존성 주입)
+    implementation ("com.google.dagger:hilt-android:2.48")
+    ksp ("com.google.dagger:hilt-android-compiler:2.48")
+    implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
+    
+    // Flow
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }
