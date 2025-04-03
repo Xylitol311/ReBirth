@@ -8,14 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface BenefitJpaRepository extends JpaRepository<BenefitTemplateEntity, Integer> {
-    @Query("SELECT b " +
-            "FROM BenefitTemplateEntity b " +
-            "WHERE b.cardTemplate.cardTemplateId = :cardTemplateId " +
+    @Query(value = "SELECT * FROM benefit_templates b " +
+            "WHERE b.card_template_id = :cardTemplateId " +
             "AND ( " +
-            "    b.merchantFilterType = 1 " +
-            "    OR (b.merchantFilterType = 2 AND (:subcategoryId MEMBER OF b.subcategoryIds OR :categoryId MEMBER OF b.categoryIds)) " +
-            "    OR (b.merchantFilterType = 3 AND :merchantId MEMBER OF b.merchantList) " +
-            ")")
+            "    b.merchant_filter_type = 1 " +
+            "    OR (b.merchant_filter_type = 2 AND (:subcategoryId = ANY(b.subcategory_id) OR :categoryId = ANY(b.category_id))) " +
+            "    OR (b.merchant_filter_type = 3 AND :merchantId = ANY(b.merchant_list)) " +
+            ")",
+            nativeQuery = true)
     List<BenefitTemplateEntity> findBenefitsByTypeCondition(
             @Param("cardTemplateId") int cardTemplateId,
             @Param("categoryId") int categoryId,
