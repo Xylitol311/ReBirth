@@ -9,7 +9,6 @@ import java.util.List;
 
 public interface BenefitTemplateJpaRepository extends JpaRepository<BenefitTemplateEntity, Integer> {
 
-
     @Query(value = """
     SELECT * 
     FROM benefit_templates 
