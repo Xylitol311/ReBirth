@@ -1,7 +1,7 @@
 package com.example.fe.ui.screens.payment.components
 
-import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,13 +31,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Star
 import com.example.fe.ui.components.cards.HorizontalCardLayout
 import com.example.fe.ui.screens.payment.PaymentCardInfo
 import kotlin.math.abs
@@ -51,6 +53,7 @@ fun PaymentCardScroll(
     horizontalPadding: Dp,
     lazyListState: LazyListState,
     onCardIndexSelected: (Int) -> Unit,
+    onAddCardButtonClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val snapBehavior = rememberSnapFlingBehavior(lazyListState = lazyListState)
@@ -71,7 +74,7 @@ fun PaymentCardScroll(
                 
                 // 인덱스가 범위를 벗어나지 않도록 확인
                 val index = closestItem?.index ?: 0
-                if (index <= cards.size) index else cards.size
+                index // 인덱스 그대로 사용 (0: 자동 카드, 1~N: 실제 카드, N+1: 카드 추가)
             } catch (e: Exception) {
                 // 예외 발생 시 기본값 반환
                 0
@@ -81,7 +84,16 @@ fun PaymentCardScroll(
     
     // 선택된 카드 인덱스가 변경되면 콜백 호출
     LaunchedEffect(selectedCardIndex) {
-        onCardIndexSelected(selectedCardIndex)
+        // 인덱스 변환: 
+        // 0 -> -1 (자동 카드)
+        // 1~N -> 0~(N-1) (실제 카드)
+        // N+1 이상 -> -2 (카드 추가)
+        val adjustedIndex = when {
+            selectedCardIndex == 0 -> -1 // 자동 카드
+            selectedCardIndex >= cards.size + 1 -> -2 // 카드 추가 (N+1 이상)
+            else -> selectedCardIndex - 1 // 실제 카드
+        }
+        onCardIndexSelected(adjustedIndex)
     }
     
     Column(
@@ -99,112 +111,40 @@ fun PaymentCardScroll(
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
         ) {
-            items(cards) { card ->
-                val index = cards.indexOf(card)
-                
-                // 아이템의 중앙 위치 계산 - 개선된 방식
-                val itemCenter by remember(lazyListState) {
-                    derivedStateOf {
-                        val listCenter = lazyListState.layoutInfo.viewportSize.width / 2
-                        val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
-                        
-                        // 현재 선택된 인덱스와의 거리 계산
-                        val distanceFromSelected = abs(index - selectedCardIndex)
-                        
-                        // 화면에 보이는 아이템 중에서 현재 카드 찾기
-                        val itemInfo = visibleItemsInfo.find { it.index == index }
-                        
-                        if (itemInfo != null) {
-                            // 실제 위치 기반 계산
-                            val itemCenterX = itemInfo.offset + (itemInfo.size / 2)
-                            itemCenterX - listCenter
-                        } else if (distanceFromSelected <= 2) {
-                            // 화면에 보이지 않지만 선택된 카드와 가까운 경우
-                            // 거리에 따라 적절한 값 반환
-                            when (distanceFromSelected) {
-                                0 -> 0f       // 선택된 카드는 중앙에 위치
-                                1 -> 300f     // 바로 옆 카드
-                                else -> 600f  // 두 칸 떨어진 카드
-                            } * if (index < selectedCardIndex) -1 else 1
-                        } else {
-                            // 화면에서 멀리 떨어진 카드
-                            1000f * if (index < selectedCardIndex) -1 else 1
-                        }
-                    }
-                }
-                
-                // 중앙에 있는 정도 계산 (0: 중앙에서 멀리, 1: 정확히 중앙)
-                val centeredness = remember(itemCenter, selectedCardIndex) {
-                    val maxDistance = 500f // 최대 거리 설정
-                    val distance = minOf(abs(itemCenter.toFloat()), maxDistance)
-                    val normalized = 1f - (distance / maxDistance)
-                    
-                    // 선택된 카드와의 거리도 고려
-                    val distanceFactor = when (abs(index - selectedCardIndex)) {
-                        0 -> 1.0f
-                        1 -> 0.8f
-                        2 -> 0.6f
-                        else -> 0.4f
-                    }
-                    
-                    // 두 요소를 결합하여 최종 centeredness 계산
-                    val combined = normalized * distanceFactor
-                    EaseOutQuart.transform(combined)
-                }
-                
-                PaymentCardItem(
-                    card = card,
-                    centeredness = centeredness,
+            // 자동 카드 추천 항목 (첫 번째 항목)
+            item {
+                PaymentAddCardItem(
                     cardWidth = cardWidth,
-                    onClick = { onCardIndexSelected(index) }
+                    centeredness = calculateCenteredness(0, lazyListState, selectedCardIndex),
+                    onClick = { onCardIndexSelected(-1) } // 자동 카드는 -1 인덱스로 표현
                 )
             }
             
-            // 카드 추가 아이템
-            item {
-                val index = cards.size
+            // 실제 카드 목록
+            items(cards) { card ->
+                val index = cards.indexOf(card)
                 
-                // 아이템의 중앙 위치 계산 - 개선된 방식
-                val itemCenter by remember(lazyListState, selectedCardIndex) {
-                    derivedStateOf {
-                        val listCenter = lazyListState.layoutInfo.viewportSize.width / 2
-                        val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
-                        
-                        // 현재 선택된 인덱스와의 거리 계산
-                        val distanceFromSelected = abs(index - selectedCardIndex)
-                        
-                        // 화면에 보이는 아이템 중에서 현재 카드 찾기
-                        val itemInfo = visibleItemsInfo.find { it.index == index }
-                        
-                        if (itemInfo != null) {
-                            // 실제 위치 기반 계산
-                            val itemCenterX = itemInfo.offset + (itemInfo.size / 2)
-                            itemCenterX - listCenter
-                        } else if (distanceFromSelected <= 2) {
-                            // 화면에 보이지 않지만 선택된 카드와 가까운 경우
-                            300f * if (index < selectedCardIndex) -1 else 1
-                        } else {
-                            // 화면에서 멀리 떨어진 카드
-                            1000f
-                        }
-                    }
-                }
-                
-                // 중앙에 있는 정도 계산 (0: 중앙에서 멀리, 1: 정확히 중앙)
-                val centeredness = remember(itemCenter, selectedCardIndex) {
-                    // 선택된 카드인 경우 바로 1.0 반환
-                    if (selectedCardIndex == index) return@remember 1.0f
-                    
-                    val maxDistance = 500f // 최대 거리 설정
-                    val distance = minOf(abs(itemCenter.toFloat()), maxDistance)
-                    val normalized = 1f - (distance / maxDistance)
-                    EaseOutQuart.transform(normalized)
-                }
-                
-                PaymentAddCardItem(
+                PaymentCardItem(
+                    card = card,
+                    centeredness = calculateCenteredness(index + 1, lazyListState, selectedCardIndex),
                     cardWidth = cardWidth,
-                    centeredness = centeredness,
-                    onClick = { onCardIndexSelected(cards.size) }
+                    onClick = { onCardIndexSelected(index) } // 실제 카드는 0부터 시작
+                )
+            }
+            
+            // 카드 추가 버튼 (마지막 항목)
+            item {
+                AddCardButton(
+                    cardWidth = cardWidth,
+                    centeredness = calculateCenteredness(cards.size + 1, lazyListState, selectedCardIndex),
+                    onClick = { 
+                        // 인덱스 선택 (스크롤 이동용)
+                        onCardIndexSelected(cards.size + 1)
+                    },
+                    onAddCardClick = {
+                        // 카드 추가 버튼 클릭 시 카드 추가 화면 열기
+                        onAddCardButtonClick()
+                    }
                 )
             }
         }
@@ -216,8 +156,20 @@ fun PaymentCardScroll(
                 .padding(top = 16.dp)
                 .fillMaxWidth()
         ) {
+            // 자동 카드 인디케이터
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .size(if (selectedCardIndex == 0) 10.dp else 8.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (selectedCardIndex == 0) Color.White else Color.White.copy(alpha = 0.5f)
+                    )
+            )
+            
+            // 카드 인디케이터들
             repeat(cards.size) { index ->
-                val isSelected = index == selectedCardIndex
+                val isSelected = index + 1 == selectedCardIndex
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
@@ -233,11 +185,10 @@ fun PaymentCardScroll(
             Box(
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
-                    .size(if (selectedCardIndex >= cards.size) 10.dp else 8.dp)
+                    .size(if (selectedCardIndex == cards.size + 1) 10.dp else 8.dp)
                     .clip(CircleShape)
                     .background(
-                        if (selectedCardIndex >= cards.size) Color.White 
-                        else Color.White.copy(alpha = 0.5f)
+                        if (selectedCardIndex == cards.size + 1) Color.White else Color.White.copy(alpha = 0.5f)
                     )
             )
         }
@@ -251,7 +202,6 @@ fun PaymentCardItem(
     cardWidth: Dp,
     onClick: () -> Unit
 ) {
-    // 카드 아이템
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -266,24 +216,18 @@ fun PaymentCardItem(
             }
             .clickable { onClick() }
     ) {
-        // 카드 이미지
+        // 카드 UI
         HorizontalCardLayout(
-            cardImage = painterResource(id = card.cardImage),
+            cardName = card.cardName,
+            cardImageUrl = card.cardImageUrl,
+            cardImage = card.cardImage,
             modifier = Modifier
-                .height(170.dp)
                 .fillMaxWidth()
+                .height(180.dp),
         )
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // 카드 이름
-        Text(
-            text = card.cardName,
-            fontSize = 14.sp,
-            color = Color.White.copy(alpha = lerp(0.8f, 1f, centeredness)),
-            textAlign = TextAlign.Center,
-            maxLines = 1
-        )
     }
 }
 
@@ -318,8 +262,8 @@ fun PaymentAddCardItem(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "카드 추가",
+                imageVector = Icons.Default.Star,
+                contentDescription = "자동 카드 추천",
                 tint = Color.White,
                 modifier = Modifier.size(40.dp)
             )
@@ -328,7 +272,7 @@ fun PaymentAddCardItem(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "카드 추가하기",
+            text = "어떤 카드가 등장할까요?",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White.copy(alpha = lerp(0.8f, 1f, centeredness)),
@@ -337,14 +281,108 @@ fun PaymentAddCardItem(
     }
 }
 
+// 카드 추가 버튼 컴포넌트 수정
+@Composable
+fun AddCardButton(
+    cardWidth: Dp,
+    centeredness: Float,
+    onClick: () -> Unit, // 스크롤 이동용
+    onAddCardClick: () -> Unit // 카드 추가 화면 열기용
+) {
+    // 전체 영역을 감싸는 Box 추가
+    Box(
+        modifier = Modifier
+            .width(cardWidth)
+            .padding(horizontal = 12.dp)
+            .height(200.dp)
+            // 테두리 추가
+            .border(
+                width = 2.dp,
+                color = Color(0xFF4CAF50).copy(alpha = lerp(0.5f, 0.8f, centeredness)),
+                shape = RoundedCornerShape(16.dp)
+            )
+            // 배경색 추가 (약간 투명하게)
+            .background(
+                color = Color(0xFF1A1A2E).copy(alpha = lerp(0.3f, 0.5f, centeredness)),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .graphicsLayer {
+                val scale = lerp(0.85f, 1f, centeredness)
+                scaleX = scale
+                scaleY = scale
+                alpha = lerp(0.7f, 1f, centeredness)
+            }
+            // 전체 영역 클릭 시 두 가지 동작 수행
+            .clickable { 
+                onClick() // 스크롤 이동
+                onAddCardClick() // 카드 추가 화면 열기
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // 카드 추가 UI - 이 부분을 클릭하면 카드 추가 화면이 열림
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF4CAF50).copy(alpha = lerp(0.5f, 0.7f, centeredness))),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "카드 추가",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // 텍스트
+            Text(
+                text = "새 카드 추가",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = lerp(0.8f, 1f, centeredness)),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
 // 보간 함수 (Linear Interpolation)
 private fun lerp(start: Float, end: Float, fraction: Float): Float {
     return start + (end - start) * fraction
 }
 
-// 이징 함수
-private object EaseOutQuart {
-    fun transform(x: Float): Float {
-        return 1f - (1f - x).pow(4)
+// centeredness 계산 함수 수정
+private fun calculateCenteredness(index: Int, lazyListState: LazyListState, selectedCardIndex: Int): Float {
+    // 선택된 카드인 경우 바로 1.0 반환
+    if (selectedCardIndex == index) return 1.0f
+    
+    val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
+    val listCenter = lazyListState.layoutInfo.viewportSize.width / 2
+    
+    // 화면에 보이는 아이템 중에서 현재 카드 찾기
+    val itemInfo = visibleItemsInfo.find { it.index == index }
+    
+    if (itemInfo != null) {
+        // 실제 위치 기반 계산
+        val itemCenterX = itemInfo.offset + (itemInfo.size / 2)
+        val distance = abs(itemCenterX - listCenter)
+        val maxDistance = 500f // 최대 거리 설정
+        return 1f - minOf(distance / maxDistance, 1f)
+    }
+    
+    // 화면에 보이지 않는 경우 거리에 따른 값 반환
+    val distanceFromSelected = abs(index - selectedCardIndex)
+    return when {
+        distanceFromSelected <= 1 -> 0.7f
+        distanceFromSelected <= 2 -> 0.5f
+        else -> 0.3f
     }
 }

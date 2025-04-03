@@ -1,65 +1,59 @@
 package com.example.fe.ui.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
+import android.util.Log
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.navigation.NavController
-import androidx.navigation.NavOptions
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
 import com.example.fe.ui.screens.calendar.CalendarScreen
+import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
+import com.example.fe.ui.screens.cardRecommend.CardInfo
 import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
+import com.example.fe.ui.screens.home.HomeDetailScreen
+import com.example.fe.ui.screens.home.HomeScreen
+import com.example.fe.ui.screens.myCard.CardDetailScreen
+import com.example.fe.ui.screens.myCard.CardItem
+import com.example.fe.ui.screens.myCard.CardManagementScreen
 import com.example.fe.ui.screens.myCard.MyCardScreen
+import com.example.fe.ui.screens.mypage.MyPageScreen
+import com.example.fe.ui.screens.onboard.OnboardingScreen
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
 import com.example.fe.ui.screens.payment.PaymentScreen
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fe.ui.screens.home.HomeScreen
-import com.example.fe.ui.screens.home.HomeDetailScreen
-import kotlinx.coroutines.launch
+import com.example.fe.ui.screens.payment.PaymentViewModel
+import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
+import com.example.fe.ui.screens.payment.components.PaymentResultPopup
+import com.example.fe.ui.screens.payment.components.QRScannerScreen
 import kotlinx.coroutines.delay
-import com.example.fe.ui.screens.myCard.CardItem
-import com.example.fe.ui.screens.myCard.CardDetailScreen
-import com.example.fe.ui.screens.myCard.CardManagementScreen
-import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
-import com.example.fe.ui.screens.cardRecommend.CardInfo
-import com.example.fe.ui.screens.mypage.MyPageScreen
-import com.example.fe.ui.screens.onboard.OnboardingScreen
-
+import kotlinx.coroutines.launch
 // 네비게이션 경로 상수 추가
 object NavRoutes {
     const val ONBOARDING = "onboarding"  // 온보딩/로그인 화면 경로 추가
@@ -72,8 +66,8 @@ object NavRoutes {
 
 @Composable
 fun AppNavigation() {
-    val context = LocalContext.current
     val navController = rememberNavController()
+    val context = LocalContext.current
     
     // 로그아웃을 위한 ViewModel
     val viewModel: OnboardingViewModel = viewModel(
@@ -124,7 +118,6 @@ fun AppNavigation() {
         animationSpec = tween(300),
         label = "contentAlpha"
     )
-
     // 탭 인덱스 맵
     val tabIndices = mapOf(
         BottomNavItem.Home.route to 0,
@@ -153,6 +146,18 @@ fun AppNavigation() {
         }
     )
 
+    // ViewModel을 상위 Composable 함수에서 가져오기
+    val paymentViewModel: PaymentViewModel = viewModel()
+    
+    // QR 스캐너 표시 여부
+    var showQRScanner by remember { mutableStateOf(false) }
+    
+    // 결제 정보 화면 표시 여부
+    var showPaymentInfo by remember { mutableStateOf(false) }
+
+    // 스캔된 QR 코드
+    var scannedQRCode by remember { mutableStateOf("") }
+
     // 네비게이션 바 애니메이션을 위한 상태
     val shouldShowBottomBar = bottomBarVisible && currentRoute != NavRoutes.HOME_DETAIL && 
                           currentRoute?.startsWith("card_detail") != true
@@ -180,6 +185,10 @@ fun AppNavigation() {
         animationSpec = tween(300, easing = EaseInOut),
         label = "bottomPadding"
     )
+
+    // 결제 결과 팝업 표시
+    var showPaymentResultPopup by remember { mutableStateOf(false) }
+    val paymentResult by paymentViewModel.paymentResult.collectAsState()
 
     Scaffold(
         topBar = {
@@ -316,6 +325,9 @@ fun AppNavigation() {
                                 navController.navigate(BottomNavItem.Home.route) {
                                     popUpTo(BottomNavItem.Home.route) { inclusive = true }
                                 }
+                            },
+                            onShowQRScanner = {
+                                showQRScanner = true  // QR 스캐너 표시
                             }
                         )
                     }
@@ -406,6 +418,54 @@ fun AppNavigation() {
                     }
                 }
             }
+        }
+        
+        // QR 스캐너 화면 (오버레이로 표시)
+        if (showQRScanner) {
+            QRScannerScreen(
+                onClose = { showQRScanner = false },
+                onQRCodeScanned = { qrCode ->
+                    // QR 코드 스캔 결과 처리
+                    Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
+                    // 이미 가져온 ViewModel 사용
+                    paymentViewModel.sendQRToken(qrCode)
+                    showQRScanner = false
+                    showPaymentInfo = true  // 결제 정보 화면 표시
+                }
+            )
+        }
+        
+        // 결제 정보 화면 (오버레이로 표시)
+        if (showPaymentInfo) {
+            val cards by paymentViewModel.cards.collectAsState()
+            val paymentState by paymentViewModel.paymentState.collectAsState()
+            
+            PaymentInfoScreen(
+                cards = cards,
+                onClose = { showPaymentInfo = false },
+                onPaymentComplete = {
+                    // 결제 완료 후 홈 화면으로 이동
+                    showPaymentInfo = false
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                    
+                    // 결제 결과 팝업 표시
+                    showPaymentResultPopup = true
+                },
+                onScrollOffsetChange = { offset ->
+                    scrollOffset = offset
+                },
+                viewModel = paymentViewModel
+            )
+        }
+
+        // 결제 결과 팝업 표시
+        if (showPaymentResultPopup && paymentResult != null) {
+            PaymentResultPopup(
+                paymentResult = paymentResult!!,
+                onDismiss = { showPaymentResultPopup = false }
+            )
         }
     }
 }

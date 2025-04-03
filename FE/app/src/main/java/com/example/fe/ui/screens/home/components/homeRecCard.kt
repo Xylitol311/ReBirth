@@ -150,10 +150,12 @@ fun HomeRecCard(
                     ) {
                         // 카드 이미지
                         HorizontalCardLayout(
-                            cardImage = painterResource(id = cardRecommendations[page].cardImage),
+                            cardImage = cardRecommendations[page].cardImage,
                             modifier = Modifier
                                 .width(280.dp)
-                                .height(170.dp)
+                                .height(170.dp),
+                            cardName = cardRecommendations[page].title,
+                            cardImageUrl = ""
                         )
                     }
                 }

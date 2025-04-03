@@ -1,359 +1,431 @@
 package com.example.fe.ui.screens.payment.components
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
+import android.util.Log
+import androidx.annotation.OptIn
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageProxy
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.cos
-import kotlin.math.min
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
-import kotlin.random.Random
+import com.example.fe.ui.screens.payment.PaymentViewModel
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
+import com.google.mlkit.vision.text.TextRecognizer
+import java.util.regex.Pattern
 
 @Composable
 fun PaymentAddCardSection(
-    modifier: Modifier = Modifier,
-    onAddCardClick: () -> Unit = {}
+    onClose: () -> Unit,
+    onAddCardComplete: () -> Unit,
+    viewModel: PaymentViewModel
+) {
+    // OCR 스캔 화면 표시 여부
+    var showOCRScreen by remember { mutableStateOf(true) }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.9f))
+    ) {
+        // OCR 스캔 화면 표시
+        if (showOCRScreen) {
+            CardOCRScanScreen(
+                onBack = onClose,
+                onComplete = onAddCardComplete,
+                viewModel = viewModel
+            )
+        }
+    }
+}
+
+
+// 카드 추가 버튼 (가로 스크롤에 표시될 항목)
+@Composable
+fun AddCardButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFF0A0A1E))
+            .width(280.dp)
+            .height(180.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF2D2A57))
+            .border(
+                width = 2.dp,
+                color = Color.White.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        // 중앙 - 안내 메시지
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "카드 추가",
+                tint = Color.White,
+                modifier = Modifier.size(48.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "새 카드 추가",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+// 이미지 처리 함수
+@OptIn(ExperimentalGetImage::class)
+internal fun processImageWithTextRecognition(
+    imageProxy: ImageProxy,
+    textRecognizer: TextRecognizer,
+    onCardDetected: (String, String, String) -> Unit
+) {
+    val mediaImage = imageProxy.image ?: run {
+        imageProxy.close()
+        return
+    }
+
+    val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
+    textRecognizer.process(image)
+        .addOnSuccessListener { visionText ->
+            // 인식된 텍스트에서 카드 정보 추출
+            val cardInfo = extractCardInfo(visionText)
+            onCardDetected(cardInfo.first, cardInfo.second, cardInfo.third)
+        }
+        .addOnFailureListener { e ->
+            Log.e("CardOCRScanScreen", "텍스트 인식 실패", e)
+        }
+        .addOnCompleteListener {
+            imageProxy.close()
+        }
+}
+
+// 카드 정보 추출 함수
+internal fun extractCardInfo(visionText: Text): Triple<String, String, String> {
+    var cardNumber = ""
+    var expiryDate = ""
+    var cardholderName = ""
+
+    // 카드 번호 패턴 (4자리 숫자 그룹)
+    val cardNumberPattern = Pattern.compile("\\d{4}\\s*\\d{4}\\s*\\d{4}\\s*\\d{4}")
+
+    // 만료일 패턴 (MM/YY 형식)
+    val expiryDatePattern = Pattern.compile("(0[1-9]|1[0-2])/([0-9]{2})")
+
+    // 텍스트 블록 순회
+    for (block in visionText.textBlocks) {
+        for (line in block.lines) {
+            val lineText = line.text
+
+            // 카드 번호 추출
+            val cardNumberMatcher = cardNumberPattern.matcher(lineText)
+            if (cardNumberMatcher.find() && cardNumber.isEmpty()) {
+                cardNumber = cardNumberMatcher.group().replace("\\s".toRegex(), " ")
+            }
+
+            // 만료일 추출
+            val expiryDateMatcher = expiryDatePattern.matcher(lineText)
+            if (expiryDateMatcher.find() && expiryDate.isEmpty()) {
+                expiryDate = expiryDateMatcher.group()
+            }
+
+            // 카드 소유자 이름 추출 (대문자로 된 이름 패턴)
+            if (lineText.matches("^[A-Z]+(\\s[A-Z]+)+$".toRegex()) && cardholderName.isEmpty()) {
+                cardholderName = lineText
+            }
+        }
+    }
+
+    return Triple(cardNumber, expiryDate, cardholderName)
+}
+
+// 카드 확인 화면
+@Composable
+fun CardConfirmationScreen(
+    cardNumber: String,
+    expiryDate: String,
+    cardIssuer: String,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    // 입력 상태 관리
+    var cardNumberInput by remember { mutableStateOf(cardNumber) }
+    var expiryDateInput by remember { mutableStateOf(expiryDate) }
+    var cardPinPrefix by remember { mutableStateOf("") }
+    var cvcInput by remember { mutableStateOf("") }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        // 상단 바
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.Center)
-                .padding(horizontal = 24.dp)
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onCancel) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로 가기",
+                    tint = Color.Black
+                )
+            }
+            
+            Text(
+                text = "카드등록",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+            
+            // 오른쪽 여백을 위한 투명 아이콘
+            Spacer(modifier = Modifier.width(48.dp))
+        }
+        
+        // 카드 정보 입력 폼
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+        ) {
+            // 카드 비밀번호 앞 두자리
+            Text(
+                text = "카드 비밀번호",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            OutlinedTextField(
+                value = cardPinPrefix,
+                onValueChange = { 
+                    if (it.length <= 2 && it.all { char -> char.isDigit() }) {
+                        cardPinPrefix = it 
+                    }
+                },
+                placeholder = { Text("앞 2자리") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.NumberPassword
+                ),
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF2196F3),
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            
+            // CVC
+            Text(
+                text = "CVC",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            OutlinedTextField(
+                value = cvcInput,
+                onValueChange = { 
+                    if (it.length <= 3 && it.all { char -> char.isDigit() }) {
+                        cvcInput = it 
+                    }
+                },
+                placeholder = { Text("뒷면 3자리") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.NumberPassword
+                ),
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF2196F3),
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            
+            // 유효기간
+            Text(
+                text = "유효기간",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            OutlinedTextField(
+                value = expiryDateInput,
+                onValueChange = { 
+                    // MM/YY 형식 유지
+                    val filtered = it.replace(Regex("[^0-9/]"), "")
+                    if (filtered.length <= 5) {
+                        expiryDateInput = filtered
+                    }
+                },
+                placeholder = { Text("MM/YY") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF2196F3),
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            
+            // 카드번호
+            Text(
+                text = "카드번호",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            OutlinedTextField(
+                value = cardNumberInput,
+                onValueChange = { 
+                    // 숫자와 공백만 허용
+                    val filtered = it.replace(Regex("[^0-9 ]"), "")
+                    if (filtered.replace(" ", "").length <= 16) {
+                        cardNumberInput = filtered
+                    }
+                },
+                placeholder = { Text("0000-0000-0000-0000") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF2196F3),
+                    unfocusedBorderColor = Color.LightGray
+                ),
+                trailingIcon = {
+                    if (cardIssuer.isNotEmpty()) {
+                        // 카드사 로고 (예시로 원형 아이콘 사용)
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(Color(0xFF1A73E8), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "S",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            )
+        }
+        
+        // 여백
+        Spacer(modifier = Modifier.weight(1f))
+        
+        // 확인 버튼
+        Button(
+            onClick = onConfirm,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF2196F3)
+            ),
+            shape = RoundedCornerShape(8.dp)
         ) {
             Text(
-                text = "어떤 별자리의 도움을 받아볼까요?",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "카드를 추가하면 별자리가 생성됩니다",
+                text = "확인",
                 fontSize = 16.sp,
-                color = Color.White.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center
+                fontWeight = FontWeight.Bold
             )
-            
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
+// 카드 정보 항목
 @Composable
-fun ConstellationCarousel(
-    modifier: Modifier = Modifier
+fun CardInfoItem(
+    label: String,
+    value: String
 ) {
-    // 여러 별자리 생성 (더 적은 수로 변경)
-    val constellations = remember {
-        List(3) { index ->
-            generateEnhancedConstellation(Random(index), index)
-        }
-    }
-    
-    // 자동 회전 애니메이션 (더 느리게)
-    val infiniteTransition = rememberInfiniteTransition(label = "carousel")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(40000, easing = LinearEasing)
-        ),
-        label = "carousel_rotation"
-    )
-    
-    // 별 깜빡임 애니메이션
-    val twinkle by infiniteTransition.animateFloat(
-        initialValue = 0.7f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "twinkle"
-    )
-    
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val canvasWidth = size.width
-        val canvasHeight = size.height
-        val centerX = canvasWidth / 2
-        val centerY = canvasHeight / 2
-        val radius = minOf(centerX, centerY) * 0.7f
-        
-        // 배경 효과 - 은하수 느낌
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color(0xFF1A237E).copy(alpha = 0.25f),
-                    Color(0xFF0D47A1).copy(alpha = 0.08f),
-                    Color(0xFF000000).copy(alpha = 0.0f)
-                ),
-                center = Offset(centerX, centerY),
-                radius = radius * 1.5f
-            ),
-            radius = radius * 1.5f,
-            center = Offset(centerX, centerY)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            color = Color.White.copy(alpha = 0.7f),
+            fontSize = 16.sp
         )
-        
-        // 각 별자리를 원형으로 배치 (더 큰 크기로, 더 멀리 떨어지게)
-        constellations.forEachIndexed { index, constellation ->
-            val angle = Math.toRadians((rotation + index * (360f / constellations.size)).toDouble())
-            val distance = radius * 0.8f  // 0.6f에서 0.8f로 증가하여 더 멀리 배치
-            val x = centerX + cos(angle).toFloat() * distance
-            val y = centerY + sin(angle).toFloat() * distance
-            
-            // 거리에 따른 크기와 투명도 조정 (더 극적인 변화)
-            val distanceFromCenter = sqrt((x - centerX).pow(2) + (y - centerY).pow(2))
-            val maxDistance = radius * 0.8f
-            val scale = 1.5f - (distanceFromCenter / maxDistance) * 0.7f
-            val alpha = 1f - (distanceFromCenter / maxDistance) * 0.3f
-            
-            // 별자리 그리기 (더 크고 화려하게)
-            drawEnhancedConstellation(
-                constellation = constellation,
-                centerX = x,
-                centerY = y,
-                scale = scale * 1.5f,
-                alpha = alpha * twinkle,
-                rotation = index * 72f,
-                twinkle = twinkle
-            )
-        }
+
+        Text(
+            text = value,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
-private fun DrawScope.drawEnhancedConstellation(
-    constellation: Constellation,
-    centerX: Float,
-    centerY: Float,
-    scale: Float,
-    alpha: Float,
-    rotation: Float,
-    twinkle: Float
-) {
-    // 별자리 크기 (크게 증가)
-    val constellationSize = 300f * scale  // 더 크게 조정
-    
-    // 별자리 배경 효과 - 은하 느낌
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                Color(0xFF5D4037).copy(alpha = 0.15f * alpha),
-                Color(0xFF3E2723).copy(alpha = 0.08f * alpha),
-                Color(0xFF000000).copy(alpha = 0.0f)
-            ),
-            center = Offset(centerX, centerY),
-            radius = constellationSize * 0.7f
-        ),
-        radius = constellationSize * 0.7f,
-        center = Offset(centerX, centerY)
-    )
-    
-    // 별자리 선 그리기 (더 화려하게)
-    constellation.connections.forEach { (startIdx, endIdx) ->
-        val startStar = constellation.stars[startIdx]
-        val endStar = constellation.stars[endIdx]
-        
-        // 회전 및 위치 조정
-        val startX = centerX + rotateX(startStar.x - 0.5f, startStar.y - 0.5f, rotation) * constellationSize
-        val startY = centerY + rotateY(startStar.x - 0.5f, startStar.y - 0.5f, rotation) * constellationSize
-        val endX = centerX + rotateX(endStar.x - 0.5f, endStar.y - 0.5f, rotation) * constellationSize
-        val endY = centerY + rotateY(endStar.x - 0.5f, endStar.y - 0.5f, rotation) * constellationSize
-        
-        // 선 그리기 - 그라데이션 효과
-        drawLine(
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    Color(0xFFE3F2FD).copy(alpha = alpha * 0.9f),
-                    Color(0xFFBBDEFB).copy(alpha = alpha * 0.7f)
-                ),
-                start = Offset(startX, startY),
-                end = Offset(endX, endY)
-            ),
-            start = Offset(startX, startY),
-            end = Offset(endX, endY),
-            strokeWidth = 3.0f * scale,  // 선 굵기 증가
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(20f, 10f), 0f)  // 대시 패턴 조정
-        )
-        
-        // 선 주변 빛 효과
-        drawLine(
-            color = Color(0xFFE1F5FE).copy(alpha = alpha * 0.3f),
-            start = Offset(startX, startY),
-            end = Offset(endX, endY),
-            strokeWidth = 10f * scale,  // 빛 효과 증가
-            cap = StrokeCap.Round
-        )
+// 카드 번호 포맷팅 함수
+internal fun formatCardNumber(cardNumber: String): String {
+    // 공백 제거 후 4자리씩 그룹화
+    val cleaned = cardNumber.replace("\\s".toRegex(), "")
+    val formatted = StringBuilder()
+
+    for (i in cleaned.indices) {
+        if (i > 0 && i % 4 == 0) {
+            formatted.append(" ")
+        }
+        formatted.append(cleaned[i])
     }
-    
-    // 별 그리기 (더 화려하게)
-    constellation.stars.forEach { star ->
-        // 회전 및 위치 조정
-        val x = centerX + rotateX(star.x - 0.5f, star.y - 0.5f, rotation) * constellationSize
-        val y = centerY + rotateY(star.x - 0.5f, star.y - 0.5f, rotation) * constellationSize
-        
-        // 별 주변 빛 효과 (더 넓게)
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color(0xFFE1F5FE).copy(alpha = alpha * 0.4f),
-                    Color(0xFFB3E5FC).copy(alpha = alpha * 0.2f),
-                    Color(0xFF81D4FA).copy(alpha = 0f)
-                ),
-                center = Offset(x, y),
-                radius = star.size * 25f * scale  // 빛 효과 크기 증가
-            ),
-            radius = star.size * 25f * scale,
-            center = Offset(x, y)
-        )
-        
-        // 중간 빛 효과
-        drawCircle(
-            color = Color(0xFFE1F5FE).copy(alpha = alpha * 0.7f),
-            radius = star.size * 12f * scale,  // 크기 증가
-            center = Offset(x, y)
-        )
-        
-        // 별 자체 (더 밝게)
-        drawCircle(
-            color = Color.White.copy(alpha = alpha),
-            radius = star.size * 6f * scale,  // 별 크기 증가
-            center = Offset(x, y)
-        )
-        
-        // 별 빛 방사 효과
-        for (i in 0 until 6) {  // 6방향으로 증가
-            val angle = (i * Math.PI / 3 + rotation / 180 * Math.PI).toFloat()
-            val rayLength = star.size * 18f * scale * twinkle  // 길이 증가
-            val rayEndX = x + cos(angle) * rayLength
-            val rayEndY = y + sin(angle) * rayLength
-            
-            drawLine(
-                color = Color.White.copy(alpha = alpha * 0.4f * twinkle),
-                start = Offset(x, y),
-                end = Offset(rayEndX, rayEndY),
-                strokeWidth = 1.5f * scale,  // 굵기 증가
-                cap = StrokeCap.Round
-            )
-        }
-    }
-}
 
-// 향상된 별자리 생성 함수
-private fun generateEnhancedConstellation(random: Random, index: Int): Constellation {
-    // 별자리 종류에 따라 다른 패턴 생성 (더 간결하게)
-    val pattern = when (index % 3) {
-        0 -> { // 물고기자리 (Pisces) - 간결한 버전
-            val stars = listOf(
-                Star(0.3f, 0.4f, 1.7f),
-                Star(0.45f, 0.3f, 1.5f),
-                Star(0.6f, 0.35f, 1.8f),
-                Star(0.7f, 0.5f, 1.6f),
-                Star(0.55f, 0.6f, 1.4f)
-            )
-            val connections = listOf(
-                Pair(0, 1),
-                Pair(1, 2),
-                Pair(2, 3),
-                Pair(3, 4)
-            )
-            Constellation(stars, connections)
-        }
-        1 -> { // 천칭자리 (Libra) - 간결한 버전
-            val stars = listOf(
-                Star(0.3f, 0.3f, 1.9f),
-                Star(0.5f, 0.25f, 1.6f),
-                Star(0.7f, 0.3f, 1.8f),
-                Star(0.4f, 0.5f, 1.5f),
-                Star(0.6f, 0.5f, 1.7f)
-            )
-            val connections = listOf(
-                Pair(0, 1),
-                Pair(1, 2),
-                Pair(1, 3),
-                Pair(1, 4)
-            )
-            Constellation(stars, connections)
-        }
-        else -> { // 전갈자리 (Scorpio) - 간결한 버전
-            val stars = listOf(
-                Star(0.25f, 0.3f, 1.8f),
-                Star(0.4f, 0.35f, 1.6f),
-                Star(0.55f, 0.4f, 2.0f),  // 안타레스 (가장 밝은 별)
-                Star(0.7f, 0.45f, 1.7f),
-                Star(0.8f, 0.55f, 1.5f),
-                Star(0.75f, 0.7f, 1.4f)
-            )
-            val connections = listOf(
-                Pair(0, 1),
-                Pair(1, 2),
-                Pair(2, 3),
-                Pair(3, 4),
-                Pair(4, 5)
-            )
-            Constellation(stars, connections)
-        }
-    }
-    
-    return pattern
+    return formatted.toString()
 }
-
-// 회전 변환 함수
-private fun rotateX(x: Float, y: Float, degrees: Float): Float {
-    val radians = Math.toRadians(degrees.toDouble())
-    return (x * cos(radians) - y * sin(radians)).toFloat()
-}
-
-private fun rotateY(x: Float, y: Float, degrees: Float): Float {
-    val radians = Math.toRadians(degrees.toDouble())
-    return (x * sin(radians) + y * cos(radians)).toFloat()
-}
-
-// 별자리 데이터 클래스
-private data class Star(val x: Float, val y: Float, val size: Float = 1f)
-private data class Constellation(val stars: List<Star>, val connections: List<Pair<Int, Int>>) 
