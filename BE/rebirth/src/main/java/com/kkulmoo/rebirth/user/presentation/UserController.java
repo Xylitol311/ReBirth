@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
 	private final UserService userService;
-	private final MyDataService myDataService;;
+	private final MyDataService myDataService;
 
 
 	// todo: UserId를 Integer에서 UserId로 바꿔야함
@@ -35,5 +35,11 @@ public class UserController {
 		return ResponseEntity.ok(ApiResponseDTO.success("삭제에 성공하였습니다."));
 	}
 
+	@PostMapping("/mydata/mycard")
+	public ResponseEntity<ApiResponseDTO<Void>> loadMyCard(@JwtUserId Integer userId){
+		 //todo: 이름 바꾸기
+		  myDataService.loadMyCard(2);
+		 return ResponseEntity.ok(ApiResponseDTO.success("카드 로드에 성공하였습니다."));
+	}
 }
 

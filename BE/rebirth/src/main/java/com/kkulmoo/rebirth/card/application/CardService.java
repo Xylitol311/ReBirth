@@ -131,7 +131,6 @@ public class CardService {
         }
     }
 
-
     /**
      * API에서 가져온 카드 중 DB에 없는 것만 처리하는 메서드
      */
