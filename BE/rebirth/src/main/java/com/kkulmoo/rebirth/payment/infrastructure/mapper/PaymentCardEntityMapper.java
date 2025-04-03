@@ -1,6 +1,6 @@
 package com.kkulmoo.rebirth.payment.infrastructure.mapper;
 
-import com.kkulmoo.rebirth.payment.domain.paymentCard;
+import com.kkulmoo.rebirth.payment.domain.PaymentCard;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import org.springframework.stereotype.Component;
 
@@ -9,15 +9,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class paymentCardEntityMapper {
+public class PaymentCardEntityMapper {
 
 
-    public paymentCard toCards(CardEntity cardsEntity) {
+    public PaymentCard toCards(CardEntity cardsEntity) {
 
         if (cardsEntity == null) {
             return null;
         }
-        return paymentCard.builder()
+        return PaymentCard.builder()
                 .cardId(cardsEntity.getCardId())
                 .cardOrder(cardsEntity.getCardOrder())
                 .cardTemplateId(cardsEntity.getCardTemplateId())
@@ -38,7 +38,7 @@ public class paymentCardEntityMapper {
 //
 //    }
 
-    public List<paymentCard> toCardsList(List<CardEntity> cardsEntities) {
+    public List<PaymentCard> toCardsList(List<CardEntity> cardsEntities) {
 
         if (cardsEntities == null) {
             return Collections.emptyList();

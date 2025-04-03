@@ -1,15 +1,17 @@
-package com.kkulmoo.rebirth.card.domain;
-
+package com.kkulmoo.rebirth.payment.application;
 
 import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
+import com.kkulmoo.rebirth.card.domain.DiscountType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
 
-@Getter
 @Builder
-public class BenefitTemplate {
+@Getter
+@AllArgsConstructor
+public class BenefitInfo {
     private Integer benefitId;
 
     private Integer cardTemplateId;
@@ -39,6 +41,4 @@ public class BenefitTemplate {
     private List<Short> benefitUsageAmount;
 
     private DiscountType discountType;
-
-    private String additionalInfo;
 }
