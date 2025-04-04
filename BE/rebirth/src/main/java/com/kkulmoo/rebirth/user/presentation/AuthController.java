@@ -26,9 +26,9 @@ public class AuthController {
 	public ResponseEntity<ApiResponseDTO<Void>> signup(
 		@RequestBody UserSignupRequest request) {
 
-		//은행 한테 사용자 이름하고 birth 넘겨주면서 user CI 받아오기
-		String userCI = authService.getUserCI(UserCIRequest.builder().userName(request.getUserName()).birth(request.getBirth()).build());
-
+//		//은행 한테 사용자 이름하고 birth 넘겨주면서 user CI 받아오기
+//		String userCI = authService.getUserCI(UserCIRequest.builder().userName(request.getUserName()).birth(request.getBirth()).build());
+		String userCI= "test";
 		authService.createUser(CreateUserCommand.fromRequest(request,userCI));
 
 	//jwt 토큰도 헤더에 같이 넘겨주기

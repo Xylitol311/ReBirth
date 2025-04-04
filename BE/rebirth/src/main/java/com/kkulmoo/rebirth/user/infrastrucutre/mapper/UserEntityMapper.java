@@ -34,13 +34,14 @@ public class UserEntityMapper {
                 .build();
     }
 
+
     public UserEntity toEntity(User user) {
         if (user == null) {
             return null;
         }
 
         return UserEntity.builder()
-                .userId(user.getUserId().getValue())
+                .userId(user.getUserId() != null ? user.getUserId().getValue() : null)
                 .consumptionPatternId(user.getConsumptionPatternId())
                 .userName(user.getUserName())
                 .hashedPinNumber(user.getHashedPinNumber())

@@ -33,10 +33,12 @@ public class UserRepositoryImpl implements UserRepository {
 
 	@Override
 	public User save(User user) {
+		System.out.println(user.getUserName());
 		UserEntity userEntity = userEntityMapper.toEntity(user);
 		UserEntity savedEntity = userJpaRepository.save(userEntity);
 		return userEntityMapper.toUser(savedEntity);
 	}
+
 
 	@Override
 	public User findByPhoneSerialNumber(String phoneSerialNumber) {
