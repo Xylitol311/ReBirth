@@ -248,17 +248,19 @@ public class PaymentService {
             return 0;
 
         // 금액 체크
-        // 이미 받을 수 있는 혜택을 다 받은 경우
-        int totalAbleBenefitAmount = benefitInfo.getBenefitUsageAmount().get(spendingTier - 1);// 받을 수 있는 총 혜택
+        // 금액 체크 (benefitUsageAmount가 null이면 제한 없다고 가정)
+        int totalAbleBenefitAmount = Integer.MAX_VALUE;
+        if (benefitInfo.getBenefitUsageAmount() != null && benefitInfo.getBenefitUsageAmount().size() >= spendingTier) {
+            totalAbleBenefitAmount = benefitInfo.getBenefitUsageAmount().get(spendingTier - 1);
+        }
+
         if (userCardBenefit.getBenefitAmount() >= totalAbleBenefitAmount)
             return 0;
         // 남은 받을 수 있는 혜택과 이번에 받게 될 혜택 중 더 작은 값을 받을 수 있음.
-        // 할인혜택 타입이 금액이라면 계산 없이 반환
+        // 할인 타입에 따라 최종 혜택 계산
         if (benefitInfo.getDiscountType() == DiscountType.AMOUNT) {
             result = Math.min((int) benefit, totalAbleBenefitAmount - userCardBenefit.getBenefitAmount());
-        }
-        // 퍼센트라면 계산 후 반환
-        else {
+        } else {
             result = Math.min((int) (amount * benefit), totalAbleBenefitAmount - userCardBenefit.getBenefitAmount());
         }
         return result;
@@ -268,18 +270,18 @@ public class PaymentService {
     private double calculateBenefit(BenefitInfo benefitInfo, int amount) {
         double benefit = 0.0;
         int rangeIdx = 0; // 결제 금액 구간을 저장할 Index 변수
-        for (int idx = 0; idx < benefitInfo.getPaymentRange().size(); idx++) {
-            // 결제 금액이 구간 시작 기준 금액 이상이면 해당 구간 인덱스 저장.
-            if (benefitInfo.getPaymentRange().get(idx) < amount) {
-                rangeIdx = ++idx;
-                break;
+        if (benefitInfo.getPaymentRange() != null && benefitInfo.getBenefitsBySection() != null) {
+            for (int idx = 0; idx < benefitInfo.getPaymentRange().size(); idx++) {
+                // 결제 금액이 구간 시작 기준 금액 이상이면 해당 구간 인덱스 저장
+                if (benefitInfo.getPaymentRange().get(idx) < amount) {
+                    rangeIdx = idx + 1;  // idx+1이 실적 구간 (인덱스 0부터 시작하므로)
+                    break;
+                }
+            }
+            if (rangeIdx != 0 && benefitInfo.getBenefitsBySection().size() >= rangeIdx) {
+                benefit = benefitInfo.getBenefitsBySection().get(rangeIdx - 1);
             }
         }
-
-        // 결제 기준 금액을 달성한 경우
-        if (rangeIdx != 0)
-            benefit = benefitInfo.getBenefitsBySection().get(rangeIdx - 1);
-
         return benefit;
     }
 }
