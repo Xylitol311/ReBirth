@@ -2,6 +2,7 @@ package com.kkulmoo.rebirth.shared.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -45,6 +46,9 @@ public class CardEntity {
 	@Column(name = "spending_tier")
 	private Short spendingTier;
 
+	@Column(name = "card_name")
+	private String cardName;
+
 	@Column(name = "expiry_date")
 	private LocalDate expiryDate;
 
@@ -52,6 +56,7 @@ public class CardEntity {
 	private Short isExpired;
 
 	@Column(name = "created_at", nullable = false)
+	@CreationTimestamp
 	private LocalDateTime createdAt;
 
 	@Column(name = "payment_created_at")

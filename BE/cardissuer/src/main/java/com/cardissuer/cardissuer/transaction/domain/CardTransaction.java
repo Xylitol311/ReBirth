@@ -8,9 +8,11 @@ import com.cardissuer.cardissuer.cards.domain.CardUniqueNumber;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Builder
+@Setter
 public class CardTransaction {
 
 	private Integer transactionId;

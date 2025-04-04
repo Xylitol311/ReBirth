@@ -1,8 +1,10 @@
 package com.cardissuer.cardissuer.transaction.application;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.cardissuer.cardissuer.common.exception.CardNotFoundException;
 import org.springframework.stereotype.Service;
@@ -66,6 +68,8 @@ public class CardTransactionService {
                             .createdAt(bankResult.getCreatedAt())
                             .merchantName(createTransactionRequest.getMerchantName())
                             .approvalCode(bankResult.getApprovalCode())
+                            .benefitAmount(createTransactionRequest.getBenefitAmount())
+                            .benefitType(createTransactionRequest.getBenefitType())
                             .build());
         }
         return bankResult;
@@ -75,7 +79,7 @@ public class CardTransactionService {
     public List<CardTransaction> getTransactionsByUserCIAndCardUniqueNumberAfterTimestamp(
             String userCI,
             String cardUniqueNumber,
-            Timestamp timestamp) {
+            LocalDateTime fromdate) {
 
         // 사용자 존재 여부 먼저 확인
         boolean userExists = userRepository.existsByUserCI(userCI);
@@ -90,9 +94,18 @@ public class CardTransactionService {
         }
 
         // 조건에 맞는 거래내역 조회 (cardUniqueNumber와 timestamp 기준)
-        return cardTransactionRepository.findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
+        List<CardTransaction> transactions = cardTransactionRepository.findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
                 cardUniqueNumber,
-                timestamp
+                fromdate
         );
+
+        // amount 값에 -1 곱하기
+        return transactions.stream()
+                .peek(transaction -> {
+                    if (transaction.getAmount() != null) {
+                        transaction.setAmount(transaction.getAmount() * (-1));
+                    }
+                })
+                .collect(Collectors.toList());
     }
 }

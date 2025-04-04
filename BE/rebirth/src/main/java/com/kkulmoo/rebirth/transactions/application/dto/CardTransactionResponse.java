@@ -3,11 +3,13 @@ package com.kkulmoo.rebirth.transactions.application.dto;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@ToString
 public class CardTransactionResponse {
 
     private UserId userId;
@@ -18,7 +20,7 @@ public class CardTransactionResponse {
     private LocalDateTime createdAt;
     private String merchantName;
     private String approvalCode;
-    private String merchantId;
+    private Integer merchantId;
 
     /**
      * userId 값을 설정하고 새로운 CardTransactionResponse 객체를 반환합니다.
@@ -46,7 +48,7 @@ public class CardTransactionResponse {
      * @param merchantId 설정할 새로운 merchantId 값
      * @return merchantId가 변경된 새로운 CardTransactionResponse 객체
      */
-    public CardTransactionResponse withMerchantId(String merchantId) {
+    public CardTransactionResponse withMerchantId(Integer merchantId) {
         return CardTransactionResponse.builder()
                 .userId(this.userId)
                 .cardUniqueNumber(this.cardUniqueNumber)
@@ -67,7 +69,7 @@ public class CardTransactionResponse {
      * @param merchantId 설정할 새로운 merchantId 값
      * @return userId와 merchantId가 변경된 새로운 CardTransactionResponse 객체
      */
-    public CardTransactionResponse withUserIdAndMerchantId(UserId userId, String merchantId) {
+    public CardTransactionResponse withUserIdAndMerchantNameAndMerchantId(UserId userId, String merchantName, Integer merchantId) {
         return CardTransactionResponse.builder()
                 .userId(userId)
                 .cardUniqueNumber(this.cardUniqueNumber)
@@ -75,7 +77,7 @@ public class CardTransactionResponse {
                 .benefitType(this.benefitType)
                 .benefitAmount(this.benefitAmount)
                 .createdAt(this.createdAt)
-                .merchantName(this.merchantName)
+                .merchantName(merchantName)
                 .approvalCode(this.approvalCode)
                 .merchantId(merchantId)
                 .build();

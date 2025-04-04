@@ -3,6 +3,8 @@ package com.kkulmoo.rebirth.card.domain;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 public class CardTemplate {
@@ -24,4 +26,5 @@ public class CardTemplate {
 
 	private String cardConstellationInfo;
 
+	private List<Integer> performanceRange;
 }

@@ -24,23 +24,21 @@ public class BenefitTemplate {
 
     private Short benefitConditionType;
 
-    private Integer[] performanceRange;
+    private List<Integer> performanceRange;
 
-    private Double[] benefitsBySection;
+    private List<Double> benefitsBySection;
 
     private Boolean merchantInfo;
 
-    private String[] merchantList;
+    private List<Integer> merchantList;
 
-    private Integer[] paymentRange;
+    private List<Integer> paymentRange;
 
-    private Short[] benefitUsageLimit;
+    private List<Short> benefitUsageLimit;
 
-    private Short[] benefitUsageAmount;
+    private List<Short> benefitUsageAmount;
 
     private DiscountType discountType;
 
     private String additionalInfo;
-
-
 }

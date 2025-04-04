@@ -15,7 +15,7 @@ import java.util.List;
 public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportCardCategoriesEntity, Integer> {
 
     @Query("SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO(c.categoryName, " +
-            "CAST(SUM(rcc.amount) AS int), " +
+            "CAST(ABS(SUM(rcc.amount)) AS int), " +
             "CAST(SUM(rcc.receivedBenefitAmount) AS int)) " +
             "FROM ReportCardCategoriesEntity rcc " +
             "JOIN ReportCardsEntity rc ON rcc.reportCard.reportCardId = rc.reportCardId " +
@@ -25,7 +25,7 @@ public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportC
             "AND mts.year = :year " +
             "AND mts.month = :month " +
             "GROUP BY c.categoryName " +
-            "ORDER BY SUM(rcc.amount) DESC")
+            "ORDER BY ABS(SUM(rcc.amount)) DESC")
     List<ReportCategoryDTO> getTotalSpendingByCategoryNameAndUser(
             @Param("userId") int userId,
             @Param("year") int year,
@@ -40,7 +40,9 @@ public interface ReportCardCategoriesJpaRepository extends JpaRepository<ReportC
     SELECT rcc.category_id, 
             c.category_name,
             CAST(ABS(SUM(rcc.amount)) / 3 AS INT) AS avg_total_spending,
-            CAST(SUM(rcc.received_benefit_amount) / 3 AS INT) AS avg_total_benefit
+            CAST(ABS(SUM(rcc.amount)) AS INT) AS total_spending,
+            CAST(SUM(rcc.received_benefit_amount) / 3 AS INT) AS avg_total_benefit,
+            CAST(SUM(rcc.received_benefit_amount) AS INT) AS total_benefit
     FROM report_card_categories rcc
     JOIN report_cards rc ON rcc.report_card_id = rc.report_card_id
     JOIN monthly_transaction_summary mts ON rc.report_id = mts.report_id

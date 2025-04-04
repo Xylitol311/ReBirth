@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,16 +20,17 @@ public class CardTransactionRepositoryImpl implements CardTransactionRepository 
 	@Override
 	public List<CardTransaction> findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
 			String cardUniqueNumber,
-			Timestamp timestamp) {
+			LocalDateTime fromDate) {
 		List<CardTransactionEntity> entities = cardTransactionJpaRepository
 				.findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
-						cardUniqueNumber, timestamp);
+						cardUniqueNumber, fromDate);
 
 		// 엔티티를 도메인 객체로 변환
 		return entities.stream()
 				.map(cardTransactionMapper::toDomain)
 				.collect(Collectors.toList());
 	}
+
 
 	@Override
 	public void save(CardTransaction cardTransaction) {

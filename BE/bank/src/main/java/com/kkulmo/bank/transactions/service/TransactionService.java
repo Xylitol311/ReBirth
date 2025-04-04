@@ -103,26 +103,18 @@ public class TransactionService {
 		System.out.println(transactionDTO.getType());
 	}
 
-	/**
-	 * 특정 계좌번호에 대해 특정 시간 이후의 거래 내역을 조회한다.
-	 * 마이데이터를 사용하기 위해 만든거야. 계좌별 내역을 가져오는게 이득일듯?
-	 *
-	 * @param userKey 사용자 키
-	 * @param accountNumber 계좌번호
-	 * @param timestamp 조회 시작 시간
-	 * @return 조회된 거래 내역 목록
-	 */
+
 	public List<TransactionDTO> getTransactionsByAccountNumberAndAfterTimestamp(
-		String userKey, String accountNumber, LocalDateTime timestamp) {
+		String userCI, String accountNumber, LocalDateTime timestamp) {
 
 		// 사용자 권한 검증 (해당 사용자의 계좌인지 확인)
-		if (!accountService.validateAccountOwnership(userKey, accountNumber)) {
+		if (!accountService.validateAccountOwnership(userCI, accountNumber)) {
 			throw new RuntimeException("해당 계좌에 권한이 없습니다.");
 		}
 
 		// 특정 시간 이후의 거래 내역 조회
-		return transactionRepository.findByAccountNumberAndCreatedAtAfterOrderByCreatedAtDesc(
-				accountNumber, timestamp).stream()
+		return transactionRepository.findByAccountNumberAndCreatedAtAfterAndApprovalCodeNotLikeOrderByCreatedAtDesc(
+				accountNumber, timestamp, "TXN%").stream()
 			.map(transactionMapper::toDTO)
 			.collect(Collectors.toList());
 	}

@@ -20,6 +20,12 @@ public class AvgAmountByCategoryDTO {
     @JsonProperty("avg_total_spending")
     Integer avgTotalSpending;
 
+    @JsonProperty("total_spending")
+    Integer totalSpending;
+
     @JsonProperty("avg_total_benefit")
     Integer avgTotalBenefit;
+
+    @JsonProperty("total_benefit")
+    Integer totalBenefit;
 }

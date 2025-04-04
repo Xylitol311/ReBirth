@@ -7,19 +7,18 @@ import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.CardTemplate;
 import com.kkulmoo.rebirth.card.domain.myCard;
 import com.kkulmoo.rebirth.card.infrastructure.adapter.dto.CardApiResponse;
+import com.kkulmoo.rebirth.card.presentation.dto.CardOrderRequest;
 import com.kkulmoo.rebirth.common.exception.CardProcessingException;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +28,33 @@ public class CardService {
     private final CardRepository cardRepository;
     private final CardPort cardPort; // 인터페이스 의존
     private final ReportCardsJpaRepository reportCardsJpaRepository;
+
+    @Transactional
+    public void updateCardsOrder(UserId userId, List<CardOrderRequest> cardOrders) {
+        // 요청된 카드 ID 수집
+        List<Integer> cardIds = cardOrders.stream()
+                .map(CardOrderRequest::getCardId)
+                .collect(Collectors.toList());
+
+        // 사용자의 카드만 조회 (보안을 위해 사용자 ID 확인)
+        List<myCard> userCards = cardRepository.findByUserIdAndCardIdIn(userId.getValue(), cardIds);
+
+        // 카드 ID로 맵 생성
+        Map<Integer, myCard> cardMap = userCards.stream()
+                .collect(Collectors.toMap(myCard::getCardId, card -> card));
+
+        // 각 카드의 새 위치 설정
+        // map으로 해야하는 이유는 List로 한다면 n^2으로 찾아야한다.
+        for (CardOrderRequest request : cardOrders) {
+            myCard card = cardMap.get(request.getCardId());
+            if (card != null) {
+                card.changeCardOrder(request.getPosition());
+            }
+        }
+
+        // 변경된 카드 저장
+        cardRepository.saveAll(cardMap.values());
+    }
 
     public List<CardResponse> findCardsAndBenefitByUserId(UserId userId) {
 
@@ -105,7 +131,6 @@ public class CardService {
         }
     }
 
-
     /**
      * API에서 가져온 카드 중 DB에 없는 것만 처리하는 메서드
      */
@@ -134,6 +159,9 @@ public class CardService {
 
     // 카드 존재 여부 확인 메서드
     private myCard createCard(CardApiResponse apiCard, UserId userId) {
+
+        System.out.println("이름 체크 하는 과정입니다이름 체크 하는 과정입니다이름 체크 하는 과정입니다");
+        System.out.println(apiCard.getCardName());
         // 카드 템플릿 가져오기
         Optional<CardTemplate> cardTemplateOptional = cardRepository.findCardTemplateByCardName(apiCard.getCardName());
 
@@ -144,15 +172,32 @@ public class CardService {
 
         CardTemplate cardTemplate = cardTemplateOptional.get();
 
+        Integer existingCardCount = cardRepository.countByUserId(userId);
+        Short newCardOrder = (short)(existingCardCount + 1);
+
+
+
         // 새 카드 객체 생성
         myCard newMyCard = myCard.builder()
                 .userId(userId)
                 .cardTemplateId(cardTemplate.getCardTemplateId())
                 .cardUniqueNumber(apiCard.getCardUniqueNumber())
+                .annualFee(cardTemplate.getAnnualFee())
+                .cardName(cardTemplate.getCardName())
+                .cardOrder(newCardOrder)
                 .build();
 
         // 저장 후 반환
         return cardRepository.save(newMyCard);
+    }
+
+
+    public void updateCardsLastLoadTime(List<myCard> myCards) {
+        List<myCard> updatedCards = myCards.stream()
+                .map(myCard::updateLatestLoadDataAt)
+                .collect(Collectors.toList());
+
+        cardRepository.saveAll(updatedCards);
     }
 
 }

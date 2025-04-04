@@ -40,6 +40,7 @@ public class TransactionsRepositoryImpl implements TransactionRepository {
             return;
         }
 
+
         List<TransactionEntity> transactionEntities = transactionsJpaRepository.saveAll(
                 responseMapper.toTransactionEntities(transactionResponses)
         );
@@ -66,5 +67,3 @@ public class TransactionsRepositoryImpl implements TransactionRepository {
         );
     }
 }
-
-//

@@ -17,5 +17,7 @@ public class RecommendCardForCategoryDTO {
 
     private String categoryName;
 
-    List<RecommendCardDTO> recommendCards;
+    private Integer amount;
+
+    private List<RecommendCardDTO> recommendCards;
 }
