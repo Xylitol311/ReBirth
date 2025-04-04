@@ -1,7 +1,9 @@
 package com.kkulmo.bank.account.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -22,14 +24,20 @@ public class AccountService {
 	private final AccountRepository accountRepository;
 	private final UserRepository userRepository;
 
+	public List<String> getAccountNumbersByUserCI(String userId) {
+		return accountRepository.findByUserId(userId)
+				.stream()
+				.map(AccountEntity::getAccountNumber)
+				.collect(Collectors.toList());
+	}
+
 	//계좌 생성.
 	public AccountDTO createAccount(AccountDTO accountDTO) {
 		// 1. 사용자 ID 유효성 검증
 		String userId = accountDTO.getUserId();
-		User user = userRepository.findById(userId)
+		userRepository.findById(userId)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. ID: " + userId));
 
-		System.out.println(accountDTO.getAccountNumber());
 		// 3. 계좌 엔티티 생성
 		AccountEntity account = AccountEntity.builder()
 			.accountNumber(accountDTO.getAccountNumber())
@@ -46,13 +54,13 @@ public class AccountService {
 	}
 
 
-	public boolean validateAccountOwnership(String userKey, String accountNumber) {
+	public boolean validateAccountOwnership(String userCI, String accountNumber) {
 		// 계좌번호로 계좌 조회
 		AccountEntity account = accountRepository.findById(accountNumber)
 			.orElseThrow(() -> new RuntimeException("Account not found: " + accountNumber));
 
 		// 계좌의 소유자 userId와 전달받은 userKey가 일치하는지 확인
-		return account.getUserId().equals(userKey);
+		return account.getUserId().equals(userCI);
 	}
 
 	public AccountBalanceDTO getBalanceByUserIdAndAccountNumber(String userId, String accountNumber) {
@@ -86,10 +94,4 @@ public class AccountService {
 			.build();
 	}
 
-	private AccountEntity convertToEntity(AccountDTO accountDTO) {
-		return AccountEntity.builder()
-			.accountNumber(accountDTO.getAccountNumber())
-			.userId(accountDTO.getUserId())
-			.build();
-	}
 }

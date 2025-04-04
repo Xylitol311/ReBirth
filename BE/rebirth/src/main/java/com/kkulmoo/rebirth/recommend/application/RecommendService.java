@@ -4,8 +4,11 @@ import com.kkulmoo.rebirth.analysis.infrastructure.repository.BenefitTemplateJpa
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
 import com.kkulmoo.rebirth.card.domain.DiscountType;
 import com.kkulmoo.rebirth.card.infrastructure.entity.BenefitTemplateEntity;
+import com.kkulmoo.rebirth.payment.domain.repository.CardTemplateRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardTemplateJpaRepository;
+import com.kkulmoo.rebirth.payment.infrastructure.repository.CardTemplateRepositoryImpl;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
+import com.kkulmoo.rebirth.recommend.domain.dto.request.SearchParameterDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.AvgAmountByCategoryDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardForCategoryDTO;
@@ -26,6 +29,7 @@ public class RecommendService {
     private final BenefitTemplateJpaRepository benefitTemplateJpaRepository;
     private final CardsJpaRepository cardsJpaRepository;
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
+    private final CardTemplateRepository cardTemplateRepository;
 
     public Top3CardDTO calculateRecommendCardForAll(Integer userId) {
 
@@ -155,5 +159,10 @@ public class RecommendService {
             recommendCardForCategoryList.add(recommendCardForCategory);
         }
         return recommendCardForCategoryList;
+    }
+
+    public List<CardTemplateEntity> searchByParameter(SearchParameterDTO parameter) {
+
+        return cardTemplateRepository.searchCard(parameter);
     }
 }

@@ -54,7 +54,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
             "WHERE t.userId = :userId " +
             "AND YEAR(t.createdAt) = :year " +
             "AND MONTH(t.createdAt) = :month " +
-            "AND ct.status = '승인' " +
+            "AND ct.status = 'APPROVED' " +
             "GROUP BY c.categoryId, cd.cardId")
     List<MonthlySpendingByCategoryAndCardDTO> getMonthlySpendingByCategoryAndCard(
             @Param("userId") int userId,
@@ -93,7 +93,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
                 WHERE t.userId = :userId
                 AND YEAR(t.createdAt) = :year
                 AND MONTH(t.createdAt) = :month
-                AND ct.status = '승인'
+                AND ct.status = 'APPROVED'
                 ORDER BY t.createdAt DESC
             """)
     List<DailyTransactionsDTO> getMonthlyTransactions(int userId, int year, int month);
@@ -110,7 +110,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
             "JOIN CategoryEntity c ON sc2.category.categoryId = c.categoryId " +
             "WHERE t2.userId = :userId " +
             "AND t2.createdAt BETWEEN :startDateTime AND :endDateTime " +
-            "AND ct2.status = '승인' " +
+            "AND ct2.status = 'APPROVED' " +
             "GROUP BY c.categoryId " +
             "ORDER BY SUM(t2.amount) ASC " +
             "LIMIT 1 " +
@@ -122,7 +122,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
             "JOIN CardTransactionEntity ct3 ON t3.transactionId = ct3.transactionId " +
             "WHERE t3.userId = :userId " +
             "AND t3.createdAt BETWEEN :prevStartDateTime AND :prevEndDateTime " +
-            "AND ct3.status = '승인' " +
+            "AND ct3.status = 'APPROVED' " +
             "), 0) - COALESCE(SUM(t.amount), 0) " +  // 소비 차이
             ")" +
             ") " +
@@ -130,7 +130,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
             "JOIN CardTransactionEntity ct ON t.transactionId = ct.transactionId " +
             "WHERE t.userId = :userId " +
             "AND t.createdAt BETWEEN :startDateTime AND :endDateTime " +
-            "AND ct.status = '승인'"
+            "AND ct.status = 'APPROVED'"
     )
     MonthlyLogInfoDTO getMonthlyLogInfo(int userId, LocalDateTime startDateTime, LocalDateTime endDateTime, LocalDateTime prevStartDateTime, LocalDateTime prevEndDateTime);
 }

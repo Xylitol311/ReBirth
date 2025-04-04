@@ -30,8 +30,10 @@ public class UserEntityMapper {
                 .updatedAt(userEntity.getUpdatedAt())
                 .deletedAt(userEntity.getDeletedAt())
                 .bankLatestLoadDataAt(userEntity.getBankLatestLoadDataAt())
+                .bankAccounts(userEntity.getBankAccounts())
                 .build();
     }
+
 
     public UserEntity toEntity(User user) {
         if (user == null) {
@@ -39,7 +41,7 @@ public class UserEntityMapper {
         }
 
         return UserEntity.builder()
-                .userId(user.getUserId().getValue())
+                .userId(user.getUserId() != null ? user.getUserId().getValue() : null)
                 .consumptionPatternId(user.getConsumptionPatternId())
                 .userName(user.getUserName())
                 .hashedPinNumber(user.getHashedPinNumber())
@@ -50,6 +52,7 @@ public class UserEntityMapper {
                 .updatedAt(user.getUpdatedAt())
                 .deletedAt(user.getDeletedAt())
                 .bankLatestLoadDataAt(user.getBankLatestLoadDataAt())
+                .bankAccounts(user.getBankAccounts())
                 .build();
     }
 

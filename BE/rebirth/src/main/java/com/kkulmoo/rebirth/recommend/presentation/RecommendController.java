@@ -3,15 +3,14 @@ package com.kkulmoo.rebirth.recommend.presentation;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ResponseDTO;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
 import com.kkulmoo.rebirth.recommend.application.RecommendService;
+import com.kkulmoo.rebirth.recommend.domain.dto.request.SearchParameterDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardForCategoryDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.Top3CardDTO;
+import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -42,6 +41,17 @@ public class RecommendController {
         result.setMessage("카테고리별 top3 카드 추천");
         List<RecommendCardForCategoryDTO> data = recommendService.calculateRecommendCardForCategory(userId);
         result.setData(data);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<ResponseDTO> searchByParameter(@RequestBody SearchParameterDTO parameter) {
+        System.out.println(parameter);
+        ResponseDTO result = new ResponseDTO();
+        result.setSuccess(true);
+        result.setMessage("카드 검색 완료");
+        List<CardTemplateEntity> cardTemplates = recommendService.searchByParameter(parameter);
+        result.setData(cardTemplates);
         return ResponseEntity.ok().body(result);
     }
 }
