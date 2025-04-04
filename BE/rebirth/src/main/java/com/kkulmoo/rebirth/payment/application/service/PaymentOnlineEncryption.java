@@ -1,6 +1,5 @@
 package com.kkulmoo.rebirth.payment.application.service;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -70,21 +69,23 @@ public class PaymentOnlineEncryption {
 
     }
 
-    //가맹점, 가격, 영구 토큰 담아서 생성해야함
-// 가맹점하고 가격 정보 담아서 토큰 생성 ( AES 처리만 하기 )
-    public String generateOnlineToken(String merchantName, int amount, String token) throws Exception {
+    // 유저 정보, 가맹점, 가격, 영구 토큰 담아서 온라인용 토큰 생성
+    public String generateOnlineToken(String merchantName, int amount, String permanentToken, int userId) throws Exception {
         long expiration = System.currentTimeMillis() + EXPIRATION_TIME;
         String iv = generateIV();
 
-        String encryptedData = encryptAES(token + "|" + merchantName + "|" + Integer.toString(amount), aesKey, iv);
+        String dataToEncrypt = userId + "|" + permanentToken + "|" + merchantName + "|" + amount;
+        String encryptedData = encryptAES(dataToEncrypt, aesKey, iv);
 
         String data = encryptedData + "|" + iv + "|" + expiration;
         String signature = generateHMAC(data, secretKey);
 
-        return Base64.getUrlEncoder().withoutPadding().encodeToString((data + "|" + signature).getBytes(StandardCharsets.UTF_8));
+        return Base64.getUrlEncoder().withoutPadding()
+                .encodeToString((data + "|" + signature).getBytes(StandardCharsets.UTF_8));
     }
 
-    // 0 : 가맹점 정보, 1 : 가격 던지기
+    // 온라인 토큰 검증 메서드
+    // 복호화 결과 : [userId, permanentToken, merchantName, amount]
     public String[] validateOnlineToken(String token) throws Exception {
         String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
         String[] parts = decoded.split("\\|");
@@ -108,11 +109,9 @@ public class PaymentOnlineEncryption {
         String decryptedData = decryptAES(encryptedData, aesKey, iv);
         String[] decryptedParts = decryptedData.split("\\|");
 
-        if (decryptedParts.length != 3) return null;
-
+        if (decryptedParts.length != 4) return null;
 
         return decryptedParts;
-
     }
 
     private String encryptAES(String data, String key, String iv) throws Exception {

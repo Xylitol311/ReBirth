@@ -45,7 +45,7 @@ public class SseController {
     }
 
 
-
+//오프라인 결제 (포스기)
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
