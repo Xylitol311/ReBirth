@@ -2,6 +2,7 @@ package com.kkulmoo.rebirth.user.application.service;
 
 import com.kkulmoo.rebirth.card.application.CardService;
 import com.kkulmoo.rebirth.card.domain.myCard;
+import com.kkulmoo.rebirth.transactions.application.BankPort;
 import com.kkulmoo.rebirth.transactions.application.TransactionService;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
@@ -21,6 +22,7 @@ public class MyDataService {
     private final UserRepository userRepository;
     private final CardService cardService;
     private final TransactionService transactionService;
+    private final BankPort bankPort;
 
     @Transactional
     public void loadMyCard(Integer userId) {
@@ -33,7 +35,7 @@ public class MyDataService {
     }
 
     @Transactional
-    public void getMyTransactionData(Integer userId) {
+    public void getMyCardTransactionData(Integer userId) {
         User user = userRepository.findByUserId(new UserId(userId));
 
         List<myCard> myCardsList = cardService.findByUserId(new UserId(userId));
@@ -43,7 +45,7 @@ public class MyDataService {
 
 
     @Transactional
-    public void loadMyTransactionByCards(User user, List<myCard> cards){
+    public void loadMyTransactionByCards(User user, List<myCard> cards) {
         List<String> cardUniqueNumbers = cards.stream()
                 .map(myCard::getCardUniqueNumber)
                 .collect(Collectors.toList());
@@ -54,10 +56,33 @@ public class MyDataService {
         cardService.updateCardsLastLoadTime(cards);
     }
 
+    @Transactional
+    public void loadMyBankAccount(Integer userId) {
+        User user = userRepository.findByUserId(new UserId(userId));
+
+        // 비동기 호출을 블로킹하여 계좌 목록 가져오기
+        List<String> newAccounts = bankPort.getAccountNumbersByUserCI(user.getUserCI())
+                .block(); // 실제 환경에서는 적절한 타임아웃 설정 필요
+
+        // 계좌 목록 업데이트
+        user.updateBankAccounts(newAccounts);
+
+        // 변경된 사용자 정보 저장
+        userRepository.save(user);
+    }
 
     @Transactional
-    public void loadMyBankTransaction() {
-        // todo: 은행 거래내역 가져오기
+    public void loadMyBankTransaction(Integer userId) {
+        User user = userRepository.findByUserId(new UserId(userId));
+
+        transactionService.getBankTransactionByMyData(user, user.getBankLatestLoadDataAt());
+
+
+        user.updateLatestLoadDataAtNow();
+        System.out.println(
+                user.toString());
+        userRepository.save(user);
+
     }
 
 }

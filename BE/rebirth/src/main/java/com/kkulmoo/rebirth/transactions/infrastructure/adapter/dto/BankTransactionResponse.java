@@ -3,11 +3,13 @@ package com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder(toBuilder = true)
+@Setter
 public class BankTransactionResponse {
     private UserId userId;
     private String accountNumber;  // 계좌번호

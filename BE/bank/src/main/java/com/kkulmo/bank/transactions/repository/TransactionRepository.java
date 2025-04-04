@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TransactionRepository extends JpaRepository<TransactionEntity, Integer> {
 
-	List<TransactionEntity> findByAccountNumberAndCreatedAtAfterOrderByCreatedAtDesc(
-		String accountNumber, LocalDateTime timestamp);
-
+	List<TransactionEntity> findByAccountNumberAndCreatedAtAfterAndApprovalCodeNotLikeOrderByCreatedAtDesc(
+			String accountNumber, LocalDateTime timestamp, String approvalCodePattern);
 }

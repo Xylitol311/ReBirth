@@ -1,8 +1,11 @@
 package com.kkulmoo.rebirth.transactions.domain;
 
+import lombok.Getter;
+
+@Getter
 public enum BankTransactionType {
     DEPOSIT("입금"),
-    DEBIT("출금");
+    WITHDRAWAL("출금");
 
     private final String koreanDescription;
 
