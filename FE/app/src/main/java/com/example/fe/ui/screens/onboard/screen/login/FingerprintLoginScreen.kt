@@ -11,8 +11,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
+
 import com.example.fe.ui.screens.onboard.auth.FingerprintAuthComposable
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -56,6 +56,7 @@ fun RegistrationCompleteScreen(navController: NavController, viewModel: Onboardi
 
     when (screenState) {
         CompleteScreenState.REGISTRATION_COMPLETE -> {
+            viewModel.setIsLogged()
             RegistrationCompleteContent(
                 onCheckSpendingType = { screenState = CompleteScreenState.INCOME_INPUT },
                 onSkip = {

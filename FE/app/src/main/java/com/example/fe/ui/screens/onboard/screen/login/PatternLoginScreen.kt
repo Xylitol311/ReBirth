@@ -7,75 +7,74 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
-
-
+import com.example.fe.ui.screens.onboard.auth.PatternLockView
+import com.example.fe.ui.screens.onboard.screen.setup.security.AdditionalSecurityStep
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatternLoginScreen(
     navController: NavController,
-    viewModel: OnboardingViewModel
+    viewModel: OnboardingViewModel,
+    onLoginSuccess: () -> Unit
 ) {
-    val context = LocalContext.current
-    var currentStep by remember { mutableStateOf(AdditionalSecurityStep.METHOD) }
-    var savedPattern by remember { mutableStateOf<List<Int>?>(null) }
-
-    Scaffold(
-        topBar = {
-            if (currentStep == AdditionalSecurityStep.PATTERN_CONFIRM) {
-                TopAppBar(
-                    title = {},
-                    navigationIcon = {
-                        IconButton(
-                            onClick = { currentStep = AdditionalSecurityStep.PATTERN },
-                            modifier = Modifier.size(54.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.ArrowBack,
-                                contentDescription = "뒤로가기",
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-                PatternAuth(
-                    currentStep = AdditionalSecurityStep.PATTERN, // Need to use SecurityStep enum here
-                    onPatternConfirmed = {
-                        Log.d("PatternAUTH","savedPattern11 : $savedPattern / it : $it")
-                        savedPattern = it
-                        currentStep = AdditionalSecurityStep.PATTERN_CONFIRM
-                    },
-                    onStepChange = { _ -> }
-                )
-
-                PatternAuth(
-                    currentStep = AdditionalSecurityStep.PATTERN_CONFIRM, // Need to use SecurityStep enum here
-                    onPatternConfirmed = {
-                        Log.d("PatternAUTH","savedPattern : $savedPattern / it : $it")
-                        // 리스트 내용을 명시적으로 비교
-                        if (savedPattern != null && it.size == savedPattern!!.size &&
-                            it.zip(savedPattern!!).all { (a, b) -> a == b }) {
-                            viewModel.hasPatternAuth = true
-                            currentStep = AdditionalSecurityStep.DONE
-                        } else {
-                            Toast.makeText(context, "패턴이 틀렸습니다. 다시 시도하세요.", Toast.LENGTH_SHORT).show()
-                            currentStep = AdditionalSecurityStep.PATTERN
-                        }
-                    },
-                    onStepChange = { _ -> }
-                )
-
-
+    Scaffold {
+        Box(modifier = Modifier.padding(it)) {
+            PatternLoginContent(
+                viewModel = viewModel,
+                onLoginSuccess = onLoginSuccess
+            )
         }
     }
 }
+
+@Composable
+fun PatternLoginContent(
+    viewModel: OnboardingViewModel,
+    onLoginSuccess: () -> Unit
+) {
+    val context = LocalContext.current
+    val savedPattern by remember { mutableStateOf(viewModel.getUserPattern()) }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            "패턴을 입력해주세요",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        // 실제 프로젝트의 PatternLockView 사용
+        PatternLockView(
+            modifier = Modifier
+                .size(300.dp)
+                .padding(16.dp),
+            patternSize = 3,
+            onPatternComplete = { pattern ->
+                if (savedPattern != null && pattern.size == savedPattern.size &&
+                    pattern.zip(savedPattern).all { (a, b) -> a == b }) {
+                    onLoginSuccess()
+                } else {
+                    Toast.makeText(
+                        context,
+                        "패턴이 일치하지 않습니다",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        )
+    }
+}
+
+// 기존 SimplePatternLockView 대신 실제 프로젝트의 PatternLockView 사용
+// (라이브러리 또는 직접 구현한 컴포넌트)

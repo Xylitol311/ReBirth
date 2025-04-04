@@ -84,7 +84,7 @@ fun PinSetupScreen(
                         PinAuth(
                             currentStep = if (currentStep == PinStep.PIN) PinStep.PIN else PinStep.PIN_CONFIRM,
                             onPinConfirmed = { confirmedPin ->
-                                viewModel.setPinAuthState(true)
+                                viewModel.setUserPin(true)
                                 if (currentStep == PinStep.PIN) {
                                     pin = confirmedPin
                                     currentStep = PinStep.PIN_CONFIRM
@@ -100,9 +100,7 @@ fun PinSetupScreen(
                                             pin = confirmedPin,
                                             onSuccess = {
                                                 saveLoginMethod(context, "pin")
-                                                navController.navigate("card_select") {
-                                                    popUpTo("pin_setup") { inclusive = true }
-                                                }
+                                                navController.navigate("card_select")
                                             },
                                             onFailure = { error ->
                                                 isLoading = false

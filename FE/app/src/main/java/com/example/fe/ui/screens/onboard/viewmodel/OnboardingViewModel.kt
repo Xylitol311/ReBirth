@@ -1,20 +1,3 @@
-//package com.example.fe.ui.screens.onboard
-//
-//import android.content.Context
-//import androidx.compose.runtime.getValue
-//import androidx.compose.runtime.mutableStateOf
-//import androidx.compose.runtime.setValue
-//import androidx.datastore.core.DataStore
-//import androidx.datastore.preferences.core.Preferences
-//import androidx.datastore.preferences.core.booleanPreferencesKey
-//import androidx.datastore.preferences.core.edit
-//import androidx.datastore.preferences.preferencesDataStore
-//import androidx.lifecycle.ViewModel
-//import androidx.lifecycle.ViewModelProvider
-//import androidx.lifecycle.viewModelScope
-//import kotlinx.coroutines.flow.MutableStateFlow
-//import kotlinx.coroutines.flow.StateFlow
-//import kotlinx.coroutines.launch
 
 
 package com.example.fe.ui.screens.onboard.viewmodel
@@ -39,6 +22,7 @@ import com.example.fe.data.model.auth.registPatternRequest
 import com.example.fe.data.network.api.AuthApiService
 
 import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
@@ -53,6 +37,7 @@ class OnboardingViewModel(
     private val context: Context
 ) : ViewModel() {
     private val authApiService = NetworkClient.authApiService
+    private val gson = Gson()
 
     companion object {
         private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
@@ -61,30 +46,30 @@ class OnboardingViewModel(
         private val HAS_PIN_AUTH = booleanPreferencesKey("has_pin_auth")
         private val USER_TOKEN = stringPreferencesKey("user_token")
         private val USER_NAME = stringPreferencesKey("user_name")
+        private val USER_PIN = stringPreferencesKey("user_pin")
+        private val USER_PATTERN = stringPreferencesKey("user_pattern")
     }
 
-    // 인증 상태
+    // 상태 변수
     var isLoggedIn by mutableStateOf(false)
-        private set
+        internal set
     var hasBiometricAuth by mutableStateOf(false)
     var hasPatternAuth by mutableStateOf(false)
     var hasPinAuth by mutableStateOf(false)
-    var hasFingerprintAuth by mutableStateOf(false) // 추가된 프로퍼티
-
-    // 사용자 정보
     var userName by mutableStateOf("")
         private set
     var userToken by mutableStateOf("")
         private set
-
-    // 회원가입/로그인 상태
     var isLoading by mutableStateOf(false)
         private set
     var errorMessage by mutableStateOf("")
         private set
 
+    // 로컬 인증 정보 (메모리 캐싱)
+    private var userPin: String = "000000"
+    private var userPattern: List<Int> = listOf(0, 3, 6, 7, 8)
+
     init {
-        // 앱 시작 시 저장된 상태 불러오기
         loadUserPreferences()
     }
 
@@ -97,68 +82,44 @@ class OnboardingViewModel(
                 hasPinAuth = preferences[HAS_PIN_AUTH] ?: false
                 userToken = preferences[USER_TOKEN] ?: ""
                 userName = preferences[USER_NAME] ?: ""
+
+                userPin = preferences[USER_PIN] ?: ""
+                userPattern = preferences[USER_PATTERN]?.let {
+                    gson.fromJson(it, Array<Int>::class.java).toList()
+                } ?: emptyList()
             }
         }
     }
 
-    // 로그인 상태 변경 및 저장
-    fun setLoggedInState(value: Boolean) {
+    fun setIsLogged(): Boolean = true
+
+    // 로컬 PIN 저장
+    fun setUserPin(pin: Boolean) {
+        hasPinAuth = true
         viewModelScope.launch {
             context.dataStore.edit { preferences ->
-                preferences[IS_LOGGED_IN] = value
+                preferences[HAS_PIN_AUTH] = true
             }
-            isLoggedIn = value
         }
     }
 
-    // 생체 인증 상태 변경 및 저장
-    fun setBiometricAuthState(value: Boolean) {
+    fun getUserPin(): String = "000000"
+
+    // 로컬 패턴 저장
+    fun setUserPattern(pattern: List<Int>) {
+        userPattern = pattern
+        hasPatternAuth = true
         viewModelScope.launch {
             context.dataStore.edit { preferences ->
-                preferences[HAS_BIOMETRIC_AUTH] = value
+                preferences[USER_PATTERN] = gson.toJson(pattern)
+                preferences[HAS_PATTERN_AUTH] = true
             }
-            hasBiometricAuth = value
         }
     }
 
-    // 패턴 인증 상태 변경 및 저장
-    fun setPatternAuthState(value: Boolean) {
-        viewModelScope.launch {
-            context.dataStore.edit { preferences ->
-                preferences[HAS_PATTERN_AUTH] = value
-            }
-            hasPatternAuth = value
-        }
-    }
+    fun getUserPattern(): List<Int> = userPattern
 
-    // PIN 인증 상태 변경 및 저장
-    fun setPinAuthState(value: Boolean) {
-        viewModelScope.launch {
-            context.dataStore.edit { preferences ->
-                preferences[HAS_PIN_AUTH] = value
-            }
-            hasPinAuth = value
-        }
-    }
-
-    // 지문 인증 상태 변경
-    fun setFingerprintAuthState(value: Boolean) {
-        hasFingerprintAuth = value
-    }
-
-    // 사용자 정보 저장
-    private fun saveUserInfo(token: String, name: String) {
-        viewModelScope.launch {
-            context.dataStore.edit { preferences ->
-                preferences[USER_TOKEN] = token
-                preferences[USER_NAME] = name
-            }
-            userToken = token
-            userName = name
-        }
-    }
-
-    // 회원가입 함수
+    // 서버 회원가입
     fun registerUser(
         name: String,
         phone: String,
@@ -171,7 +132,7 @@ class OnboardingViewModel(
             try {
                 isLoading = true
                 errorMessage = ""
-                Log.d("LoginAUTH","회원가입 요청가는중")
+
                 val signupResponse = authApiService.signup(
                     SignupRequest(
                         userName = name,
@@ -183,20 +144,24 @@ class OnboardingViewModel(
                 )
 
                 if (!signupResponse.isSuccessful) {
-                    Log.e("LoginAUTH","왜 실패했을까..")
-
                     throw Exception("회원가입 실패: ${signupResponse.message()}")
                 }
 
+                val token = signupResponse.body()?.data.toString()
+
                 context.dataStore.edit { preferences ->
-                    preferences[IS_LOGGED_IN] = true
                     preferences[USER_NAME] = name
-                    preferences[USER_TOKEN] = signupResponse.body()?.data.toString()
+                    preferences[USER_TOKEN] = token
                 }
+
+                userToken = token
+                userName = name
+
+                // PIN 로컬 저장도 동시에
+                setUserPin(true)
 
                 onSuccess()
             } catch (e: Exception) {
-                Log.e("LoginAUTH","알수 없는 오류")
                 onFailure(e.message ?: "알 수 없는 오류 발생")
             } finally {
                 isLoading = false
@@ -204,11 +169,10 @@ class OnboardingViewModel(
         }
     }
 
-
-    // 패턴 등록 함수
+    // 서버에 패턴 등록 + 로컬 저장
     fun registerPattern(
         token: String,
-        pattern: String,
+        pattern: List<Int>,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
@@ -217,19 +181,19 @@ class OnboardingViewModel(
                 isLoading = true
                 errorMessage = ""
 
-                val patternResponse = authApiService.registPattern(
-                    token = token, // 토큰 추가 (Bearer 접두사 필요 여부 확인)
+                val response = authApiService.registPattern(
+                    token = token,
                     request = registPatternRequest(
                         deviceId = deviceInfoManager.getDeviceId().toString(),
-                        patternNumbers = pattern
+                        patternNumbers = pattern.joinToString("")
                     )
                 )
 
-                if (!patternResponse.isSuccessful) {
-                    throw Exception("패턴 등록 실패: ${patternResponse.message()}")
+                if (!response.isSuccessful) {
+                    throw Exception("패턴 등록 실패: ${response.message()}")
                 }
 
-                setPatternAuthState(true)
+                setUserPattern(pattern)
                 onSuccess()
             } catch (e: Exception) {
                 errorMessage = e.message ?: "알 수 없는 오류 발생"
@@ -240,8 +204,35 @@ class OnboardingViewModel(
         }
     }
 
-    // 로그아웃 - 모든 인증 상태 초기화 및 저장
+    fun setBiometricAuthState(value: Boolean) {
+        hasBiometricAuth = value
+        viewModelScope.launch {
+            context.dataStore.edit { preferences ->
+                preferences[HAS_BIOMETRIC_AUTH] = value
+            }
+        }
+    }
+
+    fun setLoggedInState(value: Boolean) {
+        isLoggedIn = value
+        viewModelScope.launch {
+            context.dataStore.edit { preferences ->
+                preferences[IS_LOGGED_IN] = value
+            }
+        }
+    }
+
+    // 로그아웃
     fun logout() {
+        isLoggedIn = false
+        hasBiometricAuth = false
+        hasPatternAuth = false
+        hasPinAuth = false
+        userName = ""
+        userToken = ""
+        userPin = ""
+        userPattern = emptyList()
+
         viewModelScope.launch {
             context.dataStore.edit { preferences ->
                 preferences[IS_LOGGED_IN] = false
@@ -250,14 +241,9 @@ class OnboardingViewModel(
                 preferences[HAS_PIN_AUTH] = false
                 preferences[USER_TOKEN] = ""
                 preferences[USER_NAME] = ""
+                preferences[USER_PIN] = ""
+                preferences[USER_PATTERN] = "[]"
             }
-            isLoggedIn = false
-            hasBiometricAuth = false
-            hasPatternAuth = false
-            hasPinAuth = false
-            hasFingerprintAuth = false
-            userName = ""
-            userToken = ""
         }
     }
 }

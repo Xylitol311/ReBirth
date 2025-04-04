@@ -3,6 +3,7 @@ package com.example.fe
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -21,13 +22,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.fe.ui.navigation.AppNavigation
 import com.example.fe.ui.navigation.OnboardingNavHost
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
-import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
+
 import com.example.fe.ui.screens.splash.SplashScreen
-import com.example.fe.ui.screens.onboard.screen.login.FingerprintLoginScreen
-import com.example.fe.ui.screens.onboard.screen.login.PinLoginScreen
-import com.example.fe.ui.screens.onboard.screen.login.PatternLoginScreen
+
 import com.example.fe.ui.navigation.LoginNavigation
+import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModelFactory
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,8 +61,9 @@ class MainActivity : FragmentActivity() {
 @Composable
 fun MainContent() {
     val context = LocalContext.current
+    val deviceInfoManager = remember { AndroidDeviceInfoManager(context) }
     val viewModel: OnboardingViewModel = viewModel(
-        factory = OnboardingViewModelFactory(context)
+        factory = OnboardingViewModelFactory(deviceInfoManager,context)
     )
 
     // 앱 상태 관리 (스플래시 화면 표시 여부)
@@ -77,9 +79,11 @@ fun MainContent() {
         )
     } else {
         // 스플래시 화면 이후 적절한 화면으로 이동
+        Log.d("PinInputTest","로그인 여부 : ${viewModel.isLoggedIn}")
         if (!viewModel.isLoggedIn) {
             OnboardingNavHost(viewModel)
         } else {
+
             // 로그인된 경우 인증 수단에 따라 분기
             val navController = rememberNavController()
             val startDestination = when {
