@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import com.example.fe.R
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.auth.FingerprintAuth
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
 import com.example.fe.ui.screens.onboard.components.AuthMethodOption

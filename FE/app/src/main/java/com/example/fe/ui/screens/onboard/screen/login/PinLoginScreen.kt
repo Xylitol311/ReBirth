@@ -1,6 +1,6 @@
 package com.example.fe.ui.screens.onboard.screen.login
 
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*

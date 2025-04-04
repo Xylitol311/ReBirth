@@ -1,33 +1,18 @@
 package com.example.fe.ui.screens.onboard.screen.setup
 
-import android.content.Context
-import android.content.ContextWrapper
 import android.util.Log
 import android.widget.Toast
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
-import com.example.fe.R
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
-import com.example.fe.ui.screens.onboard.auth.FingerprintAuth
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
-import com.example.fe.ui.screens.onboard.components.AuthMethodOption
-
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)

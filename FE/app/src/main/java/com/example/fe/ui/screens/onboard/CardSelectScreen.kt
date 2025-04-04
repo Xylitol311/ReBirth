@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.fe.R
-import androidx.compose.material.icons.filled.ArrowBack
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)

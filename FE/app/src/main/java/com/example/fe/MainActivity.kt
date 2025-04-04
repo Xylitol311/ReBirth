@@ -18,11 +18,15 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fe.data.network.api.AuthApiService
 import com.example.fe.ui.navigation.AppNavigation
 import com.example.fe.ui.navigation.OnboardingNavHost
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
-import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
+import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModelFactory
+
 import com.example.fe.ui.screens.splash.SplashScreen
+import dagger.hilt.android.AndroidEntryPoint
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,8 +59,9 @@ class MainActivity : FragmentActivity() {
 @Composable
 fun MainContent() {
     val context = LocalContext.current
+    val deviceInfoManager = remember { AndroidDeviceInfoManager(context) }
     val viewModel: OnboardingViewModel = viewModel(
-        factory = OnboardingViewModelFactory(context)
+        factory = OnboardingViewModelFactory(deviceInfoManager,context)
     )
 
     // 앱 상태 관리 (스플래시 화면 표시 여부)

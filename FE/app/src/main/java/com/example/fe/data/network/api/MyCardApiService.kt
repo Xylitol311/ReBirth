@@ -10,13 +10,13 @@ import retrofit2.http.Query
 interface MyCardApiService {
 
     // GET getMyCardInfo /api/cards/detail/{cardId}
-    @GET("/api/cards/detail/{cardId}")
+    @GET("api/cards/detail/{cardId}")
     fun getMyCardInfo(
         @Path("cardId") cardId: Int
     ): Call<MyCardInfoResponse>
 
     // GET getCardTransactionHistory /api/transactions/card-transaction
-    @GET("/api/transactions/card-transaction")
+    @GET("api/transactions/card-transaction")
     fun getCardTransactionHistory(
         @Header("Authorization") token: String,
         @Query("cardId") cardId: Int,

@@ -41,6 +41,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.fe.R
 import com.example.fe.ui.components.backgrounds.StarryBackground
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
 enum class CompleteScreenState {
     REGISTRATION_COMPLETE,
