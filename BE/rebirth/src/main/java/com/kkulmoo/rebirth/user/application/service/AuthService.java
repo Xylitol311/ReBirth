@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 	private final UserRepository userRepository;
-	private final WebClientService webClientService;
+	private final UserWebClientService webClientService;
 
 	public User createUser(CreateUserCommand command) {
 		// PIN 번호 암호화

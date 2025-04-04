@@ -1,22 +1,18 @@
 package com.kkulmoo.rebirth.user.application.service;
 
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
-import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
-import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.user.presentation.requestDTO.UserCIRequest;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @Service
-public class WebClientService {
+public class UserWebClientService {
     private final WebClient webClient;
 
-    public WebClientService(@Qualifier("ssafyBankAPIClient") WebClient webClient) {
+    public UserWebClientService(@Qualifier("ssafyBankAPIClient") WebClient webClient) {
         this.webClient = webClient;
     }
 

@@ -11,11 +11,9 @@ import com.kkulmoo.rebirth.user.presentation.requestDTO.UserSignupRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -30,7 +28,6 @@ public class AuthController {
 
 		//은행 한테 사용자 이름하고 birth 넘겨주면서 user CI 받아오기
 		String userCI = authService.getUserCI(UserCIRequest.builder().userName(request.getUserName()).birth(request.getBirth()).build());
-
 
 		authService.createUser(CreateUserCommand.fromRequest(request,userCI));
 
