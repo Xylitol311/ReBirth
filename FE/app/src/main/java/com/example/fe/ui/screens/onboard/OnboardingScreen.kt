@@ -64,7 +64,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                 // 임시 보안 설정 버튼 추가
                 Button(
                     onClick = {
-                        navController.navigate("security_setup") {
+                        navController.navigate("pin_setup") {
                             popUpTo("onboarding") { inclusive = true }
                         }
                     },
