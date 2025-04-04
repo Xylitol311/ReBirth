@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransactionHistoryRequestDTO {
-	private String userKey;              // 사용자 키
+	private String userCI;              // 사용자 키
 	private String accountNumber;        // 계좌번호
 	private LocalDateTime timestamp;     // 조회 시간 기준
 }

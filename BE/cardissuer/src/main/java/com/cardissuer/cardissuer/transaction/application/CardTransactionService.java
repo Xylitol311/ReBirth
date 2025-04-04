@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.cardissuer.cardissuer.common.exception.CardNotFoundException;
 import org.springframework.stereotype.Service;
@@ -93,9 +94,18 @@ public class CardTransactionService {
         }
 
         // 조건에 맞는 거래내역 조회 (cardUniqueNumber와 timestamp 기준)
-        return cardTransactionRepository.findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
+        List<CardTransaction> transactions = cardTransactionRepository.findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
                 cardUniqueNumber,
                 fromdate
         );
+
+        // amount 값에 -1 곱하기
+        return transactions.stream()
+                .peek(transaction -> {
+                    if (transaction.getAmount() != null) {
+                        transaction.setAmount(transaction.getAmount() * (-1));
+                    }
+                })
+                .collect(Collectors.toList());
     }
 }
