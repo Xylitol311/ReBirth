@@ -353,7 +353,7 @@ public class ReportService {
                     .build();
         }
         // 과소비 계산
-        int overConsumption = Math.min(100, Math.abs(50 * report.getTotalSpending()) / monthlyIncome);
+        int overConsumption = Math.min(100, Math.abs(100 * report.getTotalSpending()) / monthlyIncome);
         // 변동성 계산
         int variation = 50;
         if(report.getTotalSpending() != 0 && preReport != null) {
