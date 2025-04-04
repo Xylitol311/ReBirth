@@ -1,6 +1,7 @@
 package com.cardissuer.cardissuer.transaction.application;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,6 +67,8 @@ public class CardTransactionService {
                             .createdAt(bankResult.getCreatedAt())
                             .merchantName(createTransactionRequest.getMerchantName())
                             .approvalCode(bankResult.getApprovalCode())
+                            .benefitAmount(createTransactionRequest.getBenefitAmount())
+                            .benefitType(createTransactionRequest.getBenefitType())
                             .build());
         }
         return bankResult;
@@ -75,7 +78,7 @@ public class CardTransactionService {
     public List<CardTransaction> getTransactionsByUserCIAndCardUniqueNumberAfterTimestamp(
             String userCI,
             String cardUniqueNumber,
-            Timestamp timestamp) {
+            LocalDateTime fromdate) {
 
         // 사용자 존재 여부 먼저 확인
         boolean userExists = userRepository.existsByUserCI(userCI);
@@ -92,7 +95,7 @@ public class CardTransactionService {
         // 조건에 맞는 거래내역 조회 (cardUniqueNumber와 timestamp 기준)
         return cardTransactionRepository.findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
                 cardUniqueNumber,
-                timestamp
+                fromdate
         );
     }
 }

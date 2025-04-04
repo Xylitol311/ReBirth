@@ -159,6 +159,9 @@ public class CardService {
 
     // 카드 존재 여부 확인 메서드
     private myCard createCard(CardApiResponse apiCard, UserId userId) {
+
+        System.out.println("이름 체크 하는 과정입니다이름 체크 하는 과정입니다이름 체크 하는 과정입니다");
+        System.out.println(apiCard.getCardName());
         // 카드 템플릿 가져오기
         Optional<CardTemplate> cardTemplateOptional = cardRepository.findCardTemplateByCardName(apiCard.getCardName());
 
@@ -169,15 +172,32 @@ public class CardService {
 
         CardTemplate cardTemplate = cardTemplateOptional.get();
 
+        Integer existingCardCount = cardRepository.countByUserId(userId);
+        Short newCardOrder = (short)(existingCardCount + 1);
+
+
+
         // 새 카드 객체 생성
         myCard newMyCard = myCard.builder()
                 .userId(userId)
                 .cardTemplateId(cardTemplate.getCardTemplateId())
                 .cardUniqueNumber(apiCard.getCardUniqueNumber())
+                .annualFee(cardTemplate.getAnnualFee())
+                .cardName(cardTemplate.getCardName())
+                .cardOrder(newCardOrder)
                 .build();
 
         // 저장 후 반환
         return cardRepository.save(newMyCard);
+    }
+
+
+    public void updateCardsLastLoadTime(List<myCard> myCards) {
+        List<myCard> updatedCards = myCards.stream()
+                .map(myCard::updateLatestLoadDataAt)
+                .collect(Collectors.toList());
+
+        cardRepository.saveAll(updatedCards);
     }
 
 }

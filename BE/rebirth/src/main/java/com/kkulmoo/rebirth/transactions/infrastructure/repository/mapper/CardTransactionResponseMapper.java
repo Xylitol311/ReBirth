@@ -6,14 +6,17 @@ import com.kkulmoo.rebirth.transactions.domain.Status;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.CardTransactionEntity;
 import com.kkulmoo.rebirth.transactions.infrastructure.entity.TransactionEntity;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CardTransactionResponseMapper {
 
     // CardTransactionResponse -> TransactionEntity 변환
@@ -22,6 +25,7 @@ public class CardTransactionResponseMapper {
                 .userId(response.getUserId().getValue())
                 .createdAt(response.getCreatedAt())
                 .approvalNumber(response.getApprovalCode())
+                .amount(response.getAmount())
                 .build();
     }
 
@@ -34,6 +38,7 @@ public class CardTransactionResponseMapper {
                 .cardBenefitType(response.getBenefitType() != null ?
                         BenefitType.valueOf(response.getBenefitType()) : null)
                 .benefitAmount(response.getBenefitAmount())
+                .merchantId(response.getMerchantId())
                 .build();
     }
 
@@ -49,15 +54,24 @@ public class CardTransactionResponseMapper {
             List<CardTransactionResponse> responses,
             List<TransactionEntity> savedTransactions) {
 
-        List<CardTransactionEntity> cardEntities = new ArrayList<>();
+        Map<String, TransactionEntity> transactionEntityMap = savedTransactions.stream()
+                .collect(Collectors.toMap(
+                        TransactionEntity::getApprovalNumber,
+                        transaction -> transaction
+                ));
 
-        for (int i = 0; i < responses.size(); i++) {
-            cardEntities.add(toCardTransactionEntity(
-                    responses.get(i),
-                    savedTransactions.get(i).getTransactionId()
-            ));
-        }
+        return responses.stream()
+                .map(response -> {
+                    TransactionEntity matchedTransaction  = transactionEntityMap.get(response.getApprovalCode());
+                    if(matchedTransaction!= null){
+                        return toCardTransactionEntity(response, matchedTransaction.getTransactionId());
+                    }else {
+                        log.warn("매칭되는 트랜잭션을 찾을 수 없음: {}", response.getApprovalCode());
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-        return cardEntities;
     }
 }

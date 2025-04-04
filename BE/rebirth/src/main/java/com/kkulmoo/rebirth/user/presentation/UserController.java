@@ -21,7 +21,7 @@ public class UserController {
 
 
 	// todo: UserId를 Integer에서 UserId로 바꿔야함
-	 @PostMapping
+	 @PostMapping("/mydata/transactions")
 	 public ResponseEntity<ApiResponseDTO<Void>> setMyData(@JwtUserId Integer userId){
 		 myDataService.getMyTransactionData(userId);
 		 return ResponseEntity.ok(ApiResponseDTO.success("마이데이터 연동이 성공적으로 완료되었습니다."));

@@ -7,8 +7,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+import java.util.Optional;
+
 // 카드 템플릿
 public interface CardTemplateJpaRepository extends JpaRepository<CardTemplateEntity, Integer> {
+    Optional<CardTemplateEntity> findByCardName(String cardName);
 
     @Query(value = """
     SELECT DISTINCT c.* 

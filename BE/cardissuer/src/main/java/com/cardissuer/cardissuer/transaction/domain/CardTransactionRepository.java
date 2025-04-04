@@ -1,6 +1,7 @@
 package com.cardissuer.cardissuer.transaction.domain;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,7 @@ public interface CardTransactionRepository {
 
 	List<CardTransaction> findByCardUniqueNumberAndCreatedAtAfterOrderByCreatedAtDesc(
 			String cardUniqueNumber,
-			Timestamp timestamp
+			LocalDateTime fromDate
 	);
 
 	void save (CardTransaction card);
