@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -175,6 +176,7 @@ public class CardService {
         Integer existingCardCount = cardRepository.countByUserId(userId);
         Short newCardOrder = (short)(existingCardCount + 1);
 
+        LocalDateTime defaultDate = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
 
 
         // 새 카드 객체 생성
@@ -185,6 +187,7 @@ public class CardService {
                 .annualFee(cardTemplate.getAnnualFee())
                 .cardName(cardTemplate.getCardName())
                 .cardOrder(newCardOrder)
+                .latestLoadDataAt(defaultDate)
                 .build();
 
         // 저장 후 반환
