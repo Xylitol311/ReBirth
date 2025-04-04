@@ -1,14 +1,17 @@
 package com.kkulmoo.rebirth.card.application;
 
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.ReportCardsEntity;
+import com.kkulmoo.rebirth.analysis.infrastructure.repository.CategoryJpaRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardsJpaRepository;
+import com.kkulmoo.rebirth.card.application.dto.CardBenefit;
+import com.kkulmoo.rebirth.card.application.dto.CardDetailResponse;
 import com.kkulmoo.rebirth.card.application.dto.CardResponse;
-import com.kkulmoo.rebirth.card.domain.CardRepository;
-import com.kkulmoo.rebirth.card.domain.CardTemplate;
-import com.kkulmoo.rebirth.card.domain.myCard;
+import com.kkulmoo.rebirth.card.domain.*;
 import com.kkulmoo.rebirth.card.infrastructure.adapter.dto.CardApiResponse;
 import com.kkulmoo.rebirth.card.presentation.dto.CardOrderRequest;
 import com.kkulmoo.rebirth.common.exception.CardProcessingException;
+import com.kkulmoo.rebirth.payment.domain.UserCardBenefit;
+import com.kkulmoo.rebirth.payment.infrastructure.repository.UserCardBenefitRepositoryImpl;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
@@ -18,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,8 +31,102 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CardService {
     private final CardRepository cardRepository;
-    private final CardPort cardPort; // 인터페이스 의존
+    private final CardPort cardPort;
     private final ReportCardsJpaRepository reportCardsJpaRepository;
+    private final BenefitRepository benefitRepository;
+    private final CategoryJpaRepository categoryJpaRepository;
+    private final UserCardBenefitRepositoryImpl userCardBenefitRepository;
+
+    @Transactional
+    public CardDetailResponse getCardDetail(UserId userId, Integer cardId) {
+        myCard card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 ID를 찾을 수 없습니다."));
+
+        CardTemplateEntity cardTemplate = cardRepository.findCardTemplateEntityById(card.getCardTemplateId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 cardTemplate을 찾을 수 없습니다"));
+
+        Integer maxPerformanceAmount = 0;
+        try {
+            maxPerformanceAmount = cardTemplate.getPerformanceRange().get(cardTemplate.getPerformanceRange().size() - 1);
+        } catch (IndexOutOfBoundsException e) {
+            // 인덱스가 범위를 벗어난 경우 0으로 설정
+        }
+        System.out.println("바보~~~~~~~~~~~");
+        System.out.println(Arrays.toString(cardTemplate.getPerformanceRange().toArray()));
+        ReportCardsEntity reportCardsEntity = reportCardsJpaRepository.getByUserIdAndCardIdAndYearAndMonth(
+                        userId.getValue(),
+                        cardId,
+                        LocalDateTime.now().getYear(),
+                        LocalDateTime.now().getMonthValue())
+                .orElseThrow(() -> new EntityNotFoundException("해당 entity가 없습니다."));
+        Short spendingTier = reportCardsEntity.getSpendingTier();
+        if (spendingTier == null) {
+            spendingTier = 0;  // 기본값 설정
+        }
+
+
+        List<BenefitTemplate> benefitTemplates = benefitRepository.findByTemplateId(cardTemplate.getCardTemplateId());
+
+        int amountRemainingNext = maxPerformanceAmount - reportCardsEntity.getMonthSpendingAmount();
+        if (amountRemainingNext < 0) amountRemainingNext = 0;
+
+
+        List<CardBenefit> cardBenefits = new ArrayList<>();
+
+        for (BenefitTemplate benefitTemplate : benefitTemplates) {
+            List<Integer> categoryId = benefitTemplate.getCategoryId();
+            List<String> categoryString = categoryJpaRepository.findByCategoryIdInOrderByCategoryId(categoryId);
+            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository.findByUserIdAndBenefitId(userId.getValue(), benefitTemplate.getBenefitId());
+
+            cardBenefits.add(
+                    CardBenefit.builder()
+                            .benefitCategory(categoryString)
+                            .receivedBenefitAmount((int) byUserIdAndBenefitId.getBenefitAmount())
+                            .remainingBenefitAmount(
+                                    calculateRemainingBenefit(
+                                            benefitTemplate,
+                                            spendingTier,
+                                            byUserIdAndBenefitId.getBenefitAmount()
+                                    )
+                            )
+                            .build());
+
+        }
+
+
+        return CardDetailResponse.builder()
+                .cardId(cardId)
+                .cardImageUrl(cardTemplate.getCardImgUrl())
+                .cardName(cardTemplate.getCardName())
+                .maxPerformanceAmount(maxPerformanceAmount)
+                .currentPerformanceAmount(reportCardsEntity.getMonthSpendingAmount())
+                .spendingMaxTier((short) cardTemplate.getPerformanceRange().size())
+                .currentSpendingTier(spendingTier)  // 여기를 변경: reportCardsEntity.getSpendingTier() -> spendingTier
+                .amountRemainingNext(amountRemainingNext)
+                .performanceRange(cardTemplate.getPerformanceRange())
+                .cardBenefits(cardBenefits)
+                .build();
+
+    }
+
+    private Integer calculateRemainingBenefit(BenefitTemplate template, int spendingTier, Short receivedAmount) {
+        try {
+            // 총 혜택 금액 가져오기 (null이면 0 사용)
+            List<Short> amounts = template.getBenefitUsageAmount();
+            Short totalAmount = (amounts != null && spendingTier < amounts.size() && amounts.get(spendingTier) != null)
+                    ? amounts.get(spendingTier)
+                    : 0;
+
+            // receivedAmount가 null이면 0으로 처리
+            Short received = receivedAmount != null ? receivedAmount : 0;
+
+            // 남은 혜택 금액 계산 (음수면 0 반환)
+            int remaining = totalAmount - received;
+            return  Math.max(0, remaining);
+        } catch (Exception e) {
+            return 0; // 예외 발생 시 0 반환
+        }
+    }
 
     @Transactional
     public void updateCardsOrder(UserId userId, List<CardOrderRequest> cardOrders) {
@@ -36,6 +134,7 @@ public class CardService {
         List<Integer> cardIds = cardOrders.stream()
                 .map(CardOrderRequest::getCardId)
                 .collect(Collectors.toList());
+
 
         // 사용자의 카드만 조회 (보안을 위해 사용자 ID 확인)
         List<myCard> userCards = cardRepository.findByUserIdAndCardIdIn(userId.getValue(), cardIds);
@@ -57,28 +156,52 @@ public class CardService {
         cardRepository.saveAll(cardMap.values());
     }
 
-    public List<CardResponse> findCardsAndBenefitByUserId(UserId userId) {
+    public List<CardResponse> findCardsAll(UserId userId) {
 
         List<myCard> userCards = findByUserId(userId);
 
         List<CardResponse> responses = new ArrayList<>();
 
+        //카드의 최대 혜택양 계산하기!
+
         for (myCard card : userCards) {
             CardTemplateEntity template = cardRepository.findCardTemplateEntityById(card.getCardTemplateId())
                     .orElseThrow(() -> new EntityNotFoundException("카드 템플릿을 찾을 수 없습니다: " + card.getCardTemplateId()));
 
-            ReportCardsEntity latestReport = reportCardsJpaRepository
-                    .findTopByCardIdOrderByCreatedAtDesc(card.getCardId())
-                    .orElse(null);
+            ReportCardsEntity latestReport = reportCardsJpaRepository.getByUserIdAndCardIdAndYearAndMonth(
+                            userId.getValue(),
+                            card.getCardId(),
+                            LocalDate.now().getYear(),
+                            LocalDate.now().getMonthValue())
+                    .orElseThrow(() -> new EntityNotFoundException("reportEntity를 찾을 수 없습니다. "));
+
 
             List<Integer> performanceRange = template.getPerformanceRange();
-            Integer maxSpending = performanceRange.isEmpty() ? null : performanceRange.get(performanceRange.size() - 1);
 
-            Integer maxBenefitAmount = 0; // 아직 계산 못함.
+            //이걸 가지고 혜택을 불러와서 혜택을 모두 불러와!! 혜택은 뭘로할 수 있을까?
 
+            Short lastMonthSpendingTier = card.getSpendingTier();
+            List<BenefitTemplate> benefitTemplates = benefitRepository.findByTemplateId(card.getCardTemplateId());
+
+            Integer maxBenefitAmount = benefitTemplates.stream()
+                    .filter(Objects::nonNull)
+                    .mapToInt(benefit -> {
+                        try {
+                            Short value = benefit.getBenefitUsageAmount().get(lastMonthSpendingTier);
+                            return value != null ? value : 0;
+                        } catch (Exception e) {
+                            return 0; // 예외 발생 시 0 반환
+                        }
+                    })
+                    .sum();
+
+            //일단 나의 실적 구간을 알아야 한다.
+            // 총 소비
             Integer totalSpending = (latestReport != null) ? latestReport.getMonthSpendingAmount() : 0;
+            // 최대 실적 구간
+            Integer maxSpending = performanceRange.isEmpty() ? null : performanceRange.get(performanceRange.size() - 1);
+            // 받은 혜택량
             Integer receivedBenefitAmount = (latestReport != null) ? latestReport.getMonthBenefitAmount() : 0;
-
 
             responses.add(CardResponse.builder()
                     .cardId(card.getCardId())
@@ -90,7 +213,6 @@ public class CardService {
                     .receivedBenefitAmount(receivedBenefitAmount)
                     .maxBenefitAmount(maxBenefitAmount)
                     .build());
-
         }
         return responses;
     }
@@ -174,7 +296,7 @@ public class CardService {
         CardTemplate cardTemplate = cardTemplateOptional.get();
 
         Integer existingCardCount = cardRepository.countByUserId(userId);
-        Short newCardOrder = (short)(existingCardCount + 1);
+        Short newCardOrder = (short) (existingCardCount + 1);
 
         LocalDateTime defaultDate = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
 
