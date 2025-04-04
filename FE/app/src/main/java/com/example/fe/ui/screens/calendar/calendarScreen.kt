@@ -93,8 +93,8 @@ data class DailySummary(
 )
 
 // 색상 정의
-val brightRed = Color(0xFFFF6B6B)
-val brightGreen = Color(0xFF69F0AE)
+val brightRed = Color(0xFFFF00FF) // 분홍색으로 변경
+val brightGreen = Color(0xFF00E1FF) // 하늘색으로 변경
 val calendarBlue = Color(0xFF00E1FF) // 네온 블루
 val glowingYellow = Color(0xFFFFC107) // 빛나는 노란색
 
@@ -357,7 +357,8 @@ fun CalendarScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp),
-                                cornerRadius = 16f
+                                cornerRadius = 16f,
+                                showBorder = false
                             ) {
                                 // 달력 그리드만 표시
                                 Box(
@@ -499,7 +500,8 @@ fun CalendarScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 8.dp),
-                                    cornerRadius = 24f
+                                    cornerRadius = 24f,
+                                    showBorder = false
                                 ) {
                                     Column(
                                         modifier = Modifier
@@ -779,7 +781,7 @@ fun DailyTransactionItem(
                     Text(
                         text = if (isIncome) "+${formatAmount(amount)}원"
                                else "-${formatAmount(-amount)}원",
-                        color = if (isIncome) calendarBlue else brightRed,
+                        color = if (isIncome) Color(0xFF00E1FF) else Color(0xFFFF00FF), // 색상 변경
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -952,7 +954,7 @@ fun CalendarDay(
                     Text(
                         text = "+${formatAmount(summary.income)}",
                         fontSize = 12.sp,
-                        color = calendarBlue,
+                        color = Color(0xFF00E1FF), // 하늘색으로 변경
                         textAlign = TextAlign.Center
                     )
                 }
@@ -962,7 +964,7 @@ fun CalendarDay(
                     Text(
                         text = "-${formatAmount(summary.expense)}",
                         fontSize = 12.sp,
-                        color = brightRed,
+                        color = Color(0xFFFF00FF), // 분홍색으로 변경
                         textAlign = TextAlign.Center
                     )
                 }

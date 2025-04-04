@@ -1,5 +1,6 @@
 package com.example.fe.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,6 +35,14 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Tab
 import com.example.fe.ui.components.backgrounds.GlassSurface
 import androidx.compose.foundation.clickable
+import com.example.fe.config.AppConfig
+import com.example.fe.data.network.CardSummary
+import com.example.fe.data.network.CategorySummary
+import com.example.fe.data.network.SummaryService
+import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import coil.compose.AsyncImage
 
 @Composable
 fun HomeDetailScreen(
@@ -42,88 +51,22 @@ fun HomeDetailScreen(
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("카드별", "카테고리별")
-
-    // 코루틴 스코프 추가
     val coroutineScope = rememberCoroutineScope()
-    
-    // 화면 전환 애니메이션을 위한 상태
     val isNavigatingBack = remember { mutableStateOf(false) }
     
-    // 애니메이션 값
+    val viewModel = remember { HomeDetailViewModel() }
+    val cardList by viewModel.cardList.collectAsState()
+    val categoryList by viewModel.categoryList.collectAsState()
+    
     val contentAlpha by animateFloatAsState(
         targetValue = if (isNavigatingBack.value) 0f else 1f,
         animationSpec = tween(300),
         label = "contentAlpha"
     )
-    
-    // 더미 데이터 - 카드별 사용 내역
-    val cardUsages = remember {
-        listOf(
-            CardUsage(
-                cardImage = R.drawable.card,
-                cardName = "하나 VIVA e Platinum 카드",
-                usageAmount = 50000,
-                benefit = 3000,
-                annualFee = 10000
-            ),
-            CardUsage(
-                cardImage = R.drawable.card,
-                cardName = "신한 Deep Dream 카드",
-                usageAmount = 35000,
-                benefit = 2000,
-                annualFee = 15000
-            ),
-            CardUsage(
-                cardImage = R.drawable.card,
-                cardName = "KB 국민 톡톡 카드",
-                usageAmount = 25000,
-                benefit = 1500,
-                annualFee = 5000
-            ),
-            CardUsage(
-                cardImage = R.drawable.card,
-                cardName = "삼성 taptap O 카드",
-                usageAmount = 15000,
-                benefit = 1000,
-                annualFee = 8000
-            )
-        ).sortedByDescending { it.usageAmount }
-    }
-    
-    // 더미 데이터 - 카테고리별 사용 내역
-    val categoryUsages = remember {
-        listOf(
-            CategoryUsage(
-                category = "카페",
-                percentage = 35f,
-                usageAmount = 45000,
-                benefit = 2500
-            ),
-            CategoryUsage(
-                category = "식당",
-                percentage = 25f,
-                usageAmount = 32000,
-                benefit = 1800
-            ),
-            CategoryUsage(
-                category = "쇼핑",
-                percentage = 20f,
-                usageAmount = 25000,
-                benefit = 1500
-            ),
-            CategoryUsage(
-                category = "교통",
-                percentage = 15f,
-                usageAmount = 18000,
-                benefit = 1000
-            ),
-            CategoryUsage(
-                category = "기타",
-                percentage = 5f,
-                usageAmount = 5000,
-                benefit = 200
-            )
-        ).sortedByDescending { it.usageAmount }
+
+    // API 호출
+    LaunchedEffect(Unit) {
+        viewModel.fetchSummaryData()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -137,14 +80,14 @@ fun HomeDetailScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                // 총 사용 금액 카드 - isTopPanel = true로 설정
+                // 총 사용 금액 카드
                 GlassSurface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
                         .padding(bottom = 16.dp),
                     cornerRadius = 16f,
-                    isTopPanel = true  // 상단 패널임을 명시
+                    isTopPanel = true
                 ) {
                     Column(
                         modifier = Modifier
@@ -161,7 +104,7 @@ fun HomeDetailScreen(
                         )
 
                         Text(
-                            text = "125,000원",
+                            text = "${cardList.sumOf { it.spendingAmount }}원",
                             fontSize = 36.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -169,7 +112,7 @@ fun HomeDetailScreen(
                         )
 
                         Text(
-                            text = "받은 혜택 6,000원",
+                            text = "받은 혜택 ${cardList.sumOf { it.benefitAmount }}원",
                             fontSize = 16.sp,
                             color = Color(0xFF4CAF50)
                         )
@@ -198,7 +141,6 @@ fun HomeDetailScreen(
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
                             
-                            // 인디케이터
                             Box(
                                 modifier = Modifier
                                     .width(40.dp)
@@ -213,8 +155,8 @@ fun HomeDetailScreen(
                 
                 // 탭 내용
                 when (selectedTabIndex) {
-                    0 -> CardUsageList(cardUsages)
-                    1 -> CategoryUsageList(categoryUsages)
+                    0 -> CardUsageList(cardList)
+                    1 -> CategoryUsageList(categoryList)
                 }
             }
         }
@@ -222,42 +164,64 @@ fun HomeDetailScreen(
 }
 
 @Composable
-fun CardUsageList(cardUsages: List<CardUsage>) {
-    LazyColumn {
-        items(cardUsages) { cardUsage ->
-            CardUsageItem(cardUsage)
+fun CardUsageList(cardUsages: List<CardSummary>) {
+    if (cardUsages.isEmpty()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Spacer(modifier = Modifier.width(96.dp))  // 이미지 공간만큼 여백
+
+            GlassSurface(
+                modifier = Modifier.weight(1f),
+                cornerRadius = 12f
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "기록이 없습니다",
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                }
+            }
+        }
+    } else {
+        LazyColumn {
+            items(cardUsages) { cardUsage ->
+                CardUsageItem(cardUsage)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }
 
 @Composable
-fun CardUsageItem(cardUsage: CardUsage) {
+fun CardUsageItem(cardUsage: CardSummary) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 카드 이미지 - 높이를 동적으로 조정하기 위해 AspectRatio 사용
-        Box(
+        // 카드 이미지
+        AsyncImage(
+            model = cardUsage.cardImgUrl,
+            contentDescription = "Card Image",
             modifier = Modifier
-                .width(80.dp)  // 너비 줄임
-                .aspectRatio(0.63f)  // 카드 비율 (가로:세로 = 1:1.6)
-                .clip(RoundedCornerShape(12.dp))
-        ) {
-            Image(
-                painter = painterResource(id = cardUsage.cardImage),
-                contentDescription = "Card Image",
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF6200EE)), // 보라색 배경 (카드에 맞게)
-                contentScale = ContentScale.Fit
-            )
-        }
+                .width(80.dp)
+                .aspectRatio(0.63f)
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Fit
+        )
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // 글래스 서피스는 크기 유지
         GlassSurface(
             modifier = Modifier.weight(1f),
             cornerRadius = 12f
@@ -285,7 +249,7 @@ fun CardUsageItem(cardUsage: CardUsage) {
                         color = Color.White.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = "${cardUsage.usageAmount}원",
+                        text = "${cardUsage.spendingAmount}원",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -304,7 +268,7 @@ fun CardUsageItem(cardUsage: CardUsage) {
                         color = Color.White.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = "${cardUsage.benefit}원",
+                        text = "${cardUsage.benefitAmount}원",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF4CAF50)
@@ -333,17 +297,38 @@ fun CardUsageItem(cardUsage: CardUsage) {
 }
 
 @Composable
-fun CategoryUsageList(categoryUsages: List<CategoryUsage>) {
-    LazyColumn {
-        items(categoryUsages) { categoryUsage ->
-            CategoryUsageItem(categoryUsage)
-            Spacer(modifier = Modifier.height(8.dp))
+fun CategoryUsageList(categoryUsages: List<CategorySummary>) {
+    if (categoryUsages.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            GlassSurface(
+                modifier = Modifier.wrapContentSize(),
+                cornerRadius = 16f
+            ) {
+                Text(
+                    text = "기록이 없습니다",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                )
+            }
+        }
+    } else {
+        LazyColumn {
+            items(categoryUsages) { categoryUsage ->
+                CategoryUsageItem(categoryUsage)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }
 
 @Composable
-fun CategoryUsageItem(categoryUsage: CategoryUsage) {
+fun CategoryUsageItem(categoryUsage: CategorySummary) {
     GlassSurface(
         modifier = Modifier.fillMaxWidth(),
         cornerRadius = 16f
@@ -367,32 +352,7 @@ fun CategoryUsageItem(categoryUsage: CategoryUsage) {
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
-                
-                Text(
-                    text = "전체 소비의 ${categoryUsage.percentage.toInt()}%",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
             }
-            
-            // 진행 바
-            LinearProgressIndicator(
-                progress = { categoryUsage.percentage / 100f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = Color(0xFF00E1FF),
-                trackColor = Color(0x33FFFFFF)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0x33FFFFFF)
-            )
             
             // 소비 금액과 혜택
             Row(
@@ -410,7 +370,7 @@ fun CategoryUsageItem(categoryUsage: CategoryUsage) {
                     )
                     
                     Text(
-                        text = "${categoryUsage.usageAmount}원",
+                        text = "${categoryUsage.amount}원",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
