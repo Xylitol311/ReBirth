@@ -6,6 +6,7 @@ import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserEntity;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserJpaRepository extends JpaRepository<UserEntity, Integer> {
 
@@ -13,4 +14,6 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Integer> {
             "FROM UserEntity u " +
             "WHERE u.deletedAt is null")
     List<UserEntity> findAllAndDeletedAtIsNull();
+
+    Optional<UserEntity> findByPhoneSerialNumber(String phoneSerialNumber);
 }
