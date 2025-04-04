@@ -40,6 +40,9 @@ public class TransactionsRepositoryImpl implements TransactionRepository {
             return;
         }
 
+        for (CardTransactionResponse response : transactionResponses) {
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Transaction: " + response.toString());
+        }
 
         List<TransactionEntity> transactionEntities = transactionsJpaRepository.saveAll(
                 responseMapper.toTransactionEntities(transactionResponses)
