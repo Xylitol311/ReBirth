@@ -39,20 +39,37 @@ public class BankPortImpl implements BankPort {
                             .timestamp(timestamp)
                             .build();
 
-                return ssafyBankAPIClient.post()
-                        .uri("/api/transactions/history")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(singleRequest)
-                        .retrieve()
-                        .bodyToMono(new ParameterizedTypeReference<List<BankTransactionResponse>>() {})
-                        .doOnSuccess(txns -> log.info("사용자 CI: {}, 계좌번호: {}의 거래내역 {}건 조회 완료",
-                                userCI, account, txns.size()))
-                        .onErrorResume(e -> {
-                            log.error("계좌 거래내역 조회 중 예외 발생 (계좌번호: {}): {}", account, e.getMessage(), e);
-                            return Mono.just(Collections.emptyList());
-                        })
-                        .flatMapMany(Flux::fromIterable);
+                    return ssafyBankAPIClient.post()
+                            .uri("/api/transactions/history")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(singleRequest)
+                            .retrieve()
+                            .bodyToMono(new ParameterizedTypeReference<List<BankTransactionResponse>>() {
+                            })
+                            .doOnSuccess(txns -> log.info("사용자 CI: {}, 계좌번호: {}의 거래내역 {}건 조회 완료",
+                                    userCI, account, txns.size()))
+                            .onErrorResume(e -> {
+                                log.error("계좌 거래내역 조회 중 예외 발생 (계좌번호: {}): {}", account, e.getMessage(), e);
+                                return Mono.just(Collections.emptyList());
+                            })
+                            .flatMapMany(Flux::fromIterable);
                 })
                 .collectList();
     }
+
+    @Override
+    public Mono<List<String>> getAccountNumbersByUserCI(String userCI) {
+        return ssafyBankAPIClient.get()
+                .uri("/api/accounts/user/ci/{userCI}/accountNumbers", userCI)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<String>>() {
+                })
+                .doOnSuccess(accountNumbers -> log.info("사용자 CI: {}의 계좌번호 {}개 조회 완료",
+                        userCI, accountNumbers.size()))
+                .onErrorResume(e -> {
+                    log.error("사용자 계좌번호 조회 중 예외 발생 (사용자 CI: {}): {}", userCI, e.getMessage(), e);
+                    return Mono.just(Collections.emptyList());
+                });
+    }
+
 }

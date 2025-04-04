@@ -13,6 +13,8 @@ import com.kkulmo.bank.account.service.AccountService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/accounts")
 @RequiredArgsConstructor
@@ -28,7 +30,11 @@ public class AccountController {
 		Long balance = accountService.getBalanceByUserIdAndAccountNumber(userId, accountNumber).getBalance();
 		return ResponseEntity.ok(balance);
 	}
-
+	@GetMapping("/user/ci/{userCI}/accountNumbers")
+	public ResponseEntity<List<String>> getAccountNumbersByUserCI(@PathVariable String userCI) {
+		List<String> accountNumbers = accountService.getAccountNumbersByUserCI(userCI);
+		return ResponseEntity.ok(accountNumbers);
+	}
 	//계좌 만들기
 	@PostMapping
 	public ResponseEntity<AccountDTO> createAccount(@RequestBody AccountDTO accountDTO) {

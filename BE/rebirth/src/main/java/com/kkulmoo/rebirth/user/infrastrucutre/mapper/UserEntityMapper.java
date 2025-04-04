@@ -30,6 +30,7 @@ public class UserEntityMapper {
                 .updatedAt(userEntity.getUpdatedAt())
                 .deletedAt(userEntity.getDeletedAt())
                 .bankLatestLoadDataAt(userEntity.getBankLatestLoadDataAt())
+                .bankAccounts(userEntity.getBankAccounts())
                 .build();
     }
 
@@ -50,6 +51,7 @@ public class UserEntityMapper {
                 .updatedAt(user.getUpdatedAt())
                 .deletedAt(user.getDeletedAt())
                 .bankLatestLoadDataAt(user.getBankLatestLoadDataAt())
+                .bankAccounts(user.getBankAccounts())
                 .build();
     }
 

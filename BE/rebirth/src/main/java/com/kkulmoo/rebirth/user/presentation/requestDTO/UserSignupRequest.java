@@ -7,9 +7,10 @@ import lombok.Getter;
 @Getter
 public class UserSignupRequest {
 	String userName;
-	String userEmail;
+	String birth;
 	String pinNumber;
 	String phoneNumber;
 	String deviceId;
+
 
 }

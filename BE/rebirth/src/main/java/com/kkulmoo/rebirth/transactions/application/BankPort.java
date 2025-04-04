@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface BankPort {
     Mono<List<BankTransactionResponse>> getBankTransaction(BankTransactionRequest bankTransactionRequest);
+    Mono<List<String>> getAccountNumbersByUserCI(String userCI);
 }

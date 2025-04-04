@@ -19,13 +19,34 @@ public class UserController {
 	private final UserService userService;
 	private final MyDataService myDataService;
 
+	// 은행 계좌 거래내역 불러오기 bankTransaction
+	@PostMapping("/mydata/bank/transactions")
+	public ResponseEntity<ApiResponseDTO<Void>> loadBankTransactions(@JwtUserId Integer userId){
+		myDataService.loadMyBankTransaction(userId);
+		return ResponseEntity.ok(ApiResponseDTO.success("계좌 거래내역 로드에 성공하였습니다."));
+	}
 
-	// todo: UserId를 Integer에서 UserId로 바꿔야함
-	 @PostMapping("/mydata/transactions")
-	 public ResponseEntity<ApiResponseDTO<Void>> setMyData(@JwtUserId Integer userId){
-		 myDataService.getMyTransactionData(userId);
-		 return ResponseEntity.ok(ApiResponseDTO.success("마이데이터 연동이 성공적으로 완료되었습니다."));
-	 }
+	// 카드 거래내역 불러오기 getCardTransaction
+	@PostMapping("/mydata/card/transactions")
+	public ResponseEntity<ApiResponseDTO<Void>> loadCardTransactions(@JwtUserId Integer userId){
+		myDataService.getMyCardTransactionData(userId);
+		return ResponseEntity.ok(ApiResponseDTO.success("카드 거래내역 로드에 성공하였습니다."));
+	}
+
+	// 카드 자산 불러오기(myCard 갱신)
+	@PostMapping("/mydata/mycard")
+	public ResponseEntity<ApiResponseDTO<Void>> loadMyCard(@JwtUserId Integer userId){
+		 //todo: 이름 바꾸기
+		  myDataService.loadMyCard(2);
+		 return ResponseEntity.ok(ApiResponseDTO.success("카드 로드에 성공하였습니다."));
+	}
+
+	// 은행 자산 불러오기(account 갱신)
+	@PostMapping("/mydata/bank")
+	public ResponseEntity<ApiResponseDTO<Void>> loadMyBank(@JwtUserId Integer userId){
+		myDataService.loadMyBankAccount(userId);
+		return ResponseEntity.ok(ApiResponseDTO.success("은행 계좌 로드에 성공하였습니다."));
+	}
 
 
 	// todo: UserId를 Integer에서 UserId로 바꿔야함
@@ -33,13 +54,6 @@ public class UserController {
 	public ResponseEntity<ApiResponseDTO<Void>> deleteUser(@JwtUserId Integer userId) {
 		userService.deleteUser(userId);
 		return ResponseEntity.ok(ApiResponseDTO.success("삭제에 성공하였습니다."));
-	}
-
-	@PostMapping("/mydata/mycard")
-	public ResponseEntity<ApiResponseDTO<Void>> loadMyCard(@JwtUserId Integer userId){
-		 //todo: 이름 바꾸기
-		  myDataService.loadMyCard(2);
-		 return ResponseEntity.ok(ApiResponseDTO.success("카드 로드에 성공하였습니다."));
 	}
 }
 

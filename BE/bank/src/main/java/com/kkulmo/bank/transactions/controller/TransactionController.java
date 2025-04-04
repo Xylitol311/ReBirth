@@ -48,7 +48,7 @@ public class TransactionController {
     @PostMapping("/history")
     public ResponseEntity<List<TransactionDTO>> getTransactionHistory(
             @RequestBody TransactionHistoryRequestDTO requestDTO) {
-        return ResponseEntity.ok(transactionService.getTransactionsByAccountNumberAndAfterTimestamp(requestDTO.getUserKey(),
+        return ResponseEntity.ok(transactionService.getTransactionsByAccountNumberAndAfterTimestamp(requestDTO.getUserCI(),
                 requestDTO.getAccountNumber(),
                 requestDTO.getTimestamp())
         );

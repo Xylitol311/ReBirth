@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -48,17 +49,21 @@ public class TransactionService {
     }
 
     // 입력할 때부터 어느 시간 기준으로 넣을 것인지 고민을 해야한다.
-    public void getBankTransactionByMyData(User user, LocalDateTime timestamp) {
+    public void getBankTransactionByMyData(User user, LocalDateTime fromDate){
+        System.out.println(fromDate);
         Mono<List<BankTransactionResponse>> bankTransaction = bankPort.getBankTransaction(
                 BankTransactionRequest.builder()
                         .userCI(user.getUserCI())
                         .bankAccounts(user.getBankAccounts())
-                        .timestamp(timestamp)
+                        .timestamp(fromDate)
                         .build()
         );
 
-        // Subscribe to the Mono to get the actual List
-        bankTransaction.subscribe(transactionRepository::saveAllBankTransactions);
+        bankTransaction
+                .map(transactions -> transactions.stream()
+                        .peek(transaction -> transaction.setUserId(user.getUserId()))
+                        .collect(Collectors.toList()))
+                .subscribe(transactionRepository::saveAllBankTransactions);
     }
 
     // card내역 가져오기.
@@ -83,7 +88,7 @@ public class TransactionService {
                         .map(transaction ->
                                 transaction.withUserIdAndMerchantNameAndMerchantId(user.getUserId()
                                         , transaction.getMerchantName()
-                                                , merchantCache.getMerchantIdByName(transaction.getMerchantName()))
+                                        , merchantCache.getMerchantIdByName(transaction.getMerchantName()))
                         )
                         .toList();
                 // 한 번에 모든 트랜잭션 저장

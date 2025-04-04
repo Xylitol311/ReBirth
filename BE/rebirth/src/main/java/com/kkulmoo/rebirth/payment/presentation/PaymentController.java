@@ -112,6 +112,8 @@ public class PaymentController {
         // 받은 토큰을 까서 가맹점 & 가격 확인 0: 토큰, 1: 가맹점 이름 , 2: 가격정보
         String[] merchantInfo = paymentOnlineEncryption.validateOnlineToken(token);
 
+        System.out.println(merchantInfo[0] + " "+ merchantInfo[1]);
+
         CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder().token(merchantInfo[0]).amount(Integer.parseInt(merchantInfo[2])).merchantName(merchantInfo[1]).build();
         CardTransactionDTO cardTransactionDTO = paymentService.transactionToCardsa(dataToCardsa);
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"결제 응답",cardTransactionDTO);
