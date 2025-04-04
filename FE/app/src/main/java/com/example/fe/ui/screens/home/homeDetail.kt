@@ -1,39 +1,45 @@
 package com.example.fe.ui.screens.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.R
-import com.example.fe.ui.components.backgrounds.StarryBackground
-import com.example.fe.ui.components.cards.VerticalCardLayout
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.material3.TabPosition
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Tab
 import com.example.fe.ui.components.backgrounds.GlassSurface
-import androidx.compose.foundation.clickable
 
 @Composable
 fun HomeDetailScreen(
@@ -127,95 +133,89 @@ fun HomeDetailScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        StarryBackground(
-            scrollOffset = 0f,
-            starCount = 150,
-            modifier = Modifier.fillMaxSize()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            Column(
+            // 총 사용 금액 카드 - isTopPanel = true로 설정
+            GlassSurface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(bottom = 16.dp),
+                cornerRadius = 16f,
+                isTopPanel = true  // 상단 패널임을 명시
             ) {
-                // 총 사용 금액 카드 - isTopPanel = true로 설정
-                GlassSurface(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(bottom = 16.dp),
-                    cornerRadius = 16f,
-                    isTopPanel = true  // 상단 패널임을 명시
+                        .padding(24.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
+                    Text(
+                        text = "총 사용 금액",
+                        fontSize = 16.sp,
+                        color = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    Text(
+                        text = "125,000원",
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    Text(
+                        text = "받은 혜택 6,000원",
+                        fontSize = 16.sp,
+                        color = Color(0xFF4CAF50)
+                    )
+                }
+            }
+
+            // 탭 선택
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                tabs.forEachIndexed { index, title ->
                     Column(
                         modifier = Modifier
-                            .padding(24.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .weight(1f)
+                            .clickable { selectedTabIndex = index },
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "총 사용 금액",
+                            text = title,
+                            color = if (selectedTabIndex == index) Color.White else Color.Gray,
                             fontSize = 16.sp,
-                            color = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(vertical = 8.dp)
                         )
 
-                        Text(
-                            text = "125,000원",
-                            fontSize = 36.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-
-                        Text(
-                            text = "받은 혜택 6,000원",
-                            fontSize = 16.sp,
-                            color = Color(0xFF4CAF50)
-                        )
-                    }
-                }
-                
-                // 탭 선택
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    tabs.forEachIndexed { index, title ->
-                        Column(
+                        // 인디케이터
+                        Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedTabIndex = index },
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = title,
-                                color = if (selectedTabIndex == index) Color.White else Color.Gray,
-                                fontSize = 16.sp,
-                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                            
-                            // 인디케이터
-                            Box(
-                                modifier = Modifier
-                                    .width(40.dp)
-                                    .height(2.dp)
-                                    .background(
-                                        color = if (selectedTabIndex == index) Color.White else Color.Transparent
-                                    )
-                            )
-                        }
+                                .width(40.dp)
+                                .height(2.dp)
+                                .background(
+                                    color = if (selectedTabIndex == index) Color.White else Color.Transparent
+                                )
+                        )
                     }
                 }
-                
-                // 탭 내용
-                when (selectedTabIndex) {
-                    0 -> CardUsageList(cardUsages)
-                    1 -> CategoryUsageList(categoryUsages)
-                }
+            }
+
+            // 탭 내용
+            when (selectedTabIndex) {
+                0 -> CardUsageList(cardUsages)
+                1 -> CategoryUsageList(categoryUsages)
             }
         }
     }

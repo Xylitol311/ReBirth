@@ -150,76 +150,71 @@ fun CalendarScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        StarryBackground(
-            scrollOffset = scrollOffset,
-            starCount = 150,
-            modifier = Modifier.fillMaxSize()
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            state = lazyListState
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                state = lazyListState
-            ) {
-                // 상단 탭
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // 탭 바
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+            // 상단 탭
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 탭 바
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // 왼쪽 탭 (가계부)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { selectedTabIndex = 0 },
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // 왼쪽 탭 (가계부)
-                        Column(
+                        Text(
+                            text = "가계부",
+                            color = if (selectedTabIndex == 0) calendarBlue else Color.Gray,
+                            fontSize = 18.sp, // 폰트 크기 증가
+                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+
+                        Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedTabIndex = 0 },
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "가계부",
-                                color = if (selectedTabIndex == 0) calendarBlue else Color.Gray,
-                                fontSize = 18.sp, // 폰트 크기 증가
-                                fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                            
-                            Box(
-                                modifier = Modifier
-                                    .width(100.dp)
-                                    .height(2.dp)
-                                    .background(
-                                        color = if (selectedTabIndex == 0) calendarBlue else Color.Transparent
-                                    )
-                            )
-                        }
-                        
-                        // 오른쪽 탭 (소비 리포트)
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedTabIndex = 1 },
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "소비 리포트",
-                                color = if (selectedTabIndex == 1) calendarBlue else Color.Gray,
-                                fontSize = 18.sp, // 폰트 크기 증가
-                                fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                            
-                            Box(
-                                modifier = Modifier
-                                    .width(100.dp)
-                                    .height(2.dp)
-                                    .background(
-                                        color = if (selectedTabIndex == 1) calendarBlue else Color.Transparent
-                                    )
-                            )
-                        }
+                                .width(100.dp)
+                                .height(2.dp)
+                                .background(
+                                    color = if (selectedTabIndex == 0) calendarBlue else Color.Transparent
+                                )
+                        )
                     }
+
+                    // 오른쪽 탭 (소비 리포트)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { selectedTabIndex = 1 },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "소비 리포트",
+                            color = if (selectedTabIndex == 1) calendarBlue else Color.Gray,
+                            fontSize = 18.sp, // 폰트 크기 증가
+                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .width(100.dp)
+                                .height(2.dp)
+                                .background(
+                                    color = if (selectedTabIndex == 1) calendarBlue else Color.Transparent
+                                )
+                        )
+                    }
+                }
                     
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -495,7 +490,7 @@ fun CalendarScreen(
                     )
                 }
             }
-        }
+
     }
 }
 

@@ -1,85 +1,119 @@
 package com.example.fe.ui.screens.myCard
 
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.fe.R
-import kotlin.math.absoluteValue
-import androidx.compose.foundation.clickable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import com.example.fe.ui.components.backgrounds.StarryBackground
-import androidx.compose.runtime.snapshotFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import kotlinx.coroutines.delay
-import androidx.compose.animation.core.EaseInOut
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.zIndex
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.runtime.mutableStateListOf
-// CardItem.kt의 클래스들을 가져옴
-import com.example.fe.ui.screens.myCard.CardItem
-import com.example.fe.ui.screens.myCard.CardItemWithVisibility
-import com.example.fe.ui.screens.myCard.CardOrderManager
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.navigation.NavController
+import com.example.fe.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MyCardScreen(
+    navController: NavController,
     modifier: Modifier = Modifier,
-    onScrollOffsetChange: (Float) -> Unit = {},
+    onScrollOffsetChange: (Float) -> Unit = {},  // 세로 스크롤 오프셋 콜백
+    onHorizontalOffsetChange: (Float) -> Unit = {},  // 가로 스크롤 오프셋 콜백 추가
     onCardClick: (CardItem) -> Unit = {},
-    onManageCardsClick: () -> Unit = {}
+    onManageCardsClick: () -> Unit = {},
+    viewModel: MyCardViewModel = viewModel()
 ) {
     // 현재 화면 밀도 가져오기
     val density = LocalDensity.current.density
-    
+
+    // ViewModel에서 상태 가져오기
+    val uiState by viewModel.uiState.collectAsState()
+    val isLoading = viewModel.isLoading
+
     // 초기 카드 데이터 - 관리 화면에서 정렬된 데이터가 없을 경우에만 사용
     val initialCards = remember {
         listOf(
-            CardItem(1, "토스 신한카드 Mr.Life", "•••• •••• •••• 3456"),
-            CardItem(2, "현대카드", "•••• •••• •••• 4567"),
-            CardItem(3, "삼성카드", "•••• •••• •••• 5678")
+            CardItem(
+                id = 1,
+                name = "토스 신한카드 Mr.Life",
+                cardNumber = "•••• •••• •••• 3456",
+                imageUrl = "",
+                totalSpending = 350000,
+                maxSpending = 1000000,
+                receivedBenefit = 15000,
+                maxBenefit = 50000
+            ),
+            CardItem(
+                id = 2,
+                name = "현대카드",
+                cardNumber = "•••• •••• •••• 4567",
+                imageUrl = "",
+                totalSpending = 250000,
+                maxSpending = 800000,
+                receivedBenefit = 10000,
+                maxBenefit = 30000
+            ),
+            CardItem(
+                id = 3,
+                name = "삼성카드",
+                cardNumber = "•••• •••• •••• 5678",
+                imageUrl = "",
+                totalSpending = 150000,
+                maxSpending = 500000,
+                receivedBenefit = 5000,
+                maxBenefit = 20000
+            )
         )
     }
-    
     // 카드 관리 매니저 초기화
     LaunchedEffect(Unit) {
         // 초기 데이터 설정 (비어있을 경우에만)
@@ -90,12 +124,21 @@ fun MyCardScreen(
     val managedCards = remember { CardOrderManager.sortedCards }
     
     // 표시할 카드 목록
-    val realCards = if (managedCards.isNotEmpty()) {
-        // 카드 관리 화면에서 설정한 카드 목록 (표시 상태가 true인 것만)
-        managedCards.filter { it.isVisible }.map { it.card }
-    } else {
-        // 초기 카드 목록
-        initialCards
+    val realCards = when (uiState) {
+        is MyCardUiState.Success -> {
+            val cards = (uiState as MyCardUiState.Success).cards
+            // 카드 관리 매니저에서 카드 목록 가져오기
+            val managedCards = CardOrderManager.sortedCards
+
+            if (managedCards.isNotEmpty()) {
+                // 카드 관리 화면에서 설정한 카드 목록 (표시 상태가 true인 것만)
+                managedCards.filter { it.isVisible }.map { it.card }
+            } else {
+                // API에서 가져온 카드 목록
+                cards
+            }
+        }
+        else -> emptyList()
     }
     
     // 카드 관리 매니저 리스너 등록 (카드 순서 변경 감지)
@@ -117,32 +160,24 @@ fun MyCardScreen(
         pageCount = { realCards.size },
         initialPage = 0
     )
-
-    // 스크롤 오프셋 (별 배경 이동을 위해)
-    var scrollOffset by remember { mutableStateOf(0f) }
-
-    // 애니메이션이 적용된 스크롤 오프셋 추가
-    val animatedScrollOffset by animateFloatAsState(
-        targetValue = scrollOffset,
-        // 더 빠른 애니메이션으로 변경하여 지연 느낌 감소
-        animationSpec = tween(durationMillis = 0, easing = EaseInOut),
-        label = "animatedScrollOffset"
-    )
-
     // 페이저 스냅 동작 개선을 위한 설정
     val flingBehavior = androidx.compose.foundation.pager.PagerDefaults.flingBehavior(
         state = pagerState,
         snapPositionalThreshold = 0.1f // 더 낮은 값으로 설정하여 더 빠르게 스냅되도록 함
     )
 
+    // 스크롤 오프셋 (별 배경 이동을 위해)
+    var scrollOffset by remember { mutableStateOf(0f) }
+    var horizontalOffset by remember { mutableStateOf(0f) }
+
     // 카드 슬라이드에 따른 배경 이동 계산
     LaunchedEffect(pagerState) {
         snapshotFlow {
-            // 배경이 카드의 2배 속도로 움직이도록 계수 조정
-            pagerState.currentPage * 1000f + pagerState.currentPageOffsetFraction * 1600f
-        }.collect { offset: Float ->
-            scrollOffset = offset
-            onScrollOffsetChange(offset)
+            // 여기서는 카드 슬라이드 위치만 추적하고 배경 이동은 계산하지 않음
+            pagerState.currentPage to pagerState.currentPageOffsetFraction
+        }.distinctUntilChanged().collect { (page, offset) ->
+            // 카드 슬라이드 위치 업데이트
+            horizontalOffset = page * 1000f + offset * 1600f
         }
     }
 
@@ -196,23 +231,8 @@ fun MyCardScreen(
         label = "uiTranslationY"
     )
     
-    // 배경과 콘텐츠를 함께 배치
+    //콘텐츠를 배치
     Box(modifier = Modifier.fillMaxSize()) {
-        // 배경 (스크롤에 따라 움직임)
-        StarryBackground(
-            scrollOffset = 0f, // 세로 스크롤 오프셋은 0으로 고정
-            starCount = 150,
-            horizontalOffset = animatedScrollOffset, // 애니메이션이 적용된 오프셋 사용
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    // 네비게이션 중일 때 배경을 어둡게
-                    alpha = if (isNavigating) 0.7f else 1f
-                }
-        ) {
-            // 빈 Box - 배경만 표시
-        }
-
         // 나머지 UI 요소 (헤더와 카드 이름)
         Column(
             modifier = Modifier
@@ -276,6 +296,7 @@ fun MyCardScreen(
                     }
                 }
 
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
@@ -287,7 +308,35 @@ fun MyCardScreen(
             
             Spacer(modifier = Modifier.weight(1f))
         }
-        
+
+        // 로딩 인디케이터 추가
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = Color(0xFFE0E0E0)
+                )
+            }
+        }
+
+        // 에러 메시지 표시
+        if (uiState is MyCardUiState.Error) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = (uiState as MyCardUiState.Error).message,
+                    color = Color.Red,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+
         // 카드 이름을 별도로 배치 (카드 바로 위에)
         Box(
             modifier = Modifier
@@ -300,13 +349,101 @@ fun MyCardScreen(
             contentAlignment = Alignment.BottomCenter
         ) {
             if (realCards.isNotEmpty()) {
-                Text(
-                    text = realCards[currentRealCardIndex].name,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFE0E0E0),
-                    textAlign = TextAlign.Center
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = realCards[currentRealCardIndex].name,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE0E0E0),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 사용 금액 진행 상태
+                    Column(
+                        modifier = Modifier
+                            .width(240.dp)
+                            .padding(vertical = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "사용 금액",
+                                fontSize = 14.sp,
+                                color = Color(0xFFE0E0E0)
+                            )
+                            Text(
+                                text = "${realCards[currentRealCardIndex].totalSpending}원 / ${realCards[currentRealCardIndex].maxSpending}원",
+                                fontSize = 14.sp,
+                                color = Color(0xFFE0E0E0)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        LinearProgressIndicator(
+                            progress = {
+                                val total = realCards[currentRealCardIndex].totalSpending.toFloat()
+                                val max = realCards[currentRealCardIndex].maxSpending.toFloat()
+                                if (max > 0) total / max else 0f
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RectangleShape),
+                            color = Color(0xFF4CAF50),
+                            trackColor = Color(0x33FFFFFF)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 혜택 금액 진행 상태
+                    Column(
+                        modifier = Modifier
+                            .width(240.dp)
+                            .padding(vertical = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "혜택 금액",
+                                fontSize = 14.sp,
+                                color = Color(0xFFE0E0E0)
+                            )
+                            Text(
+                                text = "${realCards[currentRealCardIndex].receivedBenefit}원 / ${realCards[currentRealCardIndex].maxBenefit}원",
+                                fontSize = 14.sp,
+                                color = Color(0xFFE0E0E0)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        LinearProgressIndicator(
+                            progress = {
+                                val received = realCards[currentRealCardIndex].receivedBenefit.toFloat()
+                                val max = realCards[currentRealCardIndex].maxBenefit.toFloat()
+                                if (max > 0) received / max else 0f
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RectangleShape),
+                            color = Color(0xFF2196F3),
+                            trackColor = Color(0x33FFFFFF)
+                        )
+                    }
+                }
             }
         }
 
@@ -413,17 +550,29 @@ fun MyCardScreen(
                                     cameraDistance = 12f * density
                                 )
                         ) {
-                            // 카드 이미지 (세로로 회전된 상태 유지)
-                            Image(
-                                painter = painterResource(id = R.drawable.card),
-                                contentDescription = "카드 이미지",
-                                contentScale = ContentScale.FillWidth,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer(
-                                        rotationZ = 90f // 세로로 회전
-                                    )
-                            )
+                            if (realCards[page].imageUrl.isNotEmpty()) {
+                                AsyncImage(
+                                    model = realCards[page].imageUrl,
+                                    contentDescription = "카드 이미지",
+                                    contentScale = ContentScale.FillWidth,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer(
+                                            rotationZ = 90f // 세로로 회전
+                                        )
+                                )
+                            } else {
+                                Image(
+                                    painter = painterResource(id = R.drawable.card),
+                                    contentDescription = "카드 이미지",
+                                    contentScale = ContentScale.FillWidth,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer(
+                                            rotationZ = 90f // 세로로 회전
+                                        )
+                                )
+                            }
                         }
                     }
                 }

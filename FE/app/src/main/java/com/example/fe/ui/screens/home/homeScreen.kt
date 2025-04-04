@@ -91,47 +91,43 @@ fun HomeHeader(
 
 @Composable
 fun HomeScreen(
-    navController: NavController
+    navController: NavController,
+    onScrollOffsetChange: (Float) -> Unit = {}  // 스크롤 오프셋 콜백 추가
 ) {
     val scrollState = rememberScrollState()
-    var scrollOffset by remember { mutableStateOf(0f) }
-    
+
     // 스크롤 오프셋 변경 감지
     LaunchedEffect(scrollState) {
         snapshotFlow { scrollState.value.toFloat() }.collect { offset ->
-            scrollOffset = offset
+            onScrollOffsetChange(offset)  // 콜백 호출
         }
     }
-    
-    Box(
-        modifier = Modifier.fillMaxSize()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        StarryBackground(scrollOffset = scrollOffset) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 16.dp, vertical = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // 헤더 (사용자 이름과 행성)
-                HomeHeader()
-                
-                // 이번 달 소비 금액
-                HomeUsedMoney(
-                    onDetailClick = {
-                        navController.navigate(NavRoutes.HOME_DETAIL)
-                    }
-                )
-                
-                // 혜택을 놓친 거래 내역
-                HomeTransaction()
-                
-                // 추천 카드
-                HomeRecCard()
+        // 헤더 (사용자 이름과 행성)
+        HomeHeader()
+
+        // 이번 달 소비 금액
+        HomeUsedMoney(
+            onDetailClick = {
+                navController.navigate(NavRoutes.HOME_DETAIL)
             }
-        }
+        )
+
+        // 혜택을 놓친 거래 내역
+        HomeTransaction()
+
+        // 추천 카드
+        HomeRecCard()
     }
+
+
 }
 
 @Preview(showBackground = true)

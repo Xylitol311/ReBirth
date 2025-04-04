@@ -48,6 +48,8 @@ import android.util.Log
 import com.example.fe.ui.screens.payment.components.PaymentAutoSection
 import androidx.compose.material3.IconButton
 import com.example.fe.ui.screens.payment.components.PaymentAddCardSection
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 
 // 카드 정보 데이터 클래스
 data class PaymentCardInfo(
@@ -64,7 +66,8 @@ fun PaymentScreen(
     onScrollOffsetChange: (Float) -> Unit = {},
     viewModel: PaymentViewModel = viewModel(),
     onNavigateToHome: () -> Unit = {},
-    onShowQRScanner: () -> Unit = {}
+    onShowQRScanner: () -> Unit = {},
+    onShowCardOCRScan: () -> Unit = {}
 ) {
 
     // 스크롤 오프셋 추적 (우주 배경 효과용)
@@ -361,11 +364,12 @@ fun PaymentScreen(
 
             // 카드 추가 버튼 클릭 핸들러
             val onAddCardButtonClick = {
-                // 현재 상태 저장
+                // 이전 상태 저장
                 previousCardIndex = selectedCardIndex
                 previousAutoCardMode = showAutoCardMode
-                // 카드 추가 모드 활성화
-                showAddCardMode = true
+                
+                // 카드 추가 모드로 전환
+                onShowCardOCRScan() 
             }
 
             // 카드 슬라이더 영역

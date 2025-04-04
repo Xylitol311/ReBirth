@@ -212,15 +212,6 @@ fun CardDetailScreen(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        // 별이 빛나는 배경 추가
-        StarryBackground(
-            scrollOffset = 0f,
-            starCount = 150,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // 빈 Box - 배경만 표시
-        }
-        
         // 콘텐츠 부분 - TopBar는 AppNavigation에서 관리됨
         Column(
             modifier = Modifier

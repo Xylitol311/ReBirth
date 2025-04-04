@@ -1,5 +1,6 @@
 package com.example.fe.ui.screens.cardRecommend
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -59,40 +60,11 @@ data class FilterTag(
 
 @Composable
 fun CardRecommendScreen(
+    viewModel: CardRecommendViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onCardClick: (CardInfo) -> Unit = {}
 ) {
+    val uiState = viewModel.uiState
     var selectedTabIndex by remember { mutableStateOf(0) }
-
-    val allCards = listOf(
-        CardInfo(1, "토스 신한카드 Mr.Life", "신한카드", listOf("카페 10% 할인"), "30,000원", "월 30만원", icons = listOf("식당", "교통")),
-        CardInfo(2, "삼성 iD카드", "삼성카드", listOf("영화 50% 할인"), "15,000원", "월 20만원", icons = listOf("여가")),
-        CardInfo(3, "국민 톡톡카드", "KB국민", listOf("대중교통 10% 적립"), "12,000원", "월 30만원", icons = listOf("교통")),
-        CardInfo(4, "농협 NH20해봄카드", "농협", listOf("편의점 5% 할인"), "10,000원", "월 10만원", icons = listOf("음식")),
-        CardInfo(5, "IBK 참!좋은카드", "IBK", listOf("학원비 10% 적립"), "8,000원", "월 25만원", icons = listOf("교육"))
-    )
-
-    var filterTags by remember {
-        mutableStateOf(
-            listOf(
-                FilterTag("타입", listOf("할인", "적립"), "전체"),
-                FilterTag("카드사", listOf("KB국민", "IBK", "농협", "신한카드", "삼성카드"), "전체"),
-                FilterTag("카테고리", listOf("교통", "음식", "교육", "여가", "식당"), "전체"),
-                FilterTag("전월 실적", listOf("30만원 미만", "30~50만원"), "전체"),
-                FilterTag("연회비", listOf("만원 미만", "1~2만원"), "전체")
-            )
-        )
-    }
-
-    val filteredCards = allCards
-        .filter {
-            val companyFilter = filterTags.find { it.category == "카드사" }?.selectedOption ?: "전체"
-            companyFilter == "전체" || it.company == companyFilter
-        }
-        .filter {
-            val categoryFilter = filterTags.find { it.category == "카테고리" }?.selectedOption ?: "전체"
-            categoryFilter == "전체" || it.icons.contains(categoryFilter)
-        }
-        .sortedBy { it.name }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // 상단 탭 바
@@ -161,17 +133,24 @@ fun CardRecommendScreen(
 
         when (selectedTabIndex) {
             0 -> PersonalizedRecommendations(
-                cards = filteredCards,
+                uiState = uiState,
+                onRefresh = {viewModel.loadRecommendations()},
                 onCardClick = onCardClick
             )
             1 -> CardFinder(
-                filterTags = filterTags,
+                filterTags = uiState.filterTags,
                 onFilterChange = { category, option ->
-                    filterTags = filterTags.map {
-                        if (it.category == category) it.copy(selectedOption = option) else it
-                    }
+                    viewModel.updateFilterAndSearch(category, option)
                 },
-                cards = filteredCards,
+                cards = uiState.searchResults?.mapNotNull { apiCard ->
+                    try {
+                        viewModel.mapApiCardToUiCard(apiCard)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } ?: emptyList(),
+                isLoading = uiState.isLoadingSearch,
+                error = uiState.errorSearch,
                 onCardClick = onCardClick
             )
         }
@@ -180,7 +159,8 @@ fun CardRecommendScreen(
 
 @Composable
 fun PersonalizedRecommendations(
-    cards: List<CardInfo>,
+    uiState: CardRecommendUiState,
+    onRefresh: () -> Unit,
     onCardClick: (CardInfo) -> Unit
 ) {
     LazyColumn(
@@ -224,73 +204,142 @@ fun PersonalizedRecommendations(
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = "3개월 간 총 500,000원 썼어요",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                    if (uiState.top3ForAll != null) {
+                        Text(
+                            text = "3개월 간 총 ${uiState.top3ForAll.amount}원 썼어요",
+                            color = Color.Gray,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    CardCarousel(cards = cards, onCardClick = onCardClick)
+                        val cards = uiState.top3ForAll.recommendCards?.map { cardInfo ->
+                            CardInfo(
+                                id = cardInfo.cardId,
+                                name = cardInfo.cardName,
+                                company = "",  // API에서 제공하지 않음
+                                benefits = listOf(cardInfo.cardInfo),
+                                annualFee = "",  // API에서 제공하지 않음
+                                minSpending = "",  // API에서 제공하지 않음
+                                cardImage = cardInfo.imageUrl,
+                                icons = listOf()  // 필요시 파싱 로직 추가
+                            )
+                        } ?: emptyList()
+                        CardCarousel(cards = cards, onCardClick = onCardClick)
+                    } else if (uiState.isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Color.White)
+                        }
+                    } else if (uiState.error != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "데이터를 불러오는데 실패했습니다",
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                                Button(
+                                    onClick = onRefresh,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    Text("다시 시도")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // 카테고리별 추천 카드 섹션
+        if (uiState.categoryRecommendations != null) {
+            uiState.categoryRecommendations.take(3).forEach { category ->
+                item {
+                    GlassSurface(
+                        modifier = Modifier.fillMaxWidth(),
+                        cornerRadius = 16f,
+                        blurRadius = 10f
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "${category.categoryName} 혜택 추천",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${category.categoryName}에 ${category.amount}원 썼어요",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            val cards = category.recommendCards.map { cardInfo ->
+                                CardInfo(
+                                    id = cardInfo.cardId,
+                                    name = cardInfo.cardName,
+                                    company = "",  // API에서 제공하지 않음
+                                    benefits = listOf(cardInfo.cardInfo),
+                                    annualFee = "",  // API에서 제공하지 않음
+                                    minSpending = "",  // API에서 제공하지 않음
+                                    cardImage = cardInfo.imageUrl,
+                                    icons = listOf()  // 필요시 파싱 로직 추가
+                                )
+                            }
+
+                            CardCarousel(cards = cards, onCardClick = onCardClick)
+                        }
+                    }
+                }
+            }
+        } else if (uiState.isLoadingCategories) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
+        } else if (uiState.errorCategories != null) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "카테고리 데이터를 불러오는데 실패했습니다",
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        Button(
+                            onClick = onRefresh,
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Text("다시 시도")
+                        }
+                    }
                 }
             }
         }
 
-        item {
-            GlassSurface(
-                modifier = Modifier.fillMaxWidth(),
-                cornerRadius = 16f,
-                blurRadius = 10f
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "카테고리별 추천 카드",
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "이전 3개월 소비를 바탕으로 API가 추천해요",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    CardCarousel(cards = cards, onCardClick = onCardClick)
-                }
-            }
-        }
-
-        item {
-            GlassSurface(
-                modifier = Modifier.fillMaxWidth(),
-                cornerRadius = 16f,
-                blurRadius = 10f
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "병원/약국 혜택 추천",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "병원/약국에 1,240,000원 썼어요",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    CardCarousel(cards = cards, onCardClick = onCardClick)
-                }
-            }
-        }
     }
 }
 
@@ -300,6 +349,8 @@ fun CardFinder(
     filterTags: List<FilterTag>,
     onFilterChange: (String, String) -> Unit,
     cards: List<CardInfo>,
+    isLoading: Boolean,
+    error: String?,
     onCardClick: (CardInfo) -> Unit
 ) {
     val textMeasurer = rememberTextMeasurer()
@@ -375,8 +426,36 @@ fun CardFinder(
             }
         }
 
-        items(cards) { card ->
-            CardListItem(card = card, onClick = { onCardClick(card) })
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
+        } else if (error != null) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "카드를 불러오는데 실패했습니다",
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            items(cards) { card ->
+                CardListItem(card = card, onClick = { onCardClick(card) })
+            }
         }
 
         item {

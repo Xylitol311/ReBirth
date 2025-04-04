@@ -61,7 +61,7 @@ fun TopBar(
                 .background(StarryBackgroundColor)
                 .padding(top = 8.dp) // 모든 컨텐츠를 아래로 내림
         ) {
-            // 중앙에 RE 로고 배치
+            // 중앙에 제목 배치
             Text(
                 text = title,
                 color = Color.White,
