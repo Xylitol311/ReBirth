@@ -283,7 +283,7 @@ public class ReportService {
             question = question.concat("과소비성향 : " + pattern[0] + "\n");
             question = question.concat("소비변동성 : " + pattern[1] + "\n");
             question = question.concat("소비외향성 : " + pattern[2] + "\n");
-            question = question.concat("hint: 과소비 성향은 수입 대비 소비정도를, 소비 변동성은 직전달 대비 소비의 변동성, 소비 외향성은 소비카테고리 기준 외향적 소비 비율을 의미해.");
+            question = question.concat("hint: 과소비 성향은 수입 대비 소비정도를, 소비 변동성은 직전달 대비 소비의 변동성, 소비 외향성은 소비카테고리 기준 외향적 소비 비율을 의미해. 모든 값은 50을 기준으로 생각하고 평가해줘");
 
 
             String answer = model.chat(question);
@@ -343,7 +343,15 @@ public class ReportService {
         int preYear = lastMonth.getYear();
         int preMonth = lastMonth.getMonthValue();
         MonthlyTransactionSummaryEntity preReport = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), preYear, preMonth);
-
+        if(preReport == null) {
+            preReport = MonthlyTransactionSummaryEntity
+                    .builder()
+                    .year(preYear)
+                    .month(preMonth)
+                    .receivedBenefitAmount(0)
+                    .totalSpending(0)
+                    .build();
+        }
         // 과소비 계산
         int overConsumption = Math.min(100, 50 * report.getTotalSpending() / monthlyIncome);
         // 변동성 계산
@@ -396,6 +404,7 @@ public class ReportService {
 
     public ReportWithPatternDTO getReportWithPattern(Integer userId, int year, int month) {
         MonthlyTransactionSummaryEntity summary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(userId, year, month);
+        if(summary == null) { return null; }
         MonthlyConsumptionReportEntity report = monthlyConsumptionReportJpaRepository.getReferenceById(summary.getReportId());
         ConsumptionPatternEntity pattern = consumptionPatternJpaRepository.getReferenceById(report.getConsumptionPatternId());
 
@@ -407,6 +416,17 @@ public class ReportService {
             preYear--;
         }
         MonthlyTransactionSummaryEntity preSummary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(userId, preYear, preMonth);
+
+        if(preSummary == null) {
+            preSummary = MonthlyTransactionSummaryEntity
+                    .builder()
+                    .year(preYear)
+                    .month(preMonth)
+                    .receivedBenefitAmount(0)
+                    .totalSpending(0)
+                    .build();
+        }
+
         int minSpending = 0;
         int maxSpending = 0;
         String groupName = "";
