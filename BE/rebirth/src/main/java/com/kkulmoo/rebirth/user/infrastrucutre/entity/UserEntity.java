@@ -67,4 +67,11 @@ public class UserEntity {
 	@Column(name = "average_monthly_income")
 	private Integer averageMonthlyIncome;
 
+	@PrePersist
+	protected void onCreate() {
+		if (this.createdAt == null) {
+			this.createdAt = LocalDateTime.now(); // 자동 생성
+		}
+	}
+
 }
