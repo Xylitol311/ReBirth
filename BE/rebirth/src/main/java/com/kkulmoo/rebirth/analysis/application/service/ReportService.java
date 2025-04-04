@@ -121,7 +121,7 @@ public class ReportService {
 
     @Transactional
     public void startWithMyData(UserEntity user) {
-        for (int i = 0; i < 6; i++) {
+        for (int i = 5; i >= 0; i--) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
             int year = now.getYear();
             int month = now.getMonthValue();
@@ -257,7 +257,7 @@ public class ReportService {
         }
 
         // 월별 요약
-        for (int i = 1; i < 6; i++) {
+        for (int i = 5; i >= 1; i--) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
             int year = now.getYear();
             int month = now.getMonthValue();
@@ -333,7 +333,7 @@ public class ReportService {
     @Transactional
     public int[] calculateSpendingPattern(UserEntity user, LocalDateTime now) {
         // 필요한 정보 - 월평균 수입, 월 총 지출, 카테고리별 지출, 전 월 지출
-        int monthlyIncome = user.getAverageMonthlyIncome();
+        int monthlyIncome = user.getAverageMonthlyIncome()+1;
         int year = now.getYear();
         int month = now.getMonthValue();
         MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
@@ -348,7 +348,7 @@ public class ReportService {
         int overConsumption = Math.min(100, 50 * report.getTotalSpending() / monthlyIncome);
         // 변동성 계산
         int variation = 50;
-        if(report.getTotalSpending() != 0) {
+        if(report.getTotalSpending() != 0 && preReport != null) {
         variation = Math.abs(100*(preReport.getTotalSpending() - report.getTotalSpending()) / (report.getTotalSpending()));
         }
         variation = Math.min(100, variation);
@@ -377,7 +377,7 @@ public class ReportService {
 
         int extrovert = 0;
         if(report.getTotalSpending() != 0) {
-            extrovert = 100*extrovertSpendAmount / report.getTotalSpending();
+            extrovert = Math.abs(100*extrovertSpendAmount / report.getTotalSpending());
         }
 
         int[] result = new int[3];
@@ -410,26 +410,26 @@ public class ReportService {
         int minSpending = 0;
         int maxSpending = 0;
         String groupName = "";
-        if (-summary.getTotalSpending() >= 0 && summary.getTotalSpending() <= 500000) {
+        if (Math.abs(summary.getTotalSpending()) >= 0 && Math.abs(summary.getTotalSpending()) <= 500000) {
             maxSpending = 500000;
             groupName = "50만원 이하";
-        } else if (-summary.getTotalSpending() > 500001 && summary.getTotalSpending() <= 1000000) {
+        } else if (Math.abs(summary.getTotalSpending()) > 500001 && Math.abs(summary.getTotalSpending()) <= 1000000) {
             minSpending = 500001;
             maxSpending = 1000000;
             groupName = "50만원 ~ 100만원";
-        } else if (-summary.getTotalSpending() > 1000001 && summary.getTotalSpending() <= 1500000) {
+        } else if (Math.abs(summary.getTotalSpending()) > 1000001 && Math.abs(summary.getTotalSpending()) <= 1500000) {
             minSpending = 1000001;
             maxSpending = 1500000;
             groupName = "100만원 ~ 150만원";
-        } else if (-summary.getTotalSpending() > 1500001 && summary.getTotalSpending() <= 2000000) {
+        } else if (Math.abs(summary.getTotalSpending()) > 1500001 && Math.abs(summary.getTotalSpending()) <= 2000000) {
             minSpending = 1500001;
             maxSpending = 2000000;
             groupName = "150만원 ~ 200만원";
-        } else if (-summary.getTotalSpending() > 2000001 && summary.getTotalSpending() <= 2500000) {
+        } else if (Math.abs(summary.getTotalSpending()) > 2000001 && Math.abs(summary.getTotalSpending()) <= 2500000) {
             minSpending = 2000001;
             maxSpending = 2500000;
             groupName = "200만원 ~ 250만원";
-        } else if (-summary.getTotalSpending() > 2500001 && summary.getTotalSpending() <= 3000000) {
+        } else if (Math.abs(summary.getTotalSpending())  > 2500001 && Math.abs(summary.getTotalSpending()) <= 3000000) {
             minSpending = 2500001;
             maxSpending = 3000000;
             groupName = "250만원 ~ 300만원";
