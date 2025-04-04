@@ -101,10 +101,6 @@ public class PaymentController {
     }
 
     /**
-     * @param token
-     * @return
-     * @throws Exception
-     *
      * 토큰 받고 나서 결제 로직 작성
      * DB 업뎃 할때는 영구토큰으로 찾아서 바꾸기
      * 토큰 안에 있는 내용 -> 가맹점, 가격, 영구토큰
