@@ -63,7 +63,7 @@ public class UserEntity {
 	@Column(name = "deleted_at")
 	private LocalDateTime deletedAt;
 
-	@Column(name = "bank_latest_load_data_at")
+	@Column(name = "bank_latest_load_data_at", nullable = false)
 	private LocalDateTime bankLatestLoadDataAt;
 
 	@Column(name = "average_monthly_income")
