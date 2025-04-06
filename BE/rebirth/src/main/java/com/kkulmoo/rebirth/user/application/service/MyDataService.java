@@ -77,12 +77,10 @@ public class MyDataService {
 
         transactionService.getBankTransactionByMyData(user, user.getBankLatestLoadDataAt());
 
-
         user.updateLatestLoadDataAtNow();
         System.out.println(
                 user.toString());
         userRepository.save(user);
 
     }
-
 }

@@ -1,6 +1,9 @@
 package com.kkulmoo.rebirth.card.infrastructure.repository;
 
 import com.kkulmoo.rebirth.card.domain.BenefitRepository;
+import com.kkulmoo.rebirth.card.domain.BenefitTemplate;
+import com.kkulmoo.rebirth.card.infrastructure.entity.BenefitTemplateEntity;
+import com.kkulmoo.rebirth.card.infrastructure.mapper.BenefitTemplateEntityMapper;
 import com.kkulmoo.rebirth.payment.application.BenefitInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -11,7 +14,15 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 public class BenefitRepositoryImpl implements BenefitRepository {
+
     private final BenefitJpaRepository benefitJpaRepository;
+    private final BenefitTemplateEntityMapper benefitTemplateMapper;
+
+    @Override
+    public List<BenefitTemplate> findByTemplateId(Integer cardTemplateId) {
+        List<BenefitTemplateEntity> entities = benefitJpaRepository.findByCardTemplate_CardTemplateId(cardTemplateId);
+        return benefitTemplateMapper.toDomainList(entities);
+    }
 
     @Override
     public List<BenefitInfo> findBenefitsByMerchantFilter(int cardTemplateId, int categoryId, int subcategoryId, int merchantId) {

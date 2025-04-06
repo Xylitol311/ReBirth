@@ -4,6 +4,8 @@ import com.kkulmoo.rebirth.transactions.application.BankPort;
 import com.kkulmoo.rebirth.transactions.application.dto.BankTransactionRequest;
 import com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto.BankTransactionResponse;
 import com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto.BankTransactionSingleRequest;
+import com.kkulmoo.rebirth.transactions.infrastructure.adapter.dto.UserCIDTO;
+import com.kkulmoo.rebirth.user.presentation.requestDTO.UserCIRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -72,4 +74,22 @@ public class BankPortImpl implements BankPort {
                 });
     }
 
+    @Override
+    public Mono<UserCIDTO> getUserCI(UserCIRequest userCIRequest) {
+        return ssafyBankAPIClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/users/userci")
+                        .queryParam("userName", userCIRequest.getUserName())
+                        .queryParam("birth", userCIRequest.getBirth())
+                        .build())
+                .retrieve()
+                .bodyToMono(UserCIDTO.class)  // ApiResponseDTO 아닌 직접 UserCIDTO로 변환
+                .doOnNext(dto -> log.info("사용자 CI 조회 성공: {}", dto))
+                .doOnError(e -> log.error("사용자 CI 조회 중 오류 발생: {}", e.getMessage(), e))
+                .onErrorResume(e -> {
+                    log.error("사용자 CI 조회 실패 (userName: {}, birth: {}): {}",
+                            userCIRequest.getUserName(), userCIRequest.getBirth(), e.getMessage());
+                    return Mono.empty();
+                });
+    }
 }
