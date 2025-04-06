@@ -20,9 +20,13 @@ public class ConsumptionPatternDTO {
     @JsonProperty("description")
     private String description;
 
+    @JsonProperty("img_url")
+    private String imgUrl;
+
     public ConsumptionPatternDTO(ConsumptionPatternEntity entity) {
         this.id = entity.getConsumptionPatternId();
         this.patternName = entity.getName();
         this.description = entity.getDescription();
+        this.imgUrl = entity.getImgUrl();
     }
 }

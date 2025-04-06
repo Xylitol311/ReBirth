@@ -22,4 +22,6 @@ public interface BenefitJpaRepository extends JpaRepository<BenefitTemplateEntit
             @Param("subcategoryId") int subcategoryId,
             @Param("merchantId") int merchantId);
 
+
+    List<BenefitTemplateEntity> findByCardTemplate_CardTemplateId(Integer cardTemplateId);
 }

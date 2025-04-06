@@ -44,9 +44,9 @@ public class RecommendController {
         return ResponseEntity.ok().body(result);
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<ResponseDTO> searchByParameter(@ModelAttribute SearchParameterDTO parameter) {
-
+    @PostMapping("/search")
+    public ResponseEntity<ResponseDTO> searchByParameter(@RequestBody SearchParameterDTO parameter) {
+        System.out.println(parameter);
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("카드 검색 완료");
