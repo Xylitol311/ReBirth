@@ -40,7 +40,6 @@ public class UserEntityMapper {
         }
 
         return UserEntity.builder()
-                .userId(user.getUserId().getValue())
                 .consumptionPatternId(user.getConsumptionPatternId())
                 .userName(user.getUserName())
                 .hashedPinNumber(user.getHashedPinNumber())

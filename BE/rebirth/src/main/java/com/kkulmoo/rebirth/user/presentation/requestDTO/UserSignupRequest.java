@@ -11,6 +11,4 @@ public class UserSignupRequest {
 	String pinNumber;
 	String phoneNumber;
 	String deviceId;
-
-
 }

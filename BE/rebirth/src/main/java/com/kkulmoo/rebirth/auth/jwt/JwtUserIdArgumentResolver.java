@@ -24,14 +24,14 @@ public class JwtUserIdArgumentResolver implements HandlerMethodArgumentResolver 
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter,
-                                  ModelAndViewContainer mavContainer,
-                                  NativeWebRequest webRequest,
-                                  WebDataBinderFactory binderFactory) throws Exception {
+    public Integer resolveArgument(MethodParameter parameter,
+                                   ModelAndViewContainer mavContainer,
+                                   NativeWebRequest webRequest,
+                                   WebDataBinderFactory binderFactory) throws Exception {
         String token = ((HttpServletRequest) webRequest.getNativeRequest()).getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {
             String jwt = token.substring(7);
-            return Long.parseLong(jwtProvider.getUsernameFromToken(jwt));
+            return (jwtProvider.getUserIdFromToken(jwt));
         }
         return null;
     }

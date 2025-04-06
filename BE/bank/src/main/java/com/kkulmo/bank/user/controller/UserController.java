@@ -32,6 +32,8 @@ public class UserController {
 
     @GetMapping("/userci")
     public ResponseEntity<UserCIDTO> getUserCI(@RequestParam("userName") String userName, @RequestParam("birth") String birth) {
-        return ResponseEntity.ok(userService.getCIbyNameAndBirth(userName , birth)) ;
+
+        System.out.println(userService.getCIbyNameAndBirth(userName, birth));
+        return ResponseEntity.ok(userService.getCIbyNameAndBirth(userName, birth));
     }
 }
