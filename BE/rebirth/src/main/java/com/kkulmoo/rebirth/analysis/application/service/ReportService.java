@@ -301,7 +301,7 @@ public class ReportService {
                     .modelName("gpt-4o-mini")
                     .build();
 
-            String question = "다음은 " + user.getUserName() + "님의 한달간 소비 내역이야. 요약해줘.\n";
+            String question = "다음은 " + user.getUserName() + "님의 한달간 소비 내역이야. 요약해줘. 감성적인 말투로 부탁해.\n";
 
             List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
             for (ReportCategoryDTO row : spendingByCategory) {
