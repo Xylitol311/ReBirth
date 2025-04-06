@@ -497,6 +497,9 @@ public class ReportService {
                 .preTotalSpendingAmount(preSummary.getTotalSpending())
                 .groupName(groupName)
                 .reportDescription(report.getReportDescription())
+                .overConsumption(report.getOverConsumption())
+                .variation(report.getVariation())
+                .extrovert(report.getExtrovert())
                 .consumptionPattern(new ConsumptionPatternDTO(pattern))
                 .build();
 
