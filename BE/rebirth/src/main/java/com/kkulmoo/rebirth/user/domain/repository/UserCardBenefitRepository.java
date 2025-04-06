@@ -1,6 +1,6 @@
-package com.kkulmoo.rebirth.payment.domain.repository;
+package com.kkulmoo.rebirth.user.domain.repository;
 
-import com.kkulmoo.rebirth.payment.domain.UserCardBenefit;
+import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
 import org.springframework.stereotype.Repository;
 
 @Repository

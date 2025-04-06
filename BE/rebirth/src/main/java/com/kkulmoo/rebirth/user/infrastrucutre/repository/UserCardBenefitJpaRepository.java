@@ -1,7 +1,7 @@
-package com.kkulmoo.rebirth.payment.infrastructure.repository;
+package com.kkulmoo.rebirth.user.infrastrucutre.repository;
 
 
-import com.kkulmoo.rebirth.payment.infrastructure.entity.UserCardBenefitEntity;
+import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserCardBenefitEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

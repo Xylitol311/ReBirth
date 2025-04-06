@@ -1,9 +1,9 @@
-package com.kkulmoo.rebirth.payment.infrastructure.repository;
+package com.kkulmoo.rebirth.user.infrastrucutre.repository;
 
-import com.kkulmoo.rebirth.payment.domain.UserCardBenefit;
-import com.kkulmoo.rebirth.payment.domain.repository.UserCardBenefitRepository;
-import com.kkulmoo.rebirth.payment.infrastructure.entity.UserCardBenefitEntity;
-import com.kkulmoo.rebirth.payment.infrastructure.mapper.UserCardBenefitEntityMapper;
+import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
+import com.kkulmoo.rebirth.user.domain.repository.UserCardBenefitRepository;
+import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserCardBenefitEntity;
+import com.kkulmoo.rebirth.user.infrastrucutre.mapper.UserCardBenefitEntityMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
