@@ -3,11 +3,11 @@ package com.kkulmoo.rebirth.payment.application.service;
 import com.kkulmoo.rebirth.card.domain.BenefitRepository;
 import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.DiscountType;
+import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.payment.application.BenefitInfo;
 import com.kkulmoo.rebirth.payment.domain.UserCardBenefit;
 import com.kkulmoo.rebirth.payment.domain.repository.UserCardBenefitRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.dto.MerchantJoinDto;
-import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,11 +38,11 @@ public class BenefitService {
         int currentMonth = LocalDate.now().getMonthValue();
 
         // 사용자 보유 카드 목록 조회
-        List<MyCardDto> myCards = cardRepository.findMyCardsIdAndTemplateIdsByUserId(userId);
+        List<MyCard> myCards = cardRepository.findMyCardsIdAndTemplateIdsByUserId(userId);
         // 최대 혜택을 찾기 위한 우선순위 큐 생성 (내림차순)
         Queue<CalculatedBenefitDto> benefitQueue = new PriorityQueue<>(Comparator.comparingInt(CalculatedBenefitDto::getBenefitAmount).reversed());
         // 각 카드별 혜택 계산 수행
-        for (MyCardDto card : myCards) {
+        for (MyCard card : myCards) {
             if (card.getPermanentToken() == null) continue; // 유효하지 않은 카드 건너뜀
             // 해당 카드에 적용 가능한 혜택 정보 조회
             List<BenefitInfo> benefitInfos = benefitRepository.findBenefitsByMerchantFilter(
@@ -79,19 +79,13 @@ public class BenefitService {
     }
 
     // 실제 카드의 혜택 계산 (제공된 영구토큰을 기반으로 단일 카드에 대해 계산)
-    public CalculatedBenefitDto calculateRealBenefit(int userId, String permanentToken, int amount, MerchantJoinDto merchantJoinDto) {
+    public CalculatedBenefitDto calculateRealBenefit(int userId, int amount, MerchantJoinDto merchantJoinDto, MyCard myCard) {
         int currentYear = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
 
-        // 단일 카드 정보 조회 (영구토큰 기반)
-        MyCardDto myCardDto = cardRepository.findMyCardIdAndTemplateIdByPermanentToken(permanentToken);
-        if (myCardDto.getPermanentToken() == null) {
-            log.error("카드 데이터 조회 실패");
-            return null; // 카드 데이터가 없으면 null 반환
-        }
         // 해당 카드에 적용 가능한 혜택 정보 조회
         List<BenefitInfo> benefitInfos = benefitRepository.findBenefitsByMerchantFilter(
-                myCardDto.getCardTemplateId(),
+                myCard.getCardTemplateId(),
                 merchantJoinDto.getCategoryId(),
                 merchantJoinDto.getSubCategoryId(),
                 merchantJoinDto.getMerchantId()
@@ -109,8 +103,8 @@ public class BenefitService {
             );
             int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
             CalculatedBenefitDto calculated = CalculatedBenefitDto.builder()
-                    .myCardId(myCardDto.getCardId())
-                    .permanentToken(myCardDto.getPermanentToken())
+                    .myCardId(myCard.getCardId())
+                    .permanentToken(myCard.getPermanentToken())
                     .benefitId(benefitInfo.getBenefitId())
                     .benefitAmount(discountAmount)
                     .benefitType(benefitInfo.getBenefitType())
