@@ -55,4 +55,6 @@ public class CardTransactionEntity {
 	@Column(name = "approval_code", length = 50)
 	private String approvalCode;
 
+	@Column(name = "benefit_id")
+	private Integer benefitId;
 }

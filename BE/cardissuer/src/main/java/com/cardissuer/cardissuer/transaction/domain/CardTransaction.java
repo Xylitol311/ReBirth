@@ -23,5 +23,6 @@ public class CardTransaction {
 	private LocalDateTime createdAt;
 	private String merchantName;
 	private String approvalCode;
+	private Integer benefitId;
 
 }
