@@ -1,0 +1,123 @@
+package com.kkulmoo.rebirth.payment.application.service;
+
+import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
+import com.kkulmoo.rebirth.card.domain.CardRepository;
+import com.kkulmoo.rebirth.payment.domain.PreBenefit;
+import com.kkulmoo.rebirth.payment.domain.repository.MerchantJoinRepository;
+import com.kkulmoo.rebirth.payment.domain.repository.PreBenefitRepository;
+import com.kkulmoo.rebirth.payment.infrastructure.dto.MerchantJoinDto;
+import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestToCardsaDTO;
+import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
+import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class PaymentTransactionService {
+
+    // 카드사 결제 요청을 위한 WebClient 서비스
+    private final WebClientService webClientService;
+    // 가맹점 정보를 조회하는 Repository
+    private final MerchantJoinRepository merchantJoinRepository;
+    // 카드 추천 및 혜택 계산을 담당하는 BenefitService
+    private final BenefitService benefitService;
+    // 토큰 관련 기능을 사용할 경우를 대비해 PaymentTokenService 주입
+    private final PaymentTokenService paymentTokenService;
+    // 결제 피드백 정보를 저장하기 위한 Repository
+    private final PreBenefitRepository preBenefitRepository;
+    // 카드 정보 조회를 위한 Repository
+    private final CardRepository cardRepository;
+
+    // 결제 프로세스 전체를 처리하는 메서드
+    public CardTransactionDTO processPayment(int userId, String requestToken, String merchantName, int amount) {
+        // 가맹점 정보 조회
+        MerchantJoinDto merchantJoinDto = merchantJoinRepository.findMerchantJoinDataByMerchantName(merchantName);
+        // 추천 카드 혜택 정보 계산 (매 결제마다 추천 기록을 위해 호출)
+        CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto);
+        // 기본적으로 benefitType과 benefitAmount는 추천 혜택으로 설정
+        BenefitType benefitType = recommendedBenefit.getBenefitType();
+        Integer benefitAmount = recommendedBenefit.getBenefitAmount();
+        String permanentToken = recommendedBenefit.getPermanentToken();
+        CalculatedBenefitDto realBenefit = null; // 실제 카드 혜택 정보를 담을 객체
+
+        // 추천 카드 결제가 아닌 경우 실제 카드의 혜택 계산 로직 수행
+        if (!requestToken.equals("rebirth")) {
+            // 실제 카드 혜택 계산을 위해 BenefitService의 calculateRealBenefit 호출
+            realBenefit = benefitService.calculateRealBenefit(userId, requestToken, amount, merchantJoinDto);
+            if (realBenefit != null) {
+                // 실제 카드 혜택 정보를 적용
+                benefitType = realBenefit.getBenefitType();
+                benefitAmount = realBenefit.getBenefitAmount();
+                permanentToken = realBenefit.getPermanentToken();
+            }
+        }
+
+        // 카드사 결제 요청 데이터 구성
+        CreateTransactionRequestToCardsaDTO request = CreateTransactionRequestToCardsaDTO.builder()
+                .permanentToken(permanentToken)
+                .amount(amount)
+                .merchantName(merchantName)
+                .benefitType(benefitType.name())
+                .benefitAmount(benefitAmount)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        // 카드사에 결제 요청 후 결과 수신
+        CardTransactionDTO cardTransactionDTO = transactionToCardsa(request);
+
+        // 추천 카드가 아닌 경우 결제 피드백 정보를 업데이트
+        if (!requestToken.equals("rebirth")) {
+            PreBenefit preBenefit = PreBenefit.builder()
+                    .userId(userId)
+                    .paymentCardId(realBenefit != null ? realBenefit.getMyCardId() : recommendedBenefit.getMyCardId())
+                    .recommendedCardId(recommendedBenefit.getMyCardId())
+                    .amount(amount)
+                    .ifBenefitType(recommendedBenefit.getBenefitType())
+                    .ifBenefitAmount(recommendedBenefit.getBenefitAmount())
+                    .realBenefitType(realBenefit != null ? realBenefit.getBenefitType() : recommendedBenefit.getBenefitType())
+                    .realBenefitAmount(realBenefit != null ? realBenefit.getBenefitAmount() : recommendedBenefit.getBenefitAmount())
+                    .merchantName(merchantName)
+                    .build();
+            savePreBenefit(preBenefit);
+        }
+
+        // 마이데이터 카드 내역 가져오기
+        cardRepository.findById(realBenefit != null ? realBenefit.getMyCardId() : recommendedBenefit.getMyCardId());
+
+        // 혜택 현황 관련 테이블에 업데이트 하기
+
+        // 리포트 업데이트 하기
+
+        return cardTransactionDTO;
+    }
+
+    // 카드사에 결제 요청하는 내부 메서드
+    private CardTransactionDTO transactionToCardsa(CreateTransactionRequestToCardsaDTO request) {
+        return webClientService.checkPermanentToken(request).block();
+    }
+
+    // 결제 피드백 정보를 저장하는 트랜잭션 처리 메서드
+    @Transactional
+    public PreBenefit savePreBenefit(PreBenefit preBenefit) {
+        return preBenefitRepository.findByUserId(preBenefit.getUserId())
+                .map(existing -> PreBenefit.builder()
+                        .userId(existing.getUserId()) // 기존 사용자 ID 유지
+                        .paymentCardId(preBenefit.getPaymentCardId())
+                        .recommendedCardId(preBenefit.getRecommendedCardId())
+                        .amount(preBenefit.getAmount())
+                        .ifBenefitType(preBenefit.getIfBenefitType())
+                        .ifBenefitAmount(preBenefit.getIfBenefitAmount())
+                        .realBenefitType(preBenefit.getRealBenefitType())
+                        .realBenefitAmount(preBenefit.getRealBenefitAmount())
+                        .merchantName(preBenefit.getMerchantName())
+                        .build())
+                .map(updated -> preBenefitRepository.save(updated))
+                .orElseGet(() -> preBenefitRepository.save(preBenefit));
+    }
+}
