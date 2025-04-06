@@ -57,6 +57,7 @@ public class PaymentTransactionService {
         BenefitType benefitType = recommendedBenefit.getBenefitType();
         Integer benefitAmount = recommendedBenefit.getBenefitAmount();
         String permanentToken = recommendedBenefit.getPermanentToken();
+        Integer benefitId = recommendedBenefit.getBenefitId();
         CalculatedBenefitDto realBenefit = null; // 실제 카드 혜택 정보를 담을 객체
 
         // 추천 카드 결제가 아닌 경우 실제 카드의 혜택 계산 로직 수행
@@ -68,6 +69,7 @@ public class PaymentTransactionService {
                 benefitType = realBenefit.getBenefitType();
                 benefitAmount = realBenefit.getBenefitAmount();
                 permanentToken = realBenefit.getPermanentToken();
+                benefitId = recommendedBenefit.getBenefitId();
             }
         }
 
@@ -76,6 +78,7 @@ public class PaymentTransactionService {
                 .permanentToken(permanentToken)
                 .amount(amount)
                 .merchantName(merchantName)
+                .benefitId(benefitId)
                 .benefitType(benefitType.name())
                 .benefitAmount(benefitAmount)
                 .createdAt(LocalDateTime.now())

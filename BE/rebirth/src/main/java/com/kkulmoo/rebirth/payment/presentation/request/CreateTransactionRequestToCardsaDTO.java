@@ -14,6 +14,7 @@ public class CreateTransactionRequestToCardsaDTO {
     String merchantName;
     //discount, mileage 2개중 하나
     String benefitType;
+    Integer benefitId;
     Integer benefitAmount;
     LocalDateTime createdAt;
 }
