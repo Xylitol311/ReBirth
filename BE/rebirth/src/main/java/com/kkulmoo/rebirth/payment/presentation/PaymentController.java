@@ -1,8 +1,8 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
-import com.kkulmoo.rebirth.payment.application.service.PaymentOnlineEncryption;
-import com.kkulmoo.rebirth.payment.application.service.PaymentService;
+import com.kkulmoo.rebirth.payment.application.service.PaymentTokenService;
+import com.kkulmoo.rebirth.payment.application.service.PaymentTransactionService;
 import com.kkulmoo.rebirth.payment.presentation.request.CardInfoDTO;
 import com.kkulmoo.rebirth.payment.presentation.request.OnlinePayDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
@@ -15,15 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/*
-
-추가 수정 필요
-1) 프론트에 전달해야할 데이터 -> 카드 이름, 카드 이미지, 별 좌표
-2) 결제 이후 DB 저장로직
-3) cors 설정 다시
-
- */
-
 @Slf4j
 @CrossOrigin
 @RestController
@@ -31,90 +22,77 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentController {
 
-    private final PaymentService paymentService;
-    private final PaymentOnlineEncryption paymentOnlineEncryption;
+    // 토큰 관련 기능을 제공하는 서비스
+    private final PaymentTokenService paymentTokenService;
+    // 결제 처리를 담당하는 서비스
+    private final PaymentTransactionService paymentTransactionService;
 
+    // 카드 등록 엔드포인트 (추후 상세 구현)
     @PostMapping("/registpaymentcard")
     public ResponseEntity<?> registPaymentCard(@RequestBody CardInfoDTO cardInfoDTO) {
-
-        // 카드사에 넘겨주기
-        // 1. userId로 userCI 검색해서 가져오기
-
-        // 2.
-        // 카드사에게 받은 데이터 토대로 사용자 카드 부분 update
-
+        // 카드 등록 로직 (현재 임시 응답)
         return ResponseEntity.ok("임시");
     }
 
-
-    // 오프라인에서의 일회용 토큰 생성
+    // 오프라인 일회용 토큰 생성 엔드포인트
     @GetMapping("/disposabletoken")
     public ResponseEntity<?> getDisposableToken(@RequestParam(value = "userId") int userId) throws Exception {
-        //1. 사용자 받아온 걸로 영구토큰 전부다 가져오기
-        List<String[]> PTandUCN = paymentService.getAllUsersPermanentTokenAndTemplateId(userId);
-
-        //2. 영구 토큰 싹다 일회용 토큰 처리
-        List<PaymentTokenResponseDTO> disposableTokens = paymentService.createDisposableToken(PTandUCN, userId);
+        // 사용자 보유 카드의 영구토큰과 템플릿 ID 조회
+        List<String[]> cardInfo = paymentTokenService.getAllUsersPermanentTokenAndTemplateId(userId);
+        // 오프라인 일회용 토큰 생성 및 DB 저장
+        List<PaymentTokenResponseDTO> disposableTokens = paymentTokenService.createDisposableToken(cardInfo, userId);
+        // 응답 객체 생성 후 반환
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "일회용 토큰 생성", disposableTokens);
-
-        //3. 토큰 전달
         return ResponseEntity.ok(apiResponseDTO);
     }
 
-    // 온라인 가맹점을 위한 QR 코드 생성
+    // 온라인 가맹점용 QR 토큰 생성 엔드포인트
     @GetMapping("/generateqr")
-    public ResponseEntity<?> generateQRforOnline(@RequestParam("merchantName") String merchantName, @RequestParam("amount") int amount) throws Exception {
-
-        String QRcode = paymentOnlineEncryption.generateQRToken(merchantName, amount);
-
+    public ResponseEntity<?> generateQRforOnline(@RequestParam("merchantName") String merchantName,
+                                                 @RequestParam("amount") int amount) throws Exception {
+        // QR 토큰 생성을 위해 PaymentTokenService 호출
+        String QRcode = paymentTokenService.generateQRToken(merchantName, amount);
+        // 응답 객체 생성 후 반환
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "가맹점 QR용 토큰 생성", QRcode);
         return ResponseEntity.ok(apiResponseDTO);
-
     }
 
-    // QR 찍은 후 클라이언트에게(고객) 가맹점 정보 & 토큰 정보 반환
+    // 온라인 일회용 토큰 생성 엔드포인트
     @PostMapping("/onlinedisposabletoken")
     public ResponseEntity<?> generateOnlineDisposableToken(@RequestBody OnlinePayDTO onlinePay) throws Exception {
-
-        // QR 토큰 검증: [가맹점명, 금액]
-        String[] merchantInfo = paymentOnlineEncryption.validateQRToken(onlinePay.getToken());
-
+        // QR 토큰 검증을 통해 가맹점 정보 추출
+        String[] merchantInfo = paymentTokenService.validateQRToken(onlinePay.getToken());
         // 사용자 보유 카드 정보 조회
-        List<String[]> cardInfo = paymentService.getAllUsersPermanentTokenAndTemplateId(onlinePay.getUserId());
-
-        // 온라인 일회용 토큰 생성 시 userId를 함께 전달
-        List<PaymentTokenResponseDTO> disposableTokens = paymentService.createOnlineDisposableToken(
+        List<String[]> cardInfo = paymentTokenService.getAllUsersPermanentTokenAndTemplateId(onlinePay.getUserId());
+        // 온라인 일회용 토큰 생성 및 DB 저장
+        List<PaymentTokenResponseDTO> disposableTokens = paymentTokenService.createOnlineDisposableToken(
                 cardInfo,
                 merchantInfo[0],
                 Integer.parseInt(merchantInfo[1]),
                 onlinePay.getUserId()
         );
-
-        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "일회용 토큰 생성",
-                OnlinePayResponseDTO.builder()
-                        .paymentTokenResponseDTO(disposableTokens)
-                        .merchantName(merchantInfo[0])
-                        .amount(Integer.parseInt(merchantInfo[1]))
-                        .build());
+        // 온라인 결제 응답 DTO 구성
+        OnlinePayResponseDTO onlineResponse = OnlinePayResponseDTO.builder()
+                .paymentTokenResponseDTO(disposableTokens)
+                .merchantName(merchantInfo[0])
+                .amount(Integer.parseInt(merchantInfo[1]))
+                .build();
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "일회용 토큰 생성", onlineResponse);
         return ResponseEntity.ok(apiResponseDTO);
     }
 
-    /**
-     * 토큰 받고 나서 결제 로직 작성
-     * DB 업뎃 할때는 영구토큰으로 찾아서 바꾸기
-     * 토큰 안에 있는 내용 -> 가맹점, 가격, 영구토큰
-     */
+    // 온라인 결제 진행 엔드포인트
     @PostMapping("/onlineprogresspay")
     public ResponseEntity<?> onlineProgressPay(@RequestBody String token) throws Exception {
-        // 토큰 검증 후 [userId, 영구토큰, 가맹점명, 금액] 추출
-        String[] tokenData = paymentOnlineEncryption.validateOnlineToken(token);
+        // 온라인 토큰 검증 후 결제 정보(사용자 ID, 영구토큰, 가맹점, 금액) 추출
+        String[] tokenData = paymentTokenService.validateOnlineToken(token);
         int userId = Integer.parseInt(tokenData[0]);
         String permanentToken = tokenData[1];
         String merchantName = tokenData[2];
         int amount = Integer.parseInt(tokenData[3]);
-
-        // 공통 결제 처리 로직 호출
-        CardTransactionDTO cardTransactionDTO = paymentService.processPayment(userId, permanentToken, merchantName, amount);
+        // 결제 처리 서비스 호출
+        CardTransactionDTO cardTransactionDTO = paymentTransactionService.processPayment(userId, permanentToken, merchantName, amount);
+        // 응답 객체 생성 후 반환
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }

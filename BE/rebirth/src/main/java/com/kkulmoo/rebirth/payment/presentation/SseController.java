@@ -1,11 +1,12 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
-import com.kkulmoo.rebirth.payment.application.service.PaymentOfflineEncryption;
-import com.kkulmoo.rebirth.payment.application.service.PaymentService;
+import com.kkulmoo.rebirth.payment.application.service.PaymentTokenService;
+import com.kkulmoo.rebirth.payment.application.service.PaymentTransactionService;
 import com.kkulmoo.rebirth.payment.application.service.SseService;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,59 +17,47 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @CrossOrigin
 @RestController
 @RequestMapping("/api/payment/sse")
+@RequiredArgsConstructor
 public class SseController {
+
+    // SSE 구독 및 전송을 위한 서비스
     private final SseService sseService;
-    private final PaymentService paymentService;
-    private final PaymentOfflineEncryption paymentOfflineEncryption;
+    // 결제 처리를 담당하는 서비스
+    private final PaymentTransactionService paymentTransactionService;
+    // 토큰 관련 기능을 제공하는 서비스
+    private final PaymentTokenService paymentTokenService;
 
-
-    public SseController(SseService sseService, PaymentService paymentService, PaymentOfflineEncryption paymentOfflineEncryption) {
-        this.sseService = sseService;
-        this.paymentService = paymentService;
-        this.paymentOfflineEncryption = paymentOfflineEncryption;
-
-    }
-
-    // 특정 유저 SSE 구독
+    // 특정 유저의 SSE 구독 엔드포인트
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> subscribe(@RequestParam(value = "userId") int userId) {
-        log.info("sse 구독 진행중~~~ userId: {}", userId);
-
+        // SSE 구독 생성
         SseEmitter emitter = sseService.subscribe(userId);
-
-        // 클라이언트가 연결을 끊으면 제거하는 이벤트 리스너 추가
+        // 연결 완료 시 로그 기록
         emitter.onCompletion(() -> log.info("SSE 연결 종료 - userId: {}", userId));
+        // 타임아웃 시 로그 기록
         emitter.onTimeout(() -> log.warn("SSE 타임아웃 - userId: {}", userId));
-
         return ResponseEntity.ok(emitter);
     }
 
-
-    //오프라인 결제 (포스기)
+    // 오프라인 결제(포스기) 진행 엔드포인트
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
-        // 토큰 검증 후 [영구토큰, userId] 추출
-        String realToken = paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
-        String[] tokenInfo = paymentOfflineEncryption.validateOneTimeToken(realToken);
-
-        log.info(realToken);
-        log.info(tokenInfo[0]);
-
+        // 클라이언트로부터 받은 짧은 토큰으로 실제 토큰 복원
+        String realToken = paymentTokenService.getRealDisposableToken(createTransactionRequestDTO.getToken());
+        // 복원된 토큰을 검증하여 결제 정보 추출
+        String[] tokenInfo = paymentTokenService.validateOneTimeToken(realToken);
         String permanentToken = tokenInfo[0];
         int userId = Integer.parseInt(tokenInfo[1]);
         String merchantName = createTransactionRequestDTO.getMerchantName();
         int amount = createTransactionRequestDTO.getAmount();
-
-        // 결제 시작 알림
+        // 결제 시작 알림을 SSE를 통해 전송
         sseService.sendToUser(userId, "결제시작");
-
-        // 공통 결제 처리 로직 호출
-        CardTransactionDTO cardTransactionDTO = paymentService.processPayment(userId, permanentToken, merchantName, amount);
-
-        // 결제 결과 알림
+        // 결제 처리 서비스 호출
+        CardTransactionDTO cardTransactionDTO = paymentTransactionService.processPayment(userId, permanentToken, merchantName, amount);
+        // 결제 결과 알림을 SSE를 통해 전송
         sseService.sendToUser(userId, cardTransactionDTO.getApprovalCode());
+        // 응답 객체 생성 후 반환
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }
 }
-
