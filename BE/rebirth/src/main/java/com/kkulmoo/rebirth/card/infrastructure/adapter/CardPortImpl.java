@@ -1,7 +1,7 @@
 package com.kkulmoo.rebirth.card.infrastructure.adapter;
 
 import com.kkulmoo.rebirth.card.application.CardPort;
-import com.kkulmoo.rebirth.card.domain.myCard;
+import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.card.infrastructure.adapter.dto.CardApiResponse;
 import com.kkulmoo.rebirth.card.infrastructure.adapter.dto.CardDataRequest;
 import com.kkulmoo.rebirth.common.exception.CardFetchException;
@@ -66,7 +66,7 @@ public class CardPortImpl implements CardPort {
     @Override
     public Mono<List<CardTransactionResponse>> getCardTransaction(CardTransactionRequest cardTransactionRequest) {
         String userCI = cardTransactionRequest.getUserCI();
-        List<myCard> cards = cardTransactionRequest.getCards();
+        List<MyCard> cards = cardTransactionRequest.getCards();
         return Flux.fromIterable((cards))
                 .flatMap(card -> {
                     CardTransactionSingleRequest singleRequest = CardTransactionSingleRequest.builder()

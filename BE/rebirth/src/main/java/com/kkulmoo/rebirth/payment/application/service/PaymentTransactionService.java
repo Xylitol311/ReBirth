@@ -1,7 +1,9 @@
 package com.kkulmoo.rebirth.payment.application.service;
 
+import com.kkulmoo.rebirth.analysis.application.service.ReportService;
 import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
 import com.kkulmoo.rebirth.card.domain.CardRepository;
+import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.payment.domain.PreBenefit;
 import com.kkulmoo.rebirth.payment.domain.repository.MerchantJoinRepository;
 import com.kkulmoo.rebirth.payment.domain.repository.PreBenefitRepository;
@@ -9,12 +11,18 @@ import com.kkulmoo.rebirth.payment.infrastructure.dto.MerchantJoinDto;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestToCardsaDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
+import com.kkulmoo.rebirth.user.application.service.MyDataService;
+import com.kkulmoo.rebirth.user.domain.User;
+import com.kkulmoo.rebirth.user.domain.UserId;
+import com.kkulmoo.rebirth.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +41,11 @@ public class PaymentTransactionService {
     private final PreBenefitRepository preBenefitRepository;
     // 카드 정보 조회를 위한 Repository
     private final CardRepository cardRepository;
+    // 유저 데이터 조회
+    private final UserRepository userRepository;
+    // 마이데이터 호출
+    private final MyDataService myDataService;
+    private final ReportService reportService;
 
     // 결제 프로세스 전체를 처리하는 메서드
     public CardTransactionDTO processPayment(int userId, String requestToken, String merchantName, int amount) {
@@ -88,11 +101,16 @@ public class PaymentTransactionService {
         }
 
         // 마이데이터 카드 내역 가져오기
-        cardRepository.findById(realBenefit != null ? realBenefit.getMyCardId() : recommendedBenefit.getMyCardId());
+        User user = userRepository.findByUserId(new UserId(userId));
+        MyCard myCard = cardRepository.findById(realBenefit != null ? realBenefit.getMyCardId() : recommendedBenefit.getMyCardId()).get();
+        List<MyCard> myCards = Arrays.asList(myCard);
+        myDataService.loadMyTransactionByCards(user, myCards);
 
         // 혜택 현황 관련 테이블에 업데이트 하기
 
         // 리포트 업데이트 하기
+        reportService.updateMonthlyTransactionSummary(userId);
+
 
         return cardTransactionDTO;
     }

@@ -1,6 +1,6 @@
 package com.kkulmoo.rebirth.card.infrastructure.mapper;
 
-import com.kkulmoo.rebirth.card.domain.myCard;
+import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import org.springframework.stereotype.Component;
@@ -17,12 +17,12 @@ public class CardEntityMapper {
      * @param entity 변환할 CardEntity 객체
      * @return 변환된 Card 객체
      */
-    public myCard toCard(CardEntity entity) {
+    public MyCard toCard(CardEntity entity) {
         if (entity == null) {
             return null;
         }
 
-        return myCard.builder()
+        return MyCard.builder()
                 .cardId(entity.getCardId())
                 .userId(new UserId(entity.getUserId()))
                 .cardTemplateId(entity.getCardTemplateId())
@@ -49,7 +49,7 @@ public class CardEntityMapper {
      * @param myCard 변환할 Card 객체
      * @return 변환된 CardEntity 객체
      */
-    public CardEntity toEntity(myCard myCard) {
+    public CardEntity toEntity(MyCard myCard) {
         if (myCard == null) {
             return null;
         }
