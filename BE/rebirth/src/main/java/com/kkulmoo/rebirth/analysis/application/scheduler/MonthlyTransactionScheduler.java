@@ -40,7 +40,7 @@ public class MonthlyTransactionScheduler {
         List<UserEntity> users = userJpaRepository.findAllAndDeletedAtIsNull(); // 나중에 deleted_at 있는건 안가져오게 수정할 것
         for(UserEntity user : users) {
 
-            createMonthlyTransactionSummary(user);
+            createMonthlyTransactionSummary(user.getUserId());
 
         }
     }
@@ -49,13 +49,14 @@ public class MonthlyTransactionScheduler {
     public void endMonthlyTransaction() {
         List<UserEntity> users = userJpaRepository.findAllAndDeletedAtIsNull(); // 나중에 deleted_at 있는건 안가져오게 수정할 것
         for(UserEntity user : users) {
-            makeMonthlyConsumptionReport(user);
+            makeMonthlyConsumptionReport(user.getUserId());
         }
 
     }
 
     @Transactional
-    public void createMonthlyTransactionSummary(UserEntity user) {
+    public void createMonthlyTransactionSummary(Integer userId) {
+        UserEntity user = userJpaRepository.getReferenceById(userId);
         // 월 시작될 때 리포트 틀 만들어주기. 년, 월 정도 넣어주고 혜택이나 금액은 0
         LocalDate now = LocalDate.now();
         int month = now.getMonthValue();
@@ -90,38 +91,23 @@ public class MonthlyTransactionScheduler {
                 .monthSpendingAmount(0)
                 .monthBenefitAmount(0)
                 .createdAt(report.getCreatedAt())
-                .spendingTier(card.getSpendingTier())
+                .spendingTier((short) 0)
                 .build();
         int reportCardId = reportCardsJpaRepository.save(reportCardsEntity).getReportCardId();
         ReportCardsEntity reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
 
     }
 
-//    @Transactional
-//    public ReportCardCategoriesEntity createReportCardCategories(ReportCardsEntity reportCard, BenefitTemplateEntity benefit) {
-//        ReportCardCategoriesEntity reportCardCategoriesEntity = ReportCardCategoriesEntity
-//                .builder()
-//                .reportCardId(reportCard.getReportCardId())
-//                .categoryId(benefit.getCategory().getCategoryId())
-////                .merchantId(benefit.getMerchantId())
-//                .amount(0)
-//                .receivedBenefitAmount(0)
-//                .count(0)
-//                .createdAt(reportCard.getCreatedAt())
-//                .build();
-//        int reportCardCategoryId = reportCardCategoriesJpaRepository.save(reportCardCategoriesEntity).getReportCategoryId();
-//        return reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
-//    }
-
     @Transactional
-    public void makeMonthlyConsumptionReport(UserEntity user) {
+    public void makeMonthlyConsumptionReport(Integer userId) {
+        UserEntity user = userJpaRepository.getReferenceById(userId);
         LocalDate yesterday = LocalDate.now().minusDays(1);
         int year = yesterday.getYear();
         int month = yesterday.getMonthValue();
         MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
 
         // 소비패턴 계산
-        int[] pattern = calculateSpendingPattern(user, year, month);
+        int[] pattern = calculateSpendingPattern(userId, year, month);
 
         // AI 요약
         OpenAiChatModel model = OpenAiChatModel.builder()
@@ -165,8 +151,9 @@ public class MonthlyTransactionScheduler {
     }
 
     @Transactional
-    public int[] calculateSpendingPattern(UserEntity user, int year, int month) {
+    public int[] calculateSpendingPattern(Integer userId, int year, int month) {
         // 필요한 정보 - 월평균 수입, 월 총 지출, 카테고리별 지출, 전 월 지출
+        UserEntity user = userJpaRepository.getReferenceById(userId);
         int monthlyIncome = user.getAverageMonthlyIncome();
         MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
 

@@ -4,6 +4,7 @@ import com.kkulmoo.rebirth.analysis.application.scheduler.MonthlyTransactionSche
 import com.kkulmoo.rebirth.analysis.domain.dto.response.*;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.*;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.*;
+import com.kkulmoo.rebirth.payment.infrastructure.repository.CardTemplateJpaRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardsJpaRepository;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
@@ -37,9 +38,11 @@ public class ReportService {
     private final MonthlyConsumptionReportJpaRepository monthlyConsumptionReportJpaRepository;
     private final ConsumptionPatternJpaRepository consumptionPatternJpaRepository;
     private final UserJpaRepository userJpaRepository;
+    private final CardTemplateJpaRepository cardTemplateJpaRepository;
 
     @Transactional
-    public void updateMonthlyTransactionSummary(UserEntity user) {
+    public void updateMonthlyTransactionSummary(Integer userId) {
+        UserEntity user = userJpaRepository.getReferenceById(userId);
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
         int month = now.getMonthValue();
@@ -107,9 +110,22 @@ public class ReportService {
             int cardId = entry.getKey();
             int[] count = entry.getValue();
 
+            CardEntity card = cardsJpaRepository.getReferenceById(cardId);
+            CardTemplateEntity cardTemplate = cardTemplateJpaRepository.getReferenceById(card.getCardTemplateId());
+            short myTierForCard = 0;
+            if(cardTemplate.getPerformanceRange()!=null) {
+                for(int point: cardTemplate.getPerformanceRange()) {
+                    if(count[0]<point) {
+                        break;
+                    }
+                    myTierForCard++;
+                }
+            }
+
             ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), cardId);
             reportCard.setMonthSpendingAmount(count[0]);
             reportCard.setMonthBenefitAmount(count[1]);
+            reportCard.setSpendingTier(myTierForCard);
 
             total[0] += count[0];
             total[1] += count[1];
@@ -120,7 +136,8 @@ public class ReportService {
     }
 
     @Transactional
-    public void startWithMyData(UserEntity user) {
+    public void startWithMyData(Integer userId) {
+        UserEntity user = userJpaRepository.getReferenceById(userId);
         for (int i = 5; i >= 0; i--) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
             int year = now.getYear();
@@ -156,7 +173,7 @@ public class ReportService {
                         .monthSpendingAmount(0)
                         .monthBenefitAmount(0)
                         .createdAt(report.getCreatedAt())
-                        .spendingTier(card.getSpendingTier())
+                        .spendingTier((short) 0)
                         .build();
                 if (reportCard == null) {
                     int reportCardId = reportCardsJpaRepository.save(reportCardsEntity).getReportCardId();
@@ -243,10 +260,21 @@ public class ReportService {
             for (Map.Entry<Integer, int[]> entry : countByCard.entrySet()) {
                 int cardId = entry.getKey();
                 int[] count = entry.getValue();
-
+                CardEntity card = cardsJpaRepository.getReferenceById(cardId);
+                CardTemplateEntity cardTemplate = cardTemplateJpaRepository.getReferenceById(card.getCardTemplateId());
+                short myTierForCard = 0;
+                if(cardTemplate.getPerformanceRange()!=null) {
+                    for(int point: cardTemplate.getPerformanceRange()) {
+                        if(count[0]<point) {
+                            break;
+                        }
+                        myTierForCard++;
+                    }
+                }
                 ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), cardId);
                 reportCard.setMonthSpendingAmount(count[0]);
                 reportCard.setMonthBenefitAmount(count[1]);
+                reportCard.setSpendingTier(myTierForCard);
 
                 total[0] += count[0];
                 total[1] += count[1];
