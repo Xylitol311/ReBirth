@@ -26,6 +26,8 @@ public class CardRepositoryImpl implements CardRepository {
     private final CardEntityMapper cardEntityMapper;
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
     private final CardTemplateMapper cardTemplateMapper;
+    private final BenefitJpaRepository benefitJpaRepository;
+
 
     @Override
     public Optional<CardTemplateEntity> findCardTemplateEntityById(Integer templateId) {

@@ -28,7 +28,7 @@ public class UserCardBenefitEntity {
     private Short benefitCount;
 
     @Column(name = "benefit_amount", nullable = false)
-    private Integer benefitAmount;
+    private Short benefitAmount;
 
     @Column(name = "reset_date", nullable = false)
     private LocalDateTime resetDate;

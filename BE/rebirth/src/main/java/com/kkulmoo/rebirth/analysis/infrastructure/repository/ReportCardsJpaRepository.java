@@ -29,4 +29,14 @@ public interface ReportCardsJpaRepository extends JpaRepository<ReportCardsEntit
             "AND mts.year = :year " +
             "AND mts.month = :month")
     List<MainCardSummaryDTO> getByUserIdAndYearAndMonth(Integer userId, int year, int month);
+
+    @Query("SELECT rc " +
+            "FROM ReportCardsEntity rc " +
+            "JOIN MonthlyTransactionSummaryEntity mts ON mts.reportId = rc.reportId " +
+            "WHERE mts.userId = :userId " +
+            "AND mts.year = :year " +
+            "AND mts.month = :month " +
+            "AND rc.cardId = :cardId")
+    Optional<ReportCardsEntity> getByUserIdAndCardIdAndYearAndMonth(Integer userId, Integer cardId, Integer year, Integer month);
+
 }
