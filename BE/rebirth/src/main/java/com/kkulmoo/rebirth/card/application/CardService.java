@@ -81,7 +81,7 @@ public class CardService {
             cardBenefits.add(
                     CardBenefit.builder()
                             .benefitCategory(categoryString)
-                            .receivedBenefitAmount((int) byUserIdAndBenefitId.getBenefitAmount())
+                            .receivedBenefitAmount(byUserIdAndBenefitId.getBenefitAmount())
                             .remainingBenefitAmount(
                                     calculateRemainingBenefit(
                                             benefitTemplate,
