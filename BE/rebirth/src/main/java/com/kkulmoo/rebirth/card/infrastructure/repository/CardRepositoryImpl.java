@@ -2,9 +2,10 @@ package com.kkulmoo.rebirth.card.infrastructure.repository;
 
 import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.CardTemplate;
-import com.kkulmoo.rebirth.card.domain.myCard;
+import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardEntityMapper;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardTemplateMapper;
+import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardTemplateJpaRepository;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
@@ -36,19 +37,19 @@ public class CardRepositoryImpl implements CardRepository {
 
 
     @Override
-    public myCard save(myCard myCard) {
+    public MyCard save(MyCard myCard) {
         CardEntity cardEntity = cardJpaRepository.save(cardEntityMapper.toEntity(myCard));
         return cardEntityMapper.toCard(cardEntity);
     }
 
     @Override
-    public Optional<myCard> findById(Integer cardId) {
+    public Optional<MyCard> findById(Integer cardId) {
         return cardJpaRepository.findById(cardId)
                 .map(cardEntityMapper::toCard);
     }
 
     @Override
-    public List<myCard> findByUserId(UserId userId) {
+    public List<MyCard> findByUserId(UserId userId) {
         if (userId == null) {
             return Collections.emptyList();
         }
@@ -61,7 +62,7 @@ public class CardRepositoryImpl implements CardRepository {
 
 
     @Override
-    public List<myCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers) {
+    public List<MyCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers) {
         return cardJpaRepository.findByCardUniqueNumberIn(cardUniqueNumbers)
                 .stream()
                 .map(cardEntityMapper::toCard)
@@ -69,7 +70,7 @@ public class CardRepositoryImpl implements CardRepository {
     }
 
     @Override
-    public Optional<myCard> findByCardUniqueNumber(String cardUniqueNumber) {
+    public Optional<MyCard> findByCardUniqueNumber(String cardUniqueNumber) {
         return cardJpaRepository.findByCardUniqueNumber(cardUniqueNumber)
                 .map(cardEntityMapper::toCard);
     }
@@ -81,7 +82,7 @@ public class CardRepositoryImpl implements CardRepository {
     }
 
     @Override
-    public List<myCard> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds) {
+    public List<MyCard> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds) {
         return cardJpaRepository.findByUserIdAndCardIdIn(userId, cardIds)
                 .stream()
                 .map(cardEntityMapper::toCard)
@@ -89,7 +90,7 @@ public class CardRepositoryImpl implements CardRepository {
     }
 
     @Override
-    public void saveAll(Collection<myCard> cards) {
+    public void saveAll(Collection<MyCard> cards) {
         List<CardEntity> entities = cards.stream()
                 .map(cardEntityMapper::toEntity)
                 .collect(Collectors.toList());
@@ -100,6 +101,16 @@ public class CardRepositoryImpl implements CardRepository {
     @Override
     public Integer countByUserId(UserId userId) {
         return cardJpaRepository.countByUserId(userId.getValue());
+    }
+
+    @Override
+    public MyCardDto findMyCardIdAndTemplateIdByPermanentToken(String permanentToken) {
+        return cardJpaRepository.findMyCardIdAndTemplateIdByPermanentToken(permanentToken);
+    }
+
+    @Override
+    public List<MyCardDto> findMyCardsIdAndTemplateIdsByUserId(Integer userId) {
+        return cardJpaRepository.findMyCardsIdAndTemplateIdsByUserId(userId);
     }
 
 }

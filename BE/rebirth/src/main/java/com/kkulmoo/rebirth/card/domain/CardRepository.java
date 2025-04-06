@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.card.domain;
 
+import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.UserId;
 
@@ -10,22 +11,26 @@ import java.util.Optional;
 public interface CardRepository {
     Optional<CardTemplateEntity> findCardTemplateEntityById(Integer templateId);
 
-    myCard save(myCard myCard);
+    MyCard save(MyCard myCard);
 
-    Optional<myCard> findById(Integer cardId);
+    Optional<MyCard> findById(Integer cardId);
 
-    List<myCard> findByUserId(UserId userId);
+    List<MyCard> findByUserId(UserId userId);
 
-    List<myCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers);
+    List<MyCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers);
     // 필요한 다른 메서드들
 
-    Optional<myCard> findByCardUniqueNumber(String cardUniqueNumber);
+    Optional<MyCard> findByCardUniqueNumber(String cardUniqueNumber);
 
     Optional<CardTemplate> findCardTemplateByCardName(String cardName);
 
-    List<myCard> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds);
+    List<MyCard> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds);
 
-    void saveAll(Collection<myCard> cards);
+    void saveAll(Collection<MyCard> cards);
 
     Integer countByUserId(UserId userId);
+
+    MyCardDto findMyCardIdAndTemplateIdByPermanentToken(String permanentToken);
+
+    List<MyCardDto> findMyCardsIdAndTemplateIdsByUserId(Integer userId);
 }

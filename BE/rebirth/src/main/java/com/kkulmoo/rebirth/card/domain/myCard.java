@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class myCard {
+public class MyCard {
 	private Integer cardId;
 	private UserId userId;
 	private Integer cardTemplateId;
@@ -38,7 +38,7 @@ public class myCard {
 		this.paymentCardOrder = newOrder;
 	}
 
-	public myCard updateLatestLoadDataAt() {
+	public MyCard updateLatestLoadDataAt() {
 		this.latestLoadDataAt = LocalDateTime.now();
 		return this;
 	}
