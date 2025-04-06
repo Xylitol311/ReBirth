@@ -1,6 +1,5 @@
 package com.kkulmoo.rebirth.auth.jwt;
 
-import com.kkulmoo.rebirth.user.domain.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +22,6 @@ import java.util.Collections;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
