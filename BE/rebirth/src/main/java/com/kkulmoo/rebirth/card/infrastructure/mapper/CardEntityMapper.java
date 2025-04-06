@@ -1,6 +1,6 @@
 package com.kkulmoo.rebirth.card.infrastructure.mapper;
 
-import com.kkulmoo.rebirth.card.domain.MyCard;
+import com.kkulmoo.rebirth.card.domain.MyCards;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import org.springframework.stereotype.Component;
@@ -17,12 +17,12 @@ public class CardEntityMapper {
      * @param entity 변환할 CardEntity 객체
      * @return 변환된 Card 객체
      */
-    public MyCard toCard(CardEntity entity) {
+    public MyCards toCard(CardEntity entity) {
         if (entity == null) {
             return null;
         }
 
-        return MyCard.builder()
+        return MyCards.builder()
                 .cardId(entity.getCardId())
                 .userId(new UserId(entity.getUserId()))
                 .cardTemplateId(entity.getCardTemplateId())
@@ -46,31 +46,31 @@ public class CardEntityMapper {
      * Card를 CardEntity로 변환
      * 현재 구현에서는 생성자가 필요합니다.
      *
-     * @param myCard 변환할 Card 객체
+     * @param myCards 변환할 Card 객체
      * @return 변환된 CardEntity 객체
      */
-    public CardEntity toEntity(MyCard myCard) {
-        if (myCard == null) {
+    public CardEntity toEntity(MyCards myCards) {
+        if (myCards == null) {
             return null;
         }
 
         return CardEntity.builder()
-                .cardId(myCard.getCardId())
-                .userId(myCard.getUserId().getValue())
-                .cardTemplateId(myCard.getCardTemplateId())
-                .cardUniqueNumber(myCard.getCardUniqueNumber())
-                .expiryDate(myCard.getExpiryDate())
-                .cardOrder(myCard.getCardOrder())
-                .createdAt(myCard.getCreatedAt())
-                .deletedAt(myCard.getDeletedAt())
-                .cardName(myCard.getCardName())
-                .isExpired(myCard.getIsExpired())
-                .annualFee(myCard.getAnnualFee())
-                .spendingTier(myCard.getSpendingTier())
-                .permanentToken(myCard.getPermanentToken())
-                .paymentCardOrder(myCard.getPaymentCardOrder())
-                .paymentCreatedAt(myCard.getPaymentCreatedAt())
-                .latestLoadDataAt(myCard.getLatestLoadDataAt())
+                .cardId(myCards.getCardId())
+                .userId(myCards.getUserId().getValue())
+                .cardTemplateId(myCards.getCardTemplateId())
+                .cardUniqueNumber(myCards.getCardUniqueNumber())
+                .expiryDate(myCards.getExpiryDate())
+                .cardOrder(myCards.getCardOrder())
+                .createdAt(myCards.getCreatedAt())
+                .deletedAt(myCards.getDeletedAt())
+                .cardName(myCards.getCardName())
+                .isExpired(myCards.getIsExpired())
+                .annualFee(myCards.getAnnualFee())
+                .spendingTier(myCards.getSpendingTier())
+                .permanentToken(myCards.getPermanentToken())
+                .paymentCardOrder(myCards.getPaymentCardOrder())
+                .paymentCreatedAt(myCards.getPaymentCreatedAt())
+                .latestLoadDataAt(myCards.getLatestLoadDataAt())
                 .build();
     }
 }

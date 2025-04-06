@@ -39,7 +39,7 @@ public class CardService {
 
     @Transactional
     public CardDetailResponse getCardDetail(UserId userId, Integer cardId) {
-        MyCard card = cardRepository.findById(cardId)
+        MyCards card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 ID를 찾을 수 없습니다."));
 
         CardTemplateEntity cardTemplate = cardRepository.findCardTemplateEntityById(card.getCardTemplateId())
@@ -137,16 +137,16 @@ public class CardService {
 
 
         // 사용자의 카드만 조회 (보안을 위해 사용자 ID 확인)
-        List<MyCard> userCards = cardRepository.findByUserIdAndCardIdIn(userId.getValue(), cardIds);
+        List<MyCards> userCards = cardRepository.findByUserIdAndCardIdIn(userId.getValue(), cardIds);
 
         // 카드 ID로 맵 생성
-        Map<Integer, MyCard> cardMap = userCards.stream()
-                .collect(Collectors.toMap(MyCard::getCardId, card -> card));
+        Map<Integer, MyCards> cardMap = userCards.stream()
+                .collect(Collectors.toMap(MyCards::getCardId, card -> card));
 
         // 각 카드의 새 위치 설정
         // map으로 해야하는 이유는 List로 한다면 n^2으로 찾아야한다.
         for (CardOrderRequest request : cardOrders) {
-            MyCard card = cardMap.get(request.getCardId());
+            MyCards card = cardMap.get(request.getCardId());
             if (card != null) {
                 card.changeCardOrder(request.getPosition());
             }
@@ -158,13 +158,13 @@ public class CardService {
 
     public List<CardResponse> findCardsAll(UserId userId) {
 
-        List<MyCard> userCards = findByUserId(userId);
+        List<MyCards> userCards = findByUserId(userId);
 
         List<CardResponse> responses = new ArrayList<>();
 
         //카드의 최대 혜택양 계산하기!
 
-        for (MyCard card : userCards) {
+        for (MyCards card : userCards) {
             CardTemplateEntity template = cardRepository.findCardTemplateEntityById(card.getCardTemplateId())
                     .orElseThrow(() -> new EntityNotFoundException("카드 템플릿을 찾을 수 없습니다: " + card.getCardTemplateId()));
 
@@ -218,27 +218,27 @@ public class CardService {
     }
 
     // 카드 정보만 가져오는 경우
-    public List<MyCard> findByUserId(UserId userId) {
+    public List<MyCards> findByUserId(UserId userId) {
         return cardRepository.findByUserId(userId);
     }
 
-    public List<MyCard> getMyCardListByCardUniqueNumbers(List<String> cardUniqueNumbers) {
+    public List<MyCards> getMyCardListByCardUniqueNumbers(List<String> cardUniqueNumbers) {
         return cardRepository.findByCardUniqueNumbers(cardUniqueNumbers);
     }
 
     // 모든 카드데이터 불러오기.
     // 컨트롤러에서 호출할 수 있는 메서드
-    public List<MyCard> getCardData(User user) {
+    public List<MyCards> getCardData(User user) {
         try {
             log.info("사용자 {}의 카드 데이터 처리 시작", user.getUserName());
 
             // 1. 현재 DB에 있는 사용자의 카드 조회
-            List<MyCard> existingMyCards = cardRepository.findByUserId(user.getUserId());
+            List<MyCards> existingMyCards = cardRepository.findByUserId(user.getUserId());
             log.info("사용자 {}의 기존 카드 {}개가 DB에 존재합니다", user.getUserName(), existingMyCards.size());
 
             // 기존 카드의 고유 번호를 Set으로 변환 (검색 최적화)
             Set<String> existingCardNumbers = existingMyCards.stream()
-                    .map(MyCard::getCardUniqueNumber)
+                    .map(MyCards::getCardUniqueNumber)
                     .collect(Collectors.toSet());
 
             // 2. API를 통해 최신 카드 정보 가져오기
@@ -257,9 +257,9 @@ public class CardService {
     /**
      * API에서 가져온 카드 중 DB에 없는 것만 처리하는 메서드
      */
-    private List<MyCard> processNewCards(List<CardApiResponse> apiCards, Set<String> existingCardNumbers, User user) {
+    private List<MyCards> processNewCards(List<CardApiResponse> apiCards, Set<String> existingCardNumbers, User user) {
         log.info("사용자 {}의 새 카드 처리 시작", user.getUserName());
-        List<MyCard> newCards = new ArrayList<>();  // 새로 생성된 카드들을 저장할 리스트
+        List<MyCards> newCards = new ArrayList<>();  // 새로 생성된 카드들을 저장할 리스트
 
         for (CardApiResponse apiCard : apiCards) {
             String cardUniqueNumber = apiCard.getCardUniqueNumber();
@@ -271,9 +271,9 @@ public class CardService {
             }
 
             // 새 카드 생성
-            MyCard myCard = createCard(apiCard, user.getUserId());
+            MyCards myCards = createCard(apiCard, user.getUserId());
             log.info("새 카드가 생성되었습니다: {}", cardUniqueNumber);
-            newCards.add(myCard);  // 생성된 카드를 리스트에 추가
+            newCards.add(myCards);  // 생성된 카드를 리스트에 추가
         }
         return newCards;  // 생성된 모든 카드 반환
 
@@ -281,7 +281,7 @@ public class CardService {
 
 
     // 카드 존재 여부 확인 메서드
-    private MyCard createCard(CardApiResponse apiCard, UserId userId) {
+    private MyCards createCard(CardApiResponse apiCard, UserId userId) {
 
         System.out.println("이름 체크 하는 과정입니다이름 체크 하는 과정입니다이름 체크 하는 과정입니다");
         System.out.println(apiCard.getCardName());
@@ -302,7 +302,7 @@ public class CardService {
 
 
         // 새 카드 객체 생성
-        MyCard newMyCard = MyCard.builder()
+        MyCards newMyCards = MyCards.builder()
                 .userId(userId)
                 .cardTemplateId(cardTemplate.getCardTemplateId())
                 .cardUniqueNumber(apiCard.getCardUniqueNumber())
@@ -313,13 +313,13 @@ public class CardService {
                 .build();
 
         // 저장 후 반환
-        return cardRepository.save(newMyCard);
+        return cardRepository.save(newMyCards);
     }
 
 
-    public void updateCardsLastLoadTime(List<MyCard> MyCards) {
-        List<MyCard> updatedCards = MyCards.stream()
-                .map(MyCard::updateLatestLoadDataAt)
+    public void updateCardsLastLoadTime(List<MyCards> MyCards) {
+        List<com.kkulmoo.rebirth.card.domain.MyCards> updatedCards = MyCards.stream()
+                .map(com.kkulmoo.rebirth.card.domain.MyCards::updateLatestLoadDataAt)
                 .collect(Collectors.toList());
 
         cardRepository.saveAll(updatedCards);

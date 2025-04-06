@@ -11,22 +11,22 @@ import java.util.Optional;
 public interface CardRepository {
     Optional<CardTemplateEntity> findCardTemplateEntityById(Integer templateId);
 
-    MyCard save(MyCard myCard);
+    MyCards save(MyCards myCards);
 
-    Optional<MyCard> findById(Integer cardId);
+    Optional<MyCards> findById(Integer cardId);
 
-    List<MyCard> findByUserId(UserId userId);
+    List<MyCards> findByUserId(UserId userId);
 
-    List<MyCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers);
+    List<MyCards> findByCardUniqueNumbers(List<String> cardUniqueNumbers);
     // 필요한 다른 메서드들
 
-    Optional<MyCard> findByCardUniqueNumber(String cardUniqueNumber);
+    Optional<MyCards> findByCardUniqueNumber(String cardUniqueNumber);
 
     Optional<CardTemplate> findCardTemplateByCardName(String cardName);
 
-    List<MyCard> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds);
+    List<MyCards> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds);
 
-    void saveAll(Collection<MyCard> cards);
+    void saveAll(Collection<MyCards> cards);
 
     Integer countByUserId(UserId userId);
 

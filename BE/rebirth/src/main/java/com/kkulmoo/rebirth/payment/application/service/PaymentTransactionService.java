@@ -3,7 +3,7 @@ package com.kkulmoo.rebirth.payment.application.service;
 import com.kkulmoo.rebirth.analysis.application.service.ReportService;
 import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
 import com.kkulmoo.rebirth.card.domain.CardRepository;
-import com.kkulmoo.rebirth.card.domain.MyCard;
+import com.kkulmoo.rebirth.card.domain.MyCards;
 import com.kkulmoo.rebirth.payment.domain.PreBenefit;
 import com.kkulmoo.rebirth.payment.domain.repository.MerchantJoinRepository;
 import com.kkulmoo.rebirth.payment.domain.repository.PreBenefitRepository;
@@ -105,8 +105,8 @@ public class PaymentTransactionService {
 
         // 마이데이터 카드 내역 가져오기
         User user = userRepository.findByUserId(new UserId(userId));
-        MyCard myCard = cardRepository.findById(realBenefit != null ? realBenefit.getMyCardId() : recommendedBenefit.getMyCardId()).get();
-        List<MyCard> myCards = Arrays.asList(myCard);
+        MyCards myCard = cardRepository.findById(realBenefit != null ? realBenefit.getMyCardId() : recommendedBenefit.getMyCardId()).get();
+        List<MyCards> myCards = Arrays.asList(myCard);
         myDataService.loadMyTransactionByCards(user, myCards);
 
         // 혜택 현황 관련 테이블에 업데이트 하기

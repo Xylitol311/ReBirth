@@ -1,7 +1,7 @@
 package com.kkulmoo.rebirth.user.application.service;
 
 import com.kkulmoo.rebirth.card.application.CardService;
-import com.kkulmoo.rebirth.card.domain.MyCard;
+import com.kkulmoo.rebirth.card.domain.MyCards;
 import com.kkulmoo.rebirth.transactions.application.BankPort;
 import com.kkulmoo.rebirth.transactions.application.TransactionService;
 import com.kkulmoo.rebirth.user.domain.User;
@@ -28,7 +28,7 @@ public class MyDataService {
     public void loadMyCard(Integer userId) {
         User user = userRepository.findByUserId(new UserId(userId));
         // todo : 카드 가져오기
-        List<MyCard> cardData = cardService.getCardData(user);
+        List<MyCards> cardData = cardService.getCardData(user);
 
         // todo : 카드에 해당하는 거래내역 가져오기
         loadMyTransactionByCards(user, cardData);
@@ -38,16 +38,16 @@ public class MyDataService {
     public void getMyCardTransactionData(Integer userId) {
         User user = userRepository.findByUserId(new UserId(userId));
 
-        List<MyCard> myCardsList = cardService.findByUserId(new UserId(userId));
+        List<MyCards> myCardsList = cardService.findByUserId(new UserId(userId));
 
         loadMyTransactionByCards(user, myCardsList);
     }
 
 
     @Transactional
-    public void loadMyTransactionByCards(User user, List<MyCard> cards) {
+    public void loadMyTransactionByCards(User user, List<MyCards> cards) {
         List<String> cardUniqueNumbers = cards.stream()
-                .map(MyCard::getCardUniqueNumber)
+                .map(MyCards::getCardUniqueNumber)
                 .collect(Collectors.toList());
 
         // 추출한 카드 고유 번호 리스트를 이용해 거래내역 가져오기

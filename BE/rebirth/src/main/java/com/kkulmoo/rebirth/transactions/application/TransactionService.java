@@ -2,7 +2,7 @@ package com.kkulmoo.rebirth.transactions.application;
 
 import com.kkulmoo.rebirth.card.application.CardPort;
 import com.kkulmoo.rebirth.card.application.CardService;
-import com.kkulmoo.rebirth.card.domain.MyCard;
+import com.kkulmoo.rebirth.card.domain.MyCards;
 import com.kkulmoo.rebirth.transactions.application.dto.*;
 import com.kkulmoo.rebirth.transactions.application.mapper.TransactionHistoryMapper;
 import com.kkulmoo.rebirth.transactions.domain.MerchantCache;
@@ -71,10 +71,10 @@ public class TransactionService {
     public void getCardTransactionByMyData(User user, List<String> CardUniqueNumbers) {
 
         // CardUniqueNumbers
-        List<MyCard> myCardList = cardService.getMyCardListByCardUniqueNumbers(CardUniqueNumbers);
+        List<MyCards> myCardsList = cardService.getMyCardListByCardUniqueNumbers(CardUniqueNumbers);
 
         Mono<List<CardTransactionResponse>> cardTransaction = cardPort.getCardTransaction(CardTransactionRequest.builder()
-                .cards(myCardList)
+                .cards(myCardsList)
                 .userCI(user.getUserCI())
                 .build());
 
