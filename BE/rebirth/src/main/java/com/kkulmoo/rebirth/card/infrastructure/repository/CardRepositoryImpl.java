@@ -2,7 +2,7 @@ package com.kkulmoo.rebirth.card.infrastructure.repository;
 
 import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.CardTemplate;
-import com.kkulmoo.rebirth.card.domain.MyCards;
+import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardEntityMapper;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardTemplateMapper;
 import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
@@ -37,19 +37,19 @@ public class CardRepositoryImpl implements CardRepository {
 
 
     @Override
-    public MyCards save(MyCards myCards) {
-        CardEntity cardEntity = cardJpaRepository.save(cardEntityMapper.toEntity(myCards));
+    public MyCard save(MyCard myCard) {
+        CardEntity cardEntity = cardJpaRepository.save(cardEntityMapper.toEntity(myCard));
         return cardEntityMapper.toCard(cardEntity);
     }
 
     @Override
-    public Optional<MyCards> findById(Integer cardId) {
+    public Optional<MyCard> findById(Integer cardId) {
         return cardJpaRepository.findById(cardId)
                 .map(cardEntityMapper::toCard);
     }
 
     @Override
-    public List<MyCards> findByUserId(UserId userId) {
+    public List<MyCard> findByUserId(UserId userId) {
         if (userId == null) {
             return Collections.emptyList();
         }
@@ -62,7 +62,7 @@ public class CardRepositoryImpl implements CardRepository {
 
 
     @Override
-    public List<MyCards> findByCardUniqueNumbers(List<String> cardUniqueNumbers) {
+    public List<MyCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers) {
         return cardJpaRepository.findByCardUniqueNumberIn(cardUniqueNumbers)
                 .stream()
                 .map(cardEntityMapper::toCard)
@@ -70,7 +70,7 @@ public class CardRepositoryImpl implements CardRepository {
     }
 
     @Override
-    public Optional<MyCards> findByCardUniqueNumber(String cardUniqueNumber) {
+    public Optional<MyCard> findByCardUniqueNumber(String cardUniqueNumber) {
         return cardJpaRepository.findByCardUniqueNumber(cardUniqueNumber)
                 .map(cardEntityMapper::toCard);
     }
@@ -82,7 +82,7 @@ public class CardRepositoryImpl implements CardRepository {
     }
 
     @Override
-    public List<MyCards> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds) {
+    public List<MyCard> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds) {
         return cardJpaRepository.findByUserIdAndCardIdIn(userId, cardIds)
                 .stream()
                 .map(cardEntityMapper::toCard)
@@ -90,7 +90,7 @@ public class CardRepositoryImpl implements CardRepository {
     }
 
     @Override
-    public void saveAll(Collection<MyCards> cards) {
+    public void saveAll(Collection<MyCard> cards) {
         List<CardEntity> entities = cards.stream()
                 .map(cardEntityMapper::toEntity)
                 .collect(Collectors.toList());

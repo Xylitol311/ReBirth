@@ -33,7 +33,7 @@ public class UserController {
 		return ResponseEntity.ok(ApiResponseDTO.success("카드 거래내역 로드에 성공하였습니다."));
 	}
 
-	// 카드 자산 불러오기(MyCards 갱신)
+	// 카드 자산 불러오기(MyCard 갱신)
 	@PostMapping("/mydata/mycard")
 	public ResponseEntity<ApiResponseDTO<Void>> loadMyCard(@JwtUserId Integer userId){
 		 //todo: 이름 바꾸기
