@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserCardBenefitRepository {
-    UserCardBenefit findByUserIdAndBenefitId(Integer userId, Integer benefitId);
+    UserCardBenefit findByUserIdAndBenefitIdAndYearAndMonth(Integer userId, Integer benefitId, int year, int month);
 }

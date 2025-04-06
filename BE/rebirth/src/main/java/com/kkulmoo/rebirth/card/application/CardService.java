@@ -72,11 +72,13 @@ public class CardService {
 
 
         List<CardBenefit> cardBenefits = new ArrayList<>();
+        int currentYear = LocalDateTime.now().getYear();
+        int currentMonth = LocalDateTime.now().getMonthValue();
 
         for (BenefitTemplate benefitTemplate : benefitTemplates) {
             List<Integer> categoryId = benefitTemplate.getCategoryId();
             List<String> categoryString = categoryJpaRepository.findByCategoryIdInOrderByCategoryId(categoryId);
-            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository.findByUserIdAndBenefitId(userId.getValue(), benefitTemplate.getBenefitId());
+            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository.findByUserIdAndBenefitIdAndYearAndMonth(userId.getValue(), benefitTemplate.getBenefitId(), currentYear, currentMonth);
 
             cardBenefits.add(
                     CardBenefit.builder()

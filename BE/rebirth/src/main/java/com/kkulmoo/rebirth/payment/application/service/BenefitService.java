@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -32,6 +33,9 @@ public class BenefitService {
 
     // 추천 카드 혜택 계산 (모든 보유 카드에 대해 계산 후 최대 혜택 선택)
     public CalculatedBenefitDto recommendPaymentCard(Integer userId, int amount, MerchantJoinDto merchantJoinDto) {
+        int currentYear = LocalDate.now().getYear();
+        int currentMonth = LocalDate.now().getMonthValue();
+
         // 사용자 보유 카드 목록 조회
         List<MyCardDto> myCards = cardRepository.findMyCardsIdAndTemplateIdsByUserId(userId);
         // 최대 혜택을 찾기 위한 우선순위 큐 생성 (내림차순)
@@ -49,7 +53,12 @@ public class BenefitService {
             // 각 혜택에 대해 할인 금액 계산
             for (BenefitInfo benefitInfo : benefitInfos) {
                 if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) continue; // 쿠폰은 제외
-                UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitId(userId, benefitInfo.getBenefitId());
+                UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitIdAndYearAndMonth(
+                        userId,
+                        benefitInfo.getBenefitId(),
+                        currentYear,
+                        currentMonth
+                );
                 int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
                 CalculatedBenefitDto calculated = CalculatedBenefitDto.builder()
                         .myCardId(card.getCardId())
@@ -70,6 +79,9 @@ public class BenefitService {
 
     // 실제 카드의 혜택 계산 (제공된 영구토큰을 기반으로 단일 카드에 대해 계산)
     public CalculatedBenefitDto calculateRealBenefit(int userId, String permanentToken, int amount, MerchantJoinDto merchantJoinDto) {
+        int currentYear = LocalDate.now().getYear();
+        int currentMonth = LocalDate.now().getMonthValue();
+
         // 단일 카드 정보 조회 (영구토큰 기반)
         MyCardDto myCardDto = cardRepository.findMyCardIdAndTemplateIdByPermanentToken(permanentToken);
         if (myCardDto.getPermanentToken() == null) {
@@ -88,7 +100,12 @@ public class BenefitService {
         // 각 혜택에 대해 할인 금액 계산 수행
         for (BenefitInfo benefitInfo : benefitInfos) {
             if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) continue; // 쿠폰은 제외
-            UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitId(userId, benefitInfo.getBenefitId());
+            UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitIdAndYearAndMonth(
+                    userId,
+                    benefitInfo.getBenefitId(),
+                    currentYear,
+                    currentMonth
+            );
             int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
             CalculatedBenefitDto calculated = CalculatedBenefitDto.builder()
                     .myCardId(myCardDto.getCardId())
@@ -164,5 +181,10 @@ public class BenefitService {
             }
         }
         return benefit;
+    }
+
+    // 카드 혜택 현황 업데이트
+    private void updateUserCardBenefit(int benefitAmount){
+
     }
 }
