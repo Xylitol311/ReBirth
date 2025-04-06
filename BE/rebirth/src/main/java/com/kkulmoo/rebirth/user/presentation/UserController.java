@@ -5,6 +5,7 @@ import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.user.application.service.MyDataService;
 import com.kkulmoo.rebirth.user.application.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,6 +49,31 @@ public class UserController {
 		return ResponseEntity.ok(ApiResponseDTO.success("은행 계좌 로드에 성공하였습니다."));
 	}
 
+	@PostMapping("/mydata/all")
+	public ResponseEntity<ApiResponseDTO<Void>> loadAllMyData(@JwtUserId Integer userId) {
+		try {
+			myDataService.loadMyCard(userId);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponseDTO.error("카드 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
+		}
+
+		try {
+			myDataService.loadMyBankAccount(userId);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponseDTO.error("은행 계좌 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
+		}
+
+		try {
+			myDataService.loadMyBankTransaction(userId);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponseDTO.error("은행 거래내역 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
+		}
+
+		return ResponseEntity.ok(ApiResponseDTO.success("전체 마이데이터 로드에 성공하였습니다."));
+	}
 
 	// todo: UserId를 Integer에서 UserId로 바꿔야함
 	@DeleteMapping

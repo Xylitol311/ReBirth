@@ -24,6 +24,8 @@ public class MyDataService {
     private final TransactionService transactionService;
     private final BankPort bankPort;
 
+
+    // 카드 내 자산 불러오기
     @Transactional
     public void loadMyCard(Integer userId) {
         User user = userRepository.findByUserId(new UserId(userId));
@@ -34,6 +36,7 @@ public class MyDataService {
         loadMyTransactionByCards(user, cardData);
     }
 
+    //내 카드의 전체 거래내역 데이터 불러오기
     @Transactional
     public void getMyCardTransactionData(Integer userId) {
         User user = userRepository.findByUserId(new UserId(userId));
@@ -43,7 +46,7 @@ public class MyDataService {
         loadMyTransactionByCards(user, myCardsList);
     }
 
-
+    //카드 거래내역 불러오기 (선택한 카드들만 불러온다.)
     @Transactional
     public void loadMyTransactionByCards(User user, List<myCard> cards) {
         List<String> cardUniqueNumbers = cards.stream()
@@ -56,6 +59,7 @@ public class MyDataService {
         cardService.updateCardsLastLoadTime(cards);
     }
 
+    // 내 은행 계좌 가져오기
     @Transactional
     public void loadMyBankAccount(Integer userId) {
         User user = userRepository.findByUserId(new UserId(userId));
@@ -71,6 +75,7 @@ public class MyDataService {
         userRepository.save(user);
     }
 
+    //은행 거래내역 불러오기
     @Transactional
     public void loadMyBankTransaction(Integer userId) {
         User user = userRepository.findByUserId(new UserId(userId));
@@ -81,6 +86,5 @@ public class MyDataService {
         System.out.println(
                 user.toString());
         userRepository.save(user);
-
     }
 }
