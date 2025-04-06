@@ -317,8 +317,8 @@ public class CardService {
     }
 
 
-    public void updateCardsLastLoadTime(List<MyCard> MyCard) {
-        List<MyCard> updatedCards = MyCard.stream()
+    public void updateCardsLastLoadTime(List<MyCard> myCard) {
+        List<MyCard> updatedCards = myCard.stream()
                 .map(MyCard::updateLatestLoadDataAt)
                 .collect(Collectors.toList());
 
