@@ -20,7 +20,6 @@ import java.util.List;
 @RequestMapping("/api/cards")
 @RequiredArgsConstructor
 @Slf4j
-
 public class CardController {
     private final CardService cardService;
 
