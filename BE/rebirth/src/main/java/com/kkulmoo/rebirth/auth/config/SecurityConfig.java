@@ -29,7 +29,7 @@ public class SecurityConfig {
                         // 로그인 API 접근 허용
                         .requestMatchers("/api/auth/login", "/api/auth/signup").permitAll()
                         // 기타 API
-                        .requestMatchers("/api").permitAll()
+                        .requestMatchers("/api/**","/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

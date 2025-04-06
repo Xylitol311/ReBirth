@@ -11,8 +11,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 public class UserCardBenefitRepositoryImpl implements UserCardBenefitRepository {
-    UserCardBenefitJpaRepository userCardBenefitJpaRepository;
-    UserCardBenefitEntityMapper userCardBenefitEntityMapper;
+    public final UserCardBenefitJpaRepository userCardBenefitJpaRepository;
+    public final UserCardBenefitEntityMapper userCardBenefitEntityMapper;
 
     @Override
     public UserCardBenefit findByUserIdAndBenefitId(Integer userId, Integer benefitId) {
