@@ -120,6 +120,7 @@ public class PaymentTransactionService {
 
         // 혜택 현황 관련 테이블에 업데이트 하기
         // TODO: 테이블 수정 로직 추가
+        benefitService.updateUserCardBenefit(userId, benefitId, benefitAmount);
 
         // 리포트 업데이트 하기
         reportService.updateMonthlyTransactionSummary(userId);

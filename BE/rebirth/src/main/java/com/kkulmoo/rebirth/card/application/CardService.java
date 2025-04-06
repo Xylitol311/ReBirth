@@ -78,7 +78,7 @@ public class CardService {
         for (BenefitTemplate benefitTemplate : benefitTemplates) {
             List<Integer> categoryId = benefitTemplate.getCategoryId();
             List<String> categoryString = categoryJpaRepository.findByCategoryIdInOrderByCategoryId(categoryId);
-            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository.findByUserIdAndBenefitIdAndYearAndMonth(userId.getValue(), benefitTemplate.getBenefitId(), currentYear, currentMonth);
+            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId.getValue(), benefitTemplate.getBenefitId(), currentYear, currentMonth);
 
             cardBenefits.add(
                     CardBenefit.builder()

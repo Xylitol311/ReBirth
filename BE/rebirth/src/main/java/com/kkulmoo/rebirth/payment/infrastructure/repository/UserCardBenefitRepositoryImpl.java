@@ -15,13 +15,20 @@ public class UserCardBenefitRepositoryImpl implements UserCardBenefitRepository 
     public final UserCardBenefitEntityMapper userCardBenefitEntityMapper;
 
     @Override
-    public UserCardBenefit findByUserIdAndBenefitIdAndYearAndMonth(Integer userId, Integer benefitId, int year, int month) {
+    public UserCardBenefit findByUserIdAndBenefitTemplateIdAndYearAndMonth(Integer userId, Integer benefitId, int year, int month) {
         UserCardBenefitEntity entity = userCardBenefitJpaRepository
-                .findByUserIdAndBenefitTemplateId(userId, benefitId, year, month)
+                .findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId, benefitId, year, month)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "UserCardBenefit not found for userId " + userId +
                         ", benefitId " + benefitId +
                         ", year " + year + ", month " + month));
         return userCardBenefitEntityMapper.toUserCardBenefit(entity);
+    }
+
+    @Override
+    public UserCardBenefit save(UserCardBenefit userCardBenefit) {
+        UserCardBenefitEntity entity = userCardBenefitEntityMapper.toUserCardBenefitEntity(userCardBenefit);
+        UserCardBenefitEntity savedEntity = userCardBenefitJpaRepository.save(entity);
+        return userCardBenefitEntityMapper.toUserCardBenefit(savedEntity);
     }
 }

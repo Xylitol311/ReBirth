@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -53,7 +54,7 @@ public class BenefitService {
             // 각 혜택에 대해 할인 금액 계산
             for (BenefitInfo benefitInfo : benefitInfos) {
                 if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) continue; // 쿠폰은 제외
-                UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitIdAndYearAndMonth(
+                UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
                         userId,
                         benefitInfo.getBenefitId(),
                         currentYear,
@@ -100,7 +101,7 @@ public class BenefitService {
         // 각 혜택에 대해 할인 금액 계산 수행
         for (BenefitInfo benefitInfo : benefitInfos) {
             if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) continue; // 쿠폰은 제외
-            UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitIdAndYearAndMonth(
+            UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
                     userId,
                     benefitInfo.getBenefitId(),
                     currentYear,
@@ -183,8 +184,45 @@ public class BenefitService {
         return benefit;
     }
 
-    // 카드 혜택 현황 업데이트
-    private void updateUserCardBenefit(int benefitAmount){
+    // 이번 달 카드 혜택 업데이트
+    public void updateUserCardBenefit(int userId, int benefitTemplateId, int receivedBenefitAmount){
+        // 현재 연도와 월 추출
+        LocalDate now = LocalDate.now();
+        int currentYear = now.getYear();
+        int currentMonth = now.getMonthValue();
 
+        // 이번 달 기존 혜택 현황 조회 (없으면 예외 처리)
+        UserCardBenefit existing = userCardBenefitRepository
+                .findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId, benefitTemplateId, currentYear, currentMonth);
+
+        if (existing == null) {
+            // 신규 생성: 최초 혜택 횟수는 1, 혜택 금액은 이번 결제 금액
+            UserCardBenefit newBenefit = UserCardBenefit.builder()
+                    .userId(userId)
+                    .benefitTemplateId(benefitTemplateId)
+                    // spendingTier는 필요에 따라 기본값을 설정하세요. 여기서는 0으로 설정합니다.
+                    .spendingTier((short) 0)
+                    .benefitCount((short) 1)
+                    .benefitAmount(receivedBenefitAmount)
+                    .updateDate(LocalDateTime.now())
+                    .year(currentYear)
+                    .month(currentMonth)
+                    .build();
+            userCardBenefitRepository.save(newBenefit);
+        } else {
+            // 기존 데이터 업데이트: benefit_count +1, benefit_amount에 이번 결제 금액 누적
+            UserCardBenefit updatedBenefit = UserCardBenefit.builder()
+                    .userCardBenefitId(existing.getUserCardBenefitId())
+                    .userId(existing.getUserId())
+                    .benefitTemplateId(existing.getBenefitTemplateId())
+                    .spendingTier(existing.getSpendingTier())
+                    .benefitCount((short) (existing.getBenefitCount() + 1))
+                    .benefitAmount(existing.getBenefitAmount() + receivedBenefitAmount)
+                    .updateDate(LocalDateTime.now())
+                    .year(existing.getYear())
+                    .month(existing.getMonth())
+                    .build();
+            userCardBenefitRepository.save(updatedBenefit);
+        }
     }
 }
