@@ -115,7 +115,7 @@ public class ReportService {
             short myTierForCard = 0;
             if(cardTemplate.getPerformanceRange()!=null) {
                 for(int point: cardTemplate.getPerformanceRange()) {
-                    if(count[0]<point) {
+                    if(Math.abs(count[0])<point) {
                         break;
                     }
                     myTierForCard++;
@@ -127,12 +127,14 @@ public class ReportService {
             reportCard.setMonthBenefitAmount(count[1]);
             reportCard.setSpendingTier(myTierForCard);
 
+            reportCardsJpaRepository.save(reportCard);
             total[0] += count[0];
             total[1] += count[1];
         }
 
         report.setTotalSpending(total[0]);
         report.setReceivedBenefitAmount(total[1]);
+        monthlyTransactionSummaryJpaRepository.save(report);
     }
 
     @Transactional
@@ -182,6 +184,7 @@ public class ReportService {
                 } else {
                     reportCard.setMonthSpendingAmount(0);
                     reportCard.setMonthBenefitAmount(0);
+                    reportCard.setSpendingTier((short) 0);
 
                     reportCard = reportCardsJpaRepository.save(reportCard);
 
@@ -201,6 +204,7 @@ public class ReportService {
                             .cardId(monthlyTransaction.getCardId())
                             .monthBenefitAmount(0)
                             .monthSpendingAmount(0)
+                            .spendingTier((short) 0)
                             .createdAt(now)
                             .build();
                     int reportCardId = reportCardsJpaRepository.save(newReportCard).getReportCardId();
@@ -209,6 +213,7 @@ public class ReportService {
                 } else {
                     reportCard.setMonthSpendingAmount(0);
                     reportCard.setMonthBenefitAmount(0);
+                    reportCard.setSpendingTier((short) 0);
 
                     reportCard = reportCardsJpaRepository.save(reportCard);
                 }
@@ -254,6 +259,7 @@ public class ReportService {
 
                     countByCard.put(monthlyTransaction.getCardId(), chk);
                 }
+                reportCardCategoriesJpaRepository.save(reportCardCategory);
             }
 
             int[] total = new int[2];
@@ -265,7 +271,8 @@ public class ReportService {
                 short myTierForCard = 0;
                 if(cardTemplate.getPerformanceRange()!=null) {
                     for(int point: cardTemplate.getPerformanceRange()) {
-                        if(count[0]<point) {
+                        System.out.println(card.getCardName()+" "+count[0]+" 이거 넘나? "+point);
+                        if(Math.abs(count[0])<point) {
                             break;
                         }
                         myTierForCard++;
@@ -276,12 +283,14 @@ public class ReportService {
                 reportCard.setMonthBenefitAmount(count[1]);
                 reportCard.setSpendingTier(myTierForCard);
 
+                reportCardsJpaRepository.save(reportCard);
                 total[0] += count[0];
                 total[1] += count[1];
             }
 
             report.setTotalSpending(total[0]);
             report.setReceivedBenefitAmount(total[1]);
+            monthlyTransactionSummaryJpaRepository.save(report);
         }
 
         // 월별 요약
