@@ -10,12 +10,13 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 public class UserCardBenefit {
+    private Integer userCardBenefitId;
     private Integer userId;
     private Integer benefitTemplateId;
     private Short spendingTier;
     private Short benefitCount;
-    //todo: 수홍이형이 고쳐야한느 부분입니다;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    private Short benefitAmount;
-    private LocalDateTime resetDate;
+    private Integer benefitAmount;
     private LocalDateTime updateDate;
+    private Integer year;
+    private Integer month;
 }

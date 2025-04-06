@@ -109,7 +109,7 @@ public class CardService {
 
     }
 
-    private Integer calculateRemainingBenefit(BenefitTemplate template, int spendingTier, Short receivedAmount) {
+    private Integer calculateRemainingBenefit(BenefitTemplate template, int spendingTier, Integer receivedAmount) {
         try {
             // 총 혜택 금액 가져오기 (null이면 0 사용)
             List<Short> amounts = template.getBenefitUsageAmount();
@@ -118,7 +118,7 @@ public class CardService {
                     : 0;
 
             // receivedAmount가 null이면 0으로 처리
-            Short received = receivedAmount != null ? receivedAmount : 0;
+            int received = receivedAmount != null ? receivedAmount : 0;
 
             // 남은 혜택 금액 계산 (음수면 0 반환)
             int remaining = totalAmount - received;
