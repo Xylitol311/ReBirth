@@ -9,6 +9,7 @@ import com.kkulmoo.rebirth.payment.domain.UserCardBenefit;
 import com.kkulmoo.rebirth.payment.domain.repository.UserCardBenefitRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.dto.MerchantJoinDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
+import com.kkulmoo.rebirth.user.domain.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,8 @@ public class BenefitService {
         int currentMonth = LocalDate.now().getMonthValue();
 
         // 사용자 보유 카드 목록 조회
-        List<MyCard> myCards = cardRepository.findMyCardsIdAndTemplateIdsByUserId(userId);
+        UserId userId1 = new UserId(userId);
+        List<MyCard> myCards = cardRepository.findByUserId(userId1);
         // 최대 혜택을 찾기 위한 우선순위 큐 생성 (내림차순)
         Queue<CalculatedBenefitDto> benefitQueue = new PriorityQueue<>(Comparator.comparingInt(CalculatedBenefitDto::getBenefitAmount).reversed());
         // 각 카드별 혜택 계산 수행

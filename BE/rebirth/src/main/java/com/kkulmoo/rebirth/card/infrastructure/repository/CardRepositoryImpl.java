@@ -26,8 +26,6 @@ public class CardRepositoryImpl implements CardRepository {
     private final CardEntityMapper cardEntityMapper;
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
     private final CardTemplateMapper cardTemplateMapper;
-    private final BenefitJpaRepository benefitJpaRepository;
-
 
     @Override
     public Optional<CardTemplateEntity> findCardTemplateEntityById(Integer templateId) {
@@ -106,14 +104,6 @@ public class CardRepositoryImpl implements CardRepository {
     public Optional<MyCard> findByPermanentToken(String permanentToken) {
         return cardJpaRepository.findByPermanentToken(permanentToken)
                 .map(cardEntityMapper::toCard);
-    }
-
-    @Override
-    public List<MyCard> findMyCardsIdAndTemplateIdsByUserId(Integer userId) {
-        return cardJpaRepository.findMyCardsIdAndTemplateIdsByUserId(userId)
-                .stream()
-                .map(cardEntityMapper::toCard)
-                .collect(Collectors.toList());
     }
 
 }
