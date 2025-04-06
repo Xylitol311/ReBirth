@@ -25,6 +25,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
 
     // 개발 편의성 향상을 위한 추가 의존성
     implementation 'org.springframework.boot:spring-boot-starter-validation'  // 유효성 검증
@@ -33,6 +35,11 @@ dependencies {
 
     compileOnly 'org.projectlombok:lombok'                    // Lombok
     annotationProcessor 'org.projectlombok:lombok'
+
+    //jwt 토큰
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // langchain4j
     implementation 'dev.langchain4j:langchain4j-open-ai:1.0.0-beta2'

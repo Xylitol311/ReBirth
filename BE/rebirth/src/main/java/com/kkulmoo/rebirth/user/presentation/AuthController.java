@@ -1,14 +1,16 @@
 package com.kkulmoo.rebirth.user.presentation;
 
+import com.kkulmoo.rebirth.auth.AuthenticationResult;
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
 import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.user.application.command.CreateUserCommand;
 import com.kkulmoo.rebirth.user.application.service.AuthService;
-import com.kkulmoo.rebirth.user.domain.UserId;
+import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.presentation.requestDTO.UserCIRequest;
 import com.kkulmoo.rebirth.user.presentation.requestDTO.UserLoginRequest;
 import com.kkulmoo.rebirth.user.presentation.requestDTO.UserSignupRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,17 +25,23 @@ public class AuthController {
 
 	// 회원가입 1차단계
 	@PostMapping("/signup")
-	public ResponseEntity<ApiResponseDTO<Void>> signup(
+	public ResponseEntity<ApiResponseDTO<User>> signup(
 		@RequestBody UserSignupRequest request) {
 
-//		//은행 한테 사용자 이름하고 birth 넘겨주면서 user CI 받아오기
-//		String userCI = authService.getUserCI(UserCIRequest.builder().userName(request.getUserName()).birth(request.getBirth()).build());
-		String userCI= "test";
-		authService.createUser(CreateUserCommand.fromRequest(request,userCI));
+		//은행 한테 사용자 이름하고 birth 넘겨주면서 user CI 받아오기
+		String userCI = authService.getUserCI(UserCIRequest.builder().userName(request.getUserName()).birth(request.getBirth()).build());
 
-	//jwt 토큰도 헤더에 같이 넘겨주기
+		User createdUser = authService.createUser(CreateUserCommand.fromRequest(request,userCI));
+
+		String jwtToken = authService.generateAccessToken(createdUser.getUserId());
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Authorization", "Bearer " + jwtToken);
+
+		//jwt 토큰도 헤더에 같이 넘겨주기
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(ApiResponseDTO.success("회원가입이 성공적으로 완료되었습니다."));
+				.headers(headers)
+				.body(ApiResponseDTO.success("회원가입이 성공적으로 완료되었습니다.",createdUser));
 	}
 
 	//회원가입 2차단계
@@ -62,21 +70,29 @@ public class AuthController {
 			@RequestBody UserLoginRequest userLoginRequest
 	)
 	{
-		if(userLoginRequest.getType().equals("fingerprint")){
 
-			//jwt 토큰 넘겨주는 로직
-			return ResponseEntity.status(HttpStatus.OK)
-					.body(ApiResponseDTO.success("로그인이 완료되었습니다."));
+		AuthenticationResult result;
+
+		if(userLoginRequest.getType().equals("fingerprint")){
+			result = authService.authenticateWithBiometric(userLoginRequest.getPhoneSerialNumber());
+		} else{
+			result =authService.validUser(
+					userLoginRequest.getNumber(),
+					userLoginRequest.getType(),
+					userLoginRequest.getPhoneSerialNumber()
+			);
 		}
 
-		if(authService.validUser(userLoginRequest.getNumber(), userLoginRequest.getType(), userLoginRequest.getPhoneSerialNumber()))
+		if(result.getIsSuccess()){
+			String jwtToken = authService.generateAccessToken(result.getUser().getUserId());
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Authorization", "Bearer " + jwtToken);
 			return ResponseEntity.status(HttpStatus.OK)
-					.body(ApiResponseDTO.success("로그인이 완료 되었습니다."));
-
-		else return ResponseEntity.status(HttpStatus.OK)
-			.body(ApiResponseDTO.error("로그인 번호가 틀렸습니다"));
-
+					.headers(headers)
+					.body(ApiResponseDTO.success("로그인이 완료되었습니다."));
+		}
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(ApiResponseDTO.error("로그인번호가 틀렸습니다."));
 	}
-
 
 }

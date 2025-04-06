@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CurrentTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 
 import java.sql.Types;
@@ -50,9 +51,10 @@ public class UserEntity {
 
 	@Column(name = "bank_accounts", columnDefinition = "text[]")
 	@JdbcTypeCode(Types.ARRAY)
-	private List<String> bankAccounts;
+	private List<String> bankAcounts;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
+	@CurrentTimestamp
 	private LocalDateTime createdAt;
 
 	@Column(name = "updated_at")

@@ -1,81 +1,102 @@
 package com.kkulmoo.rebirth.user.application.service;
 
 
-import com.kkulmoo.rebirth.user.domain.UserId;
-import com.kkulmoo.rebirth.user.presentation.requestDTO.UserCIRequest;
-import org.springframework.stereotype.Service;
-
+import com.kkulmoo.rebirth.auth.AuthenticationResult;
+import com.kkulmoo.rebirth.auth.jwt.JwtProvider;
 import com.kkulmoo.rebirth.common.exception.UserCreationException;
 import com.kkulmoo.rebirth.common.util.PasswordUtils;
+import com.kkulmoo.rebirth.transactions.application.BankPort;
 import com.kkulmoo.rebirth.user.application.command.CreateUserCommand;
 import com.kkulmoo.rebirth.user.domain.User;
+import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.domain.UserRepository;
-
+import com.kkulmoo.rebirth.user.presentation.requestDTO.UserCIRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-	private final UserRepository userRepository;
-	private final UserWebClientService webClientService;
+    private final UserRepository userRepository;
+    private final BankPort bankPort;
+    private final JwtProvider jwtProvider;
 
-	public User createUser(CreateUserCommand command) {
-		// PIN 번호 암호화
-		String hashedPinNumber = PasswordUtils.encodePassword(command.getPinNumber());
 
-		// 사용자 객체 생성
-		User newUser = User.builder()
-			.userName(command.getUserName())
-				.userCI(command.getUserCI())
-			.hashedPinNumber(hashedPinNumber)
-			.phoneNumber(command.getPhoneNumber())
-			.phoneSerialNumber(command.getPhoneSerialNumber())
-			.build();
+    public User createUser(CreateUserCommand command) {
+        // PIN 번호 암호화
+        String hashedPinNumber = PasswordUtils.encodePassword(command.getPinNumber());
 
-		// 사용자 저장
-		User createdUser  = userRepository.save(newUser);
+        // 사용자 객체 생성
+        User newUser = User.builder()
+                .userName(command.getUserName())
+                .userCI(command.getUserCI())
+                .hashedPinNumber(hashedPinNumber)
+                .phoneNumber(command.getPhoneNumber())
+                .phoneSerialNumber(command.getPhoneSerialNumber())
+                .build();
 
-		if (createdUser == null) {
-			throw new UserCreationException("사용자 생성에 실패했습니다.");
-		}
+        System.out.println(newUser);
+        // 사용자 저장
+        User createdUser = userRepository.save(newUser);
 
-		return createdUser;
-	}
+        if (createdUser == null) {
+            throw new UserCreationException("사용자 생성에 실패했습니다.");
+        }
 
-	public void createPatternNum(int userId, String patternNumbers){
+        return createdUser;
+    }
 
-		// Pattern 번호 암호화
-		String hashedPatternNumber = PasswordUtils.encodePassword(patternNumbers);
-		User user = userRepository.findByUserId(new UserId(userId));
+    public void createPatternNum(int userId, String patternNumbers) {
 
-		userRepository.update(User.builder().build());
+        // Pattern 번호 암호화
+        String hashedPatternNumber = PasswordUtils.encodePassword(patternNumbers);
+        User user = userRepository.findByUserId(new UserId(userId));
 
-	}
+        userRepository.update(User.builder().build());
 
-	public String getUserCI(UserCIRequest userCIRequest){
+    }
 
-		return webClientService.getUserCI(userCIRequest).block();
-	}
+    public String getUserCI(UserCIRequest userCIRequest) {
+        return Objects.requireNonNull(bankPort.getUserCI(userCIRequest).block()).getUserCI();
+    }
 
-	public Boolean validUser(String number, String type, String phoneSerialNumber){
 
-		//핀 일 경우
-		if(type.equals("pin")){
-			String hashedPinNumber = PasswordUtils.encodePassword(number);
-			User user = userRepository.findByPhoneSerialNumber(phoneSerialNumber);
+    public AuthenticationResult validUser(String number, String type, String phoneSerialNumber) {
+        User user = userRepository.findByPhoneSerialNumber(phoneSerialNumber);
 
-			if(user.getHashedPinNumber().equals(hashedPinNumber))
-				return true;
-			return false;
-		}else if(type.equals("pattern")){
-			String hashedPatternNumber = PasswordUtils.encodePassword(number);
-			User user = userRepository.findByPhoneSerialNumber(phoneSerialNumber);
+        if (user == null) return AuthenticationResult.failure();
 
-			if(user.getHashedPinNumber().equals(hashedPatternNumber))
-				return true;
-			return false;
+        //핀 일 경우
+        if (type.equals("PIN")) {
+            String hashedPinNumber = PasswordUtils.encodePassword(number);
+            if (user.getHashedPinNumber().equals(hashedPinNumber)) {
+                return AuthenticationResult.success(user);
+            }
+        } else if (type.equals("PATTERN")) {
+            String hashedPatternNumber = PasswordUtils.encodePassword(number);
+            if (user.getHashedPinNumber().equals(hashedPatternNumber)) {
+                return AuthenticationResult.success(user);
+            }
+        }
+        return AuthenticationResult.failure();
 
-		}else return false;
-	}
+    }
 
+    public AuthenticationResult authenticateWithBiometric(String deviceId) {
+        try {
+            User user = userRepository.findByPhoneSerialNumber(deviceId);
+            if (user != null) {
+                return AuthenticationResult.success(user);
+            }
+        } catch (Exception e) {
+            // 로깅 등 예외 처리
+        }
+        return AuthenticationResult.failure();
+    }
+
+    public String generateAccessToken(UserId userId) {
+        return jwtProvider.generateAccessToken(userId);
+    }
 }
