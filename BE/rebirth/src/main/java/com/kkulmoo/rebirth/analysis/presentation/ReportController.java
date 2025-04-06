@@ -21,13 +21,11 @@ import java.util.List;
 public class ReportController {
 
     private final ReportService reportService;
-    private final UserJpaRepository userJpaRepository;
 
     @PostMapping("/frommydata")
     public ResponseEntity<ResponseDTO> getReportFromMyData(//@AuthenticationPrincipal(expression = "userId") Integer userId,
                                                            @RequestParam(value = "userId") Integer userId) {
-        UserEntity user = userJpaRepository.getReferenceById(userId);
-        reportService.startWithMyData(user);
+        reportService.startWithMyData(userId);
         ResponseDTO responseDTO = ResponseDTO
                 .builder()
                 .success(true)
@@ -82,8 +80,7 @@ public class ReportController {
     public ResponseEntity<ResponseDTO> testTransaction(@RequestParam int userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
-        UserEntity user = userJpaRepository.getReferenceById(userId);
-        reportService.updateMonthlyTransactionSummary(user);
+        reportService.updateMonthlyTransactionSummary(userId);
         result.setMessage("트랜잭션 갱신 완료");
 
 
