@@ -39,6 +39,7 @@ public class CardTransactionResponseMapper {
                         BenefitType.valueOf(response.getBenefitType()) : null)
                 .benefitAmount(response.getBenefitAmount())
                 .merchantId(response.getMerchantId())
+                .benefitId(response.getBenefitId())
                 .build();
     }
 

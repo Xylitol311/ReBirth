@@ -36,4 +36,7 @@ public class CardTransactionEntity {
 
     @Column(name = "benefit_amount")
     private Integer benefitAmount;
+
+    @Column(name = "benefit_id")
+    private Integer benefitId;
 }

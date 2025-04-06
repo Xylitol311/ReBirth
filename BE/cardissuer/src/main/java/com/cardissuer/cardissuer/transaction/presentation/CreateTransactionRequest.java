@@ -13,6 +13,7 @@ public class CreateTransactionRequest {
 	Integer amount;
 	String merchantName;
 	//discount, mileage 2개중 하나
+	Integer benefitId;
 	String benefitType;
 	Integer benefitAmount;
 	LocalDateTime createdAt;

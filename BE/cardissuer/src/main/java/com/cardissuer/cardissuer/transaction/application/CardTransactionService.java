@@ -70,6 +70,7 @@ public class CardTransactionService {
                             .approvalCode(bankResult.getApprovalCode())
                             .benefitAmount(createTransactionRequest.getBenefitAmount())
                             .benefitType(createTransactionRequest.getBenefitType())
+                            .benefitId(createTransactionRequest.getBenefitId())
                             .build());
         }
         return bankResult;
