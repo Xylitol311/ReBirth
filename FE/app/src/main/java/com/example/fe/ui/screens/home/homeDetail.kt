@@ -58,6 +58,14 @@ fun HomeDetailScreen(
     val cardList by viewModel.cardList.collectAsState()
     val categoryList by viewModel.categoryList.collectAsState()
     
+    // 임시 카테고리 데이터 추가
+    val tempCategoryList = listOf(
+        TempCategorySummary("카페", 33, 50000, 500),
+        TempCategorySummary("음식점", 33, 50000, 500),
+        TempCategorySummary("지하철", 33, 50000, 500),
+        TempCategorySummary("영화", 33, 50000, 500)
+    )
+    
     val contentAlpha by animateFloatAsState(
         targetValue = if (isNavigatingBack.value) 0f else 1f,
         animationSpec = tween(300),
@@ -69,95 +77,59 @@ fun HomeDetailScreen(
         viewModel.fetchSummaryData()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        StarryBackground(
-            scrollOffset = 0f,
-            starCount = 150,
-            modifier = Modifier.fillMaxSize()
+    // StarryBackground 대신 단색 배경 적용
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0A1931)) // 어두운 파란색 배경으로 통일
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            Column(
+            // 탭 선택 - 더 가깝게 배치
+            Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center
             ) {
-                // 총 사용 금액 카드
-                GlassSurface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(bottom = 16.dp),
-                    cornerRadius = 16f,
-                    isTopPanel = true
-                ) {
+                // 탭 버튼들을 중앙에 배치하고 간격 줄임
+                tabs.forEachIndexed { index, title ->
                     Column(
                         modifier = Modifier
-                            .padding(24.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .padding(horizontal = 20.dp)
+                            .clickable { selectedTabIndex = index },
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "총 사용 금액",
-                            fontSize = 16.sp,
-                            color = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            text = title,
+                            color = if (selectedTabIndex == index) Color(0xFF00E1FF) else Color.Gray,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(vertical = 4.dp)
                         )
-
-                        Text(
-                            text = "${cardList.sumOf { it.spendingAmount }}원",
-                            fontSize = 36.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-
-                        Text(
-                            text = "받은 혜택 ${cardList.sumOf { it.benefitAmount }}원",
-                            fontSize = 16.sp,
-                            color = Color(0xFF4CAF50)
-                        )
-                    }
-                }
-                
-                // 탭 선택
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    tabs.forEachIndexed { index, title ->
-                        Column(
+                        
+                        // 선택된 탭 아래 밑줄
+                        Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedTabIndex = index },
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = title,
-                                color = if (selectedTabIndex == index) Color.White else Color.Gray,
-                                fontSize = 16.sp,
-                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                            
-                            Box(
-                                modifier = Modifier
-                                    .width(40.dp)
-                                    .height(2.dp)
-                                    .background(
-                                        color = if (selectedTabIndex == index) Color.White else Color.Transparent
-                                    )
-                            )
-                        }
+                                .width(40.dp)
+                                .height(2.dp)
+                                .background(
+                                    color = if (selectedTabIndex == index) Color(0xFF00E1FF) else Color.Transparent
+                                )
+                        )
                     }
                 }
-                
-                // 탭 내용
-                when (selectedTabIndex) {
-                    0 -> CardUsageList(cardList)
-                    1 -> CategoryUsageList(categoryList)
-                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // 탭 내용
+            when (selectedTabIndex) {
+                0 -> CardUsageList(cardList)
+                1 -> CategoryUsageList(categoryList)
             }
         }
     }
@@ -166,36 +138,34 @@ fun HomeDetailScreen(
 @Composable
 fun CardUsageList(cardUsages: List<CardSummary>) {
     if (cardUsages.isEmpty()) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.Center
         ) {
-            Spacer(modifier = Modifier.width(96.dp))  // 이미지 공간만큼 여백
-
-            GlassSurface(
-                modifier = Modifier.weight(1f),
-                cornerRadius = 12f
-            ) {
-                Box(
-                    modifier = Modifier
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "기록이 없습니다",
-                        color = Color.White,
-                        fontSize = 16.sp
-                    )
-                }
-            }
+            Text(
+                text = "기록이 없습니다",
+                color = Color.White,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
         }
     } else {
         LazyColumn {
             items(cardUsages) { cardUsage ->
                 CardUsageItem(cardUsage)
-                Spacer(modifier = Modifier.height(8.dp))
+                
+                // 카드 사이에 구분선 추가 (마지막이 아니면)
+                if (cardUsage != cardUsages.last()) {
+                    Divider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        color = Color(0xFF1E2D4D),  // 사진과 비슷한 색상
+                        thickness = 1.dp
+                    )
+                }
             }
         }
     }
@@ -203,35 +173,43 @@ fun CardUsageList(cardUsages: List<CardSummary>) {
 
 @Composable
 fun CardUsageItem(cardUsage: CardSummary) {
-    Row(
+    // 사진에 맞게 어두운 파란색 배경 추가
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .background(Color(0xFF0A1931))  // 어두운 파란색 배경
     ) {
-        // 카드 이미지
-        AsyncImage(
-            model = cardUsage.cardImgUrl,
-            contentDescription = "Card Image",
+        Row(
             modifier = Modifier
-                .width(80.dp)
-                .aspectRatio(0.63f)
-                .clip(RoundedCornerShape(12.dp)),
-            contentScale = ContentScale.Fit
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        GlassSurface(
-            modifier = Modifier.weight(1f),
-            cornerRadius = 12f
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 24.dp, top = 16.dp, bottom = 16.dp), // 왼쪽 패딩 감소
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // 카드 이미지 - 크기 증가 및 90도 회전
+            AsyncImage(
+                model = cardUsage.cardImgUrl,
+                contentDescription = "Card Image",
+                modifier = Modifier
+                    .width(120.dp) // 80dp에서 120dp로 증가
+                    .aspectRatio(0.8f) // 비율 조정
+                    .clip(RoundedCornerShape(12.dp))
+                    .graphicsLayer {
+                        rotationZ = 90f  // 시계 방향으로 90도 회전
+                    },
+                contentScale = ContentScale.Fit
+            )
+
+            Spacer(modifier = Modifier.width(20.dp)) // 간격 약간 감소
+
+            // 카드 정보 (GlassSurface 제거)
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 8.dp)
             ) {
                 Text(
                     text = cardUsage.cardName,
-                    fontSize = 16.sp,
+                    fontSize = 22.sp, // 폰트 크기 증가
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -245,12 +223,12 @@ fun CardUsageItem(cardUsage: CardSummary) {
                 ) {
                     Text(
                         text = "사용 금액",
-                        fontSize = 14.sp,
+                        fontSize = 18.sp, // 폰트 크기 증가
                         color = Color.White.copy(alpha = 0.7f)
                     )
                     Text(
                         text = "${cardUsage.spendingAmount}원",
-                        fontSize = 14.sp,
+                        fontSize = 18.sp, // 폰트 크기 증가
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -264,14 +242,14 @@ fun CardUsageItem(cardUsage: CardSummary) {
                 ) {
                     Text(
                         text = "받은 혜택",
-                        fontSize = 14.sp,
+                        fontSize = 18.sp, // 폰트 크기 증가
                         color = Color.White.copy(alpha = 0.7f)
                     )
                     Text(
                         text = "${cardUsage.benefitAmount}원",
-                        fontSize = 14.sp,
+                        fontSize = 18.sp, // 폰트 크기 증가
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4CAF50)
+                        color = Color(0xFF00E1FF)  // 혜택 색상을 밝은 파란색으로 변경
                     )
                 }
 
@@ -281,17 +259,127 @@ fun CardUsageItem(cardUsage: CardSummary) {
                 ) {
                     Text(
                         text = "연회비",
-                        fontSize = 14.sp,
+                        fontSize = 18.sp, // 폰트 크기 증가
                         color = Color.White.copy(alpha = 0.7f)
                     )
                     Text(
                         text = "${cardUsage.annualFee}원",
-                        fontSize = 14.sp,
+                        fontSize = 18.sp, // 폰트 크기 증가
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun TempCategoryUsageList(categoryUsages: List<TempCategorySummary>) {
+    if (categoryUsages.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "기록이 없습니다",
+                color = Color.White,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+        }
+    } else {
+        LazyColumn {
+            items(categoryUsages) { categoryUsage ->
+                TempCategoryUsageItem(categoryUsage)
+                
+                // 카테고리 사이에 구분선 추가 (마지막이 아니면)
+                if (categoryUsage != categoryUsages.last()) {
+                    Divider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        color = Color(0xFF1E2D4D),  // 사진과 비슷한 색상
+                        thickness = 1.dp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TempCategoryUsageItem(categoryUsage: TempCategorySummary) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 24.dp)
+    ) {
+        // 카테고리 이름과 퍼센트
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = categoryUsage.category,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF00E1FF)
+            )
+            
+            Text(
+                text = "${categoryUsage.percentage}%",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF00E1FF)
+            )
+        }
+        
+        // 소비 금액
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "소비금액",
+                fontSize = 18.sp,
+                color = Color.White
+            )
+            
+            Text(
+                text = "${categoryUsage.amount}원",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
+        }
+        
+        // 받은 혜택
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "받은 혜택",
+                fontSize = 18.sp,
+                color = Color.White
+            )
+            
+            Text(
+                text = "${categoryUsage.benefit}원",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
         }
     }
 }
@@ -305,23 +393,28 @@ fun CategoryUsageList(categoryUsages: List<CategorySummary>) {
                 .padding(vertical = 8.dp),
             contentAlignment = Alignment.Center
         ) {
-            GlassSurface(
-                modifier = Modifier.wrapContentSize(),
-                cornerRadius = 16f
-            ) {
-                Text(
-                    text = "기록이 없습니다",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-                )
-            }
+            Text(
+                text = "기록이 없습니다",
+                color = Color.White,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
         }
     } else {
         LazyColumn {
             items(categoryUsages) { categoryUsage ->
                 CategoryUsageItem(categoryUsage)
-                Spacer(modifier = Modifier.height(8.dp))
+                
+                // 카테고리 사이에 구분선 추가 (마지막이 아니면)
+                if (categoryUsage != categoryUsages.last()) {
+                    Divider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        color = Color(0xFF1E2D4D),  // 사진과 비슷한 색상
+                        thickness = 1.dp
+                    )
+                }
             }
         }
     }
@@ -329,70 +422,76 @@ fun CategoryUsageList(categoryUsages: List<CategorySummary>) {
 
 @Composable
 fun CategoryUsageItem(categoryUsage: CategorySummary) {
-    GlassSurface(
-        modifier = Modifier.fillMaxWidth(),
-        cornerRadius = 16f
+    // 임시 컴포넌트와 같은 스타일로 변경
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 24.dp)  // 임시 컴포넌트와 동일한 패딩
     ) {
-        Column(
+        // 카테고리 이름과 퍼센트 (값 임의 설정)
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // 카테고리 이름과 퍼센트
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = categoryUsage.category,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
+            Text(
+                text = categoryUsage.category,
+                fontSize = 28.sp,  // 임시 컴포넌트와 동일한 크기
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF00E1FF)  // 밝은 파란색으로 변경
+            )
             
-            // 소비 금액과 혜택
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "소비 금액",
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    
-                    Text(
-                        text = "${categoryUsage.amount}원",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-                
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "받은 혜택",
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    
-                    Text(
-                        text = "${categoryUsage.benefit}원",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4CAF50)
-                    )
-                }
-            }
+            // 퍼센트 임의 설정 (API 응답에 없으면 33%로 고정)
+            Text(
+                text = "33%",
+                fontSize = 28.sp,  // 임시 컴포넌트와 동일한 크기
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF00E1FF)  // 밝은 파란색으로 변경
+            )
+        }
+        
+        // 소비 금액
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "소비금액",
+                fontSize = 18.sp,  // 임시 컴포넌트와 동일한 크기
+                color = Color.White
+            )
+            
+            Text(
+                text = "${categoryUsage.amount}원",
+                fontSize = 20.sp,  // 임시 컴포넌트와 동일한 크기
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
+        }
+        
+        // 받은 혜택
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "받은 혜택",
+                fontSize = 18.sp,  // 임시 컴포넌트와 동일한 크기
+                color = Color.White
+            )
+            
+            Text(
+                text = "${categoryUsage.benefit}원",
+                fontSize = 20.sp,  // 임시 컴포넌트와 동일한 크기
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
         }
     }
 }
@@ -410,6 +509,14 @@ data class CategoryUsage(
     val category: String,
     val percentage: Float,
     val usageAmount: Int,
+    val benefit: Int
+)
+
+// 임시 카테고리 데이터 클래스
+data class TempCategorySummary(
+    val category: String,
+    val percentage: Int,
+    val amount: Int,
     val benefit: Int
 )
 
