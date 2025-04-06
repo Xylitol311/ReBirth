@@ -5,7 +5,6 @@ import com.kkulmoo.rebirth.payment.application.service.PaymentOfflineEncryption;
 import com.kkulmoo.rebirth.payment.application.service.PaymentService;
 import com.kkulmoo.rebirth.payment.application.service.SseService;
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
-import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -31,8 +30,8 @@ public class SseController {
     }
 
     // 특정 유저 SSE 구독
-    @GetMapping(path="/subscribe",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> subscribe(@RequestParam(value="userId") int userId) {
+    @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<SseEmitter> subscribe(@RequestParam(value = "userId") int userId) {
         log.info("sse 구독 진행중~~~ userId: {}", userId);
 
         SseEmitter emitter = sseService.subscribe(userId);
@@ -45,12 +44,11 @@ public class SseController {
     }
 
 
-//오프라인 결제 (포스기)
+    //오프라인 결제 (포스기)
     @PostMapping("/progresspay")
     public ResponseEntity<?> progressPay(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
-
-        //1. 받은 토큰을 redis에 가서 실제 값을 가져오기
-        String realToken= paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
+        // 토큰 검증 후 [영구토큰, userId] 추출
+        String realToken = paymentService.getRealDisposableToken(createTransactionRequestDTO.getToken());
         String[] tokenInfo = paymentOfflineEncryption.validateOneTimeToken(realToken);
 
         log.info(realToken);
@@ -58,35 +56,18 @@ public class SseController {
 
         String permanentToken = tokenInfo[0];
         int userId = Integer.parseInt(tokenInfo[1]);
+        String merchantName = createTransactionRequestDTO.getMerchantName();
+        int amount = createTransactionRequestDTO.getAmount();
 
+        // 결제 시작 알림
         sseService.sendToUser(userId, "결제시작");
 
-        //1. 추천 카드 일경우 로직 작성
-        if(permanentToken.equals("rebirth")){
-            // 추천카드 정보 받아오기
-            CalculatedBenefitDto calculatedBenefitDto = paymentService.recommendPaymentCard(userId, createTransactionRequestDTO.getAmount(), permanentToken);
+        // 공통 결제 처리 로직 호출
+        CardTransactionDTO cardTransactionDTO = paymentService.processPayment(userId, permanentToken, merchantName, amount);
 
-            permanentToken = calculatedBenefitDto.getPermanentToken();
-        }
-
-        //2. 추천 카드가 아닐 경우 해당 카드로 정보 검색
-        // 영구토큰 까서 검색해서 카드 가져오기
-        // CardTemplate cardTemplate = paymentService.getCardTemplate(permanentToken);
-
-        //2-2. permanent는 웹 클라이언트로 카드사에 넘기기 & 값 받
-        log.info(permanentToken);
-        CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder().token(permanentToken).amount(createTransactionRequestDTO.getAmount()).merchantName(createTransactionRequestDTO.getMerchantName()).build();
-        CardTransactionDTO cardTransactionDTO = paymentService.transactionToCardsa(dataToCardsa);
-
-
-        //3. 받은 값으로 아래 데이터 갱신하기
-        // 값 최종 업데이트 해주기 ( 이거 어디어디 해줘야 하는데... ) -> 나중으로 우선 미루기
-
-        //4. 결제 결과 반환하기
+        // 결제 결과 알림
         sseService.sendToUser(userId, cardTransactionDTO.getApprovalCode());
-
-        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true,"일회용 토큰 생성",cardTransactionDTO);
-
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }
 }

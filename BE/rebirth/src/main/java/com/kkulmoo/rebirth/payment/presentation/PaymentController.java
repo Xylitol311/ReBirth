@@ -1,11 +1,10 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
-import com.kkulmoo.rebirth.payment.application.service.*;
+import com.kkulmoo.rebirth.payment.application.service.PaymentOnlineEncryption;
+import com.kkulmoo.rebirth.payment.application.service.PaymentService;
 import com.kkulmoo.rebirth.payment.presentation.request.CardInfoDTO;
-import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
 import com.kkulmoo.rebirth.payment.presentation.request.OnlinePayDTO;
-import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.OnlinePayResponseDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
@@ -114,24 +113,9 @@ public class PaymentController {
         String merchantName = tokenData[2];
         int amount = Integer.parseInt(tokenData[3]);
 
-        // 매 결제마다 추천 카드 로직 호출 (추천 기록 저장 및 혜택 비교용)
-        CalculatedBenefitDto recommendedBenefit = paymentService.recommendPaymentCard(userId, amount, merchantName);
-
-        // 요청 토큰의 영구토큰이 "rebirth"인 경우 추천 카드의 영구토큰을 사용
-        if (permanentToken.equals("rebirth")) {
-            if (recommendedBenefit != null && recommendedBenefit.getPermanentToken() != null) {
-                permanentToken = recommendedBenefit.getPermanentToken();
-            }
-        }
-
-        CreateTransactionRequestDTO dataToCardsa = CreateTransactionRequestDTO.builder()
-                .token(permanentToken)
-                .amount(amount)
-                .merchantName(merchantName)
-                .build();
-        CardTransactionDTO cardTransactionDTO = paymentService.transactionToCardsa(dataToCardsa);
+        // 공통 결제 처리 로직 호출
+        CardTransactionDTO cardTransactionDTO = paymentService.processPayment(userId, permanentToken, merchantName, amount);
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
-
         return ResponseEntity.ok(apiResponseDTO);
     }
 }

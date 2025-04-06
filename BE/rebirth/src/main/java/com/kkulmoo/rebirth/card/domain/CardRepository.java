@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.card.domain;
 
+import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.UserId;
 
@@ -28,4 +29,8 @@ public interface CardRepository {
     void saveAll(Collection<myCard> cards);
 
     Integer countByUserId(UserId userId);
+
+    MyCardDto findMyCardIdAndTemplateIdByPermanentToken(String permanentToken);
+
+    List<MyCardDto> findMyCardsIdAndTemplateIdsByUserId(Integer userId);
 }

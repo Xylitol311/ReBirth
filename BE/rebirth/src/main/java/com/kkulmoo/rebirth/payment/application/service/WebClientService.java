@@ -1,6 +1,7 @@
 package com.kkulmoo.rebirth.payment.application.service;
 
 import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestDTO;
+import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequestToCardsaDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -15,10 +16,10 @@ public class WebClientService {
         this.webClient = webClient;
     }
 
-    public Mono<CardTransactionDTO> checkPermanentToken(CreateTransactionRequestDTO createTransactionRequestDTO) {
+    public Mono<CardTransactionDTO> checkPermanentToken(CreateTransactionRequestToCardsaDTO createTransactionRequestToCardsaDTO) {
         return webClient.post()
                 .uri("/api/transactions")
-                .bodyValue(createTransactionRequestDTO)
+                .bodyValue(createTransactionRequestToCardsaDTO)
                 .retrieve()
                 .bodyToMono(CardTransactionDTO.class);
     }
