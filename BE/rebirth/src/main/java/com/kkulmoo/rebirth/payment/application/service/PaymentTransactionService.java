@@ -54,10 +54,11 @@ public class PaymentTransactionService {
         // 추천 카드 혜택 정보 계산 (매 결제마다 추천 기록을 위해 호출)
         CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto);
         // 기본적으로 benefitType과 benefitAmount는 추천 혜택으로 설정
-        BenefitType benefitType = recommendedBenefit.getBenefitType();
-        Integer benefitAmount = recommendedBenefit.getBenefitAmount();
-        String permanentToken = recommendedBenefit.getPermanentToken();
-        Integer benefitId = recommendedBenefit.getBenefitId();
+        BenefitType benefitType = (recommendedBenefit != null) ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT;
+        Integer benefitAmount = (recommendedBenefit != null) ? recommendedBenefit.getBenefitAmount() : 0;
+        String permanentToken = (recommendedBenefit != null) ? recommendedBenefit.getPermanentToken() : requestToken;
+        Integer benefitId = (recommendedBenefit != null) ? recommendedBenefit.getBenefitId() : null;
+
         CalculatedBenefitDto realBenefit = null; // 실제 카드 혜택 정보를 담을 객체
 
         // 추천 카드 결제가 아닌 경우 실제 카드의 혜택 계산 로직 수행
@@ -69,18 +70,19 @@ public class PaymentTransactionService {
                 benefitType = realBenefit.getBenefitType();
                 benefitAmount = realBenefit.getBenefitAmount();
                 permanentToken = realBenefit.getPermanentToken();
-                benefitId = recommendedBenefit.getBenefitId();
+                // benefitId는 기본적으로 추천 혜택의 benefitId를 사용하되, 실제 혜택이 있으면(원래 로직과 동일) 업데이트할 수 있음
+                benefitId = realBenefit.getBenefitId();
             }
         }
 
-        // 카드사 결제 요청 데이터 구성
+        // 카드사 결제 요청 데이터 구성 (혜택 정보가 null이면 기본값으로 전송)
         CreateTransactionRequestToCardsaDTO request = CreateTransactionRequestToCardsaDTO.builder()
                 .permanentToken(permanentToken)
                 .amount(amount)
                 .merchantName(merchantName)
-                .benefitId(benefitId)
-                .benefitType(benefitType.name())
-                .benefitAmount(benefitAmount)
+                .benefitId(benefitId) // 혜택 정보가 없으면 null
+                .benefitType(benefitType.name()) // 혜택 정보가 없으면 "DISCOUNT"
+                .benefitAmount(benefitAmount) // 혜택 정보가 없으면 0
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -91,13 +93,20 @@ public class PaymentTransactionService {
         if (!requestToken.equals("rebirth")) {
             PreBenefit preBenefit = PreBenefit.builder()
                     .userId(userId)
-                    .paymentCardId(realBenefit != null ? realBenefit.getMyCardId() : recommendedBenefit.getMyCardId())
-                    .recommendedCardId(recommendedBenefit.getMyCardId())
+                    // 실제 카드 혜택 정보가 없으면 추천 혜택 정보도 없을 수 있으므로, 추가 null 체크 필요함
+                    .paymentCardId(realBenefit != null
+                            ? realBenefit.getMyCardId()
+                            : (recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null))
+                    .recommendedCardId(recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null)
                     .amount(amount)
-                    .ifBenefitType(recommendedBenefit.getBenefitType())
-                    .ifBenefitAmount(recommendedBenefit.getBenefitAmount())
-                    .realBenefitType(realBenefit != null ? realBenefit.getBenefitType() : recommendedBenefit.getBenefitType())
-                    .realBenefitAmount(realBenefit != null ? realBenefit.getBenefitAmount() : recommendedBenefit.getBenefitAmount())
+                    .ifBenefitType(recommendedBenefit != null ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT)
+                    .ifBenefitAmount(recommendedBenefit != null ? recommendedBenefit.getBenefitAmount() : 0)
+                    .realBenefitType(realBenefit != null
+                            ? realBenefit.getBenefitType()
+                            : (recommendedBenefit != null ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT))
+                    .realBenefitAmount(realBenefit != null
+                            ? realBenefit.getBenefitAmount()
+                            : (recommendedBenefit != null ? recommendedBenefit.getBenefitAmount() : 0))
                     .merchantName(merchantName)
                     .build();
             savePreBenefit(preBenefit);
@@ -110,10 +119,10 @@ public class PaymentTransactionService {
         myDataService.loadMyTransactionByCards(user, myCards);
 
         // 혜택 현황 관련 테이블에 업데이트 하기
+        // TODO: 테이블 수정 로직 추가
 
         // 리포트 업데이트 하기
         reportService.updateMonthlyTransactionSummary(userId);
-
 
         return cardTransactionDTO;
     }
