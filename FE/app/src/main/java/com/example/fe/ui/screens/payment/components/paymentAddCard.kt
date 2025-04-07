@@ -42,10 +42,11 @@ fun PaymentAddCardSection(
     // OCR 스캔 화면 표시 여부
     var showOCRScreen by remember { mutableStateOf(true) }
     
+    // 전체 화면 모드로 설정하여 네비게이션 바와 상단 바가 보이지 않도록 함
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.9f))
+            .background(Color.Black)  // 배경색을 완전 검정으로 변경
     ) {
         // OCR 스캔 화면 표시
         if (showOCRScreen) {

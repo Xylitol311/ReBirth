@@ -5,12 +5,18 @@ import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.content.MediaType.Companion.Text
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -23,11 +29,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,27 +51,26 @@ import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
 import com.example.fe.ui.screens.calendar.CalendarScreen
 import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
+import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
+import com.example.fe.ui.screens.cardRecommend.CardRecommendViewModel
 import com.example.fe.ui.screens.cardRecommend.CardInfo
-
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import com.example.fe.ui.screens.home.HomeScreen
 import com.example.fe.ui.screens.myCard.CardDetailScreen
-import com.example.fe.ui.screens.myCard.CardItem
 import com.example.fe.ui.screens.myCard.CardManagementScreen
 import com.example.fe.ui.screens.myCard.MyCardScreen
+import com.example.fe.ui.screens.myCard.MyCardViewModel.CardOrderManager.getCardById
 import com.example.fe.ui.screens.mypage.MyPageScreen
 import com.example.fe.ui.screens.onboard.OnboardingScreen
 import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
-
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModelFactory
-
 import com.example.fe.ui.screens.payment.PaymentViewModel
+import com.example.fe.ui.screens.payment.components.CardOCRScanScreen
 import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
 import com.example.fe.ui.screens.payment.components.PaymentResultPopup
 import com.example.fe.ui.screens.payment.components.QRScannerScreen
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+
 // 네비게이션 경로 상수 추가
 object NavRoutes {
     const val ONBOARDING = "onboarding"  // 온보딩/로그인 화면 경로 추가
@@ -99,14 +108,8 @@ fun AppNavigation() {
     // 네비게이션 바 표시 여부 상태
     var bottomBarVisible by remember { mutableStateOf(true) }
 
-    // 공유 스크롤 오프셋 상태
-    var scrollOffset by remember { mutableStateOf(0f) }
-
     // 누적 가로 오프셋 (별들의 전체 이동 거리)
     var cumulativeOffset by remember { mutableStateOf(0f) }
-
-    // 화면 전환 방향 (-1: 왼쪽으로, 1: 오른쪽으로)
-    var transitionDirection by remember { mutableStateOf(0) }
 
     // 애니메이션 트리거를 위한 카운터
     var animationCounter by remember { mutableStateOf(0) }
@@ -120,13 +123,14 @@ fun AppNavigation() {
 
     // 화면 전환 애니메이션을 위한 상태
     val isNavigatingBack = remember { mutableStateOf(false) }
-    
+
     // 화면 전환 시 콘텐츠 페이드 효과
     val contentAlpha by animateFloatAsState(
         targetValue = if (isNavigatingBack.value) 0f else 1f,
         animationSpec = tween(300),
         label = "contentAlpha"
     )
+
     // 탭 인덱스 맵
     val tabIndices = mapOf(
         BottomNavItem.Home.route to 0,
@@ -135,41 +139,103 @@ fun AppNavigation() {
         BottomNavItem.Calendar.route to 3,
         BottomNavItem.CardRecommend.route to 4
     )
-    
+
+    // 현재 화면의 스크롤 오프셋을 저장할 상태
+    var currentScreenScrollOffset by remember { mutableStateOf(0f) }
+
+    // 현재 화면의 가로 스크롤 오프셋을 저장할 상태
+    var currentScreenHorizontalOffset by remember { mutableStateOf(0f) }
+
+    // 스크롤 오프셋을 업데이트하는 콜백 함수
+    val updateScrollOffset: (Float) -> Unit = { offset ->
+        currentScreenScrollOffset = offset
+    }
+
+    // 가로 스크롤 오프셋을 업데이트하는 콜백 함수
+    val updateHorizontalOffset: (Float) -> Unit = { offset ->
+        currentScreenHorizontalOffset = offset
+    }
+
     // 배경 이동 거리 배율 (더 큰 값으로 변경)
-    val backgroundMovementMultiplier = 800f  // 기존 300f에서 증가
-    
+    val backgroundMovementMultiplier = 2500f
+
     // 상세 화면 이동 시 배경 이동 거리 배율 (더 큰 값으로 변경)
-    val detailBackgroundMovementMultiplier = 1500f  // 기존 800f에서 증가
-    
+    val detailBackgroundMovementMultiplier = 1000f
+
+    // 배경 이동 방향 (1: 위로, -1: 아래로, 0: 이동 없음)
+    var backgroundVerticalDirection by remember { mutableStateOf(0) }
+
+    // 화면 전환 방향 (-1: 왼쪽으로, 1: 오른쪽으로)
+    var transitionDirection by remember { mutableStateOf(0) }
+
     // 애니메이션 적용된 가로 오프셋
     val animatedHorizontalOffset by animateFloatAsState(
-        // 누적 오프셋 + 현재 전환에 의한 오프셋
-        targetValue = cumulativeOffset,
+        // 누적 오프셋 + 현재 전환에 의한 오프셋 + 현재 화면의 가로 스크롤 오프셋
+        targetValue = cumulativeOffset + currentScreenHorizontalOffset * transitionDirection,
         // 애니메이션 속도 증가 (300ms에서 200ms로 감소)
-        animationSpec = tween(200, easing = EaseInOut),
+        animationSpec = tween(700, easing = EaseInOut),
         label = "horizontalOffset",
         finishedListener = {
             // 애니메이션이 끝나면 방향 초기화 (다음 애니메이션을 위해)
             transitionDirection = 0
         }
+
+    )
+
+
+    // 애니메이션 적용된 세로 오프셋
+    val animatedVerticalOffset by animateFloatAsState(
+        // 현재 화면의 세로 스크롤 오프셋 + 배경 이동 방향에 따른 오프셋
+        targetValue = currentScreenScrollOffset + backgroundVerticalDirection * detailBackgroundMovementMultiplier,
+        // 애니메이션 속도
+        animationSpec = tween(500, easing = EaseInOut),
+        label = "verticalOffset",
+        finishedListener = {
+            // 애니메이션이 끝나면 방향 초기화 (다음 애니메이션을 위해)
+            backgroundVerticalDirection = 0
+        }
     )
 
     // ViewModel을 상위 Composable 함수에서 가져오기
     val paymentViewModel: PaymentViewModel = viewModel()
-    
-    // QR 스캐너 표시 여부
+
+    // QR 스캐너와 카드 OCR 스캔 화면 표시 여부
     var showQRScanner by remember { mutableStateOf(false) }
-    
+    var showCardOCRScan by remember { mutableStateOf(false) }
+
+    // PaymentScreen에서 QR 스캔 모드 상태를 받아오는 변수 추가
+    var isQRScanMode by remember { mutableStateOf(false) }
     // 결제 정보 화면 표시 여부
     var showPaymentInfo by remember { mutableStateOf(false) }
+
+    // 네비게이션 바와 상단 바 표시 여부 결정
+    val shouldShowUI = remember(showQRScanner, showCardOCRScan, isQRScanMode, showPaymentInfo) {
+        !showQRScanner && !showCardOCRScan && !isQRScanMode && !showPaymentInfo
+    }
 
     // 스캔된 QR 코드
     var scannedQRCode by remember { mutableStateOf("") }
 
-    // 네비게이션 바 애니메이션을 위한 상태
-    val shouldShowBottomBar = bottomBarVisible && currentRoute != NavRoutes.HOME_DETAIL && 
-                          currentRoute?.startsWith("card_detail") != true
+    val shouldShowBottomBar = remember(bottomBarVisible, currentRoute, isQRScanMode) {
+        bottomBarVisible &&
+                currentRoute != NavRoutes.HOME_DETAIL &&
+                !currentRoute.startsWith("card_detail") &&
+                !currentRoute.contains("payment_info") &&
+                !currentRoute.contains("payment_result") &&
+                !isQRScanMode &&
+                !currentRoute.contains("card_ocr_scan")
+
+    }
+
+    // TopBar 표시 여부 결정
+    val shouldShowTopBar by remember(currentRoute, isQRScanMode) {
+        mutableStateOf(
+                    !currentRoute.contains("payment_info") &&
+                    !currentRoute.contains("payment_result") &&
+                    !isQRScanMode &&
+                    !currentRoute.contains("card_ocr_scan")
+        )
+    }
 
     // 네비게이션 바 애니메이션 값
     val bottomBarAlpha by animateFloatAsState(
@@ -199,97 +265,93 @@ fun AppNavigation() {
     var showPaymentResultPopup by remember { mutableStateOf(false) }
     val paymentResult by paymentViewModel.paymentResult.collectAsState()
 
+    // 메인 탭 화면 목록 (뒤로가기 버튼이 표시되지 않아야 하는 화면들)
+    val mainTabScreens = listOf(
+        BottomNavItem.Home.route,
+        BottomNavItem.MyCard.route,
+        BottomNavItem.CardRecommend.route,
+        BottomNavItem.Calendar.route,
+        BottomNavItem.Payment.route
+    )
+    
+    // 현재 화면이 메인 탭 화면인지 확인
+    val isMainTabScreen = currentRoute in mainTabScreens
+
+    // 현재 화면의 제목 설정
+    val screenTitle = when {
+        currentRoute == NavRoutes.HOME_DETAIL -> "이번 달 사용 내역"
+        currentRoute.startsWith("card_detail") -> "카드 상세"
+        else -> ""
+    }
+
     Scaffold(
         topBar = {
-            // 현재 경로에 따라 TopBar 내용 변경
-            when {
-                currentRoute == NavRoutes.HOME_DETAIL -> {
-                    TopBar(
-                        title = "이번 달 사용 내역",
-                        showBackButton = true,
-                        onBackClick = {
-                            // 페이드아웃 시작
-                            isNavigatingBack.value = true
-                            // 약간의 지연 후 네비게이션
-                            coroutineScope.launch {
-                                delay(200)
-                                // 뒤로가기 시 애니메이션 방향 설정
-                                transitionDirection = -1
-                                // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
-                                cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
-                                animationCounter++
-                                navController.popBackStack()
-                            }
-                        },
-                        onLogoutClick = handleLogout
-                    )
-                }
-                currentRoute == NavRoutes.MY_PAGE -> {  // 마이페이지 TopBar
-                    TopBar(
-                        title = "마이페이지",
-                        showBackButton = true,
-                        onBackClick = {
-                            navController.popBackStack()
-                        },
-                        onLogoutClick = handleLogout
-                    )
-                }
-                // 카드 상세 화면일 때 TopBar 변경
-                currentRoute?.startsWith("card_detail/") == true -> {
-                    TopBar(
-                        title = "카드 상세 정보",
-                        showBackButton = true,
-                        onBackClick = {
-                            // 뒤로가기 클릭 시 애니메이션 방향 설정
+            if (shouldShowUI) {
+                TopBar(
+                    title = screenTitle,
+                    showBackButton = !isMainTabScreen,
+                    onBackClick = {
+                        // 뒤로가기 시 배경 이동 방향 설정 (아래로 이동)
+                        if (currentRoute.startsWith("card_detail")) {
+                            backgroundVerticalDirection = 0
+                        } else if (currentRoute == NavRoutes.HOME_DETAIL) {
+                            // 홈 상세에서 뒤로가기 시 배경 이동 방향 설정 (왼쪽으로 이동)
                             transitionDirection = -1
-                            // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
-                            cumulativeOffset += transitionDirection * 800f
+                            // 누적 오프셋 업데이트
+                            cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
+                            // 애니메이션 트리거
                             animationCounter++
-                            navController.popBackStack()
-                        },
-                        onLogoutClick = handleLogout
-                    )
-                }
-                else -> {
-                    TopBar(
-                        onProfileClick = {
-                            navController.navigate(NavRoutes.MY_PAGE)
-                        },
-                        onLogoutClick = handleLogout
-                    )
-                }
+                        }
+                        
+                        // 뒤로가기
+                        navController.popBackStack()
+                    },
+                    onProfileClick = {
+                    navController.navigate(NavRoutes.MY_PAGE)
+                    },
+                    onLogoutClick = handleLogout
+                )
             }
         },
         bottomBar = {
-            // 네비게이션 바가 표시되지 않을 때는 빈 상자를 렌더링하여 클릭 이벤트도 처리하지 않음
-            if (shouldShowBottomBar) {
-                Box(
-                    modifier = Modifier
-                        .graphicsLayer(
-                            alpha = bottomBarAlpha,
-                            translationY = bottomBarOffset
-                        )
-                ) {
-                    BottomNavBar(
-                        navController = navController,
-                        onTabSelected = { item: BottomNavItem ->
-                            if (currentRoute != item.route) {
-                                val newIndex = tabIndices[item.route] ?: 0
-                                previousTabIndex = currentTabIndex
-                                currentTabIndex = newIndex
-                                transitionDirection = if (newIndex > previousTabIndex) 1 else -1
-                                cumulativeOffset += transitionDirection * backgroundMovementMultiplier
-                                animationCounter++
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
+            if (shouldShowUI) {
+                BottomNavBar(
+                    navController = navController,
+                    onTabSelected = { item ->
+                        // 현재 선택된 탭과 다른 탭을 선택했을 때만 처리
+                        if (item.route != currentRoute) {
+                            // 탭 선택 시 전환 방향 계산
+                            val newIndex = tabIndices[item.route] ?: 0
+                
+                            // 이전 인덱스 저장
+                            previousTabIndex = currentTabIndex
+                
+                            // 전환 방향 계산 (새 인덱스가 현재보다 크면 오른쪽, 작으면 왼쪽)
+                            transitionDirection = if (newIndex > currentTabIndex) 1 else -1
+                
+                            // 현재 인덱스 업데이트
+                            currentTabIndex = newIndex
+                
+                            // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                            cumulativeOffset += transitionDirection * backgroundMovementMultiplier
+                
+                            // 애니메이션 카운터 증가 (애니메이션 트리거)
+                            animationCounter++
+                            
+                            // 네비게이션
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
                                 }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
-                    )
-                }
+                    }
+                )
             }
         },
+
         // 동적 패딩 적용
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
@@ -299,28 +361,32 @@ fun AppNavigation() {
                 .padding(paddingValues)
         ) {
             StarryBackground(
-                scrollOffset = scrollOffset,
-                horizontalOffset = animatedHorizontalOffset
+                scrollOffset = animatedVerticalOffset,
+                horizontalOffset = animatedHorizontalOffset,
+                animationCounter = animationCounter
             ) {
+                val cardRecommendViewModel = remember { CardRecommendViewModel() }
+
                 NavHost(
                     navController = navController,
-                    startDestination = BottomNavItem.Home.route
+                    startDestination = BottomNavItem.Home.route,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    // 온보딩/로그인 화면 추가
-                    composable(NavRoutes.ONBOARDING) {
-                        OnboardingScreen(
-                            navController = navController,
-                            viewModel = viewModel
-                        )
-                    }
+
                     composable(BottomNavItem.Home.route) {
                         HomeScreen(
-                            navController = navController
+                            navController = navController,
+                            onScrollOffsetChange = updateScrollOffset  // 콜백 전달
                         )
                     }
+
                     composable(BottomNavItem.MyCard.route) {
                         MyCardScreen(
+                            navController = navController,
+                            onScrollOffsetChange = updateScrollOffset,
+                            onHorizontalOffsetChange = updateHorizontalOffset,  // 가로 스크롤 오프셋 콜백 추가
                             onCardClick = { cardItem ->
+                                backgroundVerticalDirection = 0
                                 navController.navigate("card_detail/${cardItem.id}")
                             },
                             onManageCardsClick = {
@@ -328,19 +394,44 @@ fun AppNavigation() {
                             }
                         )
                     }
+
+                    // 온보딩/로그인 화면 추가
+                    composable(NavRoutes.ONBOARDING) {
+                        OnboardingScreen(
+                            navController = navController,
+                            viewModel = viewModel
+                        )
+                    }
+
                     composable(BottomNavItem.Payment.route) {
 
                         PaymentScreen(
+                            onScrollOffsetChange = { offset ->
+                                currentScreenHorizontalOffset = offset
+                            },
+                            viewModel = paymentViewModel,
                             onNavigateToHome = {
-                                navController.navigate(BottomNavItem.Home.route) {
-                                    popUpTo(BottomNavItem.Home.route) { inclusive = true }
+                                navController.navigate("home") {
+                                    popUpTo("home") { inclusive = true }
                                 }
                             },
                             onShowQRScanner = {
-                                showQRScanner = true  // QR 스캐너 표시
+                                showQRScanner = true  // QR 스캐너 화면 표시
+                            },
+                            onShowCardOCRScan = {
+                                showCardOCRScan = true  // 카드 OCR 스캔 화면 표시
+                            },
+                            // QR 스캔 모드 상태 콜백 추가
+                            onQRScanModeChange = { isInQRScanMode ->
+                                isQRScanMode = isInQRScanMode
+                            },
+                            onShowPaymentInfo = {
+                                showPaymentInfo = true  // 결제 정보 화면 표시
                             }
+
                         )
                     }
+
                     composable(BottomNavItem.Calendar.route) {
                         CalendarScreen()
                     }
@@ -351,42 +442,48 @@ fun AppNavigation() {
                             }
                         )
                     }
+
                     composable(NavRoutes.HOME_DETAIL) {
-                        // 홈 디테일 화면으로 이동할 때 애니메이션 값 가져오기
-                        val transitionDirection = navController.currentBackStackEntry?.savedStateHandle?.get<Int>("transitionDirection") ?: 1
-                        val backgroundMovement = navController.currentBackStackEntry?.savedStateHandle?.get<Float>("backgroundMovement") ?: 1500f
-                        
-                        // 애니메이션 값이 있으면 적용
-                        LaunchedEffect(transitionDirection, backgroundMovement) {
-                            if (transitionDirection != 0) {
-                                cumulativeOffset += transitionDirection * backgroundMovement
-                                animationCounter++
-                                // 사용 후 초기화
-                                navController.currentBackStackEntry?.savedStateHandle?.set("transitionDirection", 0)
-                                navController.currentBackStackEntry?.savedStateHandle?.set("backgroundMovement", 0f)
-                            }
+                        LaunchedEffect(Unit) {
+                            // 방향을 1로 설정 (오른쪽으로 이동)
+                            transitionDirection = 1
+                            // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                            cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
+                            // 애니메이션 트리거
+                            animationCounter++
                         }
-                        
+
                         HomeDetailScreen(
                             onBackClick = {
+                                // 뒤로가기 시 애니메이션 방향 설정
+                                transitionDirection = -1
+                                // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                                cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
+                                animationCounter++
                                 navController.popBackStack()
                             }
                         )
                     }
+
                     composable(
-                        route = NavRoutes.CARD_DETAIL,
+                        route = "card_detail/{cardId}",
                         arguments = listOf(
                             navArgument("cardId") { type = NavType.IntType }
                         )
-                    ) {
-                        val cardId = it.arguments?.getInt("cardId") ?: 1
+                    ) { backStackEntry ->
+                        val cardId = backStackEntry.arguments?.getInt("cardId") ?: 1
+
                         CardDetailScreen(
-                            cardItem = getCardById(cardId),
+                            cardId = getCardById(cardId)?.card?.id ?:0,
                             onBackClick = {
+                                // 뒤로가기 시 배경 이동 방향 설정 (아래로 이동)
+                                backgroundVerticalDirection = 0
+                                // 뒤로가기
                                 navController.popBackStack()
                             }
                         )
                     }
+
                     composable(NavRoutes.CARD_MANAGEMENT) {
                         CardManagementScreen(
                             onBackClick = {
@@ -394,31 +491,20 @@ fun AppNavigation() {
                             }
                         )
                     }
+
                     composable(
-                        route = NavRoutes.CARD_DETAIL_INFO,
-                        arguments = listOf(
-                            navArgument("cardId") { type = NavType.IntType }
-                        )
-                    ) {
-                        val cardId = it.arguments?.getInt("cardId") ?: 1
+                        route = "card_detail_info/{cardId}",
+                        arguments = listOf(navArgument("cardId") { type = NavType.IntType })
+                    ) { backStackEntry ->
+                        val cardId = backStackEntry.arguments?.getInt("cardId") ?: 0
+
                         CardDetailInfoScreen(
-                            card = CardInfo(
-                                id = cardId,
-                                name = "추천 카드 ${cardId}",
-                                company = "카드사",
-                                annualFee = "연회비 3만원",
-                                minSpending = "월 30만원 이상",
-                                benefits = listOf(
-                                    "커피 전문점 10% 할인",
-                                    "영화관 20% 할인",
-                                    "대중교통 10% 할인"
-                                )
-                            ),
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
+                            viewModel = cardRecommendViewModel,
+                            cardId = cardId,
+                            onBackClick = { navController.popBackStack() }
                         )
                     }
+
                     composable(NavRoutes.MY_PAGE) {
                         MyPageScreen(
                             onBackClick = {
@@ -429,110 +515,55 @@ fun AppNavigation() {
                 }
             }
         }
-        
-        // QR 스캐너 화면 (오버레이로 표시)
-        if (showQRScanner) {
-            QRScannerScreen(
-                onClose = { showQRScanner = false },
-                onQRCodeScanned = { qrCode ->
-                    // QR 코드 스캔 결과 처리
-                    Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
-                    // 이미 가져온 ViewModel 사용
-                    paymentViewModel.sendQRToken(qrCode)
-                    showQRScanner = false
-                    showPaymentInfo = true  // 결제 정보 화면 표시
-                }
-            )
+
+        // 카드 OCR 스캔 화면 (오버레이로 표시)
+        if (showCardOCRScan) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            ) {
+                CardOCRScanScreen(
+                    onBack = {
+                        showCardOCRScan = false
+                    },
+                    onComplete = {
+                        showCardOCRScan = false
+                        // 카드 추가 완료 후 처리
+                        paymentViewModel.refreshTokens()
+                    },
+                    viewModel = paymentViewModel
+                )
+            }
         }
-        
-        // 결제 정보 화면 (오버레이로 표시)
+
+// 결제 정보 화면 (오버레이로 표시)
         if (showPaymentInfo) {
             val cards by paymentViewModel.cards.collectAsState()
             val paymentState by paymentViewModel.paymentState.collectAsState()
-            
+
             PaymentInfoScreen(
                 cards = cards,
                 onClose = { showPaymentInfo = false },
                 onPaymentComplete = {
                     // 결제 완료 후 홈 화면으로 이동
                     showPaymentInfo = false
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                    }
-                    
                     // 결제 결과 팝업 표시
                     showPaymentResultPopup = true
                 },
                 onScrollOffsetChange = { offset ->
-                    scrollOffset = offset
+                    currentScreenHorizontalOffset = offset
                 },
                 viewModel = paymentViewModel
             )
         }
 
-        // 결제 결과 팝업 표시
-        if (showPaymentResultPopup && paymentResult != null) {
-            PaymentResultPopup(
-                paymentResult = paymentResult!!,
-                onDismiss = { showPaymentResultPopup = false }
-            )
-        }
+//        // 결제 결과 팝업 표시
+//        if (showPaymentResultPopup && paymentResult != null) {
+//            PaymentResultPopup(
+//                paymentResult = paymentResult!!,
+//                onDismiss = { showPaymentResultPopup = false }
+//            )
+//        }
     }
-}
-
-@Composable
-fun CardInfo(
-    id: Int,
-    name: String,
-    company: String,
-    annualFee: String,
-    minSpending: String,
-    benefits: List<String>
-) {
-    TODO("Not yet implemented")
-}
-
-@Composable
-fun CardRecommendScreen(
-    onCardClick: (CardInfo) -> Unit  // Changed from ERROR to CardInfo
-) {
-    // Sample implementation
-    Column {
-        Text("Card Recommendations")
-        // Example card items
-        CardInfo(
-            id = 1,
-            name = "Sample Card",
-            company = "Sample Bank",
-            annualFee = "30,000 won",
-            minSpending = "300,000 won",
-            benefits = listOf("Benefit 1", "Benefit 2")
-        ).let { card ->
-            Card(
-                onClick = { onCardClick(card) },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(card.name, style = MaterialTheme.typography.headlineSmall)
-                    Text(card.company, style = MaterialTheme.typography.bodyMedium)
-                    Text("Annual Fee: ${card.annualFee}")
-                    Text("Min Spending: ${card.minSpending}")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PaymentScreen(onNavigateToHome: () -> Unit, onShowQRScanner: () -> Unit) {
-    TODO("Not yet implemented")
-}
-
-private fun getCardById(cardId: Int): CardItem {
-    val cards = listOf(
-        CardItem(1, "토스 신한카드 Mr.Life", "•••• •••• •••• 3456"),
-        CardItem(2, "현대카드", "•••• •••• •••• 4567"),
-        CardItem(3, "삼성카드", "•••• •••• •••• 5678")
-    )
-    return cards.find { it.id == cardId } ?: cards[0]
 }

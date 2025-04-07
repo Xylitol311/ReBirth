@@ -237,10 +237,10 @@ class PaymentViewModel : ViewModel() {
             try {
                 val userId = getUserId() // 사용자 ID 가져오기
                 val response = paymentRepository.sendQRToken(QRTokenRequest(qrToken, userId))
-                
+
                 if (response.isSuccessful && response.body()?.success == true) {
                     val paymentResponse = response.body()?.data
-                    
+
                     if (paymentResponse != null) {
                         // 카드 정보 변환
                         val cardInfoList = paymentResponse.paymentTokenResponseDTO.map { tokenInfo ->
@@ -251,17 +251,17 @@ class PaymentViewModel : ViewModel() {
                                 token = tokenInfo.token ?: ""
                             )
                         }
-                        
+
                         // 결제 정보 업데이트
                         _paymentInfo.value = PaymentInfo(
                             merchantName = paymentResponse.merchantName,
                             amount = paymentResponse.amount,
                             cards = cardInfoList
                         )
-                        
+
                         // 카드 목록 업데이트
                         _cards.value = cardInfoList
-                        
+
                         // 결제 상태 업데이트
                         _paymentState.value = PaymentState.Ready
                     } else {
@@ -312,7 +312,7 @@ class PaymentViewModel : ViewModel() {
         }
     }
 
-    // 카드 추가 함수
+    // 카드 추가 함수s
     fun addCard(cardName: String, cardNumber: String, expiryDate: String, cvv: String) {
         viewModelScope.launch {
             try {

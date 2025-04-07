@@ -70,6 +70,7 @@ internal data class Star(
 fun StarryBackground(
     scrollOffset: Float = 0f,
     horizontalOffset: Float = 0f,
+    animationCounter: Int = 0,  // 애니메이션 트리거를 위한 카운터 추가
     starCount: Int = 100,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
@@ -122,7 +123,7 @@ fun StarryBackground(
             time += 0.1f // 작은 증분으로 천천히 변화
         }
     }
-    
+
     CompositionLocalProvider(LocalStarryBackgroundState provides starryBackgroundState) {
         Box(
             modifier = modifier
@@ -140,7 +141,9 @@ fun StarryBackground(
                 
                 // 스크롤 오프셋 (픽셀 단위로 변환)
                 val pixelScrollOffset = scrollOffset / 1000f * canvasHeight
-                
+                // 가로 스크롤 오프셋 (픽셀 단위로 변환)
+                val pixelHorizontalOffset = horizontalOffset / 1000f * canvasWidth
+
                 // 복제할 세트의 수 (위 아래로 각각 하나씩)
                 val repeatSets = 3
                 
@@ -149,15 +152,15 @@ fun StarryBackground(
                     stars.forEach { star ->
                         // 기본 y 위치 계산
                         val baseY = star.y * canvasHeight
-                        
+
                         // 세트별 오프셋 계산
                         val setOffset = setIndex * canvasHeight
-                        
+
                         // 최종 y 위치 (세트 오프셋 + 기본 위치 - 스크롤 오프셋)
                         val finalY = baseY + setOffset - (pixelScrollOffset % canvasHeight)
-                        
+
                         // 각 세트별 x 위치 계산 및 가로 방향 오프셋 적용
-                        val xOffset = (animatedHorizontalOffset / (canvasWidth * 0.5f)) * canvasWidth
+                        val xOffset = pixelHorizontalOffset
                         val xPos = (star.x * canvasWidth - xOffset) % canvasWidth
                         // 음수 처리
                         val adjustedX = if (xPos < 0) xPos + canvasWidth else xPos
@@ -220,7 +223,6 @@ fun GlassSurface(
                     shape = RoundedCornerShape(cornerRadius.dp)
                 )
         )
-
         // 테두리와 컨텐츠 레이어 (블러 없음)
         Box(
             modifier = Modifier
@@ -238,53 +240,8 @@ fun GlassSurface(
                     }
                 )
         ) {
-            // 유리 효과를 위한 배경
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(1.dp)
-                    .clip(RoundedCornerShape((cornerRadius - 1).dp))
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = if (isTopPanel) {
-                                // 상단 패널은 하단 패널과 유사한 색상으로 설정
-                                listOf(
-                                    Color(0x50203F64),
-                                    Color(0x50183050)
-                                )
-                            } else {
-                                // 하단 패널 색상
-                                listOf(
-                                    Color(0x50203F64),
-                                    Color(0x50183050)
-                                )
-                            },
-                            start = Offset(0f, 0f),
-                            end = Offset(0f, Float.POSITIVE_INFINITY)
-                        )
-                    )
-            ) {
-                // 유리 반사 효과 (상단에 밝은 부분)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.15f)
-                        .align(Alignment.TopCenter)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0x30FFFFFF),  // 반투명 흰색
-                                    Color.Transparent
-                                ),
-                                startY = 0f,
-                                endY = Float.POSITIVE_INFINITY
-                            )
-                        )
-                )
-
-                // 내용 (블러 없음)
-                content()
-            }
+            // 내용 (블러 없음)
+            content()
         }
     }
 }
