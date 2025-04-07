@@ -22,7 +22,6 @@ public class UserCardBenefitRepositoryImpl implements UserCardBenefitRepository 
 
         return entityOptional.map(userCardBenefitEntityMapper::toUserCardBenefit);
     }
-
     @Override
     public UserCardBenefit save(UserCardBenefit userCardBenefit) {
         UserCardBenefitEntity entity = userCardBenefitEntityMapper.toUserCardBenefitEntity(userCardBenefit);

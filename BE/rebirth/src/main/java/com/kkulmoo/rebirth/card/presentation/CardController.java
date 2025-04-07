@@ -42,16 +42,15 @@ public class CardController {
 
     @GetMapping()
     public ResponseEntity<ApiResponseDTO<List<CardResponse>>> getAllCards(@JwtUserId Integer userId) {
-//        try {
-        //todo: 이름 나중에 바꾸기
-        List<CardResponse> cards = cardService.findCardsAll(new UserId(2));
-        ApiResponseDTO<List<CardResponse>> response = ApiResponseDTO.success("카드 목록 조회 성공", cards);
-        return ResponseEntity.ok(response);
-//        }
-//        catch (Exception e) {
-//            ApiResponseDTO<List<CardResponse>> response = ApiResponseDTO.error("카드 목록 조회 실패: " + e.getMessage());
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-//        }
+        try {
+            //todo: 이름 나중에 바꾸기
+            List<CardResponse> cards = cardService.findCardsAll(new UserId(2));
+            ApiResponseDTO<List<CardResponse>> response = ApiResponseDTO.success("카드 목록 조회 성공", cards);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponseDTO<List<CardResponse>> response = ApiResponseDTO.error("카드 목록 조회 실패: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @PostMapping("/reorder")

@@ -97,18 +97,22 @@ public class CardService {
                                     .build()
                     );
 
-            cardBenefits.add(
-                    CardBenefit.builder()
-                            .benefitCategory(categoryString)
-                            .receivedBenefitAmount(byUserIdAndBenefitId.getBenefitAmount())
-                            .remainingBenefitAmount(
-                                    calculateRemainingBenefit(
-                                            benefitTemplate,
-                                            spendingTier,
-                                            byUserIdAndBenefitId.getBenefitAmount()
-                                    )
-                            )
-                            .build());
+//            if주석을 풀면된다.
+//            if (spendingTier != null && spendingTier.shortValue() != 0) {
+                cardBenefits.add(
+                        CardBenefit.builder()
+                                .benefitCategory(categoryString)
+                                .receivedBenefitAmount(byUserIdAndBenefitId.getBenefitAmount())
+                                .remainingBenefitAmount(
+                                        calculateRemainingBenefit(
+                                                benefitTemplate,
+                                                spendingTier,
+                                                byUserIdAndBenefitId.getBenefitAmount()
+                                        )
+                                )
+                                .build());
+                //          }
+
         }
 
         return CardDetailResponse.builder()
@@ -138,7 +142,7 @@ public class CardService {
 
             // 남은 혜택 금액 계산 (음수면 0 반환)
             int remaining = totalAmount - received;
-            return  Math.max(0, remaining);
+            return Math.max(0, remaining);
         } catch (Exception e) {
             return 0; // 예외 발생 시 0 반환
         }
