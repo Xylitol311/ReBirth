@@ -60,4 +60,22 @@ public class SseController {
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }
+
+    // 오프라인 결제(포스기) 진행 엔드포인트
+    @PostMapping("/insert-paydata")
+    public ResponseEntity<?> insertPayData(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
+        // 클라이언트로부터 받은 짧은 토큰으로 실제 토큰 복원
+        String realToken = paymentTokenService.getRealDisposableToken(createTransactionRequestDTO.getToken());
+        // 복원된 토큰을 검증하여 결제 정보 추출
+        String[] tokenInfo = paymentTokenService.validateOneTimeToken(realToken);
+        String permanentToken = tokenInfo[0];
+        int userId = Integer.parseInt(tokenInfo[1]);
+        String merchantName = createTransactionRequestDTO.getMerchantName();
+        int amount = createTransactionRequestDTO.getAmount();
+        // 결제 처리 서비스 호출
+        CardTransactionDTO cardTransactionDTO = paymentTransactionService.insertPayData(userId, permanentToken, merchantName, amount, createTransactionRequestDTO.getCreatedAt());
+        // 응답 객체 생성 후 반환
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
+        return ResponseEntity.ok(apiResponseDTO);
+    }
 }
