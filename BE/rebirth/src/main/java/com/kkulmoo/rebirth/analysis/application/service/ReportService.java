@@ -38,9 +38,9 @@ public class ReportService {
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
 
     @Transactional
-    public void updateMonthlyTransactionSummary(Integer userId, LocalDateTime now) {
+    public void updateMonthlyTransactionSummary(Integer userId) {
         UserEntity user = userJpaRepository.getReferenceById(userId);
-//        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
         int month = now.getMonthValue();
 

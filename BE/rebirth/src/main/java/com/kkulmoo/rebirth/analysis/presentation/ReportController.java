@@ -77,7 +77,7 @@ public class ReportController {
     public ResponseEntity<ResponseDTO> testTransaction(@JwtUserId Integer userId, @RequestParam LocalDateTime now) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
-        reportService.updateMonthlyTransactionSummary(userId, now);
+        reportService.updateMonthlyTransactionSummary(userId);
         result.setMessage("트랜잭션 갱신 완료");
 
 
