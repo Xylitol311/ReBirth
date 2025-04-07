@@ -13,13 +13,13 @@ import okhttp3.RequestBody
 
 interface PaymentApiService {
     
-    @GET("api/payment/disposabletoken")
+    @GET("/api/payment/disposabletoken")
     suspend fun getPaymentToken(@Query("userId") userId: String): Response<ApiResponse<List<TokenInfo>>>
 
-    @POST("api/payment/onlinedisposabletoken")
+    @POST("/api/payment/onlinedisposabletoken")
     suspend fun sendQRToken(@Body tokenRequest: QRTokenRequest): Response<ApiResponse<QRPaymentResponse>>
 
-    @POST("api/payment/onlineprogresspay")
+    @POST("/api/payment/onlineprogresspay")
     suspend fun completePayment(@Body requestBody: RequestBody): Response<ApiResponse<PaymentResult>>
 }
 

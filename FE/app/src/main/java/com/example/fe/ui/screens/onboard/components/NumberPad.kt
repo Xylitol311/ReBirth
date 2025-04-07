@@ -35,7 +35,10 @@ fun NumberPad(
                         }
                     )
                 }
+
             }
+
+
         }
 
         Row(
@@ -63,5 +66,13 @@ fun NumberPad(
                 }
             )
         }
+//        NumberKey(
+//            text = "←",
+//            onClick = {
+//                if (input.isNotEmpty()) {
+//                    onInputChange(input.dropLast(1))
+//                }
+//            }
+//        )
     }
 }

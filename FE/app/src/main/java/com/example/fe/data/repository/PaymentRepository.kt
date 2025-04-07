@@ -35,7 +35,13 @@ class PaymentRepository {
                 Log.d("PaymentRepository", "API 응답 성공: $apiResponse")
                 
                 if (apiResponse.success) {
-                    Result.success(apiResponse.data)
+                    // API 응답에서 data가 null일 때 빈 리스트 반환
+                    if (apiResponse.data == null) {
+                        Log.e("PaymentRepository", "API response data is null, returning empty list")
+                        Result.success(emptyList())
+                    } else {
+                        Result.success(apiResponse.data)
+                    }
                 } else {
                     Log.e("PaymentRepository", "API 오류: ${apiResponse.message}")
                     Result.failure(Exception("API error: ${apiResponse.message}"))

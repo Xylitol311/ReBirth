@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,21 +57,22 @@ fun HomeHeader(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 64.dp, vertical = 16.dp)
+            .padding(horizontal = 32.dp, vertical = 16.dp)
     ) {
-        // 행성 이미지를 오른쪽 상단에 배치
+        // 행성 이미지를 오른쪽 상단에 배치하고 위로 올림
         Image(
             painter = painterResource(id = R.drawable.earth),
             contentDescription = "Earth",
             modifier = Modifier
-                .size(100.dp)
+                .size(180.dp)
                 .align(Alignment.TopEnd)
+                .offset(y = (-20).dp) // padding 대신 offset 사용
         )
         
-        // 텍스트를 왼쪽 하단에 배치
+        // 텍스트를 왼쪽 하단에 배치하고 아래로 내림
         Column(
             modifier = Modifier
-                .padding(top = 40.dp)
+                .padding(top = 60.dp)
                 .align(Alignment.BottomStart)
         ) {
             Text(
@@ -92,8 +94,10 @@ fun HomeHeader(
 @Composable
 fun HomeScreen(
     navController: NavController,
-    onScrollOffsetChange: (Float) -> Unit = {}  // 스크롤 오프셋 콜백 추가
+    modifier: Modifier = Modifier
 ) {
+    val viewModel = remember { HomeViewModel() }
+    
     val scrollState = rememberScrollState()
 
     // 스크롤 오프셋 변경 감지
@@ -110,13 +114,30 @@ fun HomeScreen(
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 헤더 (사용자 이름과 행성)
-        HomeHeader()
-
-        // 이번 달 소비 금액
-        HomeUsedMoney(
-            onDetailClick = {
-                navController.navigate(NavRoutes.HOME_DETAIL)
+        StarryBackground(scrollOffset = scrollOffset) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 헤더 (사용자 이름과 행성)
+                HomeHeader()
+                
+                // 이번 달 소비 금액
+                HomeUsedMoney(
+                    onDetailClick = {
+                        navController.navigate(NavRoutes.HOME_DETAIL)
+                    },
+                    viewModel = viewModel
+                )
+                
+                // 혜택을 놓친 거래 내역
+                HomeTransaction()
+                
+                // 추천 카드
+                HomeRecCard()
             }
         )
 
@@ -135,6 +156,13 @@ fun HomeScreen(
 fun HomeScreenPreview() {
     HomeScreen(navController = rememberNavController())
 }
+
+data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)
 
 @Composable
 fun CategorySpendingItem(
@@ -239,5 +267,3 @@ fun CategorySpendingList(selectedTabIndex: Int) {
         }
     }
 }
-
-data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

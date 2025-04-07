@@ -192,6 +192,7 @@ fun GlassSurface(
     cornerRadius: Float = 16f,
     isTopPanel: Boolean = false, // 상단 패널 여부를 결정하는 매개변수 추가
     blurRadius: Float = 10f,
+    showBorder: Boolean = false, // 테두리 표시 여부를 결정하는 매개변수 추가, 기본값 false로 변경
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(modifier = modifier) {
@@ -227,10 +228,16 @@ fun GlassSurface(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(cornerRadius.dp))
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF00E1FF),  // 밝은 하늘색 단일 색상으로 변경
-                    shape = RoundedCornerShape(cornerRadius.dp)
+                .then(
+                    if (showBorder) {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = Color.Transparent, // 테두리 색상 제거 (투명으로 설정)
+                            shape = RoundedCornerShape(cornerRadius.dp)
+                        )
+                    } else {
+                        Modifier
+                    }
                 )
         ) {
             // 내용 (블러 없음)

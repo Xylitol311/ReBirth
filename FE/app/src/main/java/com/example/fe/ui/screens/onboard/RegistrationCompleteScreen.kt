@@ -41,6 +41,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.fe.R
 import com.example.fe.ui.components.backgrounds.StarryBackground
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
 enum class CompleteScreenState {
     REGISTRATION_COMPLETE,
@@ -55,6 +56,7 @@ fun RegistrationCompleteScreen(navController: NavController, viewModel: Onboardi
 
     when (screenState) {
         CompleteScreenState.REGISTRATION_COMPLETE -> {
+            viewModel.setIsLogged()
             RegistrationCompleteContent(
                 onCheckSpendingType = { screenState = CompleteScreenState.INCOME_INPUT },
                 onSkip = {

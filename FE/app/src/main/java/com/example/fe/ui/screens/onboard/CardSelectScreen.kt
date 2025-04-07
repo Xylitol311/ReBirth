@@ -1,5 +1,6 @@
 package com.example.fe.ui.screens.onboard
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,7 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.fe.R
-import androidx.compose.material.icons.filled.ArrowBack
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +29,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewModel) {
     val cardList = listOf("신한카드", "국민카드", "삼성카드", "현대카드", "우리카드")
     val selectedCards = remember { mutableStateListOf<String>() }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -43,7 +47,28 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
             ) {
                 Button(
                     onClick = {
-                        navController.navigate("security_setup")
+                        // 1. 버튼 클릭 시 즉시 화면 전환
+                        navController.navigate("additional_security_setup")
+
+                        // 2. 백그라운드에서 API 순차 호출 (결과와 무관)
+                        coroutineScope.launch {
+                            viewModel.loadAllMyData(
+                                onSuccess = {
+
+                                    viewModel.generateReportFromMyData(
+//                                        userId = viewModel.userId,
+                                        userId =2,
+                                        onSuccess = { Log.e("AuthAPI", "리포트 받아오기 완료!")/* 리포트 생성 성공 로직 (필요 시) */ },
+                                        onFailure = { error ->
+                                            Log.e("API", "리포트 생성 실패: $error")
+                                        }
+                                    )
+                                },
+                                onFailure = { error ->
+                                    Log.e("API", "마이데이터 로드 실패: $error")
+                                }
+                            )
+                        }
                     },
                     enabled = selectedCards.isNotEmpty(),
                     modifier = Modifier

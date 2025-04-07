@@ -6,7 +6,9 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.content.MediaType.Companion.Text
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +44,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
@@ -48,6 +53,7 @@ import com.example.fe.ui.screens.calendar.CalendarScreen
 import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
 import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
 import com.example.fe.ui.screens.cardRecommend.CardRecommendViewModel
+import com.example.fe.ui.screens.cardRecommend.CardInfo
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import com.example.fe.ui.screens.home.HomeScreen
 import com.example.fe.ui.screens.myCard.CardDetailScreen
@@ -56,9 +62,9 @@ import com.example.fe.ui.screens.myCard.MyCardScreen
 import com.example.fe.ui.screens.myCard.MyCardViewModel.CardOrderManager.getCardById
 import com.example.fe.ui.screens.mypage.MyPageScreen
 import com.example.fe.ui.screens.onboard.OnboardingScreen
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
-import com.example.fe.ui.screens.onboard.OnboardingViewModelFactory
-import com.example.fe.ui.screens.payment.PaymentScreen
+import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModelFactory
 import com.example.fe.ui.screens.payment.PaymentViewModel
 import com.example.fe.ui.screens.payment.components.CardOCRScanScreen
 import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
@@ -79,11 +85,12 @@ object NavRoutes {
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
-
-    // 로그아웃을 위한 ViewModel
+    val deviceInfoManager = remember { AndroidDeviceInfoManager(context) }
     val viewModel: OnboardingViewModel = viewModel(
-        factory = OnboardingViewModelFactory(context)
+        factory = OnboardingViewModelFactory(deviceInfoManager,context)
     )
+    // 로그아웃을 위한 ViewModel
+
 
     // 로그아웃 처리 함수
     val handleLogout = {
@@ -397,6 +404,7 @@ fun AppNavigation() {
                     }
 
                     composable(BottomNavItem.Payment.route) {
+
                         PaymentScreen(
                             onScrollOffsetChange = { offset ->
                                 currentScreenHorizontalOffset = offset
@@ -430,7 +438,7 @@ fun AppNavigation() {
                     composable(BottomNavItem.CardRecommend.route) {
                         CardRecommendScreen(
                             onCardClick = { cardInfo ->
-                                navController.navigate("card_detail_info/${cardInfo.id}")
+                                navController.navigate("card_detail_info/${cardInfo}")
                             }
                         )
                     }

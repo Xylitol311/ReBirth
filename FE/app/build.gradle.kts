@@ -1,9 +1,13 @@
 plugins {
+
+
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0"
+
+
 }
 
 android {
@@ -69,6 +73,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.okhttp3:okhttp-sse:4.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("com.launchdarkly:okhttp-eventsource:4.1.0")
     implementation("com.google.accompanist:accompanist-pager:0.30.1")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.30.1")
@@ -89,7 +94,7 @@ dependencies {
     
     // 권한 요청을 위한 라이브러리
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
-    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // ML Kit 카드 스캐너
     implementation("com.google.mlkit:text-recognition:16.0.0")
@@ -106,8 +111,9 @@ dependencies {
     implementation ("com.google.dagger:hilt-android:2.48")
     ksp ("com.google.dagger:hilt-android-compiler:2.48")
     implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
-    
+
     // Flow
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
+    implementation("com.google.code.gson:gson:2.10.1")
 }
