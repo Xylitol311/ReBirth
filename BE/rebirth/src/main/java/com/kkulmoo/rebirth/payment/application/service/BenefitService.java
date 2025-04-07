@@ -16,10 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -56,12 +53,22 @@ public class BenefitService {
             // 각 혜택에 대해 할인 금액 계산
             for (BenefitInfo benefitInfo : benefitInfos) {
                 if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) continue; // 쿠폰은 제외
-                UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
+                Optional<UserCardBenefit> optionalUserCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
                         userId,
                         benefitInfo.getBenefitId(),
                         currentYear,
                         currentMonth
                 );
+                UserCardBenefit userCardBenefit = optionalUserCardBenefit.orElseGet(() -> UserCardBenefit.builder()
+                        .userId(userId)
+                        .benefitTemplateId(benefitInfo.getBenefitId())
+                        .year(currentYear)
+                        .month(currentMonth)
+                        .spendingTier((short) 0)
+                        .benefitCount((short) 0)
+                        .benefitAmount(0)
+                        .updateDate(LocalDateTime.now())
+                        .build());
                 int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
                 CalculatedBenefitDto calculated = CalculatedBenefitDto.builder()
                         .myCardId(card.getCardId())
@@ -97,12 +104,22 @@ public class BenefitService {
         // 각 혜택에 대해 할인 금액 계산 수행
         for (BenefitInfo benefitInfo : benefitInfos) {
             if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) continue; // 쿠폰은 제외
-            UserCardBenefit userCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
+            Optional<UserCardBenefit> optionalUserCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
                     userId,
                     benefitInfo.getBenefitId(),
                     currentYear,
                     currentMonth
             );
+            UserCardBenefit userCardBenefit = optionalUserCardBenefit.orElseGet(() -> UserCardBenefit.builder()
+                    .userId(userId)
+                    .benefitTemplateId(benefitInfo.getBenefitId())
+                    .year(currentYear)
+                    .month(currentMonth)
+                    .spendingTier((short) 0)
+                    .benefitCount((short) 0)
+                    .benefitAmount(0)
+                    .updateDate(LocalDateTime.now())
+                    .build());
             int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
             CalculatedBenefitDto calculated = CalculatedBenefitDto.builder()
                     .myCardId(myCard.getCardId())
@@ -187,16 +204,15 @@ public class BenefitService {
         int currentYear = now.getYear();
         int currentMonth = now.getMonthValue();
 
-        // 이번 달 기존 혜택 현황 조회 (없으면 예외 처리)
-        UserCardBenefit existing = userCardBenefitRepository
+        // 이번 달 기존 혜택 현황 조회 (Optional 처리)
+        Optional<UserCardBenefit> optionalExisting = userCardBenefitRepository
                 .findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId, benefitTemplateId, currentYear, currentMonth);
 
-        if (existing == null) {
+        if (optionalExisting.isEmpty()) {
             // 신규 생성: 최초 혜택 횟수는 1, 혜택 금액은 이번 결제 금액
             UserCardBenefit newBenefit = UserCardBenefit.builder()
                     .userId(userId)
                     .benefitTemplateId(benefitTemplateId)
-                    // spendingTier는 필요에 따라 기본값을 설정하세요. 여기서는 0으로 설정합니다.
                     .spendingTier((short) 0)
                     .benefitCount((short) 1)
                     .benefitAmount(receivedBenefitAmount)
@@ -206,7 +222,8 @@ public class BenefitService {
                     .build();
             userCardBenefitRepository.save(newBenefit);
         } else {
-            // 기존 데이터 업데이트: benefit_count +1, benefit_amount에 이번 결제 금액 누적
+            // 기존 데이터 업데이트: benefitCount +1, benefitAmount에 이번 결제 금액 누적
+            UserCardBenefit existing = optionalExisting.get();
             UserCardBenefit updatedBenefit = UserCardBenefit.builder()
                     .userCardBenefitId(existing.getUserCardBenefitId())
                     .userId(existing.getUserId())

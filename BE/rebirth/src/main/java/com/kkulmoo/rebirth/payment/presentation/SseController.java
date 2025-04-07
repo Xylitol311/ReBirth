@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
-@CrossOrigin
+@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/payment/sse")
 @RequiredArgsConstructor

@@ -4,9 +4,10 @@ import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
 import com.kkulmoo.rebirth.user.domain.repository.UserCardBenefitRepository;
 import com.kkulmoo.rebirth.user.infrastrucutre.entity.UserCardBenefitEntity;
 import com.kkulmoo.rebirth.user.infrastrucutre.mapper.UserCardBenefitEntityMapper;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -15,14 +16,11 @@ public class UserCardBenefitRepositoryImpl implements UserCardBenefitRepository 
     public final UserCardBenefitEntityMapper userCardBenefitEntityMapper;
 
     @Override
-    public UserCardBenefit findByUserIdAndBenefitTemplateIdAndYearAndMonth(Integer userId, Integer benefitId, int year, int month) {
-        UserCardBenefitEntity entity = userCardBenefitJpaRepository
-                .findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId, benefitId, year, month)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "UserCardBenefit not found for userId " + userId +
-                        ", benefitId " + benefitId +
-                        ", year " + year + ", month " + month));
-        return userCardBenefitEntityMapper.toUserCardBenefit(entity);
+    public Optional<UserCardBenefit> findByUserIdAndBenefitTemplateIdAndYearAndMonth(Integer userId, Integer benefitId, int year, int month) {
+        Optional<UserCardBenefitEntity> entityOptional = userCardBenefitJpaRepository
+                .findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId, benefitId, year, month);
+
+        return entityOptional.map(userCardBenefitEntityMapper::toUserCardBenefit);
     }
 
     @Override
