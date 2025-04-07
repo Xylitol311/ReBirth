@@ -38,13 +38,14 @@ public class CardService {
     private final UserCardBenefitRepository userCardBenefitRepository;
 
     @Transactional
-    public CardDetailResponse getCardDetail(UserId userId, Integer cardId) {
+    public CardDetailResponse getCardDetail(UserId userId, Integer cardId, Integer year, Integer month) {
         MyCard card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 ID를 찾을 수 없습니다."));
 
         CardTemplateEntity cardTemplate = cardRepository.findCardTemplateEntityById(card.getCardTemplateId())
                 .orElseThrow(() -> new EntityNotFoundException("해당 cardTemplate을 찾을 수 없습니다"));
 
+        // 최대 실적양.
         Integer maxPerformanceAmount = 0;
         try {
             maxPerformanceAmount = cardTemplate.getPerformanceRange().get(cardTemplate.getPerformanceRange().size() - 1);
@@ -53,47 +54,66 @@ public class CardService {
         }
 
         System.out.println(Arrays.toString(cardTemplate.getPerformanceRange().toArray()));
+
+        // 해당 값이 없는경우도 있어.
         ReportCardsEntity reportCardsEntity = reportCardsJpaRepository.getByUserIdAndCardIdAndYearAndMonth(
                         userId.getValue(),
                         cardId,
-                        LocalDateTime.now().getYear(),
-                        LocalDateTime.now().getMonthValue())
-                .orElseThrow(() -> new EntityNotFoundException("해당 entity가 없습니다."));
+                        year,
+                        month)
+                .orElseGet(() -> ReportCardsEntity.builder()
+                        .cardId(cardId)
+                        .monthSpendingAmount(0)
+                        .monthBenefitAmount(0)
+                        .spendingTier((short) 0)
+                        .build());
+
         Short spendingTier = reportCardsEntity.getSpendingTier();
         if (spendingTier == null) {
             spendingTier = 0;  // 기본값 설정
         }
-
 
         List<BenefitTemplate> benefitTemplates = benefitRepository.findByTemplateId(cardTemplate.getCardTemplateId());
 
         int amountRemainingNext = maxPerformanceAmount - reportCardsEntity.getMonthSpendingAmount();
         if (amountRemainingNext < 0) amountRemainingNext = 0;
 
-
         List<CardBenefit> cardBenefits = new ArrayList<>();
-        int currentYear = LocalDateTime.now().getYear();
-        int currentMonth = LocalDateTime.now().getMonthValue();
 
         for (BenefitTemplate benefitTemplate : benefitTemplates) {
             List<Integer> categoryId = benefitTemplate.getCategoryId();
             List<String> categoryString = categoryJpaRepository.findByCategoryIdInOrderByCategoryId(categoryId);
-            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId.getValue(), benefitTemplate.getBenefitId(), currentYear, currentMonth);
+            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository
+                    .findByUserIdAndBenefitTemplateIdAndYearAndMonth(
+                            userId.getValue(),
+                            benefitTemplate.getBenefitId(),
+                            year,
+                            month).orElseGet(() ->
+                            UserCardBenefit.builder()
+                                    .benefitAmount(0)
+                                    .benefitCount((short) 0)
+                                    .spendingTier((short) 0)
+                                    .benefitTemplateId(benefitTemplate.getBenefitId())
+                                    .build()
+                    );
 
-            cardBenefits.add(
-                    CardBenefit.builder()
-                            .benefitCategory(categoryString)
-                            .receivedBenefitAmount(byUserIdAndBenefitId.getBenefitAmount())
-                            .remainingBenefitAmount(
-                                    calculateRemainingBenefit(
-                                            benefitTemplate,
-                                            spendingTier,
-                                            byUserIdAndBenefitId.getBenefitAmount()
-                                    )
-                            )
-                            .build());
+//            if주석을 풀면된다.
+//            if (spendingTier != null && spendingTier.shortValue() != 0) {
+                cardBenefits.add(
+                        CardBenefit.builder()
+                                .benefitCategory(categoryString)
+                                .receivedBenefitAmount(byUserIdAndBenefitId.getBenefitAmount())
+                                .remainingBenefitAmount(
+                                        calculateRemainingBenefit(
+                                                benefitTemplate,
+                                                spendingTier,
+                                                byUserIdAndBenefitId.getBenefitAmount()
+                                        )
+                                )
+                                .build());
+                //          }
+
         }
-
 
         return CardDetailResponse.builder()
                 .cardId(cardId)
@@ -107,7 +127,6 @@ public class CardService {
                 .performanceRange(cardTemplate.getPerformanceRange())
                 .cardBenefits(cardBenefits)
                 .build();
-
     }
 
     private Integer calculateRemainingBenefit(BenefitTemplate template, int spendingTier, Integer receivedAmount) {
@@ -123,7 +142,7 @@ public class CardService {
 
             // 남은 혜택 금액 계산 (음수면 0 반환)
             int remaining = totalAmount - received;
-            return  Math.max(0, remaining);
+            return Math.max(0, remaining);
         } catch (Exception e) {
             return 0; // 예외 발생 시 0 반환
         }
