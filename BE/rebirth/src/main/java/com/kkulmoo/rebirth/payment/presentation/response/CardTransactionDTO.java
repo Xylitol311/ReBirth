@@ -2,7 +2,6 @@ package com.kkulmoo.rebirth.payment.presentation.response;
 
 import lombok.Builder;
 import lombok.Getter;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 // 결지 시 카드사로부터 받는 객체
