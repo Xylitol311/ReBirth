@@ -49,7 +49,7 @@ public class TransactionService {
     }
 
     // 입력할 때부터 어느 시간 기준으로 넣을 것인지 고민을 해야한다.
-    public void getBankTransactionByMyData(User user, LocalDateTime fromDate){
+    public void getBankTransactionByMyData(User user, LocalDateTime fromDate) {
         System.out.println(fromDate);
         Mono<List<BankTransactionResponse>> bankTransaction = bankPort.getBankTransaction(
                 BankTransactionRequest.builder()
@@ -69,17 +69,18 @@ public class TransactionService {
     // card내역 가져오기.
     // 카드사에게 이사람이 누구인지 이사람의 어떤 카드의 결제내역을 얻고 싶은지 요청을해야한다.
     public void getCardTransactionByMyData(User user, List<String> CardUniqueNumbers) {
-
         // CardUniqueNumbers
-        List<MyCard> myCardList = cardService.getMyCardListByCardUniqueNumbers(CardUniqueNumbers);
+        List<MyCard> myCardList = cardService.getMyCardListByCardUniqueNumbers(CardUniqueNumbers, user.getUserId().getValue());
 
-        Mono<List<CardTransactionResponse>> cardTransaction = cardPort.getCardTransaction(CardTransactionRequest.builder()
-                .cards(myCardList)
-                .userCI(user.getUserCI())
-                .build());
-
-        cardTransaction.subscribe(transactions -> {
-            if (!transactions.isEmpty()) {
+        for(MyCard myCadrd : myCardList){
+            System.out.println(myCadrd.getCardName());
+        }
+        try {
+            List<CardTransactionResponse> transactions = cardPort.getCardTransaction(CardTransactionRequest.builder()
+                    .cards(myCardList)
+                    .userCI(user.getUserCI())
+                    .build()).block();
+            if (transactions != null && !transactions.isEmpty()) {
                 List<CardTransactionResponse> transactionsWithUserId = transactions.stream()
                         .peek(transaction -> {
                             // 각 개별 트랜잭션 로깅
@@ -95,11 +96,8 @@ public class TransactionService {
                 transactionRepository.saveAllCardTransactions(transactionsWithUserId);
                 log.info("사용자 {}의 {}개 거래내역 일괄 저장 완료", user.getUserId(), transactions.size());
             }
-        }, error -> {
-            log.error("카드 거래내역 처리 중 오류 발생: {}", error.getMessage(), error);
-        });
+        } catch (Exception e) {
+            log.error("카드 거래내역 처리 중 오류 발생: {}", e.getMessage(), e);
+        }
     }
-
-
-    // bank내역 가져오기.
 }

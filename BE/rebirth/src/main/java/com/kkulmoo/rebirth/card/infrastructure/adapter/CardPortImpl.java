@@ -67,6 +67,10 @@ public class CardPortImpl implements CardPort {
     public Mono<List<CardTransactionResponse>> getCardTransaction(CardTransactionRequest cardTransactionRequest) {
         String userCI = cardTransactionRequest.getUserCI();
         List<MyCard> cards = cardTransactionRequest.getCards();
+
+        for(MyCard card : cards){
+            System.out.println(card.getCardId());
+        }
         return Flux.fromIterable((cards))
                 .flatMap(card -> {
                     CardTransactionSingleRequest singleRequest = CardTransactionSingleRequest.builder()
@@ -88,9 +92,10 @@ public class CardPortImpl implements CardPort {
                             .onErrorResume(e -> {
                                 log.error("거래내역 조회 중 예외 발생 (카드번호: {}): {}", card.getCardUniqueNumber(), e.getMessage(), e);
                                 return Mono.just(Collections.emptyList());
-                            })
-                            .flatMapMany(Flux::fromIterable); // 각 리스트를 개별 항목으로 평면화
+                            });
                 })
-                .collectList();
+                .flatMapIterable(transactions -> transactions) // 더 명확한 구문
+                .collectList()
+                .cache(); // 여기에 cache() 추가!
     }
 }

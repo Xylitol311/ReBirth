@@ -59,8 +59,8 @@ public class CardRepositoryImpl implements CardRepository {
 
 
     @Override
-    public List<MyCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers) {
-        return cardJpaRepository.findByCardUniqueNumberIn(cardUniqueNumbers)
+    public List<MyCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers, Integer userId) {
+        return cardJpaRepository.findByCardUniqueNumberInAndUserId(cardUniqueNumbers, userId)
                 .stream()
                 .map(cardEntityMapper::toCard)
                 .collect(Collectors.toList());
