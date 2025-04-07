@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -41,9 +38,9 @@ public class ReportService {
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
 
     @Transactional
-    public void updateMonthlyTransactionSummary(Integer userId) {
+    public void updateMonthlyTransactionSummary(Integer userId, LocalDateTime now) {
         UserEntity user = userJpaRepository.getReferenceById(userId);
-        LocalDateTime now = LocalDateTime.now();
+//        LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
         int month = now.getMonthValue();
 
@@ -365,6 +362,232 @@ public class ReportService {
         UserEntity nowUser = userJpaRepository.getReferenceById(user.getUserId());
         nowUser.setConsumptionPatternId(mcr.getConsumptionPatternId());
         nowUser = userJpaRepository.save(nowUser);
+    }
+
+    @Transactional
+    public void updateWithMyData(Integer userId) {
+        UserEntity user = userJpaRepository.getReferenceById(userId);
+//        List<MonthlyTransactionSummaryEntity> mtsList = monthlyTransactionSummaryJpaRepository.findByUserId(userId);
+//        mtsList.sort(Comparator
+//                .comparing(MonthlyTransactionSummaryEntity::getYear)
+//                .thenComparing(MonthlyTransactionSummaryEntity::getMonth));
+//        for (MonthlyTransactionSummaryEntity report : mtsList) {
+        for (int i = 2; i>=0 ; i--) {
+            LocalDateTime now = LocalDateTime.now().minusMonths(i);
+            int year = now.getYear();
+            int month = now.getMonthValue();
+//            int year = report.getYear();
+//            int month = report.getMonth();
+            MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(userId, year, month);
+            report.setTotalSpending(0);
+            report.setReceivedBenefitAmount(0);
+
+            report = monthlyTransactionSummaryJpaRepository.save(report);
+//            List<CardEntity> cards = cardsJpaRepository.findByUserId(user.getUserId());
+//            for (CardEntity card : cards) {
+//                ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), card.getCardId());
+//                ReportCardsEntity reportCardsEntity = ReportCardsEntity
+//                        .builder()
+//                        .cardId(card.getCardId())
+//                        .reportId(report.getReportId())
+//                        .monthSpendingAmount(0)
+//                        .monthBenefitAmount(0)
+//                        .createdAt(report.getCreatedAt())
+//                        .spendingTier((short) 0)
+//                        .build();
+//                if (reportCard == null) {
+//                    int reportCardId = reportCardsJpaRepository.save(reportCardsEntity).getReportCardId();
+//                    reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
+//
+//                } else {
+//                    reportCard.setMonthSpendingAmount(0);
+//                    reportCard.setMonthBenefitAmount(0);
+//                    reportCard.setSpendingTier((short) 0);
+//
+//                    reportCard = reportCardsJpaRepository.save(reportCard);
+//
+//                }
+//
+//            }
+
+            List<MonthlySpendingByCategoryAndCardDTO> monthlyTransactions = transactionsJpaRepository.getMonthlySpendingByCategoryAndCard(user.getUserId(), year, month);
+
+            Map<Integer, int[]> countByCard = new HashMap<>();
+            for (MonthlySpendingByCategoryAndCardDTO monthlyTransaction : monthlyTransactions) {
+                ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), monthlyTransaction.getCardId());
+                if (reportCard == null) {
+                    ReportCardsEntity newReportCard = ReportCardsEntity
+                            .builder()
+                            .reportId(report.getReportId())
+                            .cardId(monthlyTransaction.getCardId())
+                            .monthBenefitAmount(0)
+                            .monthSpendingAmount(0)
+                            .spendingTier((short) 0)
+                            .createdAt(LocalDateTime.now())
+                            .build();
+                    int reportCardId = reportCardsJpaRepository.save(newReportCard).getReportCardId();
+                    reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
+
+                } else {
+                    reportCard.setMonthSpendingAmount(0);
+                    reportCard.setMonthBenefitAmount(0);
+                    reportCard.setSpendingTier((short) 0);
+
+                    reportCard = reportCardsJpaRepository.save(reportCard);
+                }
+
+                // 그냥 결제 단건 혜택만 고려
+                ReportCardCategoriesEntity reportCardCategory = reportCardCategoriesJpaRepository.getByReportCardAndCategoryId(reportCard, monthlyTransaction.getCategoryId());
+
+                if (reportCardCategory == null) {
+                    ReportCardCategoriesEntity newReportCardCategory = ReportCardCategoriesEntity
+                            .builder()
+                            .reportCard(reportCard)
+                            .categoryId(monthlyTransaction.getCategoryId())
+                            .amount(0)
+                            .receivedBenefitAmount(0)
+                            .count(0)
+                            .createdAt(LocalDateTime.now())
+                            .build();
+
+                    int reportCardCategoryId = reportCardCategoriesJpaRepository.save(newReportCardCategory).getReportCategoryId();
+
+//                    reportCardCategory = reportCardCategoriesJpaRepository.getReferenceById(reportCardCategoryId);
+                    reportCardCategory = reportCardCategoriesJpaRepository.findById(reportCardCategoryId)
+                            .orElseThrow(() -> new EntityNotFoundException("Entity not found after saving: " + newReportCardCategory.getReportCard().getReportCardId()));
+                } else {
+                    reportCardCategory.setAmount(0);
+                    reportCardCategory.setReceivedBenefitAmount(0);
+                    reportCardCategory.setCount(0);
+
+                    reportCardCategory = reportCardCategoriesJpaRepository.save(reportCardCategory);
+                }
+
+                reportCardCategory.setAmount(monthlyTransaction.getTotalSpending()); // 결제 금액
+                reportCardCategory.setReceivedBenefitAmount(monthlyTransaction.getTotalBenefit()); // 혜택 금액
+                reportCardCategory.setCount(monthlyTransaction.getTransactionCount()); // 결제 횟수
+
+                if (!countByCard.containsKey(monthlyTransaction.getCardId())) {
+                    countByCard.put(monthlyTransaction.getCardId(), new int[]{ monthlyTransaction.getTotalSpending(), monthlyTransaction.getTotalBenefit(), monthlyTransaction.getTransactionCount()});
+                } else {
+                    int[] chk = countByCard.get(monthlyTransaction.getCardId());
+                    chk[0] += monthlyTransaction.getTotalSpending();
+                    chk[1] += monthlyTransaction.getTotalBenefit();
+                    chk[2] += monthlyTransaction.getTransactionCount();
+
+                    countByCard.put(monthlyTransaction.getCardId(), chk);
+                }
+                reportCardCategoriesJpaRepository.save(reportCardCategory);
+            }
+
+            int[] total = new int[2];
+            for (Map.Entry<Integer, int[]> entry : countByCard.entrySet()) {
+                int cardId = entry.getKey();
+                int[] count = entry.getValue();
+                CardEntity card = cardsJpaRepository.getReferenceById(cardId);
+                CardTemplateEntity cardTemplate = cardTemplateJpaRepository.getReferenceById(card.getCardTemplateId());
+                short myTierForCard = 0;
+                if(cardTemplate.getPerformanceRange()!=null) {
+                    for(int point: cardTemplate.getPerformanceRange()) {
+                        System.out.println(card.getCardName()+" "+count[0]+" 이거 넘나? "+point);
+                        if(Math.abs(count[0])<point) {
+                            break;
+                        }
+                        myTierForCard++;
+                    }
+                }
+                ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), cardId);
+                reportCard.setMonthSpendingAmount(count[0]);
+                reportCard.setMonthBenefitAmount(count[1]);
+                reportCard.setSpendingTier(myTierForCard);
+
+                reportCardsJpaRepository.save(reportCard);
+                total[0] += count[0];
+                total[1] += count[1];
+            }
+
+            report.setTotalSpending(total[0]);
+            report.setReceivedBenefitAmount(total[1]);
+            monthlyTransactionSummaryJpaRepository.save(report);
+        }
+
+        // 월별 요약
+//        for (MonthlyTransactionSummaryEntity report : mtsList) {
+////            LocalDateTime now = LocalDateTime.now().minusMonths(i);
+//            int year = report.getYear();
+//            int month = report.getMonth();
+//            if(year==LocalDateTime.now().getYear() && month==LocalDateTime.now().getMonthValue()) {
+//                continue;
+//            }
+////            MonthlyTranjsactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
+//
+//            LocalDateTime now = LocalDateTime.of(year,month,1,0,0,0);
+//            // 소비패턴 계산
+//            int[] pattern = calculateSpendingPattern(user, now);
+//
+////            // AI 요약
+////            OpenAiChatModel model = OpenAiChatModel.builder()
+////                    .baseUrl("http://langchain4j.dev/demo/openai/v1")
+//////                    .apiKey("demo")
+////                    .modelName("gpt-4o-mini")
+////                    .build();
+////
+////            String question = "다음은 " + user.getUserName() + "님의 한달간 소비 내역이야. 요약해줘. 감성적인 말투로 부탁해.\n";
+////
+////            List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
+////            for (ReportCategoryDTO row : spendingByCategory) {
+////                String category = row.getCategory();
+////                question = question.concat(category + "카테고리 지출 : " + row.getAmount() + "원\n");
+////            }
+////            question = question.concat("과소비성향 : " + pattern[0] + "\n");
+////            question = question.concat("소비변동성 : " + pattern[1] + "\n");
+////            question = question.concat("소비외향성 : " + pattern[2] + "\n");
+////            question = question.concat("hint: 과소비 성향은 수입 대비 소비정도를, 소비 변동성은 직전달 대비 소비의 변동성, 소비 외향성은 소비카테고리 기준 외향적 소비 비율을 의미해. 모든 값은 50을 기준으로 생각하고 평가해줘");
+////
+////
+////            String answer = model.chat(question);
+//            String answer = "";
+//            String consumptionPatternId = "";
+//            if (pattern[2] > 50) consumptionPatternId = consumptionPatternId.concat("E"); // 외향형
+//            else consumptionPatternId = consumptionPatternId.concat("I"); // 내향헝
+//            if (pattern[0] > 50) consumptionPatternId = consumptionPatternId.concat("B"); // 과소비형
+//            else consumptionPatternId = consumptionPatternId.concat("M"); // 절약형
+//            if (pattern[1] > 50) consumptionPatternId = consumptionPatternId.concat("V"); // 변동형
+//            else consumptionPatternId = consumptionPatternId.concat("S"); // 일관형
+//            MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(report);
+//            System.out.println(mcr);
+//            if (mcr == null) {
+//
+//                MonthlyConsumptionReportEntity monthlyConsumptionReport = MonthlyConsumptionReportEntity
+//                        .builder()
+//                        .report(report)
+//                        .consumptionPatternId(consumptionPatternId)
+//                        .overConsumption(pattern[0])
+//                        .variation(pattern[1])
+//                        .extrovert(pattern[2])
+//                        .reportDescription(answer)
+//                        .build();
+//
+//                monthlyConsumptionReportJpaRepository.save(monthlyConsumptionReport);
+//            } else {
+//                mcr.setReport(report);
+//                mcr.setConsumptionPatternId(consumptionPatternId);
+//                mcr.setOverConsumption(pattern[0]);
+//                mcr.setVariation(pattern[1]);
+//                mcr.setExtrovert(pattern[2]);
+////                mcr.setReportDescription(answer);
+//
+//                mcr = monthlyConsumptionReportJpaRepository.save(mcr);
+//            }
+//        }
+//        LocalDateTime now = LocalDateTime.now().minusMonths(1);
+//        int year = now.getYear();
+//        int month = now.getMonthValue();
+//        MonthlyTransactionSummaryEntity mts = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
+//        MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(mts);
+//        UserEntity nowUser = userJpaRepository.getReferenceById(user.getUserId());
+//        nowUser.setConsumptionPatternId(mcr.getConsumptionPatternId());
+//        nowUser = userJpaRepository.save(nowUser);
     }
 
     @Transactional

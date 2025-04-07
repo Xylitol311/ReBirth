@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface MonthlyTransactionSummaryJpaRepository extends JpaRepository<MonthlyTransactionSummaryEntity, Integer> {
 
@@ -27,4 +29,6 @@ public interface MonthlyTransactionSummaryJpaRepository extends JpaRepository<Mo
                                   @Param("month") int month,
                                   @Param("minSpending") int minSpending,
                                   @Param("maxSpending") int maxSpending);
+
+    List<MonthlyTransactionSummaryEntity> findByUserId(Integer userId);
 }
