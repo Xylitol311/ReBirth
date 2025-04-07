@@ -5,7 +5,9 @@ import com.kkulmoo.rebirth.payment.domain.PaymentCard;
 import com.kkulmoo.rebirth.payment.domain.repository.CardsRepository;
 import com.kkulmoo.rebirth.payment.domain.repository.CardTemplateRepository;
 import com.kkulmoo.rebirth.payment.domain.repository.DisposableTokenRepository;
+import com.kkulmoo.rebirth.payment.presentation.request.PermanentTokenRequestToCardsaDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
+import com.kkulmoo.rebirth.payment.presentation.response.PermanentTokenResponseByCardsaDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,20 @@ public class PaymentTokenService {
     private final PaymentOfflineEncryption paymentOfflineEncryption;
     // 온라인 토큰 암호화 및 검증 서비스
     private final PaymentOnlineEncryption paymentOnlineEncryption;
+    // 카드사로 부터 응답
+    private final WebClientService webClientService;
+
+    // 결제 카드 등록
+    public void getPermanetTokenFromCardsa(PermanentTokenRequestToCardsaDTO permanentTokenRequestToCardsaDTO){
+
+        // 카드사로 부터 카드 정보 가져오기
+        PermanentTokenResponseByCardsaDTO permanentTokenResponseByCardsaDTO = webClientService.createCard(permanentTokenRequestToCardsaDTO).block();
+
+        // 리버스 DB에 결제 카드 정보 등록하기
+
+
+    }
+
 
     // 사용자 보유 카드의 영구토큰과 템플릿 ID 목록 조회
     public List<String[]> getAllUsersPermanentTokenAndTemplateId(int userId) {

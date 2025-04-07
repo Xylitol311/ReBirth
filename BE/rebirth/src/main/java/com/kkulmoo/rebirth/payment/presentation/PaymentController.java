@@ -1,13 +1,15 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
+import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.payment.application.service.PaymentTokenService;
 import com.kkulmoo.rebirth.payment.application.service.PaymentTransactionService;
-import com.kkulmoo.rebirth.payment.presentation.request.CardInfoDTO;
 import com.kkulmoo.rebirth.payment.presentation.request.OnlinePayDTO;
+import com.kkulmoo.rebirth.payment.presentation.request.PermanentTokenRequestToCardsaDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.OnlinePayResponseDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
+import com.kkulmoo.rebirth.payment.presentation.response.PermanentTokenResponseByCardsaDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -29,8 +31,11 @@ public class PaymentController {
 
     // 카드 등록 엔드포인트 (추후 상세 구현)
     @PostMapping("/registpaymentcard")
-    public ResponseEntity<?> registPaymentCard(@RequestBody CardInfoDTO cardInfoDTO) {
-        // 카드 등록 로직 (현재 임시 응답)
+    public ResponseEntity<?> registPaymentCard(@JwtUserId Integer userId, @RequestBody PermanentTokenRequestToCardsaDTO permanentTokenRequest) {
+
+        // 카드 등록하고 영구토큰 가져오기
+        paymentTokenService.getPermanetTokenFromCardsa(permanentTokenRequest);
+
         return ResponseEntity.ok("임시");
     }
 
@@ -96,4 +101,7 @@ public class PaymentController {
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }
+
+
+
 }

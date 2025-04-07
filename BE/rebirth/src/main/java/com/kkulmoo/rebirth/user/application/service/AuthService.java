@@ -91,7 +91,10 @@ public class AuthService {
             }
         } else if (type.equals("PATTERN")) {
 
+
             String hashedPatternNumber = PasswordUtils.encodePassword(number);
+
+            System.out.println("패턴" + " " + hashedPatternNumber +"유저거 > "+ user.getHashedPatternNumber()) ;
             if (user.getHashedPatternNumber().equals(hashedPatternNumber)) {
                 return AuthenticationResult.success(user);
             }

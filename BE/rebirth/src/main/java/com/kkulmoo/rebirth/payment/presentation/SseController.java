@@ -30,12 +30,9 @@ public class SseController {
     // 특정 유저의 SSE 구독 엔드포인트
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> subscribe(@RequestParam(value = "userId") int userId) {
-        // SSE 구독 생성
+        log.info("SSE 연결 요청 - userId: {}", userId);
+        // SSE 구독 생성 - 서비스에서 이미 모든 핸들러 설정 및 관리를 담당
         SseEmitter emitter = sseService.subscribe(userId);
-        // 연결 완료 시 로그 기록
-        emitter.onCompletion(() -> log.info("SSE 연결 종료 - userId: {}", userId));
-        // 타임아웃 시 로그 기록
-        emitter.onTimeout(() -> log.warn("SSE 타임아웃 - userId: {}", userId));
         return ResponseEntity.ok(emitter);
     }
 
