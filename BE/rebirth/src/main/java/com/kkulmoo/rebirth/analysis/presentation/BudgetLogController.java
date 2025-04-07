@@ -5,6 +5,7 @@ import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.DailyTransactionsDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogInfoDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ResponseDTO;
+import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +23,7 @@ public class BudgetLogController {
     private final BudgetLogService budgetLogService;
 
     @GetMapping("/log")
-    public ResponseEntity<ResponseDTO> getMonthlyLog(@RequestParam("userId") int userId,
+    public ResponseEntity<ResponseDTO> getMonthlyLog(@JwtUserId Integer userId,
                                                      @RequestParam("year") int year,
                                                      @RequestParam("month") int month) {
 
@@ -35,7 +36,7 @@ public class BudgetLogController {
     }
 
     @GetMapping("/transaction")
-    public ResponseEntity<ResponseDTO> getMonthlyTransactions(@RequestParam("userId") int userId,
+    public ResponseEntity<ResponseDTO> getMonthlyTransactions(@JwtUserId Integer userId,
                                                             @RequestParam("year") int year,
                                                             @RequestParam("month") int month) {
 
@@ -48,7 +49,7 @@ public class BudgetLogController {
     }
 
     @GetMapping("/info")
-    public ResponseEntity<ResponseDTO> getMonthlyBudgetLogInfo(@RequestParam("userId") int userId,
+    public ResponseEntity<ResponseDTO> getMonthlyBudgetLogInfo(@JwtUserId Integer userId,
                                                                @RequestParam("year") int year,
                                                                @RequestParam("month") int month) {
 

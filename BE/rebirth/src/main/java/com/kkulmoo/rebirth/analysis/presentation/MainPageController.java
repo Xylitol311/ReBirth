@@ -5,6 +5,7 @@ import com.kkulmoo.rebirth.analysis.domain.dto.response.MainCardSummaryDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MainSummaryDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ResponseDTO;
+import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +24,7 @@ public class MainPageController {
     private final MainPageService mainPageService;
 
     @GetMapping("/summary")
-    public ResponseEntity<ResponseDTO> getSummary(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> getSummary(@JwtUserId Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("메인페이지 요약 조회 완료");
@@ -33,7 +34,7 @@ public class MainPageController {
     }
 
     @GetMapping("/summary/card")
-    public ResponseEntity<ResponseDTO> getSummaryCard(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> getSummaryCard(@JwtUserId Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("메인페이지 카드별 요약 조회 완료");
@@ -44,7 +45,7 @@ public class MainPageController {
     }
 
     @GetMapping("/summary/category")
-    public ResponseEntity<ResponseDTO> getSummaryCategory(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> getSummaryCategory(@JwtUserId Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("메인페이지 카테고리별 요약 조회 완료");
