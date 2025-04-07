@@ -16,4 +16,6 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Integer> {
     List<UserEntity> findAllAndDeletedAtIsNull();
 
     Optional<UserEntity> findByPhoneSerialNumber(String phoneSerialNumber);
+
+    Optional<UserEntity> findByUserId(Integer userId);
 }
