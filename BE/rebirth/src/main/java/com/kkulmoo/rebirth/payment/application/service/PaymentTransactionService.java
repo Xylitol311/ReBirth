@@ -153,8 +153,13 @@ public class PaymentTransactionService {
         myDataService.loadMyTransactionByCards(user, myCards);
         benefitService.updateUserCardBenefit(userId, benefitId, benefitAmount);
         reportService.updateMonthlyTransactionSummary(userId);
-
-        return cardTransactionDTO;
+        return CardTransactionDTO.builder()
+                .approvalCode(cardTransactionDTO.getApprovalCode())
+                .amount(cardTransactionDTO.getAmount())
+                .createdAt(cardTransactionDTO.getCreatedAt())
+                .cardName(myCardDto.getCardName())
+                .cardImgUrl(cardTransactionDTO.getCardImgUrl())
+                .build();
     }
 
 

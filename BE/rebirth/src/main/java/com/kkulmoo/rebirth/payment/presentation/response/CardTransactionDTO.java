@@ -13,5 +13,7 @@ public class CardTransactionDTO {
     private Long amount;  // 금액
     private LocalDateTime createdAt;
     private String approvalCode;  // 승인코드 (카드 취소에도 전달 되도록)
+    private String cardName;
+    private String cardImgUrl;
 
 }
