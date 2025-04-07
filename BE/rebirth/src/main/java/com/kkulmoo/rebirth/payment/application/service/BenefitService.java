@@ -5,11 +5,11 @@ import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.DiscountType;
 import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.payment.application.BenefitInfo;
-import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
-import com.kkulmoo.rebirth.user.domain.repository.UserCardBenefitRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.dto.MerchantJoinDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
+import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
 import com.kkulmoo.rebirth.user.domain.UserId;
+import com.kkulmoo.rebirth.user.domain.repository.UserCardBenefitRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,11 +23,8 @@ import java.util.*;
 @Slf4j
 public class BenefitService {
 
-    // 사용자 카드 정보를 조회하는 Repository
     private final CardRepository cardRepository;
-    // 혜택 정보를 조회하는 Repository
     private final BenefitRepository benefitRepository;
-    // 사용자 카드의 혜택 사용 정보를 조회하는 Repository
     private final UserCardBenefitRepository userCardBenefitRepository;
 
     // 추천 카드 혜택 계산 (모든 보유 카드에 대해 계산 후 최대 혜택 선택)
@@ -35,41 +32,57 @@ public class BenefitService {
         int currentYear = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
 
-        // 사용자 보유 카드 목록 조회
         UserId userId1 = new UserId(userId);
         List<MyCard> myCards = cardRepository.findByUserId(userId1);
-        // 최대 혜택을 찾기 위한 우선순위 큐 생성 (내림차순)
+        log.info("추천 혜택 계산 - myCards count: {}", myCards.size());
+
         Queue<CalculatedBenefitDto> benefitQueue = new PriorityQueue<>(Comparator.comparingInt(CalculatedBenefitDto::getBenefitAmount).reversed());
-        // 각 카드별 혜택 계산 수행
+
         for (MyCard card : myCards) {
-            if (card.getPermanentToken() == null) continue; // 유효하지 않은 카드 건너뜀
-            // 해당 카드에 적용 가능한 혜택 정보 조회
+            if (card.getPermanentToken() == null) {
+                log.debug("카드 id {}의 영구 토큰이 없음.", card.getCardId());
+                continue;
+            }
+            log.debug("카드 id {} - 영구 토큰: {}", card.getCardId(), card.getPermanentToken());
             List<BenefitInfo> benefitInfos = benefitRepository.findBenefitsByMerchantFilter(
                     card.getCardTemplateId(),
                     merchantJoinDto.getCategoryId(),
                     merchantJoinDto.getSubCategoryId(),
                     merchantJoinDto.getMerchantId()
             );
-            // 각 혜택에 대해 할인 금액 계산
+            log.info("카드 id {} - 적용 가능한 혜택 count: {}", card.getCardId(), benefitInfos.size());
+
             for (BenefitInfo benefitInfo : benefitInfos) {
-                if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) continue; // 쿠폰은 제외
+                if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) {
+                    log.debug("혜택 id {}는 쿠폰으로 제외.", benefitInfo.getBenefitId());
+                    continue;
+                }
                 Optional<UserCardBenefit> optionalUserCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
                         userId,
                         benefitInfo.getBenefitId(),
                         currentYear,
                         currentMonth
                 );
-                UserCardBenefit userCardBenefit = optionalUserCardBenefit.orElseGet(() -> UserCardBenefit.builder()
-                        .userId(userId)
-                        .benefitTemplateId(benefitInfo.getBenefitId())
-                        .year(currentYear)
-                        .month(currentMonth)
-                        .spendingTier((short) 0)
-                        .benefitCount((short) 0)
-                        .benefitAmount(0)
-                        .updateDate(LocalDateTime.now())
-                        .build());
+                UserCardBenefit userCardBenefit = optionalUserCardBenefit.orElseGet(() -> {
+                    log.info("UserCardBenefit 없음 - userId: {}, benefitTemplateId: {}, year: {}, month: {}. 기본값 생성.",
+                            userId, benefitInfo.getBenefitId(), currentYear, currentMonth);
+                    return UserCardBenefit.builder()
+                            .userId(userId)
+                            .benefitTemplateId(benefitInfo.getBenefitId())
+                            .year(currentYear)
+                            .month(currentMonth)
+                            .spendingTier((short) 0)
+                            .benefitCount((short) 0)
+                            .benefitAmount(0)
+                            .updateDate(LocalDateTime.now())
+                            .build();
+                });
+
                 int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
+                log.info("카드 id {} - 혜택 id {}: discountAmount={}, spendingTier={}, benefitCount={}, benefitAmount={}",
+                        card.getCardId(), benefitInfo.getBenefitId(), discountAmount,
+                        userCardBenefit.getSpendingTier(), userCardBenefit.getBenefitCount(), userCardBenefit.getBenefitAmount());
+
                 CalculatedBenefitDto calculated = CalculatedBenefitDto.builder()
                         .myCardId(card.getCardId())
                         .permanentToken(card.getPermanentToken())
@@ -81,46 +94,64 @@ public class BenefitService {
             }
         }
         if (!benefitQueue.isEmpty()) {
-            return benefitQueue.poll(); // 최대 혜택 카드 반환
+            CalculatedBenefitDto bestBenefit = benefitQueue.poll();
+            log.info("최종 추천 혜택 선택 - myCardId: {}, permanentToken: {}, benefitId: {}, benefitAmount: {}, benefitType: {}",
+                    bestBenefit.getMyCardId(), bestBenefit.getPermanentToken(), bestBenefit.getBenefitId(),
+                    bestBenefit.getBenefitAmount(), bestBenefit.getBenefitType());
+            return bestBenefit;
         }
-        log.error("혜택 계산 실패. 로직이 끝났으나 결과값 없음");
+        log.error("추천 혜택 계산 실패 - 결과값 없음.");
         return null;
     }
 
-    // 실제 카드의 혜택 계산 (제공된 영구토큰을 기반으로 단일 카드에 대해 계산)
+    // 실제 카드 혜택 계산 (영구토큰을 기반으로 단일 카드에 대해 계산)
     public CalculatedBenefitDto calculateRealBenefit(int userId, int amount, MerchantJoinDto merchantJoinDto, MyCard myCard) {
+        if (myCard.getPermanentToken() == null) {
+            log.info("실제 혜택 계산 오류 - 카드 id {}의 영구 토큰이 없음.", myCard.getCardId());
+        }
         int currentYear = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
 
-        // 해당 카드에 적용 가능한 혜택 정보 조회
         List<BenefitInfo> benefitInfos = benefitRepository.findBenefitsByMerchantFilter(
                 myCard.getCardTemplateId(),
                 merchantJoinDto.getCategoryId(),
                 merchantJoinDto.getSubCategoryId(),
                 merchantJoinDto.getMerchantId()
         );
-        // 최대 혜택 계산을 위한 우선순위 큐 생성
+        log.info("실제 혜택 계산 - 카드 id {}에 적용 가능한 혜택 count: {}", myCard.getCardId(), benefitInfos.size());
+
         Queue<CalculatedBenefitDto> benefitQueue = new PriorityQueue<>(Comparator.comparingInt(CalculatedBenefitDto::getBenefitAmount).reversed());
-        // 각 혜택에 대해 할인 금액 계산 수행
         for (BenefitInfo benefitInfo : benefitInfos) {
-            if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) continue; // 쿠폰은 제외
+            if ("쿠폰".equals(benefitInfo.getBenefitType().toString())) {
+                log.debug("실제 혜택 계산 - 혜택 id {}는 쿠폰으로 제외.", benefitInfo.getBenefitId());
+                continue;
+            }
             Optional<UserCardBenefit> optionalUserCardBenefit = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
                     userId,
                     benefitInfo.getBenefitId(),
                     currentYear,
                     currentMonth
             );
-            UserCardBenefit userCardBenefit = optionalUserCardBenefit.orElseGet(() -> UserCardBenefit.builder()
-                    .userId(userId)
-                    .benefitTemplateId(benefitInfo.getBenefitId())
-                    .year(currentYear)
-                    .month(currentMonth)
-                    .spendingTier((short) 0)
-                    .benefitCount((short) 0)
-                    .benefitAmount(0)
-                    .updateDate(LocalDateTime.now())
-                    .build());
+            UserCardBenefit userCardBenefit = optionalUserCardBenefit.orElseGet(() -> {
+                log.info("실제 혜택 계산 - UserCardBenefit 없음 - userId: {}, benefitTemplateId: {}, year: {}, month: {}. 기본값 생성.",
+                        userId, benefitInfo.getBenefitId(), currentYear, currentMonth);
+                return UserCardBenefit.builder()
+                        .userId(userId)
+                        .benefitTemplateId(benefitInfo.getBenefitId())
+                        .year(currentYear)
+                        .month(currentMonth)
+                        .spendingTier((short) 0)
+                        .benefitCount((short) 0)
+                        .benefitAmount(0)
+                        .updateDate(LocalDateTime.now())
+                        .build();
+            });
+
             int discountAmount = calculateBenefitAmount(benefitInfo, amount, userCardBenefit);
+            log.info("실제 혜택 계산 - 카드 id {} - 혜택 id {}: discountAmount={}, spendingTier={}, benefitCount={}, benefitAmount={}",
+                    myCard.getCardId(), benefitInfo.getBenefitId(), discountAmount,
+                    userCardBenefit.getSpendingTier(), userCardBenefit.getBenefitCount(), userCardBenefit.getBenefitAmount());
+
             CalculatedBenefitDto calculated = CalculatedBenefitDto.builder()
                     .myCardId(myCard.getCardId())
                     .permanentToken(myCard.getPermanentToken())
@@ -131,51 +162,65 @@ public class BenefitService {
             benefitQueue.add(calculated);
         }
         if (!benefitQueue.isEmpty()) {
-            return benefitQueue.poll(); // 최대 혜택 계산 결과 반환
+            CalculatedBenefitDto bestBenefit = benefitQueue.poll();
+            log.info("실제 혜택 계산 완료 - 선택된 혜택: myCardId: {}, permanentToken: {}, benefitId: {}, benefitAmount: {}, benefitType: {}",
+                    bestBenefit.getMyCardId(), bestBenefit.getPermanentToken(), bestBenefit.getBenefitId(),
+                    bestBenefit.getBenefitAmount(), bestBenefit.getBenefitType());
+            return bestBenefit;
         }
-        log.error("실제 카드 혜택 계산 실패. 결과값이 없음");
+        log.error("실제 혜택 계산 실패 - 결과값 없음.");
         return null;
     }
 
-    // 혜택 금액 계산 메서드 (사용자 카드 혜택 정보를 기반으로 할인 금액 산출)
+    // 할인 금액 계산 메서드 (사용자 카드 혜택 정보를 기반)
     public int calculateBenefitAmount(BenefitInfo benefitInfo, int amount, UserCardBenefit userCardBenefit) {
-        // 최소 실적 미달인 경우 할인 없음
-        if (userCardBenefit.getSpendingTier() == 0) return 0;
+        if (userCardBenefit == null) {
+            log.info("할인 금액 계산 오류 - UserCardBenefit 객체가 null");
+            return 0;
+        }
+        if (userCardBenefit.getSpendingTier() == 0) {
+            log.debug("할인 금액 계산 - spendingTier 0, 할인 없음.");
+            return 0;
+        }
         double benefit = 0.0;
         int spendingTier = userCardBenefit.getSpendingTier();
-        // 단일 또는 구간 조건일 경우
         if (benefitInfo.getBenefitConditionType() == 4 || benefitInfo.getBenefitConditionType() == 1) {
             if (benefitInfo.getBenefitsBySection() != null && benefitInfo.getBenefitsBySection().size() >= spendingTier) {
+                log.debug("할인 금액 계산 - 단일 또는 구간 조건, spendingTier: {}", spendingTier);
                 benefit = benefitInfo.getBenefitsBySection().get(spendingTier - 1);
             }
         }
-        // 건당 결제 금액 조건일 경우
         if (benefitInfo.getBenefitConditionType() == 2) {
             benefit = calculateBenefit(benefitInfo, amount);
         }
-        // 복합 조건일 경우
         if (benefitInfo.getBenefitConditionType() == 3 && spendingTier >= 1) {
             benefit = calculateBenefit(benefitInfo, amount);
         }
-        if (benefit == 0) return 0; // 할인 혜택이 0이면 바로 반환
-        // 사용 제한(횟수) 체크
-        if (benefitInfo.getBenefitUsageLimit() != null && benefitInfo.getBenefitUsageLimit().size() >= spendingTier) {
-            if (userCardBenefit.getBenefitCount() >= benefitInfo.getBenefitUsageLimit().get(spendingTier - 1))
-                return 0;
+        if (benefit == 0) {
+            log.debug("할인 금액 계산 - benefit 0 반환.");
+            return 0;
         }
-        // 사용 제한(금액) 체크
+        if (benefitInfo.getBenefitUsageLimit() != null && benefitInfo.getBenefitUsageLimit().size() >= spendingTier) {
+            if (userCardBenefit.getBenefitCount() >= benefitInfo.getBenefitUsageLimit().get(spendingTier - 1)) {
+                log.debug("할인 금액 계산 - 사용 제한(횟수) 초과.");
+                return 0;
+            }
+        }
         int totalAbleBenefitAmount = Integer.MAX_VALUE;
         if (benefitInfo.getBenefitUsageAmount() != null && benefitInfo.getBenefitUsageAmount().size() >= spendingTier) {
             totalAbleBenefitAmount = benefitInfo.getBenefitUsageAmount().get(spendingTier - 1);
         }
-        if (userCardBenefit.getBenefitAmount() >= totalAbleBenefitAmount) return 0;
+        if (userCardBenefit.getBenefitAmount() >= totalAbleBenefitAmount) {
+            log.debug("할인 금액 계산 - 사용 제한(금액) 초과.");
+            return 0;
+        }
         int result;
-        // 할인 타입에 따라 최종 할인 금액 산출
         if (benefitInfo.getDiscountType() == DiscountType.AMOUNT) {
             result = Math.min((int) benefit, totalAbleBenefitAmount - userCardBenefit.getBenefitAmount());
         } else {
             result = Math.min((int) (amount * benefit), totalAbleBenefitAmount - userCardBenefit.getBenefitAmount());
         }
+        log.debug("할인 금액 계산 완료 - result: {}", result);
         return result;
     }
 
@@ -194,22 +239,22 @@ public class BenefitService {
                 benefit = benefitInfo.getBenefitsBySection().get(rangeIdx - 1);
             }
         }
+        log.debug("구간 기준 할인 계산 - rangeIdx: {}, benefit: {}", rangeIdx, benefit);
         return benefit;
     }
 
     // 이번 달 카드 혜택 업데이트
-    public void updateUserCardBenefit(int userId, int benefitTemplateId, int receivedBenefitAmount){
-        // 현재 연도와 월 추출
+    public void updateUserCardBenefit(int userId, int benefitTemplateId, int receivedBenefitAmount) {
         LocalDate now = LocalDate.now();
         int currentYear = now.getYear();
         int currentMonth = now.getMonthValue();
 
-        // 이번 달 기존 혜택 현황 조회 (Optional 처리)
         Optional<UserCardBenefit> optionalExisting = userCardBenefitRepository
                 .findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId, benefitTemplateId, currentYear, currentMonth);
 
         if (optionalExisting.isEmpty()) {
-            // 신규 생성: 최초 혜택 횟수는 1, 혜택 금액은 이번 결제 금액
+            log.info("updateUserCardBenefit - 신규 생성: userId={}, benefitTemplateId={}, year={}, month={}, receivedBenefitAmount={}",
+                    userId, benefitTemplateId, currentYear, currentMonth, receivedBenefitAmount);
             UserCardBenefit newBenefit = UserCardBenefit.builder()
                     .userId(userId)
                     .benefitTemplateId(benefitTemplateId)
@@ -222,8 +267,9 @@ public class BenefitService {
                     .build();
             userCardBenefitRepository.save(newBenefit);
         } else {
-            // 기존 데이터 업데이트: benefitCount +1, benefitAmount에 이번 결제 금액 누적
             UserCardBenefit existing = optionalExisting.get();
+            log.info("updateUserCardBenefit - 업데이트 전: userId={}, benefitTemplateId={}, benefitCount={}, benefitAmount={}",
+                    existing.getUserId(), existing.getBenefitTemplateId(), existing.getBenefitCount(), existing.getBenefitAmount());
             UserCardBenefit updatedBenefit = UserCardBenefit.builder()
                     .userCardBenefitId(existing.getUserCardBenefitId())
                     .userId(existing.getUserId())
@@ -235,6 +281,8 @@ public class BenefitService {
                     .year(existing.getYear())
                     .month(existing.getMonth())
                     .build();
+            log.info("updateUserCardBenefit - 업데이트 후: userId={}, benefitTemplateId={}, benefitCount={}, benefitAmount={}",
+                    updatedBenefit.getUserId(), updatedBenefit.getBenefitTemplateId(), updatedBenefit.getBenefitCount(), updatedBenefit.getBenefitAmount());
             userCardBenefitRepository.save(updatedBenefit);
         }
     }

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class CreateTransactionRequestToCardsaDTO {
-    String permanentToken;
+    String token;
     int amount;
     String merchantName;
     //discount, mileage 2개중 하나

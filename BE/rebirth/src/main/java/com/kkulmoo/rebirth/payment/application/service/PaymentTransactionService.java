@@ -48,13 +48,28 @@ public class PaymentTransactionService {
     private final MyDataService myDataService;
     private final ReportService reportService;
 
-    // 결제 프로세스 전체를 처리하는 메서드
     public CardTransactionDTO processPayment(int userId, String requestToken, String merchantName, int amount) {
-        // 가맹점 정보 조회
+        log.info("processPayment 시작 - userId: {}, merchantName: {}, amount: {}, requestToken: {}",
+                userId, merchantName, amount, requestToken);
+
         MerchantJoinDto merchantJoinDto = merchantJoinRepository.findMerchantJoinDataByMerchantName(merchantName);
-        // 추천 카드 혜택 정보 계산 (매 결제마다 추천 기록을 위해 호출)
+        log.info("가맹점 정보 - categoryId: {}, subCategoryId: {}, merchantId: {}",
+                merchantJoinDto.getCategoryId(),
+                merchantJoinDto.getSubCategoryId(),
+                merchantJoinDto.getMerchantId());
+
+
+        // 추천 카드 혜택 정보 계산
         CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto);
-        // 기본적으로 benefitType과 benefitAmount는 추천 혜택으로 설정
+        if (recommendedBenefit != null) {
+            log.info("추천 혜택 - myCardId: {}, permanentToken: {}, benefitId: {}, benefitAmount: {}, benefitType: {}",
+                    recommendedBenefit.getMyCardId(), recommendedBenefit.getPermanentToken(),
+                    recommendedBenefit.getBenefitId(), recommendedBenefit.getBenefitAmount(), recommendedBenefit.getBenefitType());
+        } else {
+            log.warn("추천 혜택 정보가 없음.");
+        }
+
+        // 기본 혜택 정보 적용
         MyCard myCardDto = (recommendedBenefit != null) ?
                 cardRepository.findByPermanentToken(recommendedBenefit.getPermanentToken())
                         .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다.")) : null;
@@ -63,45 +78,56 @@ public class PaymentTransactionService {
         String permanentToken = (recommendedBenefit != null) ? recommendedBenefit.getPermanentToken() : requestToken;
         Integer benefitId = (recommendedBenefit != null) ? recommendedBenefit.getBenefitId() : null;
 
-        CalculatedBenefitDto realBenefit = null; // 실제 카드 혜택 정보를 담을 객체
-
-        // 추천 카드 결제가 아닌 경우 실제 카드의 혜택 계산 로직 수행
-        // 카드 정보 조회
-        if (!requestToken.equals("rebirth")) {
-            // 카드 정보 조회
+        // 추천 카드 결제가 아닌 경우 실제 카드 혜택 계산
+        CalculatedBenefitDto realBenefit = null;
+        if (!"rebirth".equals(requestToken)) {
             myCardDto = cardRepository.findByPermanentToken(requestToken)
                     .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다."));
-            // 실제 카드 혜택 계산을 위해 BenefitService의 calculateRealBenefit 호출
             realBenefit = benefitService.calculateRealBenefit(userId, amount, merchantJoinDto, myCardDto);
             if (realBenefit != null) {
-                // 실제 카드 혜택 정보를 적용
+                log.info("실제 혜택 - myCardId: {}, permanentToken: {}, benefitId: {}, benefitAmount: {}, benefitType: {}",
+                        realBenefit.getMyCardId(), realBenefit.getPermanentToken(),
+                        realBenefit.getBenefitId(), realBenefit.getBenefitAmount(), realBenefit.getBenefitType());
                 benefitType = realBenefit.getBenefitType();
                 benefitAmount = realBenefit.getBenefitAmount();
                 permanentToken = realBenefit.getPermanentToken();
-                // benefitId는 기본적으로 추천 혜택의 benefitId를 사용하되, 실제 혜택이 있으면(원래 로직과 동일) 업데이트할 수 있음
                 benefitId = realBenefit.getBenefitId();
+            } else {
+                log.warn("실제 혜택 정보가 없음. 추천 혜택 사용.");
             }
         }
 
-        // 카드사 결제 요청 데이터 구성 (혜택 정보가 null이면 기본값으로 전송)
-        CreateTransactionRequestToCardsaDTO request = CreateTransactionRequestToCardsaDTO.builder()
-                .permanentToken(permanentToken)
+        // 최종 요청 페이로드 구성
+        log.info("카드사 요청 페이로드 - permanentToken: {}", permanentToken);
+        log.info("카드사 요청 페이로드 - amount: {}", amount);
+        log.info("카드사 요청 페이로드 - merchantName: {}", merchantName);
+        log.info("카드사 요청 페이로드 - benefitId: {}", benefitId);
+        log.info("카드사 요청 페이로드 - benefitType: {}", benefitType.name());
+        log.info("카드사 요청 페이로드 - benefitAmount: {}", benefitAmount);
+        log.info("카드사 요청 페이로드 - createdAt: {}", LocalDateTime.now());
+        CreateTransactionRequestToCardsaDTO transactionRequest = CreateTransactionRequestToCardsaDTO.builder()
+                .token(permanentToken)
                 .amount(amount)
                 .merchantName(merchantName)
-                .benefitId(benefitId) // 혜택 정보가 없으면 null
-                .benefitType(benefitType.name()) // 혜택 정보가 없으면 "DISCOUNT"
-                .benefitAmount(benefitAmount) // 혜택 정보가 없으면 0
+                .benefitId(benefitId)
+                .benefitType(benefitType.name())
+                .benefitAmount(benefitAmount)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         // 카드사에 결제 요청 후 결과 수신
-        CardTransactionDTO cardTransactionDTO = transactionToCardsa(request);
+        CardTransactionDTO cardTransactionDTO = transactionToCardsa(transactionRequest);
+        if (cardTransactionDTO != null) {
+            log.info("카드사 응답 - transactionId: {}, status: {}",
+                    cardTransactionDTO.getApprovalCode(), cardTransactionDTO.getCreatedAt());
+        } else {
+            log.warn("카드사 응답이 null입니다.");
+        }
 
-        // 추천 카드가 아닌 경우 결제 피드백 정보를 업데이트
-        if (!requestToken.equals("rebirth")) {
+        // 결제 피드백 정보 업데이트
+        if (!"rebirth".equals(requestToken)) {
             PreBenefit preBenefit = PreBenefit.builder()
                     .userId(userId)
-                    // 실제 카드 혜택 정보가 없으면 추천 혜택 정보도 없을 수 있으므로, 추가 null 체크 필요함
                     .paymentCardId(realBenefit != null
                             ? realBenefit.getMyCardId()
                             : (recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null))
@@ -120,19 +146,17 @@ public class PaymentTransactionService {
             savePreBenefit(preBenefit);
         }
 
-        // 마이데이터 카드 내역 가져오기
+        // 마이데이터 호출 및 혜택 현황 업데이트
         User user = userRepository.findByUserId(new UserId(userId));
+        log.info("유저 정보 - userId: {}, userName: {}", user.getUserId(), user.getUserName());
         List<MyCard> myCards = Arrays.asList(myCardDto);
         myDataService.loadMyTransactionByCards(user, myCards);
-
-        // 혜택 현황 관련 테이블에 업데이트 하기
         benefitService.updateUserCardBenefit(userId, benefitId, benefitAmount);
-
-        // 리포트 업데이트 하기
         reportService.updateMonthlyTransactionSummary(userId);
 
         return cardTransactionDTO;
     }
+
 
     // 카드사에 결제 요청하는 내부 메서드
     private CardTransactionDTO transactionToCardsa(CreateTransactionRequestToCardsaDTO request) {
@@ -142,6 +166,11 @@ public class PaymentTransactionService {
     // 결제 피드백 정보를 저장하는 트랜잭션 처리 메서드
     @Transactional
     public PreBenefit savePreBenefit(PreBenefit preBenefit) {
+        log.info("결제 피드백 저장 - userId: {}, paymentCardId: {}, recommendedCardId: {}, amount: {}, ifBenefitType: {}, ifBenefitAmount: {}, realBenefitType: {}, realBenefitAmount: {}, merchantName: {}",
+                preBenefit.getUserId(), preBenefit.getPaymentCardId(), preBenefit.getRecommendedCardId(), preBenefit.getAmount(),
+                preBenefit.getIfBenefitType(), preBenefit.getIfBenefitAmount(), preBenefit.getRealBenefitType(), preBenefit.getRealBenefitAmount(),
+                preBenefit.getMerchantName());
+
         return preBenefitRepository.findByUserId(preBenefit.getUserId())
                 .map(existing -> PreBenefit.builder()
                         .userId(existing.getUserId()) // 기존 사용자 ID 유지
