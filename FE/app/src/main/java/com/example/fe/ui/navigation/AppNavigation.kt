@@ -34,6 +34,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem

@@ -1,5 +1,3 @@
-
-
 package com.example.fe.ui.screens.onboard.viewmodel
 
 import android.content.Context
@@ -16,17 +14,14 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.fe.config.NetworkClient
+import com.example.fe.data.network.NetworkClient
 import com.example.fe.data.model.auth.SignupRequest
-import com.example.fe.data.model.auth.registPatternRequest
-import com.example.fe.data.network.api.AuthApiService
-
+import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
 import com.google.gson.Gson
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import kotlinx.coroutines.runBlocking
 import kotlin.String
 
 
@@ -44,7 +39,7 @@ class OnboardingViewModel(
         private val HAS_BIOMETRIC_AUTH = booleanPreferencesKey("has_biometric_auth")
         private val HAS_PATTERN_AUTH = booleanPreferencesKey("has_pattern_auth")
         private val HAS_PIN_AUTH = booleanPreferencesKey("has_pin_auth")
-        private val USER_TOKEN = stringPreferencesKey("user_token")
+        internal val USER_TOKEN = stringPreferencesKey("user_token")
         private val USER_NAME = stringPreferencesKey("user_name")
         private val USER_PIN = stringPreferencesKey("user_pin")
         private val USER_PATTERN = stringPreferencesKey("user_pattern")
@@ -82,7 +77,6 @@ class OnboardingViewModel(
                 hasPinAuth = preferences[HAS_PIN_AUTH] ?: false
                 userToken = preferences[USER_TOKEN] ?: ""
                 userName = preferences[USER_NAME] ?: ""
-
                 userPin = preferences[USER_PIN] ?: ""
                 userPattern = preferences[USER_PATTERN]?.let {
                     gson.fromJson(it, Array<Int>::class.java).toList()
@@ -144,19 +138,25 @@ class OnboardingViewModel(
                 )
 
                 if (!signupResponse.isSuccessful) {
+                    Log.d("AuthToken","${signupResponse.headers()}")
                     throw Exception("회원가입 실패: ${signupResponse.message()}")
                 }
 
-                val token = signupResponse.body()?.data.toString()
+                // 헤더에서 토큰 꺼내기
+                val token = signupResponse.headers()["Authorization"]?: throw Exception("토큰이 없습니다.")
+
+                Log.d("AuthToken","${token}")
+                Log.d("AuthToken","${signupResponse.headers()}")
+
+                // 토큰 저장 및 Interceptor 초기화
+                userToken = token
+                userName = name
+
 
                 context.dataStore.edit { preferences ->
                     preferences[USER_NAME] = name
                     preferences[USER_TOKEN] = token
                 }
-
-                userToken = token
-                userName = name
-
                 // PIN 로컬 저장도 동시에
                 setUserPin(true)
 
@@ -171,7 +171,6 @@ class OnboardingViewModel(
 
     // 서버에 패턴 등록 + 로컬 저장
     fun registerPattern(
-        token: String,
         pattern: List<Int>,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
@@ -181,15 +180,14 @@ class OnboardingViewModel(
                 isLoading = true
                 errorMessage = ""
 
+                Log.d("AuthPattern","${pattern.joinToString("")}")
                 val response = authApiService.registPattern(
-                    token = token,
-                    request = registPatternRequest(
-                        deviceId = deviceInfoManager.getDeviceId().toString(),
-                        patternNumbers = pattern.joinToString("")
-                    )
+                    patternNumbers = pattern.joinToString("")
+
                 )
 
                 if (!response.isSuccessful) {
+                    Log.d("AuthPattern","${response.message()}")
                     throw Exception("패턴 등록 실패: ${response.message()}")
                 }
 
@@ -203,6 +201,7 @@ class OnboardingViewModel(
             }
         }
     }
+
 
     fun setBiometricAuthState(value: Boolean) {
         hasBiometricAuth = value
@@ -221,6 +220,60 @@ class OnboardingViewModel(
             }
         }
     }
+
+    // 마이데이터 로드 함수
+    fun loadAllMyData(
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                isLoading = true
+                errorMessage = ""
+
+                val result = authApiService.loadAllMyData()
+                if (result.isSuccessful) {
+                    onSuccess()
+                } else {
+                    Log.d("AuthloadmyData","데이터 로드시 ${result}")
+
+                    throw Exception("마이데이터 로드 실패")
+                }
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "마이데이터 로드 중 오류 발생"
+                onFailure(errorMessage)
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    // 리포트 생성 함수
+    fun generateReportFromMyData(
+        userId: Int,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                isLoading = true
+                errorMessage = ""
+
+                val result = authApiService.generateReportFromMyData(userId)
+                if (result.isSuccessful) {
+                    onSuccess()
+                } else {
+                    throw Exception("리포트 생성 실패")
+                }
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "리포트 생성 중 오류 발생"
+                onFailure(errorMessage)
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
 
     // 로그아웃
     fun logout() {
@@ -248,6 +301,16 @@ class OnboardingViewModel(
     }
 }
 
+class AppTokenProvider(private val context: Context) : TokenProvider {
+    override fun getToken(): String {
+        // DataStore는 suspend라서 동기적으로 값을 못 받아옴.
+        // 그래서 runBlocking으로 일시적으로 블로킹해서 값을 가져와야 함.
+        return runBlocking {
+            val preferences = context.dataStore.data.first()
+            preferences[OnboardingViewModel.USER_TOKEN] ?: ""
+        }
+    }
+}
 /**
  * ViewModel 생성을 위한 Factory 클래스
  */

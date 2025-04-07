@@ -130,6 +130,17 @@ fun AdditionalSecurityScreen(
                             if (savedPattern != null && pattern.size == savedPattern!!.size &&
                                 pattern.zip(savedPattern!!).all { (a, b) -> a == b }) {
                                 // 패턴이 일치하면 저장하고 완료 화면으로 이동
+
+                                viewModel.registerPattern(
+                                    pattern = savedPattern!!,
+                                    onSuccess = {
+                                        currentStep = AdditionalSecurityStep.COMPLETE
+                                    },
+                                    onFailure = { error ->
+                                        Log.d("AuthPattern","${error}")
+                                        Toast.makeText(context, "패턴 등록 중 오류 발생: $error", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
                                 viewModel.setUserPattern(pattern)
                                 currentStep = AdditionalSecurityStep.COMPLETE
                             } else {

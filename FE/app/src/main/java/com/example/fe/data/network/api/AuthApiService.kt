@@ -14,24 +14,30 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
-
 interface AuthApiService {
 
-    //1차 회원가입
+    // 1차 회원가입
     @POST("api/auth/signup")
     suspend fun signup(@Body signupRequest: SignupRequest): Response<ApiResponseDTO<Unit>>
 
-    //패턴 등록 시
+    // 패턴 등록 - 토큰은 이제 Interceptor에서 자동 추가됨
     @POST("api/auth/registpattern")
     suspend fun registPattern(
-        @Header("Authorization") token: String, // JWT 토큰
-        @Body request: registPatternRequest // 요청 바디
-    ): Response<ApiResponseDTO<Unit>> // Unit은 Void에 해당
+        @Body patternNumbers: String
+    ): Response<ApiResponseDTO<Unit>>
 
-    //로그인
+
+    @POST("api/user/mydata/all")
+    suspend fun loadAllMyData(): Response<ApiResponseDTO<Unit>>
+
+    @POST("api/report/frommydata")
+    suspend fun generateReportFromMyData(
+        @Query("userId") userId: Int
+    ): Response<ApiResponseDTO<Unit>>
+
+    // 로그인
     @POST("api/auth/login")
     suspend fun login(
-        @Body request: userLoginRequest // 요청 바디
-    ): Response<ApiResponseDTO<Unit>> // Unit은 Void에 해당
-
+        @Body request: userLoginRequest
+    ): Response<ApiResponseDTO<Unit>>
 }

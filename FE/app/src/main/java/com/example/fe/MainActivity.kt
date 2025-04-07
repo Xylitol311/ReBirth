@@ -20,6 +20,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.fe.data.network.Interceptor.TokenProvider
+import com.example.fe.data.network.NetworkClient
 import com.example.fe.ui.navigation.AppNavigation
 import com.example.fe.ui.navigation.OnboardingNavHost
 
@@ -27,13 +29,16 @@ import com.example.fe.ui.screens.splash.SplashScreen
 
 import com.example.fe.ui.navigation.LoginNavigation
 import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
+import com.example.fe.ui.screens.onboard.viewmodel.AppTokenProvider
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModelFactory
 
 class MainActivity : FragmentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+        val tokenProvider = AppTokenProvider(applicationContext)
+        NetworkClient.init(tokenProvider)
         // 상태바 색상 강제 설정
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
