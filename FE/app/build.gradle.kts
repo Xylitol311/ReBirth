@@ -22,11 +22,16 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isMinifyEnabled = false
+            applicationIdSuffix = ".debug"
         }
     }
     compileOptions {
@@ -35,9 +40,15 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn", "-Xjvm-default=all")
     }
     buildFeatures {
         compose = true
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 }
 
@@ -90,7 +101,12 @@ dependencies {
     
     // 권한 요청을 위한 라이브러리
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+    
+    // Coil 이미지 로딩 라이브러리 업데이트
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-gif:2.5.0")
+    implementation("io.coil-kt:coil-svg:2.5.0")
+    // coil-network-okhttp는 Coil 2.5.0에서 별도 라이브러리로 제공되지 않음
 
     // ML Kit 카드 스캐너
     implementation("com.google.mlkit:text-recognition:16.0.0")
@@ -112,4 +128,7 @@ dependencies {
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Lottie 애니메이션
+    implementation("com.airbnb.android:lottie-compose:6.4.0")
 }
