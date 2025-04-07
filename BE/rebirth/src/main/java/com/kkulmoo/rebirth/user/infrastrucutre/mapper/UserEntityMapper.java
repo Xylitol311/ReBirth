@@ -29,6 +29,7 @@ public class UserEntityMapper {
                 .createdAt(userEntity.getCreatedAt())
                 .updatedAt(userEntity.getUpdatedAt())
                 .deletedAt(userEntity.getDeletedAt())
+                .averageMonthlyIncome(userEntity.getAverageMonthlyIncome())
                 .bankLatestLoadDataAt(userEntity.getBankLatestLoadDataAt())
                 .bankAccounts(userEntity.getBankAccounts())
                 .build();
@@ -49,6 +50,7 @@ public class UserEntityMapper {
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .deletedAt(user.getDeletedAt())
+                .averageMonthlyIncome(user.getAverageMonthlyIncome())
                 .bankLatestLoadDataAt(user.getBankLatestLoadDataAt())
                 .bankAccounts(user.getBankAccounts())
                 .build();
