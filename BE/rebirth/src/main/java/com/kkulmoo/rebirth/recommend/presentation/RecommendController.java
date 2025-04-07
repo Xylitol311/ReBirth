@@ -2,6 +2,7 @@ package com.kkulmoo.rebirth.recommend.presentation;
 
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ResponseDTO;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
+import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.recommend.application.RecommendService;
 import com.kkulmoo.rebirth.recommend.domain.dto.request.SearchParameterDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardDTO;
@@ -34,7 +35,7 @@ public class RecommendController {
     }
 
     @GetMapping("/category")
-    public ResponseEntity<ResponseDTO> top3ForCategory(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> top3ForCategory(@JwtUserId Integer userId) {
 
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
