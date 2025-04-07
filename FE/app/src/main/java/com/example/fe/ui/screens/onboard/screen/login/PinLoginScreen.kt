@@ -8,12 +8,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.example.fe.ui.screens.onboard.auth.PinLoginAuth
+import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
 import com.example.fe.ui.screens.onboard.screen.setup.PinStep
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PinLoginScreen(
-    navController: NavController,
+    deviceInfoManager: DeviceInfoManager,
     viewModel: OnboardingViewModel,
     onLoginSuccess: () -> Unit
 ) {
@@ -27,6 +28,7 @@ fun PinLoginScreen(
                 onSuccessfulLogin = {
                     onLoginSuccess()
                 },
+                deviceInfoManager = deviceInfoManager,
                 viewModel = viewModel
             )
         }

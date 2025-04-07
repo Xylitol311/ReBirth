@@ -101,6 +101,7 @@ fun MainContent() {
             
             if (!isLoginSuccessful) {
                 LoginNavigation(
+                    deviceInfoManager = deviceInfoManager,
                     navController = navController,
                     viewModel = viewModel,
                     startDestination = startDestination,

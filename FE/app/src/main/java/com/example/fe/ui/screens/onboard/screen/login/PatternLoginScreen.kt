@@ -17,18 +17,21 @@ import androidx.navigation.NavController
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
 import com.example.fe.ui.screens.onboard.auth.PatternLockView
+import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
 import com.example.fe.ui.screens.onboard.screen.setup.security.AdditionalSecurityStep
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatternLoginScreen(
     navController: NavController,
     viewModel: OnboardingViewModel,
+    deviceInfoManager: DeviceInfoManager,
     onLoginSuccess: () -> Unit
 ) {
     Scaffold {
         Box(modifier = Modifier.padding(it)) {
             PatternLoginContent(
                 viewModel = viewModel,
+                deviceInfoManager = deviceInfoManager,
                 onLoginSuccess = onLoginSuccess
             )
         }
@@ -38,10 +41,10 @@ fun PatternLoginScreen(
 @Composable
 fun PatternLoginContent(
     viewModel: OnboardingViewModel,
+    deviceInfoManager: DeviceInfoManager,
     onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
-    val savedPattern by remember { mutableStateOf(viewModel.getUserPattern()) }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -54,27 +57,30 @@ fun PatternLoginContent(
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        // 실제 프로젝트의 PatternLockView 사용
         PatternLockView(
             modifier = Modifier
                 .size(300.dp)
                 .padding(16.dp),
             patternSize = 3,
             onPatternComplete = { pattern ->
-                if (savedPattern != null && pattern.size == savedPattern.size &&
-                    pattern.zip(savedPattern).all { (a, b) -> a == b }) {
-                    onLoginSuccess()
-                } else {
-                    Toast.makeText(
-                        context,
-                        "패턴이 일치하지 않습니다",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+
+                val patternString = pattern.joinToString("") // 숫자 리스트 → String 변환
+                Log.d("AuthLoginPattern","${patternString}")
+                viewModel.login(
+                    type = "PATTERN",
+                    number = patternString,
+                    phoneSerialNumber = deviceInfoManager.getDeviceId(),
+                    onSuccess = {
+                        Log.d("AuthLoginPattern", "로그인 성공: $patternString")
+                        onLoginSuccess()
+                    },
+                    onFailure = { error ->
+                        Log.d("AuthLoginPattern", "${patternString}/${deviceInfoManager.getDeviceId()}")
+                        Log.e("AuthLoginPattern", "${error}")
+                        Toast.makeText(context, "로그인 실패: $error", Toast.LENGTH_SHORT).show()
+                    }
+                )
             }
         )
     }
 }
-
-// 기존 SimplePatternLockView 대신 실제 프로젝트의 PatternLockView 사용
-// (라이브러리 또는 직접 구현한 컴포넌트)

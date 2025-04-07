@@ -20,11 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.ui.screens.onboard.components.NumberPad
 import com.example.fe.ui.screens.onboard.components.PinDots
+import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
 
 @Composable
 fun PinLoginAuth(
+    deviceInfoManager: DeviceInfoManager,
     onSuccessfulLogin: () -> Unit,
     viewModel: OnboardingViewModel
 ) {
@@ -61,19 +63,20 @@ fun PinLoginAuth(
             },
             onComplete = {
                 if (pinInput.length == 6) {
-                    // 입력한 PIN이 정확한지 확인
-
-                    Log.d("PinInputTest","${pinInput} && ${correctPin}")
-                    if (pinInput == correctPin) {
-                        onSuccessfulLogin()
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "비밀번호가 일치하지 않습니다",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        pinInput = ""
-                    }
+                    viewModel.login(
+                        type = "PIN",
+                        number = pinInput,
+                        phoneSerialNumber = deviceInfoManager.getDeviceId(),
+                        onSuccess = {
+                            Log.d("PinInputTest", "로그인 성공: $pinInput")
+                            onSuccessfulLogin()
+                        },
+                        onFailure = { error ->
+                            Log.e("AuthLoginPin","${error}")
+                            Toast.makeText(context, "로그인 실패: $error", Toast.LENGTH_SHORT).show()
+                            pinInput = ""
+                        }
+                    )
                 }
             }
         )

@@ -134,6 +134,7 @@ fun AdditionalSecurityScreen(
                                 viewModel.registerPattern(
                                     pattern = savedPattern!!,
                                     onSuccess = {
+                                        Log.d("AuthPattern","패턴저장")
                                         currentStep = AdditionalSecurityStep.COMPLETE
                                     },
                                     onFailure = { error ->
@@ -141,7 +142,7 @@ fun AdditionalSecurityScreen(
                                         Toast.makeText(context, "패턴 등록 중 오류 발생: $error", Toast.LENGTH_SHORT).show()
                                     }
                                 )
-                                viewModel.setUserPattern(pattern)
+                                viewModel.setUserPattern()
                                 currentStep = AdditionalSecurityStep.COMPLETE
                             } else {
                                 // 패턴이 일치하지 않으면 다시 처음부터

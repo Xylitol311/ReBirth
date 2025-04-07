@@ -1,6 +1,7 @@
 package com.example.fe.data.network.api
 
 import com.example.fe.data.model.auth.ApiResponseDTO
+import com.example.fe.data.model.auth.ReportWithPatternDTO
 import com.example.fe.data.model.auth.SignupRequest
 import com.example.fe.data.model.auth.registPatternRequest
 import com.example.fe.data.model.auth.userLoginRequest
@@ -25,6 +26,14 @@ interface AuthApiService {
     suspend fun registPattern(
         @Body patternNumbers: String
     ): Response<ApiResponseDTO<Unit>>
+
+
+    @GET("api/report")
+    suspend fun getReportWithPattern(
+        @Query("userId") userId: String,
+        @Query("year") year: Int,
+        @Query("month") month: Int
+    ): Response<ApiResponseDTO<ReportWithPatternDTO>>
 
 
     @POST("api/user/mydata/all")
