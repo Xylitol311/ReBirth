@@ -8,6 +8,7 @@ import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class MyDataService {
 
     private final UserRepository userRepository;
@@ -53,6 +55,7 @@ public class MyDataService {
                 .map(MyCard::getCardUniqueNumber)
                 .collect(Collectors.toList());
 
+        log.info("cards size : {}", cards.size());
         // 추출한 카드 고유 번호 리스트를 이용해 거래내역 가져오기
         transactionService.getCardTransactionByMyData(user, cardUniqueNumbers);
 
