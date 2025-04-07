@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -52,6 +51,16 @@ public class MainPageController {
         List<ReportCategoryDTO> mainCategorySummaryList = mainPageService.getCategorySummary(userId);
         result.setData(mainCategorySummaryList);
 
+        return ResponseEntity.ok().body(result);
+    }
+
+    @GetMapping("/prebenefit")
+    public ResponseEntity<ResponseDTO> getPrebenefit(@JwtUserId Integer userId) {
+        // TODO: 직전 거래 혜택 정보 불러오기
+
+        ResponseDTO result = new ResponseDTO();
+        result.setSuccess(true);
+        result.setMessage("직전 거래 혜택 피드백 조회 완료(추천 카드로 결제한 경우 제외)");
         return ResponseEntity.ok().body(result);
     }
 }

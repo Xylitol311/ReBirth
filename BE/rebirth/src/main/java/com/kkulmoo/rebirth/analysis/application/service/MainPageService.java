@@ -2,11 +2,13 @@ package com.kkulmoo.rebirth.analysis.application.service;
 
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MainCardSummaryDTO;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.MainSummaryDTO;
+import com.kkulmoo.rebirth.analysis.domain.dto.response.PreBenefitDto;
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
 import com.kkulmoo.rebirth.analysis.infrastructure.entity.MonthlyTransactionSummaryEntity;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.MonthlyTransactionSummaryJpaRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
 import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardsJpaRepository;
+import com.kkulmoo.rebirth.payment.domain.repository.PreBenefitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,7 @@ public class MainPageService {
     private final MonthlyTransactionSummaryJpaRepository monthlyTransactionSummaryJpaRepository;
     private final ReportCardCategoriesJpaRepository reportCardCategoriesJpaRepository;
     private final ReportCardsJpaRepository reportCardsJpaRepository;
+    private final PreBenefitRepository preBenefitRepository;
 
     public MainSummaryDTO getSummary(Integer userId) {
         LocalDate today = LocalDate.now();
@@ -76,5 +79,11 @@ public class MainPageService {
         int month = today.getMonthValue();
 
         return reportCardCategoriesJpaRepository.getTotalSpendingByCategoryNameAndUser(userId, year, month);
+    }
+
+    public PreBenefitDto getPreBenefit(Integer userId){
+        preBenefitRepository.findByUserId(userId);
+
+        return null;
     }
 }
