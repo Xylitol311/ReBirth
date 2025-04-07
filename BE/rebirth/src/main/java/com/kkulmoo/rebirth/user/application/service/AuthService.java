@@ -36,6 +36,7 @@ public class AuthService {
                 .userCI(command.getUserCI())
                 .hashedPinNumber(hashedPinNumber)
                 .phoneNumber(command.getPhoneNumber())
+                .averageMonthlyIncome(Integer.parseInt(command.getAverageMonthlyIncome()))
                 .phoneSerialNumber(command.getPhoneSerialNumber())
                 .bankLatestLoadDataAt(LocalDateTime.of(2000, 1, 1, 0, 0, 0))
                 .bankAccounts(new ArrayList<>())

@@ -39,6 +39,7 @@ public class CardController {
         }
     }
 
+
     @GetMapping()
     public ResponseEntity<ApiResponseDTO<List<CardResponse>>> getAllCards(@JwtUserId Integer userId) {
         try {

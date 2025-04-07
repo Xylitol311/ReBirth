@@ -16,6 +16,7 @@ public class CreateUserCommand {
     private final String phoneSerialNumber;
     private final String birth;
     private final String userCI;
+    private final String averageMonthlyIncome;
 
     // DTO에서 Command로 변환하는 팩토리 메서드
     public static CreateUserCommand fromRequest(UserSignupRequest request, String userCI) {
@@ -24,6 +25,7 @@ public class CreateUserCommand {
                 .pinNumber(request.getPinNumber())
                 .phoneNumber(request.getPhoneNumber())
                 .birth(request.getBirth())
+                .averageMonthlyIncome(request.getAverageMonthlyIncome())
                 .phoneSerialNumber(request.getDeviceId())
                 .userCI(userCI)
                 .build();
