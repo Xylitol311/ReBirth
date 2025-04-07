@@ -38,13 +38,21 @@ public class UserRepositoryImpl implements UserRepository {
 		return userEntityMapper.toUser(savedEntity);
 	}
 
-
 	@Override
 	public User findByPhoneSerialNumber(String phoneSerialNumber) {
-		UserEntity userEntity = userJpaRepository.findByPhoneSerialNumber(phoneSerialNumber)
-				.orElseThrow(() -> new UserNotFoundException("핸드폰시리얼 넘버를 찾을 수 없습니다. ID: " + phoneSerialNumber));
+		UserEntity userEntity = userJpaRepository
+				.findFirstByPhoneSerialNumberOrderByUserIdDesc(phoneSerialNumber)
+				.orElseThrow(() -> new UserNotFoundException("핸드폰 시리얼 넘버를 찾을 수 없습니다. ID: " + phoneSerialNumber));
 		return userEntityMapper.toUser(userEntity);
 	}
+
+
+//	@Override
+//	public User findByPhoneSerialNumber(String phoneSerialNumber) {
+//		UserEntity userEntity = userJpaRepository.findByPhoneSerialNumber(phoneSerialNumber)
+//				.orElseThrow(() -> new UserNotFoundException("핸드폰시리얼 넘버를 찾을 수 없습니다. ID: " + phoneSerialNumber));
+//		return userEntityMapper.toUser(userEntity);
+//	}
 
 
 }
