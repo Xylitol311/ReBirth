@@ -23,10 +23,12 @@ import java.util.List;
 public class CardController {
     private final CardService cardService;
 
-    @GetMapping("/detail/{cardId}")
-    public ResponseEntity<ApiResponseDTO<CardDetailResponse>> getMyCardInfo(@PathVariable Integer cardId) {
+    @GetMapping("/detail/{cardId}/{year}/{month}")
+    public ResponseEntity<ApiResponseDTO<CardDetailResponse>> getMyCardInfo(@PathVariable Integer cardId,
+                                                                            @PathVariable Integer year,
+                                                                            @PathVariable Integer month) {
         try {
-            CardDetailResponse cardDetail = cardService.getCardDetail(new UserId(2), cardId);
+            CardDetailResponse cardDetail = cardService.getCardDetail(new UserId(2), cardId, year, month);
             return ResponseEntity.ok(ApiResponseDTO.success("카드 상세 정보 조회 성공", cardDetail));
         } catch (EntityNotFoundException e) {
             log.error("Card not found error", e);  // Add logging here
@@ -36,6 +38,7 @@ public class CardController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponseDTO.error("카드 정보 조회 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
+
 
     @GetMapping()
     public ResponseEntity<ApiResponseDTO<List<CardResponse>>> getAllCards(@JwtUserId Integer userId) {
