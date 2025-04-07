@@ -15,6 +15,7 @@ import com.kkulmoo.rebirth.user.application.service.MyDataService;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.domain.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,9 @@ public class PaymentTransactionService {
         // 추천 카드 혜택 정보 계산 (매 결제마다 추천 기록을 위해 호출)
         CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto);
         // 기본적으로 benefitType과 benefitAmount는 추천 혜택으로 설정
+        MyCard myCardDto = (recommendedBenefit != null) ?
+                cardRepository.findByPermanentToken(recommendedBenefit.getPermanentToken())
+                        .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다.")) : null;
         BenefitType benefitType = (recommendedBenefit != null) ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT;
         Integer benefitAmount = (recommendedBenefit != null) ? recommendedBenefit.getBenefitAmount() : 0;
         String permanentToken = (recommendedBenefit != null) ? recommendedBenefit.getPermanentToken() : requestToken;
@@ -62,9 +66,13 @@ public class PaymentTransactionService {
         CalculatedBenefitDto realBenefit = null; // 실제 카드 혜택 정보를 담을 객체
 
         // 추천 카드 결제가 아닌 경우 실제 카드의 혜택 계산 로직 수행
+        // 카드 정보 조회
         if (!requestToken.equals("rebirth")) {
+            // 카드 정보 조회
+            myCardDto = cardRepository.findByPermanentToken(requestToken)
+                    .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다."));
             // 실제 카드 혜택 계산을 위해 BenefitService의 calculateRealBenefit 호출
-            realBenefit = benefitService.calculateRealBenefit(userId, requestToken, amount, merchantJoinDto);
+            realBenefit = benefitService.calculateRealBenefit(userId, amount, merchantJoinDto, myCardDto);
             if (realBenefit != null) {
                 // 실제 카드 혜택 정보를 적용
                 benefitType = realBenefit.getBenefitType();
@@ -114,12 +122,11 @@ public class PaymentTransactionService {
 
         // 마이데이터 카드 내역 가져오기
         User user = userRepository.findByUserId(new UserId(userId));
-        MyCard myCard = cardRepository.findById(realBenefit != null ? realBenefit.getMyCardId() : recommendedBenefit.getMyCardId()).get();
-        List<MyCard> myCards = Arrays.asList(myCard);
+        List<MyCard> myCards = Arrays.asList(myCardDto);
         myDataService.loadMyTransactionByCards(user, myCards);
 
         // 혜택 현황 관련 테이블에 업데이트 하기
-        // TODO: 테이블 수정 로직 추가
+        benefitService.updateUserCardBenefit(userId, benefitId, benefitAmount);
 
         // 리포트 업데이트 하기
         reportService.updateMonthlyTransactionSummary(userId);

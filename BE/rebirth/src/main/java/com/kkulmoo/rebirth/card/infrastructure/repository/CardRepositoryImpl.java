@@ -5,7 +5,6 @@ import com.kkulmoo.rebirth.card.domain.CardTemplate;
 import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardEntityMapper;
 import com.kkulmoo.rebirth.card.infrastructure.mapper.CardTemplateMapper;
-import com.kkulmoo.rebirth.payment.infrastructure.dto.MyCardDto;
 import com.kkulmoo.rebirth.payment.infrastructure.repository.CardTemplateJpaRepository;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
@@ -27,8 +26,6 @@ public class CardRepositoryImpl implements CardRepository {
     private final CardEntityMapper cardEntityMapper;
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
     private final CardTemplateMapper cardTemplateMapper;
-    private final BenefitJpaRepository benefitJpaRepository;
-
 
     @Override
     public Optional<CardTemplateEntity> findCardTemplateEntityById(Integer templateId) {
@@ -104,13 +101,9 @@ public class CardRepositoryImpl implements CardRepository {
     }
 
     @Override
-    public MyCardDto findMyCardIdAndTemplateIdByPermanentToken(String permanentToken) {
-        return cardJpaRepository.findMyCardIdAndTemplateIdByPermanentToken(permanentToken);
-    }
-
-    @Override
-    public List<MyCardDto> findMyCardsIdAndTemplateIdsByUserId(Integer userId) {
-        return cardJpaRepository.findMyCardsIdAndTemplateIdsByUserId(userId);
+    public Optional<MyCard> findByPermanentToken(String permanentToken) {
+        return cardJpaRepository.findByPermanentToken(permanentToken)
+                .map(cardEntityMapper::toCard);
     }
 
 }

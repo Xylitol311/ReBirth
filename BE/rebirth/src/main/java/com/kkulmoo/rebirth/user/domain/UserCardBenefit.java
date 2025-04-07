@@ -1,4 +1,4 @@
-package com.kkulmoo.rebirth.payment.domain;
+package com.kkulmoo.rebirth.user.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
