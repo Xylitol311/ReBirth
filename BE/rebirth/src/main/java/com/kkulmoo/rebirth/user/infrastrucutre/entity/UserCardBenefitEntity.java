@@ -1,4 +1,4 @@
-package com.kkulmoo.rebirth.payment.infrastructure.entity;
+package com.kkulmoo.rebirth.user.infrastrucutre.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

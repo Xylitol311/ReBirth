@@ -10,11 +10,11 @@ import com.kkulmoo.rebirth.card.domain.*;
 import com.kkulmoo.rebirth.card.infrastructure.adapter.dto.CardApiResponse;
 import com.kkulmoo.rebirth.card.presentation.dto.CardOrderRequest;
 import com.kkulmoo.rebirth.common.exception.CardProcessingException;
-import com.kkulmoo.rebirth.payment.domain.UserCardBenefit;
-import com.kkulmoo.rebirth.payment.domain.repository.UserCardBenefitRepository;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.User;
+import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
 import com.kkulmoo.rebirth.user.domain.UserId;
+import com.kkulmoo.rebirth.user.domain.repository.UserCardBenefitRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -72,11 +72,13 @@ public class CardService {
 
 
         List<CardBenefit> cardBenefits = new ArrayList<>();
+        int currentYear = LocalDateTime.now().getYear();
+        int currentMonth = LocalDateTime.now().getMonthValue();
 
         for (BenefitTemplate benefitTemplate : benefitTemplates) {
             List<Integer> categoryId = benefitTemplate.getCategoryId();
             List<String> categoryString = categoryJpaRepository.findByCategoryIdInOrderByCategoryId(categoryId);
-            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository.findByUserIdAndBenefitId(userId.getValue(), benefitTemplate.getBenefitId());
+            UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(userId.getValue(), benefitTemplate.getBenefitId(), currentYear, currentMonth);
 
             cardBenefits.add(
                     CardBenefit.builder()
