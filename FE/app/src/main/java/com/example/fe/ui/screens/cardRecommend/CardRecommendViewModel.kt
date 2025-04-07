@@ -232,6 +232,13 @@ class CardRecommendViewModel : ViewModel() {
      * API 카드 정보를 UI 카드 정보로 변환합니다.
      */
     fun mapApiCardToUiCard(apiCard: CardInfoApi): CardInfo {
+
+        // 혜택 정보 처리 - 쉼표(,)로 구분하여 리스트로 변환
+        val benefits = apiCard.cardInfo
+            .split(",")  // 쉼표로 분리
+            .map { it.trim() }  // 각 항목의 앞뒤 공백 제거
+            .filter { it.isNotBlank() }  // 빈 항목 제거
+
         // 전월 실적 처리
         val minSpending = if (apiCard.performanceRange != null && apiCard.performanceRange.isNotEmpty()) {
             "${apiCard.performanceRange[0]}원 이상"
@@ -243,7 +250,7 @@ class CardRecommendViewModel : ViewModel() {
             id = apiCard.cardId,
             name = apiCard.cardName,
             company = getCardCompanyName(apiCard.cardCompanyId),
-            benefits = listOf(apiCard.cardInfo),
+            benefits = benefits,
             annualFee = if (apiCard.annualFee != null) "${apiCard.annualFee}원" else "0원",
             minSpending = minSpending,
             cardImage = apiCard.imageUrl,
@@ -306,8 +313,11 @@ class CardRecommendViewModel : ViewModel() {
     fun getSelectedCardDetailForUI(): CardInfo? {
         val apiCard = uiState.selectedCardDetail ?: return null
 
-        // 혜택 정보 처리
-        val benefits = listOf(apiCard.cardInfo)
+        // 혜택 정보 처리 - 쉼표(,)로 구분하여 리스트로 변환
+        val benefits = apiCard.cardInfo
+            .split(",")  // 쉼표로 분리
+            .map { it.trim() }  // 각 항목의 앞뒤 공백 제거
+            .filter { it.isNotBlank() }  // 빈 항목 제거
 
         // 전월 실적 처리
         val minSpending = if (apiCard.performanceRange != null && apiCard.performanceRange.isNotEmpty()) {

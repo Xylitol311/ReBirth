@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -41,16 +43,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
-import com.example.fe.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -59,7 +58,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import com.example.fe.ui.components.cards.VerticalCardLayout
+import com.example.fe.ui.screens.myCard.MyCardViewModel.CardItem
+import com.example.fe.ui.screens.myCard.MyCardViewModel.CardItemWithVisibility
+import com.example.fe.ui.screens.myCard.MyCardViewModel.CardOrderManager
+import com.example.fe.ui.screens.myCard.MyCardViewModel.MyCardUiState
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -79,50 +82,11 @@ fun MyCardScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isLoading = viewModel.isLoading
 
-    // 초기 카드 데이터 - 관리 화면에서 정렬된 데이터가 없을 경우에만 사용
-    val initialCards = remember {
-        listOf(
-            CardItem(
-                id = 1,
-                name = "토스 신한카드 Mr.Life",
-                cardNumber = "•••• •••• •••• 3456",
-                imageUrl = "",
-                totalSpending = 350000,
-                maxSpending = 1000000,
-                receivedBenefit = 15000,
-                maxBenefit = 50000
-            ),
-            CardItem(
-                id = 2,
-                name = "현대카드",
-                cardNumber = "•••• •••• •••• 4567",
-                imageUrl = "",
-                totalSpending = 250000,
-                maxSpending = 800000,
-                receivedBenefit = 10000,
-                maxBenefit = 30000
-            ),
-            CardItem(
-                id = 3,
-                name = "삼성카드",
-                cardNumber = "•••• •••• •••• 5678",
-                imageUrl = "",
-                totalSpending = 150000,
-                maxSpending = 500000,
-                receivedBenefit = 5000,
-                maxBenefit = 20000
-            )
-        )
-    }
     // 카드 관리 매니저 초기화
     LaunchedEffect(Unit) {
-        // 초기 데이터 설정 (비어있을 경우에만)
-        CardOrderManager.initializeIfEmpty(initialCards.map { CardItemWithVisibility(it) })
+        viewModel.loadMyCards(forceRefresh = false)
     }
-    
-    // 카드 관리 매니저에서 카드 목록 가져오기
-    val managedCards = remember { CardOrderManager.sortedCards }
-    
+
     // 표시할 카드 목록
     val realCards = when (uiState) {
         is MyCardUiState.Success -> {
@@ -140,7 +104,17 @@ fun MyCardScreen(
         }
         else -> emptyList()
     }
-    
+
+    // 카드 관리 매니저 초기화 (API에서 데이터를 가져왔을 때만)
+    LaunchedEffect(uiState) {
+        if (uiState is MyCardUiState.Success) {
+            val cards = (uiState as MyCardUiState.Success).cards
+            if (cards.isNotEmpty()) {
+                CardOrderManager.initializeIfEmpty(cards.map { CardItemWithVisibility(it) })
+            }
+        }
+    }
+
     // 카드 관리 매니저 리스너 등록 (카드 순서 변경 감지)
     DisposableEffect(Unit) {
         val listener = {
@@ -161,7 +135,7 @@ fun MyCardScreen(
         initialPage = 0
     )
     // 페이저 스냅 동작 개선을 위한 설정
-    val flingBehavior = androidx.compose.foundation.pager.PagerDefaults.flingBehavior(
+    val flingBehavior = PagerDefaults.flingBehavior(
         state = pagerState,
         snapPositionalThreshold = 0.1f // 더 낮은 값으로 설정하여 더 빠르게 스냅되도록 함
     )
@@ -181,10 +155,10 @@ fun MyCardScreen(
         }
     }
 
-    // 현재 실제 카드 인덱스
+// 현재 실제 카드 인덱스
     val currentRealCardIndex by remember {
         derivedStateOf {
-            pagerState.currentPage.coerceIn(0, realCards.size - 1)
+            if (realCards.isEmpty()) 0 else pagerState.currentPage.coerceIn(0, realCards.size - 1)
         }
     }
 
@@ -348,7 +322,7 @@ fun MyCardScreen(
                 },
             contentAlignment = Alignment.BottomCenter
         ) {
-            if (realCards.isNotEmpty()) {
+            if (realCards.isNotEmpty() && currentRealCardIndex < realCards.size) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -473,107 +447,101 @@ fun MyCardScreen(
                             translationX = 0f
                         }
                 ) {
-                    HorizontalPager(
-                        state = pagerState,
-                        pageSpacing = 0.dp,
-                        flingBehavior = flingBehavior,
-                        contentPadding = PaddingValues(start = 100.dp, end = 100.dp),
-                        userScrollEnabled = !isNavigating,
-                        pageSize = androidx.compose.foundation.pager.PageSize.Fixed(280.dp),
-                        key = { it }
-                    ) { page ->
-                        // 현재 페이지와의 거리 계산
-                        val pageOffset = (
-                                (pagerState.currentPage - page) + pagerState
-                                    .currentPageOffsetFraction
-                                ).absoluteValue
-        
-                        // 현재 카드는 더 크게, 다른 카드는 작게 (이전 값으로 복원)
-                        val baseScale = if (page == pagerState.currentPage) 1.3f else 0.85f
-                        
-                        // 각 카드에 대한 애니메이션 결정
-                        val isSelected = isNavigating && page == navigatingCardPage
-                        val isNonSelected = isNavigating && page != navigatingCardPage
-                        
-                        // 모든 카드의 투명도 애니메이션 - 동일한 속도로
-                        val cardAlpha by animateFloatAsState(
-                            targetValue = if (isNavigating) 0f else 1f,
-                            animationSpec = tween(300, easing = EaseInOut),
-                            label = "cardAlpha"
-                        )
-                        
-                        // 선택된 카드의 Z-Index
-                        val zIndex by animateFloatAsState(
-                            targetValue = if (isSelected) 100f else 0f,
-                            animationSpec = tween(100),
-                            label = "zIndex"
-                        )
-                        
-                        // 선택된 카드 스케일 - 약간 확대
-                        val selectedScale by animateFloatAsState(
-                            targetValue = if (isSelected) 1.0f else baseScale,
-                            animationSpec = tween(300),
-                            label = "selectedScale"
-                        )
-                        
-                        // 카드 이미지 - res/drawable의 card.png 사용
-                        Box(
-                            modifier = Modifier
-                                .width(280.dp)
-                                .height(400.dp)
-                                .zIndex(zIndex)
-                                .clickable(enabled = !isNavigating) {
-                                    // 현재 페이지가 아닌 경우 해당 카드로 스크롤
-                                    if (page != pagerState.currentPage) {
-                                        // 코루틴 스코프 필요
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(page)
+                    if (realCards.isNotEmpty()) {
+                        HorizontalPager(
+                            state = pagerState,
+                            pageSpacing = 0.dp,
+                            flingBehavior = flingBehavior,
+                            contentPadding = PaddingValues(start = 100.dp, end = 100.dp),
+                            userScrollEnabled = !isNavigating,
+                            pageSize = PageSize.Fixed(280.dp),
+                            key = { it }
+                        ) { page ->
+                            // 현재 페이지와의 거리 계산
+                            val pageOffset = (
+                                    (pagerState.currentPage - page) + pagerState
+                                        .currentPageOffsetFraction
+                                    ).absoluteValue
+
+                            // 현재 카드는 더 크게, 다른 카드는 작게
+                            val baseScale = if (page == pagerState.currentPage) 1.3f else 0.85f
+
+                            // 각 카드에 대한 애니메이션 결정
+                            val isSelected = isNavigating && page == navigatingCardPage
+                            val isNonSelected = isNavigating && page != navigatingCardPage
+
+                            // 모든 카드의 투명도 애니메이션
+                            val cardAlpha by animateFloatAsState(
+                                targetValue = if (isNavigating) 0f else 1f,
+                                animationSpec = tween(300, easing = EaseInOut),
+                                label = "cardAlpha"
+                            )
+
+                            // 선택된 카드의 Z-Index
+                            val zIndex by animateFloatAsState(
+                                targetValue = if (isSelected) 100f else 0f,
+                                animationSpec = tween(100),
+                                label = "zIndex"
+                            )
+
+                            // 선택된 카드 스케일
+                            val selectedScale by animateFloatAsState(
+                                targetValue = if (isSelected) 1.0f else baseScale,
+                                animationSpec = tween(300),
+                                label = "selectedScale"
+                            )
+
+                            // 카드 이미지
+                            Box(
+                                modifier = Modifier
+                                    .width(280.dp)
+                                    .height(400.dp)
+                                    .zIndex(zIndex)
+                                    .graphicsLayer(
+                                        scaleX = selectedScale,
+                                        scaleY = selectedScale,
+                                        alpha = cardAlpha,
+                                        clip = false,
+                                        cameraDistance = 12f * density
+                                    )
+                            ) {
+                                if (realCards[page].imageUrl.isNotEmpty()) {
+                                    // URL이 있는 경우 URL 버전의 VerticalCardLayout 사용
+                                    VerticalCardLayout(
+                                        cardImageUrl = realCards[page].imageUrl,
+                                        width = 280.dp,
+                                        height = 400.dp,
+                                        cornerRadius = 16.dp,
+                                        onClick = {
+                                            if (page == pagerState.currentPage) {
+                                                isNavigating = true
+                                                navigatingCardPage = page
+
+                                                coroutineScope.launch {
+                                                    delay(300)
+                                                    onCardClick(realCards[page])
+                                                }
+                                            } else {
+                                                coroutineScope.launch {
+                                                    pagerState.animateScrollToPage(page)
+                                                }
+                                            }
                                         }
-                                    } else {
-                                        // 현재 카드(중앙에 있는 카드)만 클릭 시 상세 화면으로 이동
-                                        isNavigating = true
-                                        navigatingCardPage = page
-    
-                                        // 페이드 아웃 후 상세 화면으로 이동
-                                        coroutineScope.launch {
-                                            // 페이드 아웃 애니메이션 완료 대기
-                                            delay(300)
-                                            onCardClick(realCards[page])
-                                        }
-                                    }
+                                    )
+                                } else {
+
                                 }
-                                .graphicsLayer(
-                                    scaleX = selectedScale,
-                                    scaleY = selectedScale,
-                                    alpha = cardAlpha,
-                                    clip = false,
-                                    cameraDistance = 12f * density
-                                )
-                        ) {
-                            if (realCards[page].imageUrl.isNotEmpty()) {
-                                AsyncImage(
-                                    model = realCards[page].imageUrl,
-                                    contentDescription = "카드 이미지",
-                                    contentScale = ContentScale.FillWidth,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .graphicsLayer(
-                                            rotationZ = 90f // 세로로 회전
-                                        )
-                                )
-                            } else {
-                                Image(
-                                    painter = painterResource(id = R.drawable.card),
-                                    contentDescription = "카드 이미지",
-                                    contentScale = ContentScale.FillWidth,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .graphicsLayer(
-                                            rotationZ = 90f // 세로로 회전
-                                        )
-                                )
                             }
                         }
+                    } else if (!isLoading && uiState !is MyCardUiState.Error) {
+                        // 카드가 없는 경우 메시지 표시
+                        Text(
+                            text = "등록된 카드가 없습니다",
+                            color = Color(0xFFE0E0E0),
+                            fontSize = 18.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
                 }
             }

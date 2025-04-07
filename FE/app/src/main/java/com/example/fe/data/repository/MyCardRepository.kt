@@ -5,11 +5,13 @@ import com.example.fe.config.AppConfig
 import com.example.fe.data.model.myCard.CardTransactionHistoryResponse
 import com.example.fe.data.model.myCard.MyCardInfoResponse
 import com.example.fe.data.model.myCard.MyCardsResponse
+import com.example.fe.data.network.api.CardTransactionHistoryRequest
 import com.example.fe.data.network.api.MyCardApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.Calendar
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -43,11 +45,23 @@ class MyCardRepository {
             forceRefresh = forceRefresh,
             fetch = {
                 Log.d(TAG, "API 호출: getMyCards")
-                apiService.getMyCards(token)
+                val response = apiService.getMyCards(token)
+                // 응답 데이터 로깅 추가
+                Log.d(TAG, "API 응답 받음: success=${response.success}, message=${response.message}")
+                Log.d(TAG, "API 응답 데이터: data=${response.data}")
+
+                // 데이터가 리스트인 경우 각 항목 로깅
+                response.data?.forEachIndexed { index, card ->
+                    Log.d(TAG, "카드[$index]: id=${card.cardId}, name=${card.cardName}, imgUrl=${card.cardImgUrl}")
+                    Log.d(TAG, "카드[$index] 금액: totalSpending=${card.totalSpending}, maxSpending=${card.maxSpending}")
+                    Log.d(TAG, "카드[$index] 혜택: receivedBenefit=${card.receivedBenefitAmount}, maxBenefit=${card.maxBenefitAmount}")
+                }
+
+                response
             },
             createErrorResponse = { message ->
                 Log.e(TAG, "getMyCards 오류: $message")
-                MyCardsResponse(success = false, message = message, data = null)
+                MyCardsResponse(success = false, message = message, data = emptyList())
             }
         )
     }
@@ -55,19 +69,26 @@ class MyCardRepository {
     /**
      * 특정 카드의 상세 정보를 가져옵니다.
      * @param cardId 카드 ID
+     * @param year 조회할 연도
+     * @param month 조회할 월
      * @param forceRefresh 강제로 새로고침할지 여부
      * @return 카드 상세 정보 응답
      */
-    suspend fun getMyCardInfo(cardId: Int, forceRefresh: Boolean = false): Result<MyCardInfoResponse> {
-        Log.d(TAG, "getMyCardInfo 호출: cardId=$cardId, forceRefresh=$forceRefresh")
-        val cacheKey = generateCacheKey("card_info", cardId.toString())
+    suspend fun getMyCardInfo(
+        cardId: Int,
+        year: Int,
+        month: Int,
+        forceRefresh: Boolean = false
+    ): Result<MyCardInfoResponse> {
+        Log.d(TAG, "getMyCardInfo 호출: cardId=$cardId, year=$year, month=$month, forceRefresh=$forceRefresh")
+        val cacheKey = generateCacheKey("card_info", "$cardId-$year-$month")
 
         return fetchData(
             cacheKey = cacheKey,
             forceRefresh = forceRefresh,
             fetch = {
-                Log.d(TAG, "API 호출: getMyCardInfo(cardId=$cardId)")
-                apiService.getMyCardInfo(cardId)
+                Log.d(TAG, "API 호출: getMyCardInfo(cardId=$cardId, year=$year, month=$month)")
+                apiService.getMyCardInfo(cardId, year, month)
             },
             createErrorResponse = { message ->
                 Log.e(TAG, "getMyCardInfo 오류: $message")
@@ -78,7 +99,7 @@ class MyCardRepository {
 
     /**
      * 특정 카드의 거래 내역을 가져옵니다.
-     * @param token 사용자 인증 토큰
+     * @param token 사용자 인증 토큰 (현재 사용되지 않음)
      * @param cardId 카드 ID
      * @param page 페이지 번호
      * @param pageSize 페이지 크기
@@ -92,25 +113,33 @@ class MyCardRepository {
         page: Int,
         pageSize: Int,
         month: Int,
-        forceRefresh: Boolean = false
+        forceRefresh: Boolean = false,
+        year: Int = Calendar.getInstance().get(Calendar.YEAR) // 기본값으로 현재 연도 사용
     ): Result<CardTransactionHistoryResponse> {
-        Log.d(TAG, "getCardTransactionHistory 호출: cardId=$cardId, page=$page, month=$month")
-        val cacheKey = generateCacheKey("transactions", cardId.toString(), month.toString(), page.toString(), pageSize.toString())
+        Log.d(TAG, "getCardTransactionHistory 호출: cardId=$cardId, page=$page, month=$month, year=$year")
+        val cacheKey = generateCacheKey("transactions", cardId.toString(), month.toString(), year.toString(), page.toString(), pageSize.toString())
 
         return fetchData(
             cacheKey = cacheKey,
             forceRefresh = forceRefresh,
             fetch = {
-                Log.d(TAG, "API 호출: getCardTransactionHistory(cardId=$cardId, page=$page)")
-                apiService.getCardTransactionHistory(token, cardId, page, pageSize, month)
-                },
+                Log.d(TAG, "API 호출: getCardTransactionHistory(cardId=$cardId, page=$page, month=$month, year=$year)")
+                // 요청 객체 생성
+                val request = CardTransactionHistoryRequest(
+                    cardId = cardId,
+                    page = page,
+                    pageSize = pageSize,
+                    month = month,
+                    year = year
+                )
+                apiService.getCardTransactionHistory(request)
+            },
             createErrorResponse = { message ->
                 Log.e(TAG, "getCardTransactionHistory 오류: $message")
                 CardTransactionHistoryResponse(success = false, message = message, data = null)
             }
         )
     }
-
     /**
      * 모든 캐시를 지웁니다.
      */

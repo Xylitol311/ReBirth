@@ -124,14 +124,14 @@ fun PaymentCardScroll(
             items(cards) { card ->
                 val index = cards.indexOf(card)
                 
-                PaymentCardItem(
+                PaymentCardItemScroll(
                     card = card,
                     centeredness = calculateCenteredness(index + 1, lazyListState, selectedCardIndex),
                     cardWidth = cardWidth,
                     onClick = { onCardIndexSelected(index) } // 실제 카드는 0부터 시작
                 )
             }
-            
+
             // 카드 추가 버튼 (마지막 항목)
             item {
                 AddCardButton(
@@ -149,54 +149,55 @@ fun PaymentCardScroll(
             }
         }
         
-        // 카드 인디케이터
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .fillMaxWidth()
-        ) {
-            // 자동 카드 인디케이터
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .size(if (selectedCardIndex == 0) 10.dp else 8.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (selectedCardIndex == 0) Color.White else Color.White.copy(alpha = 0.5f)
-                    )
-            )
-            
-            // 카드 인디케이터들
-            repeat(cards.size) { index ->
-                val isSelected = index + 1 == selectedCardIndex
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .size(if (isSelected) 10.dp else 8.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isSelected) Color.White else Color.White.copy(alpha = 0.5f)
-                        )
-                )
-            }
-            
-            // 카드 추가 인디케이터
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .size(if (selectedCardIndex == cards.size + 1) 10.dp else 8.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (selectedCardIndex == cards.size + 1) Color.White else Color.White.copy(alpha = 0.5f)
-                    )
-            )
-        }
+//        // 카드 인디케이터
+//        Row(
+//            horizontalArrangement = Arrangement.Center,
+//            modifier = Modifier
+//                .padding(top = 16.dp)
+//                .fillMaxWidth()
+//        ) {
+//            // 자동 카드 인디케이터
+//            Box(
+//                modifier = Modifier
+//                    .padding(horizontal = 4.dp)
+//                    .size(if (selectedCardIndex == 0) 10.dp else 8.dp)
+//                    .clip(CircleShape)
+//                    .background(
+//                        if (selectedCardIndex == 0) Color.White else Color.White.copy(alpha = 0.5f)
+//                    )
+//            )
+//
+//            // 카드 인디케이터들
+//            repeat(cards.size) { index ->
+//                val isSelected = index + 1 == selectedCardIndex
+//                Box(
+//                    modifier = Modifier
+//                        .padding(horizontal = 4.dp)
+//                        .size(if (isSelected) 10.dp else 8.dp)
+//                        .clip(CircleShape)
+//                        .background(
+//                            if (isSelected) Color.White else Color.White.copy(alpha = 0.5f)
+//                        )
+//                )
+//            }
+//
+//            // 카드 추가 인디케이터
+//            Box(
+//                modifier = Modifier
+//                    .padding(horizontal = 4.dp)
+//                    .size(if (selectedCardIndex == cards.size + 1) 10.dp else 8.dp)
+//                    .clip(CircleShape)
+//                    .background(
+//                        if (selectedCardIndex == cards.size + 1) Color.White else Color.White.copy(alpha = 0.5f)
+//                    )
+//            )
+//        }
+
     }
 }
 
 @Composable
-fun PaymentCardItem(
+fun PaymentCardItemScroll(
     card: PaymentCardInfo,
     centeredness: Float,
     cardWidth: Dp,
@@ -225,9 +226,9 @@ fun PaymentCardItem(
                 .fillMaxWidth()
                 .height(180.dp),
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
     }
 }
 
@@ -243,7 +244,7 @@ fun PaymentAddCardItem(
         modifier = Modifier
             .width(cardWidth)
             .padding(horizontal = 12.dp)
-            .height(200.dp)
+            .height(180.dp)
             .graphicsLayer {
                 // 중앙에 있을수록 점진적으로 크기가 커지고 선명해짐
                 val scale = lerp(0.85f, 1f, centeredness)

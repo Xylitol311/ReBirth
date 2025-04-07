@@ -9,8 +9,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -19,11 +25,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -38,15 +46,14 @@ import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
 import com.example.fe.ui.screens.calendar.CalendarScreen
 import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
-import com.example.fe.ui.screens.cardRecommend.CardInfo
 import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
 import com.example.fe.ui.screens.cardRecommend.CardRecommendViewModel
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import com.example.fe.ui.screens.home.HomeScreen
 import com.example.fe.ui.screens.myCard.CardDetailScreen
-import com.example.fe.ui.screens.myCard.CardItem
 import com.example.fe.ui.screens.myCard.CardManagementScreen
 import com.example.fe.ui.screens.myCard.MyCardScreen
+import com.example.fe.ui.screens.myCard.MyCardViewModel.CardOrderManager.getCardById
 import com.example.fe.ui.screens.mypage.MyPageScreen
 import com.example.fe.ui.screens.onboard.OnboardingScreen
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
@@ -57,8 +64,7 @@ import com.example.fe.ui.screens.payment.components.CardOCRScanScreen
 import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
 import com.example.fe.ui.screens.payment.components.PaymentResultPopup
 import com.example.fe.ui.screens.payment.components.QRScannerScreen
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+
 // 네비게이션 경로 상수 추가
 object NavRoutes {
     const val ONBOARDING = "onboarding"  // 온보딩/로그인 화면 경로 추가
@@ -190,25 +196,38 @@ fun AppNavigation() {
     var showQRScanner by remember { mutableStateOf(false) }
     var showCardOCRScan by remember { mutableStateOf(false) }
 
-    // 네비게이션 바와 상단 바 표시 여부 결정
-    val shouldShowUI = !showQRScanner && !showCardOCRScan
-
+    // PaymentScreen에서 QR 스캔 모드 상태를 받아오는 변수 추가
+    var isQRScanMode by remember { mutableStateOf(false) }
     // 결제 정보 화면 표시 여부
     var showPaymentInfo by remember { mutableStateOf(false) }
+
+    // 네비게이션 바와 상단 바 표시 여부 결정
+    val shouldShowUI = remember(showQRScanner, showCardOCRScan, isQRScanMode, showPaymentInfo) {
+        !showQRScanner && !showCardOCRScan && !isQRScanMode && !showPaymentInfo
+    }
 
     // 스캔된 QR 코드
     var scannedQRCode by remember { mutableStateOf("") }
 
-
-    val shouldShowBottomBar = remember(bottomBarVisible, currentRoute) {
+    val shouldShowBottomBar = remember(bottomBarVisible, currentRoute, isQRScanMode) {
         bottomBarVisible &&
                 currentRoute != NavRoutes.HOME_DETAIL &&
                 !currentRoute.startsWith("card_detail") &&
                 !currentRoute.contains("payment_info") &&
                 !currentRoute.contains("payment_result") &&
-                !currentRoute.contains("qr_scanner") &&
+                !isQRScanMode &&
                 !currentRoute.contains("card_ocr_scan")
 
+    }
+
+    // TopBar 표시 여부 결정
+    val shouldShowTopBar by remember(currentRoute, isQRScanMode) {
+        mutableStateOf(
+                    !currentRoute.contains("payment_info") &&
+                    !currentRoute.contains("payment_result") &&
+                    !isQRScanMode &&
+                    !currentRoute.contains("card_ocr_scan")
+        )
     }
 
     // 네비게이션 바 애니메이션 값
@@ -238,16 +257,6 @@ fun AppNavigation() {
     // 결제 결과 팝업 표시
     var showPaymentResultPopup by remember { mutableStateOf(false) }
     val paymentResult by paymentViewModel.paymentResult.collectAsState()
-
-    // TopBar 표시 여부 결정
-    val shouldShowTopBar by remember(currentRoute) {
-        mutableStateOf(
-            !currentRoute.contains("payment_info") &&
-            !currentRoute.contains("payment_result") &&
-            !currentRoute.contains("qr_scanner") &&
-            !currentRoute.contains("card_ocr_scan")
-        )
-    }
 
     // 메인 탭 화면 목록 (뒤로가기 버튼이 표시되지 않아야 하는 화면들)
     val mainTabScreens = listOf(
@@ -403,9 +412,18 @@ fun AppNavigation() {
                             },
                             onShowCardOCRScan = {
                                 showCardOCRScan = true  // 카드 OCR 스캔 화면 표시
+                            },
+                            // QR 스캔 모드 상태 콜백 추가
+                            onQRScanModeChange = { isInQRScanMode ->
+                                isQRScanMode = isInQRScanMode
+                            },
+                            onShowPaymentInfo = {
+                                showPaymentInfo = true  // 결제 정보 화면 표시
                             }
+
                         )
                     }
+
                     composable(BottomNavItem.Calendar.route) {
                         CalendarScreen()
                     }
@@ -448,7 +466,7 @@ fun AppNavigation() {
                         val cardId = backStackEntry.arguments?.getInt("cardId") ?: 1
 
                         CardDetailScreen(
-                            cardItem = getCardById(cardId),
+                            cardId = getCardById(cardId)?.card?.id ?:0,
                             onBackClick = {
                                 // 뒤로가기 시 배경 이동 방향 설정 (아래로 이동)
                                 backgroundVerticalDirection = 0
@@ -490,23 +508,6 @@ fun AppNavigation() {
             }
         }
 
-        // QR 스캐너 화면 (오버레이로 표시)
-        if (showQRScanner) {
-            QRScannerScreen(
-                onClose = {
-                    showQRScanner = false
-                },
-                onQRCodeScanned = { qrCode ->
-                    // QR 코드 스캔 결과 처리
-                    Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
-                    // 이미 가져온 ViewModel 사용
-                    paymentViewModel.sendQRToken(qrCode)
-                    showQRScanner = false
-                    showPaymentInfo = true  // 결제 정보 화면 표시
-                }
-            )
-        }
-
         // 카드 OCR 스캔 화면 (오버레이로 표시)
         if (showCardOCRScan) {
             Box(
@@ -528,7 +529,7 @@ fun AppNavigation() {
             }
         }
 
-        // 결제 정보 화면 (오버레이로 표시)
+// 결제 정보 화면 (오버레이로 표시)
         if (showPaymentInfo) {
             val cards by paymentViewModel.cards.collectAsState()
             val paymentState by paymentViewModel.paymentState.collectAsState()
@@ -539,10 +540,6 @@ fun AppNavigation() {
                 onPaymentComplete = {
                     // 결제 완료 후 홈 화면으로 이동
                     showPaymentInfo = false
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                    }
-
                     // 결제 결과 팝업 표시
                     showPaymentResultPopup = true
                 },
@@ -553,21 +550,12 @@ fun AppNavigation() {
             )
         }
 
-        // 결제 결과 팝업 표시
-        if (showPaymentResultPopup && paymentResult != null) {
-            PaymentResultPopup(
-                paymentResult = paymentResult!!,
-                onDismiss = { showPaymentResultPopup = false }
-            )
-        }
+//        // 결제 결과 팝업 표시
+//        if (showPaymentResultPopup && paymentResult != null) {
+//            PaymentResultPopup(
+//                paymentResult = paymentResult!!,
+//                onDismiss = { showPaymentResultPopup = false }
+//            )
+//        }
     }
-}
-
-private fun getCardById(cardId: Int): CardItem {
-    val cards = listOf(
-        CardItem(1, "토스 신한카드 Mr.Life", "•••• •••• •••• 3456"),
-        CardItem(2, "현대카드", "•••• •••• •••• 4567"),
-        CardItem(3, "삼성카드", "•••• •••• •••• 5678")
-    )
-    return cards.find { it.id == cardId } ?: cards[0]
 }

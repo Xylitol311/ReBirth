@@ -222,7 +222,6 @@ fun GlassSurface(
                     shape = RoundedCornerShape(cornerRadius.dp)
                 )
         )
-
         // 테두리와 컨텐츠 레이어 (블러 없음)
         Box(
             modifier = Modifier
@@ -230,64 +229,12 @@ fun GlassSurface(
                 .clip(RoundedCornerShape(cornerRadius.dp))
                 .border(
                     width = 1.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF00E1FF),  // 밝은 하늘색
-                            Color(0x8000E1FF)   // 투명한 하늘색
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(0f, Float.POSITIVE_INFINITY)
-                    ),
+                    color = Color(0xFF00E1FF),  // 밝은 하늘색 단일 색상으로 변경
                     shape = RoundedCornerShape(cornerRadius.dp)
                 )
         ) {
-            // 유리 효과를 위한 배경
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(1.dp)
-                    .clip(RoundedCornerShape((cornerRadius - 1).dp))
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = if (isTopPanel) {
-                                // 상단 패널은 하단 패널과 유사한 색상으로 설정
-                                listOf(
-                                    Color(0x50203F64),
-                                    Color(0x50183050)
-                                )
-                            } else {
-                                // 하단 패널 색상
-                                listOf(
-                                    Color(0x50203F64),
-                                    Color(0x50183050)
-                                )
-                            },
-                            start = Offset(0f, 0f),
-                            end = Offset(0f, Float.POSITIVE_INFINITY)
-                        )
-                    )
-            ) {
-                // 유리 반사 효과 (상단에 밝은 부분)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.15f)
-                        .align(Alignment.TopCenter)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0x30FFFFFF),  // 반투명 흰색
-                                    Color.Transparent
-                                ),
-                                startY = 0f,
-                                endY = Float.POSITIVE_INFINITY
-                            )
-                        )
-                )
-
-                // 내용 (블러 없음)
-                content()
-            }
+            // 내용 (블러 없음)
+            content()
         }
     }
 }
