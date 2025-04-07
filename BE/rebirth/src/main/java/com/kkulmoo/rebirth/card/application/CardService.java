@@ -10,11 +10,11 @@ import com.kkulmoo.rebirth.card.domain.*;
 import com.kkulmoo.rebirth.card.infrastructure.adapter.dto.CardApiResponse;
 import com.kkulmoo.rebirth.card.presentation.dto.CardOrderRequest;
 import com.kkulmoo.rebirth.common.exception.CardProcessingException;
-import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
-import com.kkulmoo.rebirth.user.infrastrucutre.repository.UserCardBenefitRepositoryImpl;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import com.kkulmoo.rebirth.user.domain.User;
+import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
 import com.kkulmoo.rebirth.user.domain.UserId;
+import com.kkulmoo.rebirth.user.domain.repository.UserCardBenefitRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class CardService {
     private final ReportCardsJpaRepository reportCardsJpaRepository;
     private final BenefitRepository benefitRepository;
     private final CategoryJpaRepository categoryJpaRepository;
-    private final UserCardBenefitRepositoryImpl userCardBenefitRepository;
+    private final UserCardBenefitRepository userCardBenefitRepository;
 
     @Transactional
     public CardDetailResponse getCardDetail(UserId userId, Integer cardId) {
@@ -51,7 +51,7 @@ public class CardService {
         } catch (IndexOutOfBoundsException e) {
             // 인덱스가 범위를 벗어난 경우 0으로 설정
         }
-        System.out.println("바보~~~~~~~~~~~");
+
         System.out.println(Arrays.toString(cardTemplate.getPerformanceRange().toArray()));
         ReportCardsEntity reportCardsEntity = reportCardsJpaRepository.getByUserIdAndCardIdAndYearAndMonth(
                         userId.getValue(),
@@ -92,7 +92,6 @@ public class CardService {
                                     )
                             )
                             .build());
-
         }
 
 

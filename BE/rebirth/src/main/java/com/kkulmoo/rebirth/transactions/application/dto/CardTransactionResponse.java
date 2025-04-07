@@ -21,6 +21,7 @@ public class CardTransactionResponse {
     private String merchantName;
     private String approvalCode;
     private Integer merchantId;
+    private Integer benefitId;
 
     /**
      * userId 값을 설정하고 새로운 CardTransactionResponse 객체를 반환합니다.
@@ -39,6 +40,7 @@ public class CardTransactionResponse {
                 .merchantName(this.merchantName)
                 .approvalCode(this.approvalCode)
                 .merchantId(this.merchantId)
+                .benefitId(this.benefitId)
                 .build();
     }
 
@@ -59,6 +61,7 @@ public class CardTransactionResponse {
                 .merchantName(this.merchantName)
                 .approvalCode(this.approvalCode)
                 .merchantId(merchantId)
+                .benefitId(this.benefitId)
                 .build();
     }
 
@@ -80,6 +83,7 @@ public class CardTransactionResponse {
                 .merchantName(merchantName)
                 .approvalCode(this.approvalCode)
                 .merchantId(merchantId)
+                .benefitId(this.benefitId)
                 .build();
     }
 }

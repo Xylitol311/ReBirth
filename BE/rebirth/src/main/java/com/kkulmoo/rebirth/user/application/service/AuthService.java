@@ -14,6 +14,8 @@ import com.kkulmoo.rebirth.user.presentation.requestDTO.UserCIRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Objects;
 
 @Service
@@ -35,6 +37,8 @@ public class AuthService {
                 .hashedPinNumber(hashedPinNumber)
                 .phoneNumber(command.getPhoneNumber())
                 .phoneSerialNumber(command.getPhoneSerialNumber())
+                .bankLatestLoadDataAt(LocalDateTime.of(2000, 1, 1, 0, 0, 0))
+                .bankAccounts(new ArrayList<>())
                 .build();
 
         System.out.println(newUser);
