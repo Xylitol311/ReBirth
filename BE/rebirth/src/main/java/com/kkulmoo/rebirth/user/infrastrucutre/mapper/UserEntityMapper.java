@@ -41,7 +41,7 @@ public class UserEntityMapper {
             return null;
         }
 
-        return UserEntity.builder()
+        UserEntity.UserEntityBuilder builder = UserEntity.builder()
                 .consumptionPatternId(user.getConsumptionPatternId())
                 .userName(user.getUserName())
                 .hashedPinNumber(user.getHashedPinNumber())
@@ -54,8 +54,14 @@ public class UserEntityMapper {
                 .hashedPatternNumber(user.getHashedPatternNumber())
                 .averageMonthlyIncome(user.getAverageMonthlyIncome())
                 .bankLatestLoadDataAt(user.getBankLatestLoadDataAt())
-                .bankAccounts(user.getBankAccounts())
-                .build();
+                .bankAccounts(user.getBankAccounts());
+
+        // userId가 null이 아닌 경우에만 설정
+        if (user.getUserId() != null) {
+            builder.userId(user.getUserId().getValue());
+        }
+
+        return builder.build();
     }
 
     public List<User> toUserList(List<UserEntity> userEntities) {

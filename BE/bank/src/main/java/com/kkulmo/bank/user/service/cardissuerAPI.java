@@ -16,7 +16,7 @@ public class cardissuerAPI {
 
 	public cardIssuerUserResponse createCardIssuerUser(CardIssuerRequest request) {
 		return webClient.post()
-			.uri("/users") // 엔드포인트 지정
+			.uri("/api/users") // 엔드포인트 지정
 			.bodyValue(request) // 요청 본문 설정
 			.retrieve() // 응답 검색 시작
 			.bodyToMono(cardIssuerUserResponse.class) // 응답 본문을 CardIssueResponse 클래스로 변환
