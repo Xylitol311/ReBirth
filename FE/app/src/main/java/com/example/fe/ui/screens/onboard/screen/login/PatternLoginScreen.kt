@@ -1,4 +1,4 @@
-package com.example.fe.ui.screens.onboard.screen.setup
+package com.example.fe.ui.screens.onboard.screen.login
 
 import android.content.Context
 import android.content.ContextWrapper
@@ -23,22 +23,18 @@ import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import com.example.fe.R
 import com.example.fe.ui.screens.onboard.OnboardingViewModel
-import com.example.fe.ui.screens.onboard.auth.FingerprintAuth
-import com.example.fe.ui.screens.onboard.auth.PatternAuth
-import com.example.fe.ui.screens.onboard.components.AuthMethodOption
-
-
-
+import com.example.fe.ui.screens.onboard.auth.LoginPatternAuth
+import com.example.fe.ui.screens.onboard.screen.setup.security.AdditionalSecurityStep
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatternLoginScreen(
     navController: NavController,
-    viewModel: OnboardingViewModel
+    viewModel: OnboardingViewModel,
+    onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
-    var currentStep by remember { mutableStateOf(AdditionalSecurityStep.METHOD) }
-    var savedPattern by remember { mutableStateOf<List<Int>?>(null) }
+    var currentStep by remember { mutableStateOf(AdditionalSecurityStep.PATTERN) }
 
     Scaffold(
         topBar = {
@@ -62,35 +58,20 @@ fun PatternLoginScreen(
         }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-                PatternAuth(
-                    currentStep = AdditionalSecurityStep.PATTERN, // Need to use SecurityStep enum here
-                    onPatternConfirmed = {
-                        Log.d("PatternAUTH","savedPattern11 : $savedPattern / it : $it")
-                        savedPattern = it
-                        currentStep = AdditionalSecurityStep.PATTERN_CONFIRM
-                    },
-                    onStepChange = { _ -> }
-                )
-
-                PatternAuth(
-                    currentStep = AdditionalSecurityStep.PATTERN_CONFIRM, // Need to use SecurityStep enum here
-                    onPatternConfirmed = {
-                        Log.d("PatternAUTH","savedPattern : $savedPattern / it : $it")
-                        // 리스트 내용을 명시적으로 비교
-                        if (savedPattern != null && it.size == savedPattern!!.size &&
-                            it.zip(savedPattern!!).all { (a, b) -> a == b }) {
-                            viewModel.hasPatternAuth = true
-                            currentStep = AdditionalSecurityStep.DONE
-                        } else {
-                            Toast.makeText(context, "패턴이 틀렸습니다. 다시 시도하세요.", Toast.LENGTH_SHORT).show()
-                            currentStep = AdditionalSecurityStep.PATTERN
-                        }
-                    },
-                    onStepChange = { _ -> }
-                )
-
-
+            LoginPatternAuth(
+                currentStep = currentStep,
+                onPatternConfirmed = { pattern ->
+                    // 패턴이 일치하면 홈 화면으로 이동
+                    if (pattern == viewModel.getUserPattern()) {
+                        onLoginSuccess()
+                    } else {
+                        Toast.makeText(context, "패턴이 일치하지 않습니다", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onStepChange = { step ->
+                    currentStep = step
+                }
+            )
         }
     }
 }

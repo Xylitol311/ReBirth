@@ -72,14 +72,20 @@ fun HomeRecCard(
         Column(
             modifier = Modifier.padding(24.dp)
         ) {
-            Text(
-                text = "이런 카드는 어떠세요?",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "이런 카드는 어떠세요?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+            }
             
             val cardRecommendations = listOf(
                 CardRecommendation(

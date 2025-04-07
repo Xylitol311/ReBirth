@@ -26,27 +26,28 @@ import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.auth.FingerprintAuth
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
 import com.example.fe.ui.screens.onboard.components.AuthMethodOption
+import com.example.fe.ui.screens.onboard.screen.setup.security.AdditionalSecurityStep
 
-
-
-enum class AdditionalSecurityStep { METHOD, PATTERN, PATTERN_CONFIRM, DONE }
-
-// Helper function to find FragmentActivity from context
+/**
+ * FragmentActivity를 찾기 위한 확장 함수
+ * 지문 인증에 필요한 FragmentActivity를 Context로부터 찾아서 반환
+ */
 fun Context.findActivity(): FragmentActivity? {
-    var currentContext = this
-    var level = 0
-
-    while (currentContext is ContextWrapper) {
-        if (currentContext is FragmentActivity) {
-            return currentContext
-        }
-        currentContext = currentContext.baseContext ?: break
-        level++
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is FragmentActivity) return context
+        context = context.baseContext
     }
-    Log.e("FingerAuth", "FragmentActivity를 찾지 못함")
     return null
 }
 
+/**
+ * 추가 보안 설정 화면
+ * 사용자가 지문이나 패턴 인증을 추가로 설정할 수 있는 메인 화면
+ * 
+ * @param navController 화면 전환을 위한 네비게이션 컨트롤러
+ * @param viewModel 보안 설정 상태를 관리하는 뷰모델
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdditionalSecurityScreen(
@@ -54,18 +55,20 @@ fun AdditionalSecurityScreen(
     viewModel: OnboardingViewModel
 ) {
     val context = LocalContext.current
+    // 현재 단계를 관리하는 상태 (METHOD: 선택 화면, PATTERN: 패턴 설정, COMPLETE: 완료 화면)
     var currentStep by remember { mutableStateOf(AdditionalSecurityStep.METHOD) }
-    val activity = remember { context.findActivity() }
+    // 패턴 인증 시 첫 번째 입력한 패턴을 저장하는 상태
     var savedPattern by remember { mutableStateOf<List<Int>?>(null) }
 
     Scaffold(
         topBar = {
-            if (currentStep == AdditionalSecurityStep.PATTERN_CONFIRM) {
+            // 메인 선택 화면과 완료 화면을 제외한 화면에서만 뒤로가기 버튼 표시
+            if (currentStep != AdditionalSecurityStep.METHOD && currentStep != AdditionalSecurityStep.COMPLETE) {
                 TopAppBar(
                     title = {},
                     navigationIcon = {
                         IconButton(
-                            onClick = { currentStep = AdditionalSecurityStep.PATTERN },
+                            onClick = { currentStep = AdditionalSecurityStep.METHOD },
                             modifier = Modifier.size(54.dp)
                         ) {
                             Icon(
@@ -81,74 +84,90 @@ fun AdditionalSecurityScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (currentStep) {
-                AdditionalSecurityStep.METHOD -> SecurityMethodSelection(
-                    onFingerprintSelected = {
-                        val biometricManager = BiometricManager.from(context)
-                        when (biometricManager.canAuthenticate(BIOMETRIC_STRONG)) {
-                            BiometricManager.BIOMETRIC_SUCCESS -> {
-                                // Fixed the issue with `it` by using the activity variable
-                                if (activity != null) {
-                                    FingerprintAuth.authenticate(activity) { success ->
-                                        if (success) {
-                                            viewModel.hasFingerprintAuth = true
-                                            currentStep = AdditionalSecurityStep.DONE
-                                        }
+                AdditionalSecurityStep.METHOD -> {
+                    // 추가 인증 수단 선택 화면
+                    SecurityMethodSelectionScreen(
+                        onFingerprintSelected = {
+                            // 지문 인증 선택 시 처리
+                            val activity = context.findActivity()
+                            if (activity != null) {
+                                FingerprintAuth.authenticate(activity) { success ->
+                                    if (success) {
+                                        viewModel.setBiometricAuthState(true)
+                                        currentStep = AdditionalSecurityStep.COMPLETE
+                                    } else {
+                                        Toast.makeText(context, "지문 등록에 실패했습니다.", Toast.LENGTH_SHORT).show()
                                     }
-                                } else {
-                                    Toast.makeText(context, "생체인증을 사용할 수 없습니다", Toast.LENGTH_SHORT).show()
                                 }
                             }
-                            else -> Toast.makeText(context, "지문 인증이 불가능합니다. 패턴 인증을 사용하세요.", Toast.LENGTH_LONG).show()
-                        }
-                    },
-                    onPatternSelected = {
-                        currentStep = AdditionalSecurityStep.PATTERN
-                    },
-                    onSkip = {
-                        navController.navigate("registration_complete") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
-                    }
-                )
-                AdditionalSecurityStep.PATTERN -> PatternAuth(
-                    currentStep = AdditionalSecurityStep.PATTERN, // Need to use SecurityStep enum here
-                    onPatternConfirmed = {
-                        Log.d("PatternAUTH","savedPattern11 : $savedPattern / it : $it")
-                        savedPattern = it
-                        currentStep = AdditionalSecurityStep.PATTERN_CONFIRM
-                    },
-                    onStepChange = { _ -> }
-                )
-
-                AdditionalSecurityStep.PATTERN_CONFIRM -> PatternAuth(
-                    currentStep = AdditionalSecurityStep.PATTERN_CONFIRM, // Need to use SecurityStep enum here
-                    onPatternConfirmed = {
-                        Log.d("PatternAUTH","savedPattern : $savedPattern / it : $it")
-                        // 리스트 내용을 명시적으로 비교
-                        if (savedPattern != null && it.size == savedPattern!!.size &&
-                            it.zip(savedPattern!!).all { (a, b) -> a == b }) {
-                            viewModel.hasPatternAuth = true
-                            currentStep = AdditionalSecurityStep.DONE
-                        } else {
-                            Toast.makeText(context, "패턴이 틀렸습니다. 다시 시도하세요.", Toast.LENGTH_SHORT).show()
+                        },
+                        onPatternSelected = {
+                            // 패턴 인증 선택 시 패턴 설정 화면으로 이동
                             currentStep = AdditionalSecurityStep.PATTERN
+                        },
+                        onSkip = {
+                            // 건너뛰기 선택 시 완료 화면으로 이동
+                            currentStep = AdditionalSecurityStep.COMPLETE
                         }
-                    },
-                    onStepChange = { _ -> }
-                )
-
-                AdditionalSecurityStep.DONE -> SecurityCompleteScreen {
-                    navController.navigate("registration_complete") {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                    }
+                    )
+                }
+                AdditionalSecurityStep.PATTERN -> {
+                    // 패턴 첫 입력 화면
+                    PatternAuth(
+                        currentStep = currentStep,
+                        onPatternConfirmed = { pattern ->
+                            savedPattern = pattern
+                            currentStep = AdditionalSecurityStep.PATTERN_CONFIRM
+                        },
+                        onStepChange = { step -> currentStep = step }
+                    )
+                }
+                AdditionalSecurityStep.PATTERN_CONFIRM -> {
+                    // 패턴 확인 화면 - 첫 입력과 동일한지 확인
+                    PatternAuth(
+                        currentStep = AdditionalSecurityStep.PATTERN_CONFIRM,
+                        onPatternConfirmed = { pattern ->
+                            if (savedPattern != null && pattern.size == savedPattern!!.size &&
+                                pattern.zip(savedPattern!!).all { (a, b) -> a == b }) {
+                                // 패턴이 일치하면 저장하고 완료 화면으로 이동
+                                viewModel.setUserPattern(pattern)
+                                currentStep = AdditionalSecurityStep.COMPLETE
+                            } else {
+                                // 패턴이 일치하지 않으면 다시 처음부터
+                                Toast.makeText(context, "패턴이 일치하지 않습니다. 다시 시도하세요.", Toast.LENGTH_SHORT).show()
+                                currentStep = AdditionalSecurityStep.PATTERN
+                            }
+                        },
+                        onStepChange = { step -> currentStep = step }
+                    )
+                }
+                AdditionalSecurityStep.COMPLETE -> {
+                    // 보안 설정 완료 화면
+                    SecurityCompleteScreen(
+                        onNext = {
+                            // 다음 버튼 클릭 시 회원가입 완료 화면으로 이동
+                            navController.navigate("registration_complete")
+                        }
+                    )
+                }
+                else -> {
+                    currentStep = AdditionalSecurityStep.METHOD
                 }
             }
         }
     }
 }
 
+/**
+ * 추가 인증 수단 선택 화면
+ * 지문 인증과 패턴 인증 중 선택할 수 있는 화면
+ * 
+ * @param onFingerprintSelected 지문 인증 선택 시 콜백
+ * @param onPatternSelected 패턴 인증 선택 시 콜백
+ * @param onSkip 건너뛰기 선택 시 콜백
+ */
 @Composable
-private fun SecurityMethodSelection(
+private fun SecurityMethodSelectionScreen(
     onFingerprintSelected: () -> Unit,
     onPatternSelected: () -> Unit,
     onSkip: () -> Unit
@@ -217,6 +236,12 @@ private fun SecurityMethodSelection(
     }
 }
 
+/**
+ * 보안 설정 완료 화면
+ * 선택한 보안 설정이 완료되었음을 알리는 화면
+ * 
+ * @param onNext 다음 버튼 클릭 시 콜백
+ */
 @Composable
 private fun SecurityCompleteScreen(onNext: () -> Unit) {
     Column(

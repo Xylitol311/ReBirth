@@ -1,6 +1,5 @@
 package com.example.fe.ui.screens.onboard.auth
 
-
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
@@ -10,17 +9,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.ui.screens.onboard.components.PatternGrid
-import com.example.fe.ui.screens.onboard.screen.setup.AdditionalSecurityStep
+import com.example.fe.ui.screens.onboard.screen.setup.security.AdditionalSecurityStep
 
-
+/**
+ * 패턴 인증 화면 컴포저블
+ * 사용자가 패턴을 입력하고 확인하는 화면을 제공
+ * 
+ * @param currentStep 현재 패턴 입력 단계 (최초 입력 또는 확인 입력)
+ * @param onPatternConfirmed 패턴 입력이 완료되었을 때 호출되는 콜백
+ * @param onStepChange 패턴 입력 단계 변경 시 호출되는 콜백
+ */
 @Composable
 fun PatternAuth(
     currentStep: AdditionalSecurityStep,
@@ -28,7 +34,6 @@ fun PatternAuth(
     onStepChange: (AdditionalSecurityStep) -> Unit
 ) {
     val context = LocalContext.current
-    // 불필요한 내부 상태 제거
 
     Column(
         modifier = Modifier
@@ -38,31 +43,38 @@ fun PatternAuth(
     ) {
         Spacer(modifier = Modifier.weight(0.1f))
 
+        // 단계에 따른 안내 텍스트 표시
         Text(
-            if (currentStep == AdditionalSecurityStep.PATTERN) "패턴을 설정해주세요"
-            else "패턴을 다시 입력해주세요",
+            text = when (currentStep) {
+                AdditionalSecurityStep.PATTERN -> "패턴을 입력해주세요"
+                AdditionalSecurityStep.PATTERN_CONFIRM -> "패턴을 한 번 더 입력해주세요"
+                else -> ""
+            },
             fontSize = 28.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
+        // 패턴 입력 설명 텍스트
+        Text(
+            text = when (currentStep) {
+                AdditionalSecurityStep.PATTERN -> "4개 이상의 점을 연결하여\n나만의 패턴을 만들어주세요"
+                AdditionalSecurityStep.PATTERN_CONFIRM -> "방금 입력한 패턴을\n한 번 더 그려주세요"
+                else -> ""
+            },
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // 패턴 입력 그리드
         PatternGrid(
             onPatternComplete = { pattern ->
-                if (pattern is List<*> && pattern.all { it is Int }) {
-                    val validPattern = pattern.filterIsInstance<Int>()
-
-                    if (validPattern.size < 4) {
-                        Toast.makeText(
-                            context,
-                            "최소 4개 이상의 점을 연결해주세요",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@PatternGrid
-                    }
-
-                    // 패턴을 부모 컴포넌트로 전달
-                    onPatternConfirmed(validPattern)
+                if (pattern.size >= 4) {
+                    onPatternConfirmed(pattern)
                 }
             },
             showConfirmButton = false

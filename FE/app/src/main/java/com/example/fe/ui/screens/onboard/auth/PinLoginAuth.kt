@@ -1,6 +1,5 @@
 package com.example.fe.ui.screens.onboard.auth
 
-
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,16 +19,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.ui.screens.onboard.components.NumberPad
 import com.example.fe.ui.screens.onboard.components.PinDots
-
+import com.example.fe.ui.screens.onboard.OnboardingViewModel
 
 @Composable
 fun PinLoginAuth(
     onSuccessfulLogin: () -> Unit,
-    correctPin: String = "123456" // 테스트용 PIN, 실제로는 안전한 방법으로 관리해야 합니다
+    viewModel: OnboardingViewModel
 ) {
     val context = LocalContext.current
     var pinInput by remember { mutableStateOf("") }
     val shuffledNumbers = remember { (1..9).toList().shuffled() }
+    val correctPin = viewModel.getUserPin()
 
     Column(
         modifier = Modifier
@@ -59,7 +59,7 @@ fun PinLoginAuth(
             },
             onComplete = {
                 if (pinInput.length == 6) {
-                    // 입력한 PIN이 정확한지 확인 (실제로는 서버 검증이 필요)
+                    // 입력한 PIN이 정확한지 확인
                     if (pinInput == correctPin) {
                         onSuccessfulLogin()
                     } else {
