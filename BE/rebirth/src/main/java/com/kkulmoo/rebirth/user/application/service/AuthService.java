@@ -68,7 +68,7 @@ public class AuthService {
                 .phoneSerialNumber(user.getPhoneSerialNumber())
                 .bankLatestLoadDataAt(user.getBankLatestLoadDataAt())
                 .bankAccounts(user.getBankAccounts())
-                        .hashedPatternNumber(hashedPatternNumber)
+                .hashedPatternNumber(hashedPatternNumber)
                 .build());
 
     }
@@ -90,8 +90,9 @@ public class AuthService {
                 return AuthenticationResult.success(user);
             }
         } else if (type.equals("PATTERN")) {
+
             String hashedPatternNumber = PasswordUtils.encodePassword(number);
-            if (user.getHashedPinNumber().equals(hashedPatternNumber)) {
+            if (user.getHashedPatternNumber().equals(hashedPatternNumber)) {
                 return AuthenticationResult.success(user);
             }
         }

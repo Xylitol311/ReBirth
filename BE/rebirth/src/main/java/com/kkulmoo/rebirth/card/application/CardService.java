@@ -242,8 +242,8 @@ public class CardService {
         return cardRepository.findByUserId(userId);
     }
 
-    public List<MyCard> getMyCardListByCardUniqueNumbers(List<String> cardUniqueNumbers) {
-        return cardRepository.findByCardUniqueNumbers(cardUniqueNumbers);
+    public List<MyCard> getMyCardListByCardUniqueNumbers(List<String> cardUniqueNumbers, Integer userId) {
+        return cardRepository.findByCardUniqueNumbers(cardUniqueNumbers, userId);
     }
 
     // 모든 카드데이터 불러오기.

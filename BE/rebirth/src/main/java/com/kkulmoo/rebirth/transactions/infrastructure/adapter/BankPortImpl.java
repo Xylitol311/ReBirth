@@ -76,6 +76,7 @@ public class BankPortImpl implements BankPort {
 
     @Override
     public Mono<UserCIDTO> getUserCI(UserCIRequest userCIRequest) {
+        System.out.println(userCIRequest.toString());
         return ssafyBankAPIClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/users/userci")

@@ -16,8 +16,7 @@ public interface CardRepository {
 
     List<MyCard> findByUserId(UserId userId);
 
-    List<MyCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers);
-    // 필요한 다른 메서드들
+    List<MyCard> findByCardUniqueNumbers(List<String> cardUniqueNumbers, Integer userId);
 
     Optional<MyCard> findByCardUniqueNumber(String cardUniqueNumber);
 

@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SseService {
 
     private final Map<Integer, SseEmitter> emitterMap = new ConcurrentHashMap<>();
-    private static final long TIMEOUT = 60 * 1000;
+    private static final long TIMEOUT = 70 * 1000;
     private static final long RECONNECTION_TIMEOUT = 1000L;
 
     public SseEmitter subscribe(int userId) {

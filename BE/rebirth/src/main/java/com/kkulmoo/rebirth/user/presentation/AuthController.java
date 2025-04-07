@@ -71,6 +71,8 @@ public class AuthController {
 	)
 	{
 
+		System.out.println(userLoginRequest.getNumber() + " " + userLoginRequest.getPhoneSerialNumber()+ " " + userLoginRequest.getType());
+
 		AuthenticationResult result;
 
 		if(userLoginRequest.getType().equals("fingerprint")){
