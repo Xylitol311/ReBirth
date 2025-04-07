@@ -58,7 +58,17 @@ public class AuthService {
         String hashedPatternNumber = PasswordUtils.encodePassword(patternNumbers);
         User user = userRepository.findByUserId(new UserId(userId));
 
-        userRepository.update(User.builder().build());
+        userRepository.update(User.builder()
+                        .userId(user.getUserId())
+                .userName(user.getUserName())
+                .userCI(user.getUserCI())
+                .hashedPinNumber(user.getHashedPinNumber())
+                .phoneNumber(user.getPhoneNumber())
+                .phoneSerialNumber(user.getPhoneSerialNumber())
+                .bankLatestLoadDataAt(user.getBankLatestLoadDataAt())
+                .bankAccounts(user.getBankAccounts())
+                        .hashedPatternNumber(hashedPatternNumber)
+                .build());
 
     }
 
