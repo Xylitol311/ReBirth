@@ -30,6 +30,7 @@ fun PinSetupScreen(
     name: String,
     phone: String,
     ssnFront: String,
+    income: String
 ) {
     val context = LocalContext.current
     val viewModel: OnboardingViewModel = viewModel(
@@ -91,13 +92,15 @@ fun PinSetupScreen(
                                 } else {
                                     // PIN 확인이 일치하는지 검증
                                     if (confirmedPin == pin) {
-                                        Log.d("LoginAUTH","회원가입 pinsetupscreen")
+                                        Log.d("LoginAUTH","${name}/${phone}/${ssnFront}/${confirmedPin}/${income}")
                                         isLoading = true
+
                                         viewModel.registerUser(
                                             name = name,
                                             phone = phone,
                                             ssnFront = ssnFront,
                                             pin = confirmedPin,
+                                            income = income,
                                             onSuccess = {
                                                 saveLoginMethod(context, "pin")
                                                 navController.navigate("card_select")

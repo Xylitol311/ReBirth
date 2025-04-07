@@ -38,11 +38,12 @@ fun OnboardingNavHost(
 
         // PIN 설정 화면
         composable(
-            "pin_setup/{name}/{phone}/{ssnFront}",
+            "pin_setup/{name}/{phone}/{ssnFront}/{income}",
             arguments = listOf(
                 navArgument("name") { type = NavType.StringType },
                 navArgument("phone") { type = NavType.StringType },
-                navArgument("ssnFront") { type = NavType.StringType }
+                navArgument("ssnFront") { type = NavType.StringType },
+                navArgument("income") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             PinSetupScreen(
@@ -50,6 +51,7 @@ fun OnboardingNavHost(
                 name = backStackEntry.arguments?.getString("name") ?: "",
                 phone = backStackEntry.arguments?.getString("phone") ?: "",
                 ssnFront = backStackEntry.arguments?.getString("ssnFront") ?: "",
+                income = backStackEntry.arguments?.getString("income") ?: ""
             )
         }
 
