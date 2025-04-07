@@ -21,6 +21,13 @@ public class CardsRepositoryImpl implements CardsRepository{
         this.paymentCardEntityMapper = paymentCardEntityMapper;
     }
 
+    //사용자 결제 카드 등록
+
+    // cardUniqueId로 검색해서 가져오기
+
+
+    // 업데이트 해주기
+
 
     //사용자 보유 카드 리스트 가져오기
     @Override
@@ -33,10 +40,14 @@ public class CardsRepositoryImpl implements CardsRepository{
         return cards;
     }
 
+    //카드 아이디로 카드 가져오기
     @Override
-    public int findCardTemplateIdByToken(String permanentToken) {
-        return cardsJpaRepository.findCardTemplateIdByPermanentToken(permanentToken)
-                .orElseThrow(() -> new NoSuchElementException("해당 permanentToken을 가진 카드가 없습니다."));
+    public PaymentCard findByCardUniqueNumber(String CardUniqueNumber) {
+
+
+
+        return null;
     }
+
 
 }
