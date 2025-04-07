@@ -62,7 +62,7 @@ public class SseController {
     }
 
     // 오프라인 결제(포스기) 진행 엔드포인트
-    @PostMapping("/progresspay")
+    @PostMapping("/insert-paydata")
     public ResponseEntity<?> insertPayData(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
         // 클라이언트로부터 받은 짧은 토큰으로 실제 토큰 복원
         String realToken = paymentTokenService.getRealDisposableToken(createTransactionRequestDTO.getToken());
