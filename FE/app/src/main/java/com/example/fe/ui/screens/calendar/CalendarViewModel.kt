@@ -81,6 +81,10 @@ class CalendarViewModel : ViewModel() {
     // 디버그 모드 여부
     private val useDebugMode = AppConfig.App.DEBUG_MODE
     
+    // 리포트 탭 스크롤 오프셋 - 배경 이동을 위한 값
+    private val _reportScrollOffset = MutableStateFlow(0f)
+    val reportScrollOffset: StateFlow<Float> = _reportScrollOffset
+    
     init {
         // 초기 데이터 로드
         loadMonthlyData(selectedYearMonth)
@@ -494,5 +498,10 @@ class CalendarViewModel : ViewModel() {
                 false
             }
         }
+    }
+    
+    // 리포트 스크롤 오프셋 업데이트
+    fun updateReportScrollOffset(offset: Float) {
+        _reportScrollOffset.value = offset
     }
 } 

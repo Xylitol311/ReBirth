@@ -94,7 +94,7 @@ dependencies {
     
     // 권한 요청을 위한 라이브러리
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
-    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // ML Kit 카드 스캐너
     implementation("com.google.mlkit:text-recognition:16.0.0")
