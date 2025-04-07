@@ -23,14 +23,14 @@ public class UserController {
 	// 은행 계좌 거래내역 불러오기 bankTransaction
 	@PostMapping("/mydata/bank/transactions")
 	public ResponseEntity<ApiResponseDTO<Void>> loadBankTransactions(@JwtUserId Integer userId){
-//		myDataService.loadMyBankTransaction(userId);
+		myDataService.loadMyBankTransaction(userId);
 		return ResponseEntity.ok(ApiResponseDTO.success("계좌 거래내역 로드에 성공하였습니다."));
 	}
 
 	// 카드 거래내역 불러오기 getCardTransaction
 	@PostMapping("/mydata/card/transactions")
 	public ResponseEntity<ApiResponseDTO<Void>> loadCardTransactions(@JwtUserId Integer userId){
-		myDataService.getMyCardTransactionData(2);
+//		myDataService.getMyCardTransactionData(userId);
 		return ResponseEntity.ok(ApiResponseDTO.success("카드 거래내역 로드에 성공하였습니다."));
 	}
 
@@ -51,12 +51,6 @@ public class UserController {
 
 	@PostMapping("/mydata/all")
 	public ResponseEntity<ApiResponseDTO<Void>> loadAllMyData(@JwtUserId Integer userId) {
-		try {
-			myDataService.loadMyCard(userId);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(ApiResponseDTO.error("카드 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
-		}
 
 		try {
 			myDataService.loadMyBankAccount(userId);
@@ -65,6 +59,12 @@ public class UserController {
 					.body(ApiResponseDTO.error("은행 계좌 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
 		}
 
+		try {
+			myDataService.loadMyCard(userId);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponseDTO.error("카드 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
+		}
 		try {
 			myDataService.loadMyBankTransaction(userId);
 		} catch (Exception e) {
