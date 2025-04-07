@@ -29,8 +29,8 @@ object AppConfig {
     
     // 타임아웃 설정
     object Timeout {
-        const val CONNECT_TIMEOUT_SECONDS = 30L
+        const val CONNECT_TIMEOUT_SECONDS = 60L
         const val READ_TIMEOUT_SECONDS = 60L
-        const val WRITE_TIMEOUT_SECONDS = 30L
+        const val WRITE_TIMEOUT_SECONDS = 60L
     }
 } 

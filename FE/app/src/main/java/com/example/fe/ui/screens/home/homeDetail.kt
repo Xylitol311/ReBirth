@@ -1,6 +1,8 @@
 package com.example.fe.ui.screens.home
 
 import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,6 +42,10 @@ import androidx.compose.ui.unit.sp
 import com.example.fe.R
 import com.example.fe.ui.components.backgrounds.GlassSurface
 import androidx.compose.foundation.clickable
+import androidx.compose.material.Divider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import com.example.fe.config.AppConfig
 import com.example.fe.data.network.CardSummary
 import com.example.fe.data.network.CategorySummary

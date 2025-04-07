@@ -1,26 +1,15 @@
 package com.example.fe.ui.navigation
 
-import android.util.Log
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.content.MediaType.Companion.Text
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,13 +18,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -44,7 +30,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
@@ -53,7 +38,6 @@ import com.example.fe.ui.screens.calendar.CalendarScreen
 import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
 import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
 import com.example.fe.ui.screens.cardRecommend.CardRecommendViewModel
-import com.example.fe.ui.screens.cardRecommend.CardInfo
 import com.example.fe.ui.screens.home.HomeDetailScreen
 import com.example.fe.ui.screens.home.HomeScreen
 import com.example.fe.ui.screens.myCard.CardDetailScreen
@@ -65,11 +49,10 @@ import com.example.fe.ui.screens.onboard.OnboardingScreen
 import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModelFactory
+import com.example.fe.ui.screens.payment.PaymentScreen
 import com.example.fe.ui.screens.payment.PaymentViewModel
 import com.example.fe.ui.screens.payment.components.CardOCRScanScreen
 import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
-import com.example.fe.ui.screens.payment.components.PaymentResultPopup
-import com.example.fe.ui.screens.payment.components.QRScannerScreen
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
