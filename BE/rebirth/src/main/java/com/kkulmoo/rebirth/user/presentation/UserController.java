@@ -30,7 +30,7 @@ public class UserController {
 	// 카드 거래내역 불러오기 getCardTransaction
 	@PostMapping("/mydata/card/transactions")
 	public ResponseEntity<ApiResponseDTO<Void>> loadCardTransactions(@JwtUserId Integer userId){
-//		myDataService.getMyCardTransactionData(userId);
+		myDataService.getMyCardTransactionData(2);
 		return ResponseEntity.ok(ApiResponseDTO.success("카드 거래내역 로드에 성공하였습니다."));
 	}
 

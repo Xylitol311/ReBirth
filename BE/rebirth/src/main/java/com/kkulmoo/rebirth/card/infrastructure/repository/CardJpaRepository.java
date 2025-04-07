@@ -11,8 +11,8 @@ public interface CardJpaRepository extends JpaRepository<CardEntity,Integer> {
 
 	List<CardEntity> findByUserId(Integer userId);
 
-	@Query("SELECT c FROM CardEntity c WHERE c.cardUniqueNumber IN :cardUniqueNumbers")
-	List<CardEntity> findByCardUniqueNumberIn(List<String> cardUniqueNumbers);
+	@Query("SELECT c FROM CardEntity c WHERE c.cardUniqueNumber IN :cardUniqueNumbers AND c.userId = :userId")
+	List<CardEntity> findByCardUniqueNumberInAndUserId(List<String> cardUniqueNumbers, Integer userId);
 
 	List<CardEntity> findByUserIdAndCardIdIn(Integer userId, List<Integer> cardIds);
 
