@@ -185,8 +185,8 @@ public class PaymentTransactionService {
                 .orElseGet(() -> preBenefitRepository.save(preBenefit));
     }
 
-    public CardTransactionDTO insertPayData(int userId, String requestToken, String merchantName, int amount) {
-        log.info("processPayment 시작 - userId: {}, merchantName: {}, amount: {}, requestToken: {}",
+    public CardTransactionDTO insertPayData(int userId, String requestToken, String merchantName, int amount, LocalDateTime createdAt) {
+        log.info("InsertPayData 시작 - userId: {}, merchantName: {}, amount: {}, requestToken: {}",
                 userId, merchantName, amount, requestToken);
 
         MerchantJoinDto merchantJoinDto = merchantJoinRepository.findMerchantJoinDataByMerchantName(merchantName);
@@ -194,7 +194,6 @@ public class PaymentTransactionService {
                 merchantJoinDto.getCategoryId(),
                 merchantJoinDto.getSubCategoryId(),
                 merchantJoinDto.getMerchantId());
-
 
         // 추천 카드 혜택 정보 계산
         CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto);
@@ -241,7 +240,7 @@ public class PaymentTransactionService {
         log.info("카드사 요청 페이로드 - benefitId: {}", benefitId);
         log.info("카드사 요청 페이로드 - benefitType: {}", benefitType.name());
         log.info("카드사 요청 페이로드 - benefitAmount: {}", benefitAmount);
-        log.info("카드사 요청 페이로드 - createdAt: {}", LocalDateTime.now());
+        log.info("카드사 요청 페이로드 - createdAt: {}", createdAt);
         CreateTransactionRequestToCardsaDTO transactionRequest = CreateTransactionRequestToCardsaDTO.builder()
                 .token(permanentToken)
                 .amount(amount)
@@ -249,7 +248,7 @@ public class PaymentTransactionService {
                 .benefitId(benefitId)
                 .benefitType(benefitType.name())
                 .benefitAmount(benefitAmount)
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
 
         // 카드사에 결제 요청 후 결과 수신
@@ -261,32 +260,16 @@ public class PaymentTransactionService {
             log.warn("카드사 응답이 null입니다.");
         }
 
-        // 결제 피드백 정보 업데이트
-        PreBenefit preBenefit = PreBenefit.builder()
-                .userId(userId)
-                .paymentCardId(realBenefit != null
-                        ? realBenefit.getMyCardId()
-                        : (recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null))
-                .recommendedCardId(recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null)
-                .amount(amount)
-                .ifBenefitType(recommendedBenefit != null ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT)
-                .ifBenefitAmount(recommendedBenefit != null ? recommendedBenefit.getBenefitAmount() : 0)
-                .realBenefitType(realBenefit != null
-                        ? realBenefit.getBenefitType()
-                        : (recommendedBenefit != null ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT))
-                .realBenefitAmount(realBenefit != null
-                        ? realBenefit.getBenefitAmount()
-                        : (recommendedBenefit != null ? recommendedBenefit.getBenefitAmount() : 0))
-                .merchantName(merchantName)
-                .build();
-        savePreBenefit(preBenefit);
-
         // 마이데이터 호출 및 혜택 현황 업데이트
         User user = userRepository.findByUserId(new UserId(userId));
         log.info("유저 정보 - userId: {}, userName: {}", user.getUserId(), user.getUserName());
         List<MyCard> myCards = Arrays.asList(myCardDto);
+
+        // 마이데이터 가져오기 호출
         myDataService.loadMyTransactionByCards(user, myCards);
+        // 혜택 현황 업데이트(이것도 현재 기준이라 없애야 할듯?)
         benefitService.updateUserCardBenefit(userId, benefitId, benefitAmount);
+        // 리포트 업데이트(이것도 현재 기준이라 없애야 할듯?)
         reportService.updateMonthlyTransactionSummary(userId);
 
         return cardTransactionDTO;
