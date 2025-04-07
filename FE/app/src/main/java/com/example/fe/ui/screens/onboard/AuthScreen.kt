@@ -3,8 +3,6 @@ package com.example.fe.ui.screens.onboard
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.indication
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -22,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.text.input.KeyboardType
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
 enum class Step {
     NAME, SSN, TELECOM, PHONE, CODE, AGREEMENT
@@ -30,7 +28,10 @@ enum class Step {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
+fun AuthScreen(
+    navController: NavController,  // navController 추가
+    viewModel: OnboardingViewModel
+) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -363,7 +364,11 @@ fun AuthScreen(navController: NavController, viewModel: OnboardingViewModel) {
                 Button(
                     onClick = {
                         showAgreement = false
-                        navController.navigate("pin_setup")
+                        // 데이터를 함께 전달
+
+                        Log.d("AUTH","pin_setup/${name}/${phone}/${ssnFront}")
+                        navController.navigate("pin_setup/${name}/${phone}/${ssnFront}")
+
                     },
                     enabled = checkedItems.size == agreementItems.size,
                     modifier = Modifier

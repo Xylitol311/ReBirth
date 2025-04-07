@@ -7,7 +7,7 @@ object AppConfig {
     // 서버 환경 설정
     object Server {
         // 기본 서버 URL
-//        const val BASE_URL = "http://localhost:8080/"
+//        const val BASE_URL = "http://localhost:8080"
         const val BASE_URL = "https://j12a602.p.ssafy.io/rebirth/"
         
         // API 엔드포인트

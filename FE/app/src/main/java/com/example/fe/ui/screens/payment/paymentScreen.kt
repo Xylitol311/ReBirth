@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.R
 import com.example.fe.ui.components.zodiac.DynamicZodiacView
-import com.example.fe.ui.screens.payment.components.PaymentBarcodeQRSection
 import com.example.fe.ui.screens.payment.components.PaymentCardScroll
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -48,6 +47,8 @@ import android.util.Log
 import com.example.fe.ui.screens.payment.components.PaymentAutoSection
 import androidx.compose.material3.IconButton
 import com.example.fe.ui.screens.payment.components.PaymentAddCardSection
+import com.example.fe.ui.screens.payment.components.PaymentBarcodeQRSection
+import com.example.fe.ui.screens.payment.components.QRScannerScreen
 
 // 카드 정보 데이터 클래스
 data class PaymentCardInfo(
@@ -288,6 +289,7 @@ fun PaymentScreen(
                     }
                 } else if (selectedCard != null) {
                     // 선택된 카드가 있는 경우
+
                     PaymentBarcodeQRSection(
                         remainingTime = remainingTime,
                         refreshTrigger = refreshTrigger,

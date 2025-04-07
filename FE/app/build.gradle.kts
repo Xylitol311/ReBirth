@@ -1,9 +1,13 @@
 plugins {
+
+
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0"
+
+
 }
 
 android {
@@ -107,7 +111,7 @@ dependencies {
     implementation ("com.google.dagger:hilt-android:2.48")
     ksp ("com.google.dagger:hilt-android-compiler:2.48")
     implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
-    
+
     // Flow
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 

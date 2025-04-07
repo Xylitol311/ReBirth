@@ -1,28 +1,54 @@
 package com.example.fe.ui.screens.onboard.screen.setup
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
+import com.example.fe.data.network.api.AuthApiService
 import com.example.fe.ui.screens.onboard.auth.PinAuth
+import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
+import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
 import com.example.fe.ui.screens.onboard.components.login.saveLoginMethod
-import kotlinx.coroutines.launch
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModelFactory
+
 
 enum class PinStep { PIN, PIN_CONFIRM, DONE }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PinSetupScreen(
     navController: NavController,
-    viewModel: OnboardingViewModel
+    name: String,
+    phone: String,
+    ssnFront: String,
 ) {
     val context = LocalContext.current
+    val viewModel: OnboardingViewModel = viewModel(
+        factory = OnboardingViewModelFactory(
+            deviceInfoManager = AndroidDeviceInfoManager(context),
+            context = context
+        )
+    )
     var currentStep by remember { mutableStateOf(PinStep.PIN) }
-    val scope = rememberCoroutineScope()
+    var pin by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    // 에러 메시지 표시
+    if (errorMessage.isNotEmpty()) {
+        LaunchedEffect(errorMessage) {
+            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+            errorMessage = ""
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -35,7 +61,7 @@ fun PinSetupScreen(
                             modifier = Modifier.size(54.dp)
                         ) {
                             Icon(
-                                androidx.compose.material.icons.Icons.Default.ArrowBack,
+                                Icons.Default.ArrowBack,
                                 contentDescription = "뒤로가기",
                                 modifier = Modifier.size(32.dp)
                             )
@@ -45,31 +71,59 @@ fun PinSetupScreen(
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
             when (currentStep) {
-                PinStep.PIN, PinStep.PIN_CONFIRM -> PinAuth(
-                    currentStep = if (currentStep == PinStep.PIN) PinStep.PIN else PinStep.PIN_CONFIRM,
-                    onPinConfirmed = { pin ->
-                        viewModel.hasPinAuth = true
-                        viewModel.setUserPin(pin)
-                        scope.launch {
-                            saveLoginMethod(context, "pin")
-                            currentStep = PinStep.DONE
-                        }
-                    },
-                    onStepChange = {
-                        currentStep = when (it) {
-                            PinStep.PIN -> PinStep.PIN
-                            PinStep.PIN_CONFIRM -> PinStep.PIN_CONFIRM
-                            else -> currentStep
-                        }
+                PinStep.PIN, PinStep.PIN_CONFIRM -> {
+                    if (isLoading) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    } else {
+                        PinAuth(
+                            currentStep = if (currentStep == PinStep.PIN) PinStep.PIN else PinStep.PIN_CONFIRM,
+                            onPinConfirmed = { confirmedPin ->
+                                viewModel.setUserPin(true)
+                                if (currentStep == PinStep.PIN) {
+                                    pin = confirmedPin
+                                    currentStep = PinStep.PIN_CONFIRM
+                                } else {
+                                    // PIN 확인이 일치하는지 검증
+                                    if (confirmedPin == pin) {
+                                        Log.d("LoginAUTH","회원가입 pinsetupscreen")
+                                        isLoading = true
+                                        viewModel.registerUser(
+                                            name = name,
+                                            phone = phone,
+                                            ssnFront = ssnFront,
+                                            pin = confirmedPin,
+                                            onSuccess = {
+                                                saveLoginMethod(context, "pin")
+                                                navController.navigate("card_select")
+                                            },
+                                            onFailure = { error ->
+                                                isLoading = false
+                                                errorMessage = error
+                                            }
+                                        )
+                                    } else {
+                                        errorMessage = "PIN 번호가 일치하지 않습니다"
+                                        currentStep = PinStep.PIN
+                                        pin = ""
+                                    }
+                                }
+                            },
+                            onBack = {
+                                if (currentStep == PinStep.PIN_CONFIRM) {
+                                    currentStep = PinStep.PIN
+                                }
+                            }
+                        )
                     }
-                )
-
+                }
                 PinStep.DONE -> {
-                    LaunchedEffect(Unit) {
-                        navController.navigate("card_select")
-                    }
+                    // 처리 완료 (이미 onSuccess에서 네비게이션 처리)
                 }
             }
         }

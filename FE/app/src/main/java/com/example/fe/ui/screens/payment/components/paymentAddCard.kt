@@ -131,7 +131,7 @@ internal fun processImageWithTextRecognition(
 }
 
 // 카드 정보 추출 함수
-internal fun extractCardInfo(visionText: Text): Triple<String, String, String> {
+fun extractCardInfo(visionText: Text): Triple<String, String, String> {
     var cardNumber = ""
     var expiryDate = ""
     var cardholderName = ""
