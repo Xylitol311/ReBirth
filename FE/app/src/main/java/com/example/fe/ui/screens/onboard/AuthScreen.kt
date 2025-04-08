@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -19,11 +20,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.activity.compose.BackHandler
+import com.example.fe.ui.theme.SkyBlue
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
 enum class Step {
-    NAME, SSN, TELECOM, PHONE, CODE, INCOME
+    NAME, SSN, TELECOM, PHONE, CODE
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -42,7 +46,6 @@ fun AuthScreen(
     var telco by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
-    var income by remember { mutableStateOf("") }
     var showTelcoSheet by remember { mutableStateOf(false) }
     var showAgreement by remember { mutableStateOf(false) }
 
@@ -52,7 +55,6 @@ fun AuthScreen(
     val ssnBackFocusRequester = remember { FocusRequester() }
     val phoneFocusRequester = remember { FocusRequester() }
     val codeFocusRequester = remember { FocusRequester() }
-    val incomeFocusRequester = remember { FocusRequester() }
 
     // 단계 변경 시 포커스 및 키보드 자동 표시 또는 바텀시트 표시
     LaunchedEffect(currentStep) {
@@ -77,10 +79,6 @@ fun AuthScreen(
                 codeFocusRequester.requestFocus()
                 keyboardController?.show()
             }
-            Step.INCOME -> {
-                incomeFocusRequester.requestFocus()
-                keyboardController?.show()
-            }
             else -> {}
         }
     }
@@ -92,6 +90,14 @@ fun AuthScreen(
         "[필수] 마이데이터 제공 동의"
     )
     val checkedItems = remember { mutableStateListOf<String>() }
+
+    // 시스템 뒤로가기 처리
+    BackHandler(enabled = currentStep != Step.NAME) {
+        // 첫 단계가 아닌 경우에만 이전 단계로 이동
+        if (currentStep != Step.NAME) {
+            currentStep = Step.values()[currentStep.ordinal - 1]
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -124,11 +130,21 @@ fun AuthScreen(
                 Button(
                     onClick = {
                         Log.d("Click", "다음")
-                        if (currentStep == Step.CODE) showAgreement = true
-                        else if (currentStep == Step.INCOME) {
-                            // 수입 입력 후 다음 화면으로 이동
-                            Log.d("AUTH","pin_setup/${name}/${phone}/${ssnFront}/${income}")
-                            navController.navigate("pin_setup/${name}/${phone}/${ssnFront}/${income}")
+                        if (currentStep == Step.CODE) {
+                            // 인증번호 입력 완료 후 수입 입력 화면으로 이동 (애니메이션 없이)
+                            if (code.length == 6) {
+                                navController.navigate(
+                                    "income_input/${name}/${phone}/${ssnFront}",
+                                    NavOptions.Builder()
+                                        .setEnterAnim(0)
+                                        .setExitAnim(0)
+                                        .setPopEnterAnim(0)
+                                        .setPopExitAnim(0)
+                                        .build()
+                                )
+                            } else {
+                                showAgreement = true
+                            }
                         }
                         else currentStep = Step.values()[currentStep.ordinal + 1]
                     },
@@ -138,16 +154,20 @@ fun AuthScreen(
                         Step.TELECOM -> telco.isNotBlank()
                         Step.PHONE -> phone.length >= 10
                         Step.CODE -> code.length == 6
-                        Step.INCOME -> income.isNotBlank()
                         else -> false
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp), // 버튼 높이 증가
-                    shape = MaterialTheme.shapes.large
+                        .height(60.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SkyBlue,
+                        contentColor = Color.White,
+                        disabledContainerColor = Color.LightGray
+                    )
                 ) {
                     Text(
-                        text = if (currentStep == Step.INCOME) "확인" else "다음",
+                        text = "다음",
                         fontSize = 22.sp
                     )
                 }
@@ -295,38 +315,6 @@ fun AuthScreen(
                     DisplayInfo("통신사", telco)
                     DisplayInfo("휴대폰 번호", phone)
                 }
-                Step.INCOME -> {
-                    Text("월 평균 수입을 입력해 주세요", fontSize = 28.sp)
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        UnderlineTextField(
-                            value = income,
-                            onValueChange = {
-                                // 숫자만 입력 가능하도록
-                                if (it.all { char -> char.isDigit() }) {
-                                    income = it
-                                }
-                            },
-                            label = "월 평균 수입",
-                            modifier = Modifier
-                                .weight(1f)
-                                .focusRequester(incomeFocusRequester),
-                            keyboardType = KeyboardType.Number
-                        )
-
-                        Text(
-                            text = "원",
-                            fontSize = 22.sp,
-                            modifier = Modifier.padding(start = 8.dp, bottom = 20.dp)
-                        )
-                    }
-                    DisplayInfo("이름", name)
-                    DisplayInfo("주민등록번호", "$ssnFront-$ssnBack●●●●●●")
-                    DisplayInfo("통신사", telco)
-                    DisplayInfo("휴대폰 번호", phone)
-                }
             }
         }
     }
@@ -393,7 +381,7 @@ fun AuthScreen(
                         ) {
                             Text(
                                 text = "✔",
-                                color = if (checkedItems.contains(item)) Color(0xFF1976D2) else Color.Gray,
+                                color = if (checkedItems.contains(item)) SkyBlue else Color.Gray,
                                 fontSize = 26.sp
                             )
                         }
@@ -404,13 +392,30 @@ fun AuthScreen(
                 Button(
                     onClick = {
                         showAgreement = false
-                        // 동의 후 수입 입력 단계로 이동
-                        currentStep = Step.INCOME
+                        // 동의 완료
+                        if (code.length == 6) {
+                            // 코드가 이미 입력되어 있다면 소득 입력 화면으로 이동 (애니메이션 없이)
+                            navController.navigate(
+                                "income_input/${name}/${phone}/${ssnFront}",
+                                NavOptions.Builder()
+                                    .setEnterAnim(0)
+                                    .setExitAnim(0)
+                                    .setPopEnterAnim(0)
+                                    .setPopExitAnim(0)
+                                    .build()
+                            )
+                        }
                     },
                     enabled = checkedItems.size == agreementItems.size,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SkyBlue,
+                        contentColor = Color.White,
+                        disabledContainerColor = Color.LightGray
+                    )
                 ) {
                     Text(
                         "동의하기",
@@ -435,16 +440,17 @@ fun UnderlineTextField(
         onValueChange = onValueChange,
         modifier = modifier.height(70.dp),
         singleLine = true,
-        label = { Text(label, fontSize = 20.sp) },
-        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 20.sp),
+        label = { Text(label, fontSize = 20.sp, color = SkyBlue) },
+        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 20.sp, color = Color.Black),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = TextFieldDefaults.colors(
-            focusedIndicatorColor = Color.Blue,
+            focusedIndicatorColor = SkyBlue,
             unfocusedIndicatorColor = Color.Gray,
             disabledIndicatorColor = Color.Gray,
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent
+            disabledContainerColor = Color.Transparent,
+            cursorColor = SkyBlue
         )
     )
 }
@@ -464,16 +470,18 @@ fun UnderlineSingleDigitField(
         textStyle = androidx.compose.ui.text.TextStyle(
             fontSize = 20.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Normal,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            color = Color.Black
         ),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = TextFieldDefaults.colors(
-            focusedIndicatorColor = Color.Blue,
+            focusedIndicatorColor = SkyBlue,
             unfocusedIndicatorColor = Color.Gray,
             disabledIndicatorColor = Color.Gray,
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent
+            disabledContainerColor = Color.Transparent,
+            cursorColor = SkyBlue
         )
     )
 }

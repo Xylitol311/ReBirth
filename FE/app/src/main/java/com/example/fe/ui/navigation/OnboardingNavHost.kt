@@ -13,6 +13,7 @@ import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.OnboardingScreen
 import com.example.fe.ui.screens.onboard.AuthScreen
 import com.example.fe.ui.screens.onboard.CardSelectScreen
+import com.example.fe.ui.screens.onboard.IncomeInputScreen
 
 import com.example.fe.ui.screens.onboard.RegistrationCompleteScreen
 import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
@@ -25,7 +26,7 @@ fun OnboardingNavHost(
 ) {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "onboarding") {
+    NavHost(navController = navController, startDestination = "auth") {
         // 온보딩 시작 화면
         composable("onboarding") {
             OnboardingScreen(navController, onboardingViewModel)
@@ -34,6 +35,23 @@ fun OnboardingNavHost(
         // 인증 화면
         composable("auth") {
             AuthScreen(navController, onboardingViewModel)
+        }
+
+        // 월 평균 수입 입력 화면
+        composable(
+            "income_input/{name}/{phone}/{ssnFront}",
+            arguments = listOf(
+                navArgument("name") { type = NavType.StringType },
+                navArgument("phone") { type = NavType.StringType },
+                navArgument("ssnFront") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            IncomeInputScreen(
+                navController = navController,
+                name = backStackEntry.arguments?.getString("name") ?: "",
+                phone = backStackEntry.arguments?.getString("phone") ?: "",
+                ssnFront = backStackEntry.arguments?.getString("ssnFront") ?: ""
+            )
         }
 
         // PIN 설정 화면

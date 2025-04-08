@@ -100,8 +100,20 @@ class CalendarRepository {
                 val apiResponse = response.body()!!
                 Log.d(TAG, "Response successful: $apiResponse")
                 if (apiResponse.success) {
-                    Log.d(TAG, "Successfully fetched monthly log: ${apiResponse.data.size} days")
-                    Result.success(apiResponse.data)
+                    // 해당 월의 실제 일수를 확인
+                    val daysInMonth = yearMonth.lengthOfMonth()
+                    
+                    // 유효한 날짜만 필터링
+                    val filteredData = apiResponse.data.filter { dailyLog ->
+                        val isValidDay = dailyLog.day in 1..daysInMonth
+                        if (!isValidDay) {
+                            Log.w(TAG, "Invalid day filtered out: ${dailyLog.day} for month ${yearMonth.month} (max: $daysInMonth)")
+                        }
+                        isValidDay
+                    }
+                    
+                    Log.d(TAG, "Successfully fetched monthly log: ${filteredData.size} days (filtered from ${apiResponse.data.size})")
+                    Result.success(filteredData)
                 } else {
                     Log.e(TAG, "API error: ${apiResponse.message}")
                     Result.failure(Exception("API error: ${apiResponse.message}"))
