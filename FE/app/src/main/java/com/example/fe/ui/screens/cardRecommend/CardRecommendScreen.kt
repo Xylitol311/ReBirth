@@ -902,7 +902,7 @@ fun CardGridItem(
             modifier = Modifier
                 .size(120.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color.DarkGray.copy(alpha = 0.3f))
+                // 배경색 제거
         ) {
             if (card.hasValidImageUrl()) {
                 NetworkImage(

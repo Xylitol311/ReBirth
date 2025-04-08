@@ -124,6 +124,7 @@ fun StarryBackground(
     }
     
     CompositionLocalProvider(LocalStarryBackgroundState provides starryBackgroundState) {
+        // 명확하게 배경색 적용
         Box(
             modifier = modifier
                 .fillMaxSize()

@@ -6,8 +6,11 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -18,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +37,7 @@ import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
+import com.example.fe.ui.components.navigation.TopBarDimensions
 import com.example.fe.ui.screens.calendar.CalendarScreen
 import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
 import com.example.fe.ui.screens.cardRecommend.CardInfo
@@ -54,6 +59,7 @@ import com.example.fe.ui.screens.payment.components.PaymentResultPopup
 import com.example.fe.ui.screens.payment.components.QRScannerScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
 // 네비게이션 경로 상수 추가
 object NavRoutes {
     const val ONBOARDING = "onboarding"  // 온보딩/로그인 화면 경로 추가
@@ -190,8 +196,158 @@ fun AppNavigation() {
     var showPaymentResultPopup by remember { mutableStateOf(false) }
     val paymentResult by paymentViewModel.paymentResult.collectAsState()
 
-    Scaffold(
-        topBar = {
+    // Scaffold 부분부터 개선된 구조로 수정
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        // 별이 빛나는 배경을 가장 먼저 렌더링 (최하단 레이어)
+        StarryBackground(
+            scrollOffset = scrollOffset,
+            horizontalOffset = animatedHorizontalOffset
+        ) {
+            // 빈 내용 - 별 배경만 표시
+        }
+        
+        // 메인 콘텐츠를 중간 레이어로 배치 - TopBar 높이만큼 상단 여백 추가
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    // TopBar와 상태바 높이만큼 상단 패딩 추가
+                    top = TopBarDimensions.TOPBAR_HEIGHT + TopBarDimensions.TOPBAR_PADDING_TOP + 24.dp,
+                    bottom = if (shouldShowBottomBar) bottomBarHeight else 0.dp
+                )
+        ) {
+            // 여기에 NavHost 구성
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavItem.Home.route
+            ) {
+                // 온보딩/로그인 화면 추가
+                composable(NavRoutes.ONBOARDING) {
+                    OnboardingScreen(
+                        navController = navController,
+                        viewModel = viewModel
+                    )
+                }
+                composable(BottomNavItem.Home.route) {
+                    HomeScreen(
+                        navController = navController
+                    )
+                }
+                composable(BottomNavItem.MyCard.route) {
+                    MyCardScreen(
+                        onCardClick = { cardItem ->
+                            navController.navigate("card_detail/${cardItem.id}")
+                        },
+                        onManageCardsClick = {
+                            navController.navigate(NavRoutes.CARD_MANAGEMENT)
+                        }
+                    )
+                }
+                composable(BottomNavItem.Payment.route) {
+                    PaymentScreen(
+                        onNavigateToHome = {
+                            navController.navigate(BottomNavItem.Home.route) {
+                                popUpTo(BottomNavItem.Home.route) { inclusive = true }
+                            }
+                        },
+                        onShowQRScanner = {
+                            showQRScanner = true  // QR 스캐너 표시
+                        }
+                    )
+                }
+                composable(BottomNavItem.Calendar.route) {
+                    CalendarScreen()
+                }
+                composable(BottomNavItem.CardRecommend.route) {
+                    CardRecommendScreen(
+                        onCardClick = { cardInfo ->
+                            navController.navigate("card_detail_info/${cardInfo.id}")
+                        }
+                    )
+                }
+                composable(NavRoutes.HOME_DETAIL) {
+                    // 홈 디테일 화면으로 이동할 때 애니메이션 값 가져오기
+                    val transitionDirection = navController.currentBackStackEntry?.savedStateHandle?.get<Int>("transitionDirection") ?: 1
+                    val backgroundMovement = navController.currentBackStackEntry?.savedStateHandle?.get<Float>("backgroundMovement") ?: 1500f
+                    
+                    // 애니메이션 값이 있으면 적용
+                    LaunchedEffect(transitionDirection, backgroundMovement) {
+                        if (transitionDirection != 0) {
+                            cumulativeOffset += transitionDirection * backgroundMovement
+                            animationCounter++
+                            // 사용 후 초기화
+                            navController.currentBackStackEntry?.savedStateHandle?.set("transitionDirection", 0)
+                            navController.currentBackStackEntry?.savedStateHandle?.set("backgroundMovement", 0f)
+                        }
+                    }
+                    
+                    HomeDetailScreen(
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+                composable(
+                    route = NavRoutes.CARD_DETAIL,
+                    arguments = listOf(
+                        navArgument("cardId") { type = NavType.IntType }
+                    )
+                ) {
+                    val cardId = it.arguments?.getInt("cardId") ?: 1
+                    CardDetailScreen(
+                        cardItem = getCardById(cardId),
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+                composable(NavRoutes.CARD_MANAGEMENT) {
+                    CardManagementScreen(
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+                composable(
+                    route = NavRoutes.CARD_DETAIL_INFO,
+                    arguments = listOf(
+                        navArgument("cardId") { type = NavType.IntType }
+                    )
+                ) {
+                    val cardId = it.arguments?.getInt("cardId") ?: 1
+                    CardDetailInfoScreen(
+                        card = CardInfo(
+                            id = cardId,
+                            name = "추천 카드 ${cardId}",
+                            company = "카드사",
+                            annualFee = "연회비 3만원",
+                            minSpending = "월 30만원 이상",
+                            benefits = listOf(
+                                "커피 전문점 10% 할인",
+                                "영화관 20% 할인",
+                                "대중교통 10% 할인"
+                            )
+                        ),
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+                composable(NavRoutes.MY_PAGE) {
+                    MyPageScreen(
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+        }
+        
+        // 상단에 TopBar 오버레이로 배치 (최상단 레이어)
+        Column(modifier = Modifier.fillMaxWidth()) {
             // 현재 경로에 따라 TopBar 내용 변경
             when {
                 currentRoute == NavRoutes.HOME_DETAIL -> {
@@ -250,223 +406,85 @@ fun AppNavigation() {
                     )
                 }
             }
-        },
-        bottomBar = {
-            // 네비게이션 바가 표시되지 않을 때는 빈 상자를 렌더링하여 클릭 이벤트도 처리하지 않음
-            if (shouldShowBottomBar) {
-                Box(
-                    modifier = Modifier
-                        .graphicsLayer(
-                            alpha = bottomBarAlpha,
-                            translationY = bottomBarOffset
-                        )
-                ) {
-                    BottomNavBar(
-                        navController = navController,
-                        onTabSelected = { item: BottomNavItem ->
-                            if (currentRoute != item.route) {
-                                val newIndex = tabIndices[item.route] ?: 0
-                                previousTabIndex = currentTabIndex
-                                currentTabIndex = newIndex
-                                transitionDirection = if (newIndex > previousTabIndex) 1 else -1
-                                cumulativeOffset += transitionDirection * backgroundMovementMultiplier
-                                animationCounter++
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            }
-                        }
+        }
+        
+        // 하단에 BottomNavBar 배치 (동적으로 표시/숨김)
+        if (shouldShowBottomBar) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .graphicsLayer(
+                        alpha = bottomBarAlpha,
+                        translationY = bottomBarOffset
                     )
-                }
-            }
-        },
-        // 동적 패딩 적용
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            StarryBackground(
-                scrollOffset = scrollOffset,
-                horizontalOffset = animatedHorizontalOffset
             ) {
-                NavHost(
+                BottomNavBar(
                     navController = navController,
-                    startDestination = BottomNavItem.Home.route
-                ) {
-                    // 온보딩/로그인 화면 추가
-                    composable(NavRoutes.ONBOARDING) {
-                        OnboardingScreen(
-                            navController = navController,
-                            viewModel = viewModel
-                        )
-                    }
-                    composable(BottomNavItem.Home.route) {
-                        HomeScreen(
-                            navController = navController
-                        )
-                    }
-                    composable(BottomNavItem.MyCard.route) {
-                        MyCardScreen(
-                            onCardClick = { cardItem ->
-                                navController.navigate("card_detail/${cardItem.id}")
-                            },
-                            onManageCardsClick = {
-                                navController.navigate(NavRoutes.CARD_MANAGEMENT)
-                            }
-                        )
-                    }
-                    composable(BottomNavItem.Payment.route) {
-                        PaymentScreen(
-                            onNavigateToHome = {
-                                navController.navigate(BottomNavItem.Home.route) {
-                                    popUpTo(BottomNavItem.Home.route) { inclusive = true }
-                                }
-                            },
-                            onShowQRScanner = {
-                                showQRScanner = true  // QR 스캐너 표시
-                            }
-                        )
-                    }
-                    composable(BottomNavItem.Calendar.route) {
-                        CalendarScreen()
-                    }
-                    composable(BottomNavItem.CardRecommend.route) {
-                        CardRecommendScreen(
-                            onCardClick = { cardInfo ->
-                                navController.navigate("card_detail_info/${cardInfo.id}")
-                            }
-                        )
-                    }
-                    composable(NavRoutes.HOME_DETAIL) {
-                        // 홈 디테일 화면으로 이동할 때 애니메이션 값 가져오기
-                        val transitionDirection = navController.currentBackStackEntry?.savedStateHandle?.get<Int>("transitionDirection") ?: 1
-                        val backgroundMovement = navController.currentBackStackEntry?.savedStateHandle?.get<Float>("backgroundMovement") ?: 1500f
-                        
-                        // 애니메이션 값이 있으면 적용
-                        LaunchedEffect(transitionDirection, backgroundMovement) {
-                            if (transitionDirection != 0) {
-                                cumulativeOffset += transitionDirection * backgroundMovement
-                                animationCounter++
-                                // 사용 후 초기화
-                                navController.currentBackStackEntry?.savedStateHandle?.set("transitionDirection", 0)
-                                navController.currentBackStackEntry?.savedStateHandle?.set("backgroundMovement", 0f)
+                    onTabSelected = { item: BottomNavItem ->
+                        if (currentRoute != item.route) {
+                            val newIndex = tabIndices[item.route] ?: 0
+                            previousTabIndex = currentTabIndex
+                            currentTabIndex = newIndex
+                            transitionDirection = if (newIndex > previousTabIndex) 1 else -1
+                            cumulativeOffset += transitionDirection * backgroundMovementMultiplier
+                            animationCounter++
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId)
+                                launchSingleTop = true
                             }
                         }
-                        
-                        HomeDetailScreen(
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
-                        )
                     }
-                    composable(
-                        route = NavRoutes.CARD_DETAIL,
-                        arguments = listOf(
-                            navArgument("cardId") { type = NavType.IntType }
-                        )
-                    ) {
-                        val cardId = it.arguments?.getInt("cardId") ?: 1
-                        CardDetailScreen(
-                            cardItem = getCardById(cardId),
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-                    composable(NavRoutes.CARD_MANAGEMENT) {
-                        CardManagementScreen(
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-                    composable(
-                        route = NavRoutes.CARD_DETAIL_INFO,
-                        arguments = listOf(
-                            navArgument("cardId") { type = NavType.IntType }
-                        )
-                    ) {
-                        val cardId = it.arguments?.getInt("cardId") ?: 1
-                        CardDetailInfoScreen(
-                            card = CardInfo(
-                                id = cardId,
-                                name = "추천 카드 ${cardId}",
-                                company = "카드사",
-                                annualFee = "연회비 3만원",
-                                minSpending = "월 30만원 이상",
-                                benefits = listOf(
-                                    "커피 전문점 10% 할인",
-                                    "영화관 20% 할인",
-                                    "대중교통 10% 할인"
-                                )
-                            ),
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-                    composable(NavRoutes.MY_PAGE) {
-                        MyPageScreen(
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-                }
+                )
             }
         }
+    }
+    
+    // QR 스캐너 화면 (오버레이로 표시)
+    if (showQRScanner) {
+        QRScannerScreen(
+            onClose = { showQRScanner = false },
+            onQRCodeScanned = { qrCode ->
+                // QR 코드 스캔 결과 처리
+                Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
+                // 이미 가져온 ViewModel 사용
+                paymentViewModel.sendQRToken(qrCode)
+                showQRScanner = false
+                showPaymentInfo = true  // 결제 정보 화면 표시
+            }
+        )
+    }
+    
+    // 결제 정보 화면 (오버레이로 표시)
+    if (showPaymentInfo) {
+        val cards by paymentViewModel.cards.collectAsState()
+        val paymentState by paymentViewModel.paymentState.collectAsState()
         
-        // QR 스캐너 화면 (오버레이로 표시)
-        if (showQRScanner) {
-            QRScannerScreen(
-                onClose = { showQRScanner = false },
-                onQRCodeScanned = { qrCode ->
-                    // QR 코드 스캔 결과 처리
-                    Log.d("QRScanner", "스캔된 QR 코드: $qrCode")
-                    // 이미 가져온 ViewModel 사용
-                    paymentViewModel.sendQRToken(qrCode)
-                    showQRScanner = false
-                    showPaymentInfo = true  // 결제 정보 화면 표시
+        PaymentInfoScreen(
+            cards = cards,
+            onClose = { showPaymentInfo = false },
+            onPaymentComplete = {
+                // 결제 완료 후 홈 화면으로 이동
+                showPaymentInfo = false
+                navController.navigate("home") {
+                    popUpTo("home") { inclusive = true }
                 }
-            )
-        }
-        
-        // 결제 정보 화면 (오버레이로 표시)
-        if (showPaymentInfo) {
-            val cards by paymentViewModel.cards.collectAsState()
-            val paymentState by paymentViewModel.paymentState.collectAsState()
-            
-            PaymentInfoScreen(
-                cards = cards,
-                onClose = { showPaymentInfo = false },
-                onPaymentComplete = {
-                    // 결제 완료 후 홈 화면으로 이동
-                    showPaymentInfo = false
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                    }
-                    
-                    // 결제 결과 팝업 표시
-                    showPaymentResultPopup = true
-                },
-                onScrollOffsetChange = { offset ->
-                    scrollOffset = offset
-                },
-                viewModel = paymentViewModel
-            )
-        }
+                
+                // 결제 결과 팝업 표시
+                showPaymentResultPopup = true
+            },
+            onScrollOffsetChange = { offset ->
+                scrollOffset = offset
+            },
+            viewModel = paymentViewModel
+        )
+    }
 
-        // 결제 결과 팝업 표시
-        if (showPaymentResultPopup && paymentResult != null) {
-            PaymentResultPopup(
-                paymentResult = paymentResult!!,
-                onDismiss = { showPaymentResultPopup = false }
-            )
-        }
+    // 결제 결과 팝업 표시
+    if (showPaymentResultPopup && paymentResult != null) {
+        PaymentResultPopup(
+            paymentResult = paymentResult!!,
+            onDismiss = { showPaymentResultPopup = false }
+        )
     }
 }
 
