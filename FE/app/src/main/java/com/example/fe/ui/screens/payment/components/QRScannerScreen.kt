@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -269,6 +271,35 @@ fun QRScannerScreen(
                     }
                 }
             }
+        }
+        
+        // 상단 바 - 상태 바 높이만큼 패딩 추가
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = statusBarPadding.calculateTopPadding())
+                .height(56.dp)
+                .background(Color.Transparent)
+                .align(Alignment.TopCenter)
+        ) {
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로 가기",
+                    tint = Color.White
+                )
+            }
+            
+            Text(
+                text = "QR 결제",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
     }
 }

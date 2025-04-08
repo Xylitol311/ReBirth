@@ -1,6 +1,5 @@
 package com.example.fe.ui.screens.onboard
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,14 +17,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -43,88 +39,44 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.fe.R
-import com.example.fe.data.model.auth.ReportWithPatternDTO
 import com.example.fe.ui.components.backgrounds.StarryBackground
-import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
-import java.time.LocalDate
 
 enum class CompleteScreenState {
     REGISTRATION_COMPLETE,
+    INCOME_INPUT,
     SPENDING_TYPE
 }
 
 @Composable
 fun RegistrationCompleteScreen(navController: NavController, viewModel: OnboardingViewModel) {
     var screenState by remember { mutableStateOf(CompleteScreenState.REGISTRATION_COMPLETE) }
-    var reportData by remember { mutableStateOf<ReportWithPatternDTO?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    val context = LocalContext.current
+    var monthlyIncome by remember { mutableStateOf("") }
 
     when (screenState) {
         CompleteScreenState.REGISTRATION_COMPLETE -> {
-            viewModel.setIsLogged()
             RegistrationCompleteContent(
-                onCheckSpendingType = {
-                    // 날짜 계산
-                    val today = LocalDate.now()
-                    val year = today.year
-                    val month = today.monthValue
-
-                    isLoading = true
-                    viewModel.getUserPatternType(
-                        userId = "2",
-                        year = year,
-                        month = month-1,
-                        onSuccess = {
-                            reportData = it
-                            isLoading = false
-                            screenState = CompleteScreenState.SPENDING_TYPE
-                        },
-                        onFailure = {
-                            errorMessage = it
-                            isLoading = false
-                        }
-                    )
-                },
+                onCheckSpendingType = { screenState = CompleteScreenState.INCOME_INPUT },
                 onSkip = {
                     viewModel.setLoggedInState(true)
                 }
             )
         }
-
+        CompleteScreenState.INCOME_INPUT -> {
+            IncomeInputDialog(
+                income = monthlyIncome,
+                onIncomeChange = { monthlyIncome = it },
+                onConfirm = { screenState = CompleteScreenState.SPENDING_TYPE },
+                onDismiss = { screenState = CompleteScreenState.REGISTRATION_COMPLETE }
+            )
+        }
         CompleteScreenState.SPENDING_TYPE -> {
-            reportData?.let { report ->
-                SpendingTypeContent(
-                    report = report,
-                    onGoHome = {
-                        viewModel.setLoggedInState(true)
-                    }
-                )
-            } ?: run {
-                // 로딩 중이거나 데이터가 없을 경우 예외 처리
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("소비 패턴 정보를 불러올 수 없습니다.")
+            SpendingTypeContent(
+                monthlyIncome = monthlyIncome,
+                onGoHome = {
+                    viewModel.setLoggedInState(true)
                 }
-            }
-        }
-    }
-
-    // 로딩 인디케이터
-    if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color(0xFF3366FF))
-        }
-    }
-
-    // 에러 메시지 토스트 (선택사항)
-    errorMessage?.let {
-        LaunchedEffect(it) {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-            errorMessage = null // 한 번만 표시되도록 초기화
+            )
         }
     }
 }
@@ -263,23 +215,12 @@ fun IncomeInputDialog(
         }
     }
 }
+
 @Composable
 fun SpendingTypeContent(
-    report: ReportWithPatternDTO,
+    monthlyIncome: String,
     onGoHome: () -> Unit
 ) {
-    val pattern = report.consumptionPattern
-
-    // 안전하게 값 가져오기
-    val groupName = report.groupName ?: "소비 유형"
-    val variation = (report.variation ?: 0) / 100f
-    val extrovert = (report.extrovert ?: 0) / 100f
-    val overConsumption = (report.overConsumption ?: 0) / 100f
-    val patternName = pattern?.patternName ?: "소비 유형"
-    val reportDesc = report.reportDescription ?: ""
-    val patternDesc = pattern?.description ?: ""
-    val imgUrl = pattern?.imgUrl
-
     // 별 배경 추가
     Box(
         modifier = Modifier.fillMaxSize()
@@ -293,7 +234,7 @@ fun SpendingTypeContent(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "당신의 소비는\n$groupName 입니다.",
+                    text = "당신의 소비는\n조화로운 지구형입니다.",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -303,14 +244,12 @@ fun SpendingTypeContent(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // 지구 이미지 (URL 이미지 로딩)
-                imgUrl?.let {
-                    AsyncImage(
-                        model = it,
-                        contentDescription = patternName,
-                        modifier = Modifier.size(150.dp)
-                    )
-                }
+                // 지구 이미지
+                Image(
+                    painter = painterResource(id = R.drawable.earth), // 실제로는 지구 이미지 리소스로 변경 필요
+                    contentDescription = "지구형 소비 유형",
+                    modifier = Modifier.size(150.dp)
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -318,33 +257,54 @@ fun SpendingTypeContent(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("유형별", color = Color.White, fontSize = 14.sp)
+                    Text(
+                        text = "유형별",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
-                        progress = extrovert.coerceIn(0f, 1f),
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                        progress = 0.7f,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
                         color = Color(0xFF3366FF),
                         trackColor = Color.Gray.copy(alpha = 0.3f)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("안정성", color = Color.White, fontSize = 14.sp)
+                    Text(
+                        text = "안정성",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
-                        progress = variation.coerceIn(0f, 1f),
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                        progress = 0.8f,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
                         color = Color(0xFF3366FF),
                         trackColor = Color.Gray.copy(alpha = 0.3f)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("저축성", color = Color.White, fontSize = 14.sp)
+                    Text(
+                        text = "저축성",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
-                        progress = overConsumption.coerceIn(0f, 1f),
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                        progress = 0.5f,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
                         color = Color(0xFF3366FF),
                         trackColor = Color.Gray.copy(alpha = 0.3f)
                     )
@@ -361,8 +321,10 @@ fun SpendingTypeContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // 소비 유형 설명 텍스트
                 Text(
-                    text = "$reportDesc\n\n$patternDesc",
+                    text = "안정된 자금관리 조화로운 소비를 지향하시는 균형 잡혀진 월수입의 상당 부분을 취미생활에 가치를 두고 있습니다.\n\n" +
+                            "안정된 자금관리 조화로운 소비를 지향하시는 균형 잡혀진 월수입의 상당 부분을 취미생활에 가치를 두고 있습니다.",
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 14.sp,
                     lineHeight = 22.sp,
@@ -377,7 +339,9 @@ fun SpendingTypeContent(
                         containerColor = Color.White,
                         contentColor = Color(0xFF191E3F)
                     ),
-                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
                 ) {
                     Text("홈으로 가기")
                 }

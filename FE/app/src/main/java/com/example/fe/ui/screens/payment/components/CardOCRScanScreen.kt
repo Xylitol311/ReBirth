@@ -6,8 +6,11 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -49,6 +52,7 @@ import androidx.compose.animation.slideOutVertically
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.icons.filled.Close
 
 @Composable
 fun CardOCRScanScreen(
@@ -59,7 +63,6 @@ fun CardOCRScanScreen(
     val context = LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
-    val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
 
     // 카메라 권한 상태
     var hasCameraPermission by remember { mutableStateOf(false) }
@@ -421,6 +424,52 @@ fun CardOCRScanScreen(
                 )
             }
         } else {
+            // 상단 바
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .align(Alignment.TopCenter)
+            ) {
+                // 뒤로 가기 버튼
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "뒤로 가기",
+                        tint = Color.White
+                    )
+                }
+
+                // 제목
+                Text(
+                    text = "카드 스캔",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+
+                // 도움말 버튼
+                IconButton(
+                    onClick = { /* 도움말 표시 */ },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 16.dp)
+                ) {
+                    Text(
+                        text = "?",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
             // 카메라 미리보기
             if (hasCameraPermission) {
                 AndroidView(
@@ -470,38 +519,6 @@ fun CardOCRScanScreen(
                         fontSize = 18.sp
                     )
                 }
-            }
-                // 상단 바
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = statusBarPadding.calculateTopPadding())
-                    .height(56.dp)
-                    .background(Color.Transparent)
-                    .align(Alignment.TopCenter)
-            ) {
-                // 뒤로 가기 버튼
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = 16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "뒤로 가기",
-                        tint = Color.White
-                    )
-                }
-
-                // 제목
-                Text(
-                    text = "카드 스캔",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center)
-                )
             }
 
             // 중앙 영역 - 카드 스캔 영역

@@ -34,58 +34,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun CardDetailInfoScreen(
-    viewModel: CardRecommendViewModel,
-    cardId: Int,
+    card: CardInfo,
     onBackClick: () -> Unit
 ) {
-    // 화면이 표시될 때 카드 상세 정보 로드
-    LaunchedEffect(cardId) {
-        viewModel.loadCardDetail(cardId)
-    }
-
-    // UI 상태 가져오기
-    val uiState = viewModel.uiState
-    val cardDetail = viewModel.getSelectedCardDetailForUI()
-
-    // 로딩 상태 처리
-    if (uiState.isLoadingCardDetail) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-        return
-    }
-
-    // 오류 상태 처리
-    if (uiState.errorCardDetail != null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "오류: ${uiState.errorCardDetail}",
-                color = Color.Red
-            )
-        }
-        return
-    }
-
-    // 카드 정보가 없는 경우 처리
-    if (cardDetail == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "카드 정보를 찾을 수 없습니다.",
-                color = Color.White
-            )
-        }
-        return
-    }
-
     // 화면 스크롤 상태
     val lazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -108,11 +59,18 @@ fun CardDetailInfoScreen(
         ) {
             // 배경만 표시
         }
-
+        
         // 메인 콘텐츠
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            // 상단 앱바
+            TopBar(
+                title = "카드 상세 정보",
+                showBackButton = true,
+                onBackClick = onBackClick
+            )
+            
             // 스크롤 가능한 콘텐츠
             LazyColumn(
                 state = lazyListState,
@@ -127,24 +85,12 @@ fun CardDetailInfoScreen(
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        // 실제 카드 이미지가 있으면 사용, 없으면 기본 이미지 사용
-                        if (cardDetail.cardImage.isNullOrBlank()) {
-                            Image(
-                                painter = painterResource(id = R.drawable.card),
-                                contentDescription = cardDetail.name,
-                                contentScale = ContentScale.FillWidth,
-                                modifier = Modifier.height(240.dp)
-                            )
-                        } else {
-                            // 네트워크 이미지 로드 (Coil 등의 라이브러리 사용)
-                            // 여기서는 기본 이미지로 대체
-                            Image(
-                                painter = painterResource(id = R.drawable.card),
-                                contentDescription = cardDetail.name,
-                                contentScale = ContentScale.FillWidth,
-                                modifier = Modifier.height(240.dp)
-                            )
-                        }
+                        Image(
+                            painter = painterResource(id = R.drawable.card),
+                            contentDescription = card.name,
+                            contentScale = ContentScale.FillWidth,
+                            modifier = Modifier.height(240.dp)
+                        )
                     }
                 }
                 
@@ -160,16 +106,16 @@ fun CardDetailInfoScreen(
                             modifier = Modifier.padding(16.dp)
                         ) {
                             Text(
-                                text = cardDetail.name,
+                                text = card.name,
                                 color = Color.White,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold
                             )
-
+                            
                             Spacer(modifier = Modifier.height(8.dp))
-
+                            
                             Text(
-                                text = cardDetail.company,
+                                text = card.company,
                                 color = Color.White,
                                 fontSize = 16.sp
                             )
@@ -197,7 +143,7 @@ fun CardDetailInfoScreen(
                             )
                             
                             // 혜택 목록
-                            cardDetail.benefits.forEachIndexed { index, benefit ->
+                            card.benefits.forEachIndexed { index, benefit ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -230,7 +176,7 @@ fun CardDetailInfoScreen(
                                 }
                                 
                                 // 마지막 항목이 아니면 구분선 추가
-                                if (index < cardDetail.benefits.size - 1) {
+                                if (index < card.benefits.size - 1) {
                                     Divider(
                                         color = Color.White.copy(alpha = 0.2f),
                                         modifier = Modifier.padding(start = 48.dp)
@@ -274,7 +220,7 @@ fun CardDetailInfoScreen(
                                 )
                                 
                                 Text(
-                                    text = cardDetail.annualFee,
+                                    text = card.annualFee,
                                     color = Color.White,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
@@ -300,7 +246,7 @@ fun CardDetailInfoScreen(
                                 )
                                 
                                 Text(
-                                    text = cardDetail.minSpending,
+                                    text = card.minSpending,
                                     color = Color.White,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
@@ -392,4 +338,4 @@ fun CardDetailInfoScreen(
             }
         }
     }
-}
+} 

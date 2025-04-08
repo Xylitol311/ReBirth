@@ -1,6 +1,5 @@
 package com.example.fe.ui.screens.onboard.auth
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,19 +19,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.ui.screens.onboard.components.NumberPad
 import com.example.fe.ui.screens.onboard.components.PinDots
-import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
-import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
-
+import com.example.fe.ui.screens.onboard.OnboardingViewModel
 
 @Composable
 fun PinLoginAuth(
-    deviceInfoManager: DeviceInfoManager,
     onSuccessfulLogin: () -> Unit,
     viewModel: OnboardingViewModel
 ) {
     val context = LocalContext.current
     var pinInput by remember { mutableStateOf("") }
-    val shuffledNumbers = remember { (0..9).toList().shuffled() }
+    val shuffledNumbers = remember { (1..9).toList().shuffled() }
     val correctPin = viewModel.getUserPin()
 
     Column(
@@ -63,20 +59,17 @@ fun PinLoginAuth(
             },
             onComplete = {
                 if (pinInput.length == 6) {
-                    viewModel.login(
-                        type = "PIN",
-                        number = pinInput,
-                        phoneSerialNumber = deviceInfoManager.getDeviceId(),
-                        onSuccess = {
-                            Log.d("PinInputTest", "로그인 성공: $pinInput")
-                            onSuccessfulLogin()
-                        },
-                        onFailure = { error ->
-                            Log.e("AuthLoginPin","${error}")
-                            Toast.makeText(context, "로그인 실패: $error", Toast.LENGTH_SHORT).show()
-                            pinInput = ""
-                        }
-                    )
+                    // 입력한 PIN이 정확한지 확인
+                    if (pinInput == correctPin) {
+                        onSuccessfulLogin()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "비밀번호가 일치하지 않습니다",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        pinInput = ""
+                    }
                 }
             }
         )

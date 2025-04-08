@@ -1,5 +1,7 @@
 package com.example.fe.ui.screens.onboard
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -20,9 +22,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.fe.R
 import com.example.fe.ui.components.backgrounds.StarryBackground
-import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable

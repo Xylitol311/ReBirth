@@ -29,7 +29,6 @@ class PaymentRepository {
         return try {
             val response = paymentApiService.getPaymentToken(userId)
             Log.d("PaymentRepository", "API 응답: ${response.code()}")
-
             
             if (response.isSuccessful && response.body() != null) {
                 val apiResponse = response.body()!!
