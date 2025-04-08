@@ -72,12 +72,12 @@ public class AuthController {
 	@PostMapping("/registpattern")
 	public ResponseEntity<ApiResponseDTO<Void>> registPattern(
 			@JwtUserId Integer userId,
-			@RequestBody String patternNumbers) {
+			@RequestBody PatternNumbersRequest patternNumbers) {
 
 		System.out.println("패턴로그인등록시 유저 아이디 > " + userId);
 		System.out.println("등록하는 패턴 번호 > " + patternNumbers);
 		//패턴 ID를 업데이트 하기
-		authService.createPatternNum(userId,patternNumbers);
+		authService.createPatternNum(userId,patternNumbers.getPatternNumbers());
 
 		return ResponseEntity.status(HttpStatus.OK)
 				.body(ApiResponseDTO.success("패턴등록이 성공적으로 완료되었습니다."));
