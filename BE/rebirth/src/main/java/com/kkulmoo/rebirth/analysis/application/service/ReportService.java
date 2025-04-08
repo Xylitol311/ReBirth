@@ -405,7 +405,7 @@ public class ReportService {
 //                .comparing(MonthlyTransactionSummaryEntity::getYear)
 //                .thenComparing(MonthlyTransactionSummaryEntity::getMonth));
 //        for (MonthlyTransactionSummaryEntity report : mtsList) {
-        for (int i = 2; i>=0 ; i--) {
+        for (int i = 3; i>=0 ; i--) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
             int year = now.getYear();
             int month = now.getMonthValue();

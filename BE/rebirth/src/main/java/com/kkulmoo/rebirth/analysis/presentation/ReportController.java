@@ -94,8 +94,8 @@ public class ReportController {
         return ResponseEntity.ok().body(result);
     }
 
-    @GetMapping("/test2")
-    public ResponseEntity<ResponseDTO> testTransaction2(@RequestParam Integer userId) {
+    @GetMapping("/updatesummary")
+    public ResponseEntity<ResponseDTO> updateSummary(@RequestParam Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("리포트 갱신 완료");
