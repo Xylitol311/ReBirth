@@ -37,17 +37,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import com.example.fe.ui.components.backgrounds.GlassSurface
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
-import com.example.fe.data.model.cardRecommend.CategoryRecommendation
-import com.example.fe.data.model.cardRecommend.RecommendCard
-import com.example.fe.data.model.cardRecommend.Top3ForAllData
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.text.style.TextOverflow
-import coil.compose.AsyncImage
-import com.example.fe.ui.components.images.NetworkImage
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.foundation.layout.offset
+
 
 // 카드 데이터 클래스
 data class CardInfo(
@@ -59,23 +49,7 @@ data class CardInfo(
     val minSpending: String,
     val cardImage: String? = null,
     val icons: List<String> = listOf() // 교통, 식당 등의 아이콘
-) {
-    // 이미지 URL 유효성 검사
-    fun hasValidImageUrl(): Boolean = cardImage != null && cardImage.isNotEmpty() && cardImage.startsWith("http")
-    
-    // 이미지 URL 정규화
-    fun normalizedImageUrl(): String {
-        val imgUrl = cardImage ?: ""
-        // URL이 비어있거나 이미 http로 시작하면 그대로 반환
-        if (imgUrl.isEmpty() || imgUrl.startsWith("http")) return imgUrl
-        
-        // 상대 경로인 경우 기본 URL 추가
-        return "https://a602rebirth.s3.ap-northeast-2.amazonaws.com/card_img/$imgUrl"
-    }
-    
-    // imgUrl getter 추가
-    val imgUrl: String get() = cardImage ?: ""
-}
+)
 
 // 필터 태그 데이터 클래스
 data class FilterTag(
@@ -91,37 +65,6 @@ fun CardRecommendScreen(
 ) {
     val uiState = viewModel.uiState
     var selectedTabIndex by remember { mutableStateOf(0) }
-    // ViewModel 생성
-    val viewModel = viewModel<CardRecommendViewModel>()
-    
-    // 컴포즈에서 관찰 가능한 상태
-    val top3Data by viewModel.top3Data
-    val categoryData by viewModel.categoryData
-    val top3Loading by viewModel.top3Loading
-    val categoryLoading by viewModel.categoryLoading
-    val errorMessage by viewModel.errorMessage
-    
-    // 첫 로드 시 API 호출
-    LaunchedEffect(Unit) {
-        viewModel.fetchTop3ForAll()
-        viewModel.fetchTop3ForCategory()
-    }
-    
-    // 로그 출력
-    LaunchedEffect(top3Data, categoryData, errorMessage) {
-        top3Data?.let {
-            Log.d("CardRecommendScreen", "TOP 3 Data: $it")
-        }
-        
-        if (categoryData.isNotEmpty()) {
-            Log.d("CardRecommendScreen", "Category Data: $categoryData")
-        }
-        
-        errorMessage?.let {
-            Log.e("CardRecommendScreen", "Error: $it")
-            viewModel.clearErrorMessage()
-        }
-    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // 상단 탭 바
@@ -190,11 +133,9 @@ fun CardRecommendScreen(
 
         when (selectedTabIndex) {
             0 -> PersonalizedRecommendations(
-                cards = filteredCards,
-                onCardClick = onCardClick,
-                top3Data = top3Data,
-                categoryData = categoryData,
-                isLoading = top3Loading || categoryLoading
+                uiState = uiState,
+                onRefresh = {viewModel.loadRecommendations()},
+                onCardClick = onCardClick
             )
             1 -> CardFinder(
                 filterTags = uiState.filterTags,
@@ -218,11 +159,9 @@ fun CardRecommendScreen(
 
 @Composable
 fun PersonalizedRecommendations(
-    cards: List<CardInfo>,
-    onCardClick: (CardInfo) -> Unit,
-    top3Data: Top3ForAllData?,
-    categoryData: List<CategoryRecommendation>,
-    isLoading: Boolean
+    uiState: CardRecommendUiState,
+    onRefresh: () -> Unit,
+    onCardClick: (CardInfo) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -265,142 +204,108 @@ fun PersonalizedRecommendations(
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    
-                    // API 응답 데이터가 있는 경우 표시
-                    if (top3Data != null) {
+                    if (uiState.top3ForAll != null) {
                         Text(
-                            text = "3개월 간 총 ${top3Data.amount}원 썼어요",
+                            text = "3개월 간 총 ${uiState.top3ForAll.amount}원 썼어요",
                             color = Color.Gray,
                             fontSize = 14.sp,
                             modifier = Modifier.padding(top = 4.dp)
                         )
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // API에서 cards가 null인 경우를 방어적으로 처리
-                        if (top3Data.cards != null && top3Data.cards.isNotEmpty()) {
-                            Log.d("CardRecommendScreen", "Top3 카드 데이터가 있습니다: ${top3Data.cards.size}개")
-                            val recommendedCards = top3Data.cards.map { recommendCard ->
+
+                        val cards = uiState.top3ForAll.recommendCards?.map { cardInfo ->
+                            CardInfo(
+                                id = cardInfo.cardId,
+                                name = cardInfo.cardName,
+                                company = "",  // API에서 제공하지 않음
+                                benefits = listOf(cardInfo.cardInfo),
+                                annualFee = "",  // API에서 제공하지 않음
+                                minSpending = "",  // API에서 제공하지 않음
+                                cardImage = cardInfo.imageUrl,
+                                icons = listOf()  // 필요시 파싱 로직 추가
+                            )
+                        } ?: emptyList()
+                        CardCarousel(cards = cards, onCardClick = onCardClick)
+                    } else if (uiState.isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Color.White)
+                        }
+                    } else if (uiState.error != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "데이터를 불러오는데 실패했습니다",
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                                Button(
+                                    onClick = onRefresh,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    Text("다시 시도")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // 카테고리별 추천 카드 섹션
+        if (uiState.categoryRecommendations != null) {
+            uiState.categoryRecommendations.take(3).forEach { category ->
+                item {
+                    GlassSurface(
+                        modifier = Modifier.fillMaxWidth(),
+                        cornerRadius = 16f,
+                        blurRadius = 10f
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "${category.categoryName} 혜택 추천",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${category.categoryName}에 ${category.amount}원 썼어요",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            val cards = category.recommendCards.map { cardInfo ->
                                 CardInfo(
-                                    id = recommendCard.cardId,
-                                    name = recommendCard.cardName,
-                                    company = "", // API에서 제공하지 않음
-                                    benefits = recommendCard.cardInfo.split(", "),
-                                    annualFee = "", // API에서 제공하지 않음
-                                    minSpending = "", // API에서 제공하지 않음
-                                    cardImage = recommendCard.imgUrl
+                                    id = cardInfo.cardId,
+                                    name = cardInfo.cardName,
+                                    company = "",  // API에서 제공하지 않음
+                                    benefits = listOf(cardInfo.cardInfo),
+                                    annualFee = "",  // API에서 제공하지 않음
+                                    minSpending = "",  // API에서 제공하지 않음
+                                    cardImage = cardInfo.imageUrl,
+                                    icons = listOf()  // 필요시 파싱 로직 추가
                                 )
                             }
-                            CardCarousel(cards = recommendedCards, onCardClick = onCardClick)
-                        } else {
-                            // API에서 반환된 카드 데이터가 없는 경우 기본 카드 데이터 사용
-                            Log.d("CardRecommendScreen", "Top3 카드 데이터가 없습니다. 기본 카드를 표시합니다.")
+
                             CardCarousel(cards = cards, onCardClick = onCardClick)
                         }
-                    } else {
-                        // API 응답 자체가 없는 경우
-                    Text(
-                        text = "3개월 간 총 500,000원 썼어요",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                    CardCarousel(cards = cards, onCardClick = onCardClick)
                     }
                 }
             }
-        }
-
-        item {
-            Text(
-                text = "카테고리별 추천 카드",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-        }
-
-        item {
-            if (categoryData.isNotEmpty()) {
-                GlassSurface(
-                    modifier = Modifier.fillMaxWidth(),
-                    cornerRadius = 16f,
-                    blurRadius = 10f
-                ) {
-                    Column(modifier = Modifier
-                        .padding(16.dp)
-                        .padding(bottom = 16.dp)) {
-                        // 각 카테고리별 추천 카드 슬라이드를 보여줌
-                        categoryData.forEachIndexed { index, category ->
-                            CategoryCardSlide(
-                                category = category,
-                                onCardClick = { cardId ->
-                                    // 해당 카드 ID로 CardInfo를 만들어 전달
-                                    val recommendCard = category.recommendCards.find { it.cardId == cardId }
-                                    if (recommendCard != null) {
-                                        val cardInfo = CardInfo(
-                                            id = recommendCard.cardId,
-                                            name = recommendCard.cardName,
-                                            company = "", // API에서 제공하지 않음
-                                            benefits = listOf(recommendCard.cardInfo), // 콤마로 분리된 문자열을 그대로 사용
-                                            annualFee = "", // API에서 제공하지 않음
-                                            minSpending = "", // API에서 제공하지 않음
-                                            cardImage = recommendCard.imgUrl
-                                        )
-                                        onCardClick(cardInfo)
-                                    }
-                                }
-                            )
-                            
-                            // 마지막 카테고리가 아니면 구분선 추가
-                            if (index < categoryData.size - 1) {
-                                Divider(
-                                    color = Color.Gray.copy(alpha = 0.3f),
-                                    thickness = 1.dp,
-                                    modifier = Modifier
-                                        .padding(vertical = 16.dp)
-                                        .padding(top = 16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                // 카테고리 데이터가 없는 경우 기존 UI 유지
-            GlassSurface(
-                modifier = Modifier.fillMaxWidth(),
-                cornerRadius = 16f,
-                blurRadius = 10f
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                            text = "병원/약국 혜택 추천",
-                        color = Color.White,
-                            fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                            text = "병원/약국에 1,240,000원 썼어요",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    CardCarousel(cards = cards, onCardClick = onCardClick)
-                    }
-                }
-            }
-        }
-
-        // 로딩 중인 경우 표시
-        if (isLoading) {
-        item {
+        } else if (uiState.isLoadingCategories) {
+            item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -410,277 +315,34 @@ fun PersonalizedRecommendations(
                     CircularProgressIndicator(color = Color.White)
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun CategoryCardSlide(
-    category: CategoryRecommendation,
-    onCardClick: (Int) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        // 카테고리 이름과 소비 금액
-                    Text(
-            text = "${category.categoryName} 혜택 추천",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-            text = "${category.categoryName}에 ${category.amount}원 썼어요",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-        // 추천 카드 캐러셀
-        if (category.recommendCards.isNotEmpty()) {
-            CategoryCardCarousel(
-                recommendCards = category.recommendCards,
-                onCardClick = onCardClick
-            )
-        } else {
-            // 추천 카드가 없는 경우
-            Text(
-                text = "추천 카드가 없습니다",
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 32.dp)
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun CategoryCardCarousel(
-    recommendCards: List<RecommendCard>,
-    onCardClick: (Int) -> Unit
-) {
-    // 3개 미만이면 반복해서 3개로 만듦
-    val extendedCards = if (recommendCards.size < 3) {
-        val repeatedList = mutableListOf<RecommendCard>()
-        repeat(3) { i ->
-            repeatedList.add(recommendCards[i % recommendCards.size])
-        }
-        repeatedList
-    } else {
-        recommendCards.take(3)
-    }
-
-    val pagerState = rememberPagerState(
-        pageCount = { extendedCards.size },
-        initialPage = 0
-    )
-
-    val density = LocalDensity.current.density
-    val coroutineScope = rememberCoroutineScope()
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(
-                // 혜택 개수에 따라 박스 높이도 동적으로 조절
-                when {
-                    extendedCards.getOrNull(0)?.cardInfo?.split(", ")?.size ?: 0 <= 1 -> 430.dp
-                    extendedCards.getOrNull(0)?.cardInfo?.split(", ")?.size == 2 -> 450.dp
-                    else -> 480.dp
-                }
-            )
-    ) {
-        HorizontalPager(
-            state = pagerState,
-            pageSpacing = (-20).dp,
-            contentPadding = PaddingValues(horizontal = 70.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                val pageOffset = (
-                        (pagerState.currentPage - page) + pagerState
-                            .currentPageOffsetFraction
-                        ).absoluteValue
-
-                val scale = 1.2f - (pageOffset * 0.3f).coerceIn(0f, 0.3f)
-                val alpha = 1f - (pageOffset * 0.4f).coerceIn(0f, 0.4f)
-
+        } else if (uiState.errorCategories != null) {
+            item {
                 Box(
                     modifier = Modifier
-                        .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            alpha = alpha,
-                            clip = false,
-                            cameraDistance = 12f * density
-                        )
-                        .clickable {
-                            if (page != pagerState.currentPage) {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(page)
-                                }
-                            } else {
-                                onCardClick(extendedCards[page].cardId)
-                            }
-                        }
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // 전체 카드 컨테이너
-                    // 혜택 개수에 따라 동적으로 높이 조절
-                    val benefits = extendedCards[page].cardInfo.split(", ")
-                    val containerHeight = when {
-                        benefits.size <= 1 -> 430.dp
-                        benefits.size == 2 -> 450.dp
-                        else -> 480.dp
-                    }
-                    
-                    Column(
-                        modifier = Modifier.height(containerHeight),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // 카드 이미지 부분
-                        Box(
-                            modifier = Modifier
-                                .width(380.dp)
-                                .height(340.dp) // 원래 값으로 복원 (300dp에서 340dp로)
-                                .padding(horizontal = 8.dp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "카테고리 데이터를 불러오는데 실패했습니다",
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        Button(
+                            onClick = onRefresh,
+                            modifier = Modifier.padding(top = 8.dp)
                         ) {
-                            val card = extendedCards[page]
-                            
-                            // API에서 받은 이미지 URL 사용
-                            if (card.imgUrl.isNotEmpty() && card.imgUrl.startsWith("http")) {
-                                // Coil 라이브러리를 사용한 비동기 이미지 로딩
-                                val imgUrl = card.imgUrl
-                                Log.d("CardRecommendScreen", "카테고리 카드 이미지 로드 시도: $imgUrl")
-                                
-                                // NetworkImage 컴포넌트 사용
-                                NetworkImage(
-                                    url = imgUrl,
-                                    contentDescription = card.cardName,
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(12.dp), // 원래 값으로 복원 (6dp에서 12dp로)
-                                    rotationZ = 90f,
-                                    fallbackResId = R.drawable.card,
-                                    onError = {
-                                        Log.e("CardRecommendScreen", "⚠️ 카테고리 카드 이미지 로드 실패: $imgUrl")
-                                    },
-                                    onSuccess = {
-                                        Log.d("CardRecommendScreen", "✅ 카테고리 카드 이미지 로드 성공: $imgUrl")
-                                    }
-                                )
-                            } else {
-                                // 이미지 URL이 없는 경우 기본 이미지 표시
-                            Image(
-                                painter = painterResource(id = R.drawable.card),
-                                    contentDescription = card.cardName,
-                                    contentScale = ContentScale.Fit,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                        .padding(12.dp) // 원래 값으로 복원
-                                    .graphicsLayer(rotationZ = 90f)
-                            )
-                                Log.d("CardRecommendScreen", "⚠️ 카드 URL이 비어있어 기본 이미지 사용: ${card.cardName}")
-                            }
-                        }
-
-                        // 카드 정보 (혜택 및 이름) - 이미지와 분리된 별도 영역
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp) // 원래 값으로 복원 (24dp에서 16dp로)
-                                .padding(top = 0.dp, bottom = 16.dp) // 원래 값으로 복원 (8dp에서 16dp로)
-                                .background(Color.Transparent) // 배경색 제거하여 카드와 분리감 강화
-                        ) {
-                            // 카드 혜택 정보 - 여러 줄로 표시
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                benefits.take(2).forEach { benefit ->
-                            Text(
-                                        text = benefit,
-                                color = Color.White,
-                                        fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                            .padding(bottom = 4.dp)
-                                    )
-                                }
-                                
-                                // 더 많은 혜택이 있는 경우 "... 외 N개" 형식으로 표시
-                                if (benefits.size > 2) {
-                                    Text(
-                                        text = "... 외 ${benefits.size - 2}개",
-                                        color = Color.White.copy(alpha = 0.7f),
-                                        fontSize = 16.sp,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 4.dp)
-                                    )
-                                }
-                            }
-
-                            // 혜택 개수에 따라 공간 조절 - 공간 더 줄이기
-                            val spacerHeight = when {
-                                benefits.size <= 1 -> {
-                                    Log.d("CardRecommendScreen", "Card has ${benefits.size} benefits - using 4.dp spacing")
-                                    4.dp // 8dp에서 4dp로 축소
-                                }
-                                benefits.size == 2 -> {
-                                    Log.d("CardRecommendScreen", "Card has ${benefits.size} benefits - using 6.dp spacing")
-                                    6.dp // 12dp에서 6dp로 축소
-                                }
-                                else -> {
-                                    Log.d("CardRecommendScreen", "Card has ${benefits.size} benefits - using 8.dp spacing")
-                                    8.dp // 16dp에서 8dp로 축소
-                                }
-                            }
-                            Spacer(
-                                modifier = Modifier
-                                    .height(spacerHeight)
-                                    .fillMaxWidth()
-                            )
-
-                            // 카드 이름 - 글자 크기 키우고 강조
-                            Text(
-                                text = extendedCards[page].cardName,
-                                color = Color.White,
-                                fontSize = 18.sp, // 16sp에서 18sp로 증가
-                                fontWeight = FontWeight.Bold, // 볼드 추가
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp)
-                                    .padding(bottom = 16.dp) // 카드 이름 아래 여백 추가
-                            )
+                            Text("다시 시도")
                         }
                     }
                 }
             }
         }
+
     }
 }
+
 
 @Composable
 fun CardFinder(
@@ -691,95 +353,92 @@ fun CardFinder(
     error: String?,
     onCardClick: (CardInfo) -> Unit
 ) {
-    // 필터 페이지 표시 여부
-    var showFilterPage by remember { mutableStateOf(false) }
-    // 현재 선택된 필터 카테고리 (필터 페이지에 표시할 카테고리)
-    var selectedFilterCategory by remember { mutableStateOf("") }
-    
-    // ViewModel 가져오기
-    val viewModel = viewModel<CardRecommendViewModel>()
-    val searchResults by viewModel.searchResults
-    val searchLoading by viewModel.searchLoading
-    
-    // 앱 첫 실행 시 초기 검색 실행
-    LaunchedEffect(Unit) {
-        viewModel.initialSearch()
-    }
-    
-    // 필터 페이지 표시 중인 경우
-    if (showFilterPage) {
-        FilterPage(
-            category = selectedFilterCategory,
-            onClose = { showFilterPage = false },
-            onApplyFilter = {
-                showFilterPage = false
-                // 필터 적용 후 API 검색 실행 (실제 구현 시 파라미터 추가)
-                viewModel.searchByParams(viewModel.currentSearchParams.value)
-            }
-        )
-        return
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    var maxLabelWidth by remember { mutableStateOf(0.dp) }
+
+    LaunchedEffect(filterTags) {
+        val maxText = filterTags.maxByOrNull { it.category.length }?.category ?: ""
+        val textLayoutResult = textMeasurer.measure(text = maxText)
+        maxLabelWidth = with(density) { textLayoutResult.size.width.toDp() }
     }
 
-    // 필터 버튼 데이터
-    val filterButtons = listOf(
-        "혜택 타입", "카드사", "카테고리", "전월실적", "연회비"
-    )
-    
-    Column(modifier = Modifier.fillMaxSize()) {
-        // 1. 상단 필터 버튼 영역
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(filterButtons) { filterName ->
-                FilterButton(
-                    text = filterName,
-                    onClick = {
-                        selectedFilterCategory = filterName
-                        showFilterPage = true
-                    }
-                )
-            }
-        }
-        
-        // 구분선
-        Divider(
-            color = Color.Gray.copy(alpha = 0.3f),
-            thickness = 1.dp,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        
-        // 2. "인기순" 라벨
-        Text(
-            text = "인기순",
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-        )
-        
-        // 3. 카드 그리드 레이아웃을 포함한 GlassSurface
-        if (searchLoading) {
-            // 로딩 중 표시
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
-            }
-        } else if (searchResults.isEmpty()) {
-            // 검색 결과가 없는 경우
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
             GlassSurface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                cornerRadius = 16f,
-                blurRadius = 10f
+                    .padding(vertical = 4.dp),
+                cornerRadius = 16f
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    filterTags.forEach { tag ->
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            FilterTagRow(
+                                tag = tag,
+                                labelPadding = maxLabelWidth,
+                                onOptionSelected = { option ->
+                                    onFilterChange(tag.category, option)
+                                }
+                            )
+
+                            if (tag != filterTags.last()) {
+                                Divider(
+                                    color = Color.Gray.copy(alpha = 0.3f),
+                                    thickness = 0.5.dp,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "인기순",
+                    color = Color.White,
+                    fontSize = 18.sp
+                )
+
+                Text(
+                    text = "이벤트 카드 제외",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+        }
+
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
+        } else if (error != null) {
+            item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -787,625 +446,82 @@ fun CardFinder(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "검색 결과가 없습니다",
+                        text = "카드를 불러오는데 실패했습니다",
                         color = Color.White,
-                        fontSize = 18.sp
+                        textAlign = TextAlign.Center
                     )
                 }
             }
         } else {
-            // 검색 결과 카드 그리드 표시
-            GlassSurface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                cornerRadius = 16f,
-                blurRadius = 10f
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    // 카드 결과를 2열로 표시하기 위해 2개씩 묶어서 처리
-                    val cardPairs = viewModel.searchResultsToCardInfo().chunked(2)
-                    
-                    items(cardPairs) { rowCards ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            rowCards.forEachIndexed { index, card ->
-                                CardGridItem(
-                                    card = card, 
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onCardClick(card) }
-                                )
-                            }
-                            
-                            // 행에 카드가 1개만 있는 경우 빈 공간 추가
-                            if (rowCards.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
-                    }
-                    
-                    // 하단 여백
-                    item {
-                        Spacer(modifier = Modifier.height(80.dp))
-                    }
-                }
+            items(cards) { card ->
+                CardListItem(card = card, onClick = { onCardClick(card) })
             }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
 
-@Composable
-fun FilterButton(
-    text: String,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(30.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(30.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 14.sp
-        )
-    }
-}
 
 @Composable
-fun CardGridItem(
-    card: CardInfo,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+fun FilterTagRow(
+    tag: FilterTag,
+    labelPadding: Dp,
+    onOptionSelected: (String) -> Unit
 ) {
     Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // 카드 이미지
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(8.dp))
-                // 배경색 제거
-        ) {
-            if (card.hasValidImageUrl()) {
-                NetworkImage(
-                    url = card.normalizedImageUrl(),
-                    contentDescription = card.name,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    rotationZ = 90f
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.card),
-                    contentDescription = card.name,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
-                        .graphicsLayer(rotationZ = 90f)
-                )
-            }
-        }
-        
-        // 카드 정보
-        Text(
-            text = card.name,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        
-        // 혜택 요약 (첫 번째 혜택만 표시)
-        if (card.benefits.isNotEmpty()) {
-            Text(
-                text = card.benefits.first(),
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FilterPage(
-    category: String,
-    onClose: () -> Unit,
-    onApplyFilter: () -> Unit
-) {
-    // 필터 페이지 상태 관리
-    val viewModel = viewModel<CardRecommendViewModel>()
-    val currentParams by viewModel.currentSearchParams
-    
-    // 선택된 필터 값 (임시 상태)
-    var selectedBenefitTypes by remember { mutableStateOf(currentParams.benefitType) }
-    var selectedCardCompanies by remember { mutableStateOf(currentParams.cardCompany) }
-    var selectedCategories by remember { mutableStateOf(currentParams.category) }
-    var minPerformance by remember { mutableStateOf(currentParams.minPerformanceRange) }
-    var maxPerformance by remember { mutableStateOf(currentParams.maxPerformanceRange) }
-    var minAnnualFee by remember { mutableStateOf(currentParams.minAnnualFee) }
-    var maxAnnualFee by remember { mutableStateOf(currentParams.maxAnnualFee) }
-    
-    // 슬라이더 위치 (0.0f ~ 1.0f)
-    var performanceMinSliderPosition by remember { mutableStateOf(minPerformance / 1000000f) }
-    var performanceMaxSliderPosition by remember { mutableStateOf(maxPerformance / 1000000f) }
-    var annualFeeMinSliderPosition by remember { mutableStateOf(minAnnualFee / 20000f) }
-    var annualFeeMaxSliderPosition by remember { mutableStateOf(maxAnnualFee / 20000f) }
-    
-    // 필터 옵션 데이터
-    val benefitTypeOptions = listOf("DISCOUNT", "MILEAGE", "COUPON")
-    val cardCompanyOptions = listOf("KB국민", "신한", "삼성", "현대", "롯데", "농협", "IBK", "우리")
-    val categoryOptions = listOf("쇼핑", "교통", "통신", "식음료", "교육", "의료", "여행", "레저")
-    
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF1A1A2E))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            // 헤더
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "필터",
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "닫기",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable(onClick = onClose)
-                )
-            }
-            
-            // 필터 내용
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) {
-                // 필터 카테고리에 따른 내용 표시
-                when (category) {
-                    "혜택 타입" -> {
-                        item {
-                Text(
-                                text = "카드 종류",
-                    color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                            
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                benefitTypeOptions.forEach { option ->
-                                    FilterChip(
-                                        option = option,
-                                        isSelected = selectedBenefitTypes.contains(option),
-                                        onToggle = {
-                                            selectedBenefitTypes = if (selectedBenefitTypes.contains(option)) {
-                                                selectedBenefitTypes - option
-                                            } else {
-                                                selectedBenefitTypes + option
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    "카드사" -> {
-                        item {
-                            Text(
-                                text = "카드사",
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                            
-                            // 카드사 옵션을 2열 그리드로 표시
-                            val rows = cardCompanyOptions.chunked(2)
-                            rows.forEach { rowOptions ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    rowOptions.forEach { option ->
-                                        FilterChip(
-                                            option = option,
-                                            isSelected = selectedCardCompanies.contains(option),
-                                            onToggle = {
-                                                selectedCardCompanies = if (selectedCardCompanies.contains(option)) {
-                                                    selectedCardCompanies - option
-                                                } else {
-                                                    selectedCardCompanies + option
-                                                }
-                                            },
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                    
-                                    // 행에 하나만 있는 경우 빈 공간 추가
-                                    if (rowOptions.size == 1) {
-                                        Spacer(modifier = Modifier.weight(1f))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    "카테고리" -> {
-        item {
-                            Text(
-                                text = "카테고리",
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                            
-                            // 카테고리 옵션을 2열 그리드로 표시
-                            val rows = categoryOptions.chunked(2)
-                            rows.forEach { rowOptions ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    rowOptions.forEach { option ->
-                                        FilterChip(
-                                            option = option,
-                                            isSelected = selectedCategories.contains(option),
-                                            onToggle = {
-                                                selectedCategories = if (selectedCategories.contains(option)) {
-                                                    selectedCategories - option
-                                                } else {
-                                                    selectedCategories + option
-                                                }
-                                            },
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                    
-                                    // 행에 하나만 있는 경우 빈 공간 추가
-                                    if (rowOptions.size == 1) {
-                                        Spacer(modifier = Modifier.weight(1f))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    "전월실적" -> {
-                        item {
-                            Text(
-                                text = "전월실적",
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                            
-                            // 현재 선택된 값 표시
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "${minPerformance}원",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                                Text(
-                                    text = "${maxPerformance}원",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                            }
-                            
-                            // 슬라이더
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 16.dp)
-                            ) {
-                                // 슬라이더 트랙
-                                Box(
         modifier = Modifier
             .fillMaxWidth()
-                                        .height(4.dp)
-                                        .background(Color.Gray.copy(alpha = 0.5f))
-                                        .align(Alignment.Center)
-                                ) {
-                                    // 선택된 범위 하이라이트
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth(performanceMaxSliderPosition - performanceMinSliderPosition)
-                                            .fillMaxHeight()
-                                            .offset(x = (performanceMinSliderPosition * 100).dp)
-                                            .background(Color.Cyan)
-                                    )
-                                }
-                                
-                                // 최소값 슬라이더 핸들
-                                Slider(
-                                    value = performanceMinSliderPosition,
-                                    onValueChange = {
-                                        // 최소값은 최대값보다 클 수 없음
-                                        performanceMinSliderPosition = it.coerceAtMost(performanceMaxSliderPosition - 0.1f)
-                                        minPerformance = (performanceMinSliderPosition * 1000000).toInt()
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color.Transparent,
-                                        inactiveTrackColor = Color.Transparent
-                                    )
-                                )
-                                
-                                // 최대값 슬라이더 핸들
-                                Slider(
-                                    value = performanceMaxSliderPosition,
-                                    onValueChange = {
-                                        // 최대값은 최소값보다 작을 수 없음
-                                        performanceMaxSliderPosition = it.coerceAtLeast(performanceMinSliderPosition + 0.1f)
-                                        maxPerformance = (performanceMaxSliderPosition * 1000000).toInt()
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color.Transparent,
-                                        inactiveTrackColor = Color.Transparent
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    "연회비" -> {
-                        item {
+            .wrapContentHeight()
+            .padding(vertical = 8.dp)
+    ) {
         Text(
-                                text = "연회비",
+            text = tag.category,
             color = Color.White,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp)
         )
 
-                            // 현재 선택된 값 표시
-                            Row(
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(end = 16.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                                    .padding(vertical = 16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                .padding(start = labelPadding)
         ) {
+            item {
+                val isSelected = tag.selectedOption == "전체"
                 Text(
-                                    text = "${minAnnualFee}원",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                                Text(
-                                    text = "${maxAnnualFee}원",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                            }
-                            
-                            // 슬라이더
-                            Box(
+                    text = "전체",
+                    color = if (isSelected) Color(0xFFFFF176) else Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 16.dp)
-                            ) {
-                                // 슬라이더 트랙
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(4.dp)
-                                        .background(Color.Gray.copy(alpha = 0.5f))
-                                        .align(Alignment.Center)
-                                ) {
-                                    // 선택된 범위 하이라이트
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth(annualFeeMaxSliderPosition - annualFeeMinSliderPosition)
-                                            .fillMaxHeight()
-                                            .offset(x = (annualFeeMinSliderPosition * 100).dp)
-                                            .background(Color.Cyan)
-                                    )
-                                }
-                                
-                                // 최소값 슬라이더 핸들
-                                Slider(
-                                    value = annualFeeMinSliderPosition,
-                                    onValueChange = {
-                                        // 최소값은 최대값보다 클 수 없음
-                                        annualFeeMinSliderPosition = it.coerceAtMost(annualFeeMaxSliderPosition - 0.1f)
-                                        minAnnualFee = (annualFeeMinSliderPosition * 20000).toInt()
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color.Transparent,
-                                        inactiveTrackColor = Color.Transparent
-                                    )
-                                )
-                                
-                                // 최대값 슬라이더 핸들
-                                Slider(
-                                    value = annualFeeMaxSliderPosition,
-                                    onValueChange = {
-                                        // 최대값은 최소값보다 작을 수 없음
-                                        annualFeeMaxSliderPosition = it.coerceAtLeast(annualFeeMinSliderPosition + 0.1f)
-                                        maxAnnualFee = (annualFeeMaxSliderPosition * 20000).toInt()
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color.Transparent,
-                                        inactiveTrackColor = Color.Transparent
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    else -> {
-                        // 기본 필터 내용 (모든 필터 옵션 표시)
-                        item {
-                Text(
-                                text = "모든 필터 옵션",
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-                    }
-                }
+                        .clickable { onOptionSelected("전체") }
+                        .padding(vertical = 4.dp)
+                )
             }
-            
-            // 하단 버튼 영역 (고정)
-            Row(
+
+            items(tag.options) { option ->
+                val isSelected = tag.selectedOption == option
+                Text(
+                    text = option,
+                    color = if (isSelected) Color(0xFFFFF176) else Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // 초기화 버튼
-                Button(
-                    onClick = {
-                        // 모든 필터 초기화
-                        selectedBenefitTypes = listOf()
-                        selectedCardCompanies = listOf()
-                        selectedCategories = listOf()
-                        minPerformance = 0
-                        maxPerformance = 10000000
-                        minAnnualFee = 0
-                        maxAnnualFee = 20000
-                        performanceMinSliderPosition = 0f
-                        performanceMaxSliderPosition = 1f
-                        annualFeeMinSliderPosition = 0f
-                        annualFeeMaxSliderPosition = 1f
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(1.dp, Color.White)
-                ) {
-                    Text("초기화")
-                }
-                
-                // 결과보기 버튼
-                Button(
-                    onClick = {
-                        // 선택된 필터를 ViewModel에 적용
-                        viewModel.currentSearchParams.value = CardRecommendViewModel.SearchParams(
-                            benefitType = selectedBenefitTypes,
-                            cardCompany = selectedCardCompanies,
-                            category = selectedCategories,
-                            minPerformanceRange = minPerformance,
-                            maxPerformanceRange = maxPerformance,
-                            minAnnualFee = minAnnualFee,
-                            maxAnnualFee = maxAnnualFee
-                        )
-                        onApplyFilter()
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00BCD4),
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("결과보기")
-                }
+                        .clickable { onOptionSelected(option) }
+                        .padding(vertical = 4.dp)
+                )
             }
         }
     }
 }
 
-@Composable
-fun FilterChip(
-    option: String,
-    isSelected: Boolean,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (isSelected) Color(0xFF00BCD4) else Color.Transparent)
-            .border(
-                width = 1.dp,
-                color = if (isSelected) Color(0xFF00BCD4) else Color.White.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .clickable(onClick = onToggle)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = option,
-            color = Color.White,
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CardCarousel(
     cards: List<CardInfo>,
@@ -1428,14 +544,7 @@ fun CardCarousel(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(
-                // 혜택 개수에 따라 박스 높이도 동적으로 조절
-                when {
-                    extendedCards.getOrNull(0)?.benefits?.size ?: 0 <= 1 -> 430.dp
-                    extendedCards.getOrNull(0)?.benefits?.size == 2 -> 450.dp
-                    else -> 480.dp
-                }
-            )
+            .height(470.dp)
     ) {
         HorizontalPager(
             state = pagerState,
@@ -1474,145 +583,121 @@ fun CardCarousel(
                             }
                         }
                 ) {
-                    // 전체 카드 컨테이너
-                    // 혜택 개수에 따라 동적으로 높이 조절
-                    val benefits = extendedCards[page].benefits
-                    val containerHeight = when {
-                        benefits.size <= 1 -> 430.dp
-                        benefits.size == 2 -> 450.dp
-                        else -> 480.dp
-                    }
-                    
-                    Column(
-                        modifier = Modifier.height(containerHeight),
-                        verticalArrangement = Arrangement.SpaceBetween
+                    Box(
+                        modifier = Modifier.height(420.dp)
                     ) {
-                        // 카드 이미지 부분
                         Box(
                             modifier = Modifier
                                 .width(380.dp)
-                                .height(340.dp) // 원래 값으로 복원 (300dp에서 340dp로)
-                                .padding(horizontal = 8.dp)
+                                .height(340.dp)
+                                .padding(top = 0.dp, bottom = 0.dp)
                         ) {
-                            val card = extendedCards[page]
-                            
-                            // API에서 받은 이미지 URL 사용
-                            if (card.imgUrl.isNotEmpty() && card.imgUrl.startsWith("http")) {
-                                // Coil 라이브러리를 사용한 비동기 이미지 로딩
-                                val imgUrl = card.imgUrl
-                                Log.d("CardRecommendScreen", "카테고리 카드 이미지 로드 시도: $imgUrl")
-                                
-                                // NetworkImage 컴포넌트 사용
-                                NetworkImage(
-                                    url = imgUrl,
-                                    contentDescription = card.name,
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(12.dp), // 원래 값으로 복원 (6dp에서 12dp로)
-                                    rotationZ = 90f,
-                                    fallbackResId = R.drawable.card,
-                                    onError = {
-                                        Log.e("CardRecommendScreen", "⚠️ 카테고리 카드 이미지 로드 실패: $imgUrl")
-                                    },
-                                    onSuccess = {
-                                        Log.d("CardRecommendScreen", "✅ 카테고리 카드 이미지 로드 성공: $imgUrl")
-                                    }
-                                )
-                            } else {
-                                // 이미지 URL이 없는 경우 기본 이미지 표시
                             Image(
                                 painter = painterResource(id = R.drawable.card),
-                                    contentDescription = card.name,
-                                    contentScale = ContentScale.Fit,
+                                contentDescription = extendedCards[page].name,
+                                contentScale = ContentScale.FillWidth,
                                 modifier = Modifier
                                     .fillMaxSize()
-                                        .padding(12.dp) // 원래 값으로 복원
                                     .graphicsLayer(rotationZ = 90f)
                             )
-                                Log.d("CardRecommendScreen", "⚠️ 카드 URL이 비어있어 기본 이미지 사용: ${card.name}")
-                            }
                         }
 
-                        // 카드 정보 (혜택 및 이름) - 이미지와 분리된 별도 영역
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(top = 10.dp)
+                                .padding(bottom = 15.dp)
+                                .padding(horizontal = 24.dp)
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp) // 원래 값으로 복원 (24dp에서 16dp로)
-                                .padding(top = 0.dp, bottom = 16.dp) // 원래 값으로 복원 (8dp에서 16dp로)
-                                .background(Color.Transparent) // 배경색 제거하여 카드와 분리감 강화
                         ) {
-                            // 카드 혜택 정보 - 여러 줄로 표시
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                benefits.take(2).forEach { benefit ->
                             Text(
-                                        text = benefit,
+                                text = "카페 10% 할인",
                                 color = Color.White,
-                                        fontSize = 18.sp,
+                                fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                            .padding(bottom = 4.dp)
+                                    .padding(bottom = 8.dp)
                             )
-                                }
 
-                                // 더 많은 혜택이 있는 경우 "... 외 N개" 형식으로 표시
-                                if (benefits.size > 2) {
                             Text(
-                                        text = "... 외 ${benefits.size - 2}개",
-                                        color = Color.White.copy(alpha = 0.7f),
+                                text = extendedCards[page].name,
+                                color = Color.White,
                                 fontSize = 16.sp,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                            .padding(bottom = 4.dp)
-                                    )
-                                }
-                            }
-
-                            // 혜택 개수에 따라 공간 조절 - 공간 더 줄이기
-                            val spacerHeight = when {
-                                benefits.size <= 1 -> {
-                                    Log.d("CardRecommendScreen", "Card has ${benefits.size} benefits - using 4.dp spacing")
-                                    4.dp // 8dp에서 4dp로 축소
-                                }
-                                benefits.size == 2 -> {
-                                    Log.d("CardRecommendScreen", "Card has ${benefits.size} benefits - using 6.dp spacing")
-                                    6.dp // 12dp에서 6dp로 축소
-                                }
-                                else -> {
-                                    Log.d("CardRecommendScreen", "Card has ${benefits.size} benefits - using 8.dp spacing")
-                                    8.dp // 16dp에서 8dp로 축소
-                                }
-                            }
-                            Spacer(
-        modifier = Modifier
-                                    .height(spacerHeight)
-            .fillMaxWidth()
-                            )
-
-                            // 카드 이름 - 글자 크기 키우고 강조
-                Text(
-                                text = extendedCards[page].name,
-                    color = Color.White,
-                                fontSize = 18.sp, // 16sp에서 18sp로 증가
-                                fontWeight = FontWeight.Bold, // 볼드 추가
-                                textAlign = TextAlign.Center,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 2.dp)
-                                    .padding(bottom = 16.dp) // 카드 이름 아래 여백 추가
+                                    .padding(vertical = 4.dp)
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun CardListItem(
+    card: CardInfo,
+    onClick: () -> Unit
+) {
+    GlassSurface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        cornerRadius = 12f
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 카드 이미지: 비율 유지하며 조정
+            Image(
+                painter = painterResource(id = R.drawable.card), // ← 네 카드 이미지
+                contentDescription = card.name,
+                contentScale = ContentScale.Fit, // 비율 유지
+                modifier = Modifier
+                    .width(72.dp)
+                    .height(48.dp) // 가로로 긴 카드 형태 반영
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(
+                        width = 0.5.dp,
+                        color = Color.White.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+            )
+
+            // 카드 정보
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp)
+            ) {
+                Text(
+                    text = card.name,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    card.icons.forEach { icon ->
+                        Text(
+                            text = icon,
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }

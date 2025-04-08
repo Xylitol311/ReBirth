@@ -6,11 +6,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -21,7 +18,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -38,7 +34,6 @@ import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.BottomNavBar
 import com.example.fe.ui.components.navigation.BottomNavItem
 import com.example.fe.ui.components.navigation.TopBar
-import com.example.fe.ui.components.navigation.TopBarDimensions
 import com.example.fe.ui.screens.calendar.CalendarScreen
 import com.example.fe.ui.screens.cardRecommend.CardDetailInfoScreen
 import com.example.fe.ui.screens.cardRecommend.CardRecommendScreen
@@ -58,10 +53,6 @@ import com.example.fe.ui.screens.payment.PaymentScreen
 import com.example.fe.ui.screens.payment.PaymentViewModel
 import com.example.fe.ui.screens.payment.components.CardOCRScanScreen
 import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
-import com.example.fe.ui.screens.payment.components.PaymentResultPopup
-import com.example.fe.ui.screens.payment.components.QRScannerScreen
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
