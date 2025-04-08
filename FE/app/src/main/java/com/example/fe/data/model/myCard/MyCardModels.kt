@@ -8,19 +8,19 @@ data class MyCardInfoResponse(
 
 data class MyCardInfoData(
     val cardId: Int,
-    val cardImgUrl: String,
+    val cardImageUrl: String,  // cardImgUrl에서 cardImageUrl로 변경
     val cardName: String,
     val maxPerformanceAmount: Int,
     val currentPerformanceAmount: Int,
     val spendingMaxTier: Int,
     val currentSpendingTier: Int,
     val amountRemainingNext: Int,
+    val performanceRange: List<Int>,  // 추가된 필드
     val cardBenefits: List<CardBenefit>
 )
 
 data class CardBenefit(
-    val category: String,
-    val merchantName: String,
+    val benefitCategory: List<String>,  // String에서 List<String>으로 변경
     val receivedBenefitAmount: Int,
     val remainingBenefitAmount: Int
 )
@@ -38,10 +38,10 @@ data class CardTransactionHistoryData(
 
 data class Transaction(
     val transactionDate: String,
-    val transactionCategory: String,
+    val transactionCategory: String?,  // null 가능하도록 변경
     val spendingAmount: Int,
-    val merchantName: String,
-    val receivedBenefitAmount: Int
+    val merchantName: String?,  // null 가능하도록 변경
+    val receivedBenefitAmount: Int?  // null 가능하도록 변경
 )
 
 data class Pagination(
@@ -50,10 +50,11 @@ data class Pagination(
     val hasMore: Boolean
 )
 
+//유지
 data class MyCardsResponse(
     val success: Boolean,
     val message: String,
-    val data: MyCardData?
+    val data: List<MyCardData>?
 )
 
 data class MyCardData(

@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import com.example.fe.R
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.auth.FingerprintAuth
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
 import com.example.fe.ui.screens.onboard.components.AuthMethodOption
@@ -130,7 +130,19 @@ fun AdditionalSecurityScreen(
                             if (savedPattern != null && pattern.size == savedPattern!!.size &&
                                 pattern.zip(savedPattern!!).all { (a, b) -> a == b }) {
                                 // 패턴이 일치하면 저장하고 완료 화면으로 이동
-                                viewModel.setUserPattern(pattern)
+
+                                viewModel.registerPattern(
+                                    pattern = savedPattern!!,
+                                    onSuccess = {
+                                        Log.d("AuthPattern","패턴저장")
+                                        currentStep = AdditionalSecurityStep.COMPLETE
+                                    },
+                                    onFailure = { error ->
+                                        Log.d("AuthPattern","${error}")
+                                        Toast.makeText(context, "패턴 등록 중 오류 발생: $error", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                                viewModel.setUserPattern()
                                 currentStep = AdditionalSecurityStep.COMPLETE
                             } else {
                                 // 패턴이 일치하지 않으면 다시 처음부터

@@ -234,6 +234,32 @@ fun CalendarScreen(
                                 )
                         )
                     }
+
+                    // 오른쪽 탭 (소비 리포트)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { selectedTabIndex = 1 },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "소비 리포트",
+                            color = if (selectedTabIndex == 1) calendarBlue else Color.Gray,
+                            fontSize = 18.sp, // 폰트 크기 증가
+                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .width(100.dp)
+                                .height(2.dp)
+                                .background(
+                                    color = if (selectedTabIndex == 1) calendarBlue else Color.Transparent
+                                )
+                        )
+                    }
+                }
                     
                     // 오른쪽 탭 (소비 리포트)
                     Column(
@@ -749,7 +775,7 @@ fun CalendarScreen(
                     )
                 }
             }
-        }
+
     }
 }
 

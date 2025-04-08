@@ -4,14 +4,16 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.fe.ui.screens.onboard.OnboardingViewModel
 import com.example.fe.ui.screens.onboard.screen.login.PinLoginScreen
-import com.example.fe.ui.screens.onboard.screen.login.PatternLoginScreen
 import com.example.fe.ui.screens.onboard.screen.login.FingerprintLoginScreen
 import com.example.fe.ui.screens.home.HomeScreen
+import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
+import com.example.fe.ui.screens.onboard.screen.setup.PatternLoginScreen
+import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
 @Composable
 fun LoginNavigation(
+    deviceInfoManager: DeviceInfoManager,
     navController: NavHostController,
     viewModel: OnboardingViewModel,
     startDestination: String,
@@ -23,7 +25,7 @@ fun LoginNavigation(
     ) {
         composable("pin_login") {
             PinLoginScreen(
-                navController = navController,
+                deviceInfoManager = deviceInfoManager,
                 viewModel = viewModel,
                 onLoginSuccess = onLoginSuccess
             )
@@ -32,13 +34,14 @@ fun LoginNavigation(
             PatternLoginScreen(
                 navController = navController,
                 viewModel = viewModel,
-                onLoginSuccess = onLoginSuccess
+                deviceInfoManager = deviceInfoManager,
+                onLoginSuccess = onLoginSuccess  // 콜백 전달
             )
         }
         composable("fingerprint_login") {
             FingerprintLoginScreen(
-                navController = navController,
-                onboardingViewModel = viewModel,
+                viewModel = viewModel,
+                deviceInfoManager = deviceInfoManager,
                 onLoginSuccess = onLoginSuccess
             )
         }

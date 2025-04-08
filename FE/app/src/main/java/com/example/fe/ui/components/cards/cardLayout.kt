@@ -2,6 +2,7 @@ package com.example.fe.ui.components.cards
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,12 +45,16 @@ fun HorizontalCardLayout(
     cardName: String,
     cardImageUrl: String = "",
     cardImage: Int = R.drawable.card,
-    modifier: Modifier = Modifier
+    isSelected: Boolean = false,
+    isRecommended: Boolean = false,
+    modifier: Modifier = Modifier,
+    width: Dp = 280.dp,
+    height: Dp = 180.dp
 ) {
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(200.dp)
+            .width(width)
+            .height(height)
             .clip(RoundedCornerShape(16.dp))
             .background(
                 Brush.verticalGradient(
@@ -59,9 +64,16 @@ fun HorizontalCardLayout(
                     )
                 )
             )
+            .then(
+                if (isSelected) Modifier.border(
+                    width = 2.dp,
+                    color = Color.White,
+                    shape = RoundedCornerShape(16.dp)
+                ) else Modifier
+            )
     ) {
         // 카드 이미지 (URL 또는 리소스)
-        if (cardImageUrl.isNotEmpty()) {
+        if (!isRecommended && cardImageUrl.isNotEmpty()) {
             // URL 이미지 로드
             AsyncImage(
                 model = cardImageUrl,
@@ -70,7 +82,7 @@ fun HorizontalCardLayout(
                 modifier = Modifier.fillMaxSize(),
                 error = painterResource(id = cardImage) // 로드 실패 시 기본 이미지
             )
-        } else {
+        } else if (!isRecommended) {
             // 리소스 이미지 사용
             Image(
                 painter = painterResource(id = cardImage),
@@ -79,7 +91,22 @@ fun HorizontalCardLayout(
                 modifier = Modifier.fillMaxSize()
             )
         }
-        
+
+        // 추천 카드인 경우 RE 별자리 표시
+        if (isRecommended) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "RE",
+                    color = Color.White,
+                    fontSize = 60.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
         // 카드 정보 오버레이
         Column(
             modifier = Modifier
@@ -89,29 +116,21 @@ fun HorizontalCardLayout(
         ) {
             // 카드 이름
             Text(
-                text = cardName,
+                text = "RE: BIRTH",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
         }
     }
 }
 
-
 /**
- * 세로형 카드 레이아웃 컴포넌트
- * 
- * @param cardImage 카드 이미지 리소스
- * @param modifier 기본 모디파이어
- * @param width 카드 너비 (null이면 fillMaxWidth 사용)
- * @param height 카드 높이
- * @param cornerRadius 모서리 둥글기
- * @param onClick 클릭 이벤트 핸들러
+ * 세로형 카드 레이아웃 컴포넌트 (URL 이미지 지원)
  */
 @Composable
 fun VerticalCardLayout(
-    cardImage: Painter,
+    cardImageUrl: String,
     modifier: Modifier = Modifier,
     width: Dp? = null,
     height: Dp = 200.dp,
@@ -120,8 +139,8 @@ fun VerticalCardLayout(
 ) {
     Box(
         modifier = modifier
-            .let { 
-                if (width != null) it.width(width) else it 
+            .let {
+                if (width != null) it.width(width) else it
             }
             .height(height)
             .clip(RoundedCornerShape(cornerRadius))
@@ -129,9 +148,11 @@ fun VerticalCardLayout(
         contentAlignment = Alignment.Center
     ) {
         // 세로형 카드 (이미지 회전)
-        Image(
-            painter = cardImage,
+        AsyncImage(
+            model = cardImageUrl,
             contentDescription = "Card Image",
+            contentScale = ContentScale.FillWidth,
+            error = painterResource(id = R.drawable.card), // 로드 실패 시 기본 이미지
             modifier = Modifier
                 .width(height) // 높이와 너비를 바꿔서 회전 후에도 비율 유지
                 .height(width ?: height) // width가 null이면 height 사용
@@ -149,15 +170,5 @@ fun HorizontalCardLayoutPreview() {
     HorizontalCardLayout(
         cardName = "Card Name",
         cardImageUrl = "https://example.com/card-image.jpg"
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun VerticalCardLayoutPreview() {
-    VerticalCardLayout(
-        cardImage = painterResource(id = R.drawable.card),
-        width = 160.dp,
-        height = 240.dp
     )
 }

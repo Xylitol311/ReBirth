@@ -3,10 +3,8 @@ package com.example.fe.utils
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.example.fe.ui.screens.onboard.dataStore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.example.fe.ui.screens.onboard.viewmodel.dataStore
+
 
 private val LOGIN_METHOD = stringPreferencesKey("login_method")
 

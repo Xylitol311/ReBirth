@@ -70,7 +70,7 @@ fun TopBar(
                 .height(TopBarDimensions.TOPBAR_HEIGHT)
                 .padding(top = TopBarDimensions.TOPBAR_PADDING_TOP)
         ) {
-            // 중앙에 로고 배치 - 그림자 효과 추가
+            // 중앙에 제목 배치
             Text(
                 text = title,
                 color = Color.White,
