@@ -1,18 +1,13 @@
 package com.example.fe.data.network.api
 
 import com.example.fe.data.model.auth.ApiResponseDTO
+import com.example.fe.data.model.auth.PatternNumbersRequest
 import com.example.fe.data.model.auth.ReportWithPatternDTO
 import com.example.fe.data.model.auth.SignupRequest
-import com.example.fe.data.model.auth.registPatternRequest
 import com.example.fe.data.model.auth.userLoginRequest
-import com.example.fe.data.model.payment.ApiResponse
-import com.example.fe.data.model.payment.PaymentResult
-import com.example.fe.data.model.payment.QRPaymentResponse
-import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
 interface AuthApiService {
@@ -24,7 +19,7 @@ interface AuthApiService {
     // 패턴 등록 - 토큰은 이제 Interceptor에서 자동 추가됨
     @POST("api/auth/registpattern")
     suspend fun registPattern(
-        @Body patternNumbers: String
+        @Body patternNumbers: PatternNumbersRequest
     ): Response<ApiResponseDTO<Unit>>
 
 
