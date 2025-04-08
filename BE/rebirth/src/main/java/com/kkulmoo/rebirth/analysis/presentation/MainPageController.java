@@ -1,10 +1,7 @@
 package com.kkulmoo.rebirth.analysis.presentation;
 
 import com.kkulmoo.rebirth.analysis.application.service.MainPageService;
-import com.kkulmoo.rebirth.analysis.domain.dto.response.MainCardSummaryDTO;
-import com.kkulmoo.rebirth.analysis.domain.dto.response.MainSummaryDTO;
-import com.kkulmoo.rebirth.analysis.domain.dto.response.ReportCategoryDTO;
-import com.kkulmoo.rebirth.analysis.domain.dto.response.ResponseDTO;
+import com.kkulmoo.rebirth.analysis.domain.dto.response.*;
 import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -57,10 +54,12 @@ public class MainPageController {
     @GetMapping("/prebenefit")
     public ResponseEntity<ResponseDTO> getPrebenefit(@JwtUserId Integer userId) {
         // TODO: 직전 거래 혜택 정보 불러오기
+        PreBenefitDto preBenefitDto = mainPageService.getPreBenefit(userId);
 
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("직전 거래 혜택 피드백 조회 완료(추천 카드로 결제한 경우 제외)");
+        result.setData(preBenefitDto);
         return ResponseEntity.ok().body(result);
     }
 }

@@ -82,8 +82,19 @@ public class MainPageService {
     }
 
     public PreBenefitDto getPreBenefit(Integer userId){
-        preBenefitRepository.findByUserId(userId);
-
-        return null;
+        return preBenefitRepository.findByUserId(userId)
+                .map(preBenefit -> PreBenefitDto.builder()
+                        .userId(preBenefit.getUserId())
+                        .paymentCardId(preBenefit.getPaymentCardId())
+                        .recommendedCardId(preBenefit.getRecommendedCardId())
+                        .amount(preBenefit.getAmount())
+                        .ifBenefitType(preBenefit.getIfBenefitType().name())
+                        .ifBenefitAmount(preBenefit.getIfBenefitAmount())
+                        .realBenefitType(preBenefit.getRealBenefitType().name())
+                        .realBenefitAmount(preBenefit.getRealBenefitAmount())
+                        .merchantName(preBenefit.getMerchantName())
+                        .isGood(preBenefit.getPaymentCardId().equals(preBenefit.getRecommendedCardId()))
+                        .build())
+                .orElse(null);
     }
 }
