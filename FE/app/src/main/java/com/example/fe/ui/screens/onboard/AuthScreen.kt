@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.activity.compose.BackHandler
+import androidx.compose.ui.text.style.TextAlign
 import com.example.fe.ui.theme.SkyBlue
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 
@@ -39,12 +40,29 @@ fun AuthScreen(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var currentStep by remember { mutableStateOf(Step.NAME) }
-    var name by remember { mutableStateOf("") }
-    var ssnFront by remember { mutableStateOf("") }
+    // 쿼리 파라미터에서 초기 단계와 데이터 가져오기
+    val navBackStackEntry = navController.currentBackStackEntry
+    val stepParam = navBackStackEntry?.arguments?.getString("step")
+    val nameParam = navBackStackEntry?.arguments?.getString("name")
+    val ssnFrontParam = navBackStackEntry?.arguments?.getString("ssnFront")
+    val phoneParam = navBackStackEntry?.arguments?.getString("phone")
+
+    // 초기 단계 설정
+    var currentStep by remember { 
+        mutableStateOf(
+            when (stepParam) {
+                "CODE" -> Step.CODE
+                else -> Step.NAME
+            }
+        ) 
+    }
+    
+    // 기존 데이터 복원
+    var name by remember { mutableStateOf(nameParam ?: "") }
+    var ssnFront by remember { mutableStateOf(ssnFrontParam ?: "") }
     var ssnBack by remember { mutableStateOf("") }
     var telco by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf(phoneParam ?: "") }
     var code by remember { mutableStateOf("") }
     var showTelcoSheet by remember { mutableStateOf(false) }
     var showAgreement by remember { mutableStateOf(false) }
@@ -178,14 +196,23 @@ fun AuthScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp) // 간격 증가
+                .padding(horizontal = 40.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(80.dp))
 
             when (currentStep) {
                 Step.NAME -> {
-                    Text("이름을 알려주세요", fontSize = 28.sp)
+                    Text(
+                        "이름을 알려주세요", 
+                        fontSize = 28.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(Modifier.height(40.dp))
+                    
                     UnderlineTextField(
                         value = name,
                         onValueChange = { name = it },
@@ -196,7 +223,14 @@ fun AuthScreen(
                     )
                 }
                 Step.SSN -> {
-                    Text("주민등록번호를 입력해주세요", fontSize = 28.sp)
+                    Text(
+                        "주민등록번호를 입력해주세요", 
+                        fontSize = 28.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(Modifier.height(40.dp))
 
                     Box(modifier = Modifier.fillMaxWidth()) {
                         // 중앙 "-" 배치
@@ -274,7 +308,15 @@ fun AuthScreen(
                     DisplayInfo("이름", name)
                 }
                 Step.TELECOM -> {
-                    Text("통신사를 선택해주세요", fontSize = 28.sp)
+                    Text(
+                        "통신사를 선택해주세요", 
+                        fontSize = 28.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(Modifier.height(40.dp))
+                    
                     TelcoSelector(telco = telco) {
                         Log.d("TELCO_CLICK", "바텀시트 열림")
                         showTelcoSheet = true
@@ -283,7 +325,15 @@ fun AuthScreen(
                     DisplayInfo("주민등록번호", "$ssnFront-$ssnBack●●●●●●")
                 }
                 Step.PHONE -> {
-                    Text("휴대폰 번호를 입력해주세요", fontSize = 28.sp)
+                    Text(
+                        "휴대폰 번호를 입력해주세요", 
+                        fontSize = 28.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(Modifier.height(40.dp))
+                    
                     UnderlineTextField(
                         value = phone,
                         onValueChange = {
@@ -300,7 +350,15 @@ fun AuthScreen(
                     DisplayInfo("통신사", telco)
                 }
                 Step.CODE -> {
-                    Text("인증번호를 입력해주세요", fontSize = 28.sp)
+                    Text(
+                        "인증번호를 입력해주세요", 
+                        fontSize = 28.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(Modifier.height(40.dp))
+                    
                     UnderlineTextField(
                         value = code,
                         onValueChange = { if (it.length <= 6) code = it },
@@ -505,13 +563,14 @@ fun TelcoSelector(telco: String, onClick: () -> Unit) {
         Text(
             text = "통신사",
             style = MaterialTheme.typography.labelMedium,
-            fontSize = 20.sp
+            fontSize = 20.sp,
+            color = SkyBlue
         )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
-                .border(1.dp, Color.Gray, MaterialTheme.shapes.medium)
+                .border(1.dp, SkyBlue, MaterialTheme.shapes.medium)
                 .clickable { onClick() }
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.CenterStart

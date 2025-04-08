@@ -112,7 +112,9 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                        modifier = Modifier
+                            .padding(horizontal = 24.dp, vertical = 4.dp)
+                            .fillMaxWidth()
                     )
 
                     Text(
@@ -120,7 +122,9 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                         fontSize = 20.sp, // 16sp에서 20sp로 키움
                         color = Color.White.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                        modifier = Modifier
+                            .padding(horizontal = 24.dp, vertical = 4.dp)
+                            .fillMaxWidth()
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))

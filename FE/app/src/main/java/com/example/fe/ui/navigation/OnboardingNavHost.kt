@@ -32,8 +32,32 @@ fun OnboardingNavHost(
             OnboardingScreen(navController, onboardingViewModel)
         }
 
-        // 인증 화면
-        composable("auth") {
+        // 인증 화면 - 쿼리 파라미터 지원
+        composable(
+            "auth?step={step}&name={name}&ssnFront={ssnFront}&phone={phone}",
+            arguments = listOf(
+                navArgument("step") { 
+                    type = NavType.StringType 
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("name") { 
+                    type = NavType.StringType 
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("ssnFront") { 
+                    type = NavType.StringType 
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("phone") { 
+                    type = NavType.StringType 
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
             AuthScreen(navController, onboardingViewModel)
         }
 
