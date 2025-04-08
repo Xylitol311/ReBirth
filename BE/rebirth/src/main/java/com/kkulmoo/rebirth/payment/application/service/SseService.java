@@ -22,7 +22,7 @@ public class SseService {
     private final Map<Integer, SseEmitter> emitterMap = new ConcurrentHashMap<>();
     private static final long TIMEOUT = 1200 * 1000;
     private static final long RECONNECTION_TIMEOUT = 1000L;
-    private static final long HEARTBEAT_INTERVAL = 30 * 1000; // 30초
+    private static final long HEARTBEAT_INTERVAL = 10 * 1000; // 30초
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
