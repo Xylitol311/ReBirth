@@ -90,8 +90,21 @@ class PaymentSseClient {
                 }
                 
                 Log.e(TAG, "Stack trace:", t)
+
+                // 타임아웃 오류인 경우 특별 처리
+                val isTimeout = t?.message?.contains("timeout") == true
+
                 trySend(PaymentEvent("연결 오류: ${t?.message}"))
-                channel.close(t)
+
+                // 타임아웃이 아닌 경우에만 Flow 종료
+                if (!isTimeout) {
+                    channel.close(t)
+                } else {
+                    // 타임아웃인 경우 기존 eventSource 정리만 하고 Flow는 유지
+                    this@PaymentSseClient.eventSource?.cancel()
+                    this@PaymentSseClient.eventSource = null
+                    Log.d(TAG, "타임아웃 발생, eventSource만 정리 (Flow 유지)")
+                }
             }
         }
         
@@ -99,8 +112,14 @@ class PaymentSseClient {
             eventSource = EventSources.createFactory(client).newEventSource(request, listener)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create EventSource", e)
+            // 타임아웃 오류인 경우 특별 처리
+            val isTimeout = e.message?.contains("timeout") == true
+
             trySend(PaymentEvent("EventSource 생성 실패: ${e.message}"))
-            channel.close(e)
+            // 타임아웃이 아닌 경우에만 Flow 종료
+            if (!isTimeout) {
+                channel.close(e)
+            }
         }
         
         // Flow가 취소되면 SSE 연결도 종료

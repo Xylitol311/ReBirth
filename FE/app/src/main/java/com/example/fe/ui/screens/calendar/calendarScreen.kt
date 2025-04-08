@@ -1,5 +1,6 @@
 package com.example.fe.ui.screens.calendar
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -1323,6 +1324,7 @@ fun CardReportPage(cardReports: List<CardReport>) {
     }
 }
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun CardReportItemView(card: CardReport) {
     // 카드 데이터 계산
@@ -1363,12 +1365,12 @@ fun CardReportItemView(card: CardReport) {
                 fontSize = 18.sp
             )
                     
-                    Text(
-                        text = "${formatAmount(totalAmount)}원",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            Text(
+                text = "${formatAmount(totalAmount)}원",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
         
         // 받은 혜택 행

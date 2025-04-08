@@ -7,6 +7,7 @@ import com.example.fe.data.model.payment.PaymentResult
 import com.example.fe.data.model.payment.TokenInfo
 import com.example.fe.data.network.api.QRTokenRequest
 import com.example.fe.data.repository.PaymentRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -45,6 +46,9 @@ class PaymentViewModel : ViewModel() {
     // 결제 결과 저장
     private val _paymentResult = MutableStateFlow<PaymentResult?>(null)
     val paymentResult: StateFlow<PaymentResult?> = _paymentResult
+
+    private var isReconnecting = false
+    private val reconnectDelay = 1000L // 1초 후 재연결
 
     // 결제 정보 데이터 클래스
     data class PaymentInfo(
@@ -113,10 +117,30 @@ class PaymentViewModel : ViewModel() {
                 .catch { e ->
                     Log.e("PaymentViewModel", "Error in SSE connection: ${e.message}")
                     _paymentState.value = PaymentState.Error("SSE 연결 오류: ${e.message}")
+
+                    // 타임아웃 오류인 경우 재연결 시도
+                    if (e.message?.contains("timeout") == true && !isReconnecting) {
+                        isReconnecting = true
+                        Log.d("PaymentViewModel", "타임아웃으로 인한 SSE 재연결 시도 ($reconnectDelay ms 후)")
+                        delay(reconnectDelay)
+                        isReconnecting = false
+                        connectToPaymentEvents(userId)
+                    }
+
                 }
                 .collect { event ->
                     Log.e("PaymentViewModel", "Received payment event: $event")
-                    
+
+                    // 타임아웃 오류 메시지 처리
+                    if (event.message?.contains("timeout") == true && !isReconnecting) {
+                        isReconnecting = true
+                        Log.d("PaymentViewModel", "타임아웃 이벤트 감지, SSE 재연결 시도 ($reconnectDelay ms 후)")
+                        delay(reconnectDelay)
+                        isReconnecting = false
+                        connectToPaymentEvents(userId)
+                        return@collect
+                    }
+
                     // 이벤트 타입과 메시지 내용에 따라 상태 업데이트
                     when (event.eventType) {
                         "결제이벤트" -> {
@@ -129,10 +153,21 @@ class PaymentViewModel : ViewModel() {
                                 event.message?.contains("결제시작") == true -> {
                                     _paymentState.value = PaymentState.Processing
                                 }
-                                event.message?.startsWith("TXN") == true -> {
+                                event.message?.startsWith("TXN") == true ||
+                                event.message?.startsWith("REJ") == true -> {  // REJ로 시작하는 메시지도 완료로 처리
                                     // 트랜잭션 ID가 포함된 메시지는 결제 완료로 처리
+
+                                    // 결제 결과 생성 (실제로는 API 응답에서 가져와야 함)
+                                    _paymentResult.value = PaymentResult(
+                                    amount = 1000,  // 실제로는 응답에서 가져와야 함
+                                    createdAt = "현재시간",  // 실제로는 응답에서 가져와야 함
+                                    approvalCode = event.message ?: ""
+                                )
+
                                     _paymentState.value = PaymentState.Completed
+                                    Log.d("PaymentViewModel", "결제 완료 상태로 변경: ${event.message}")
                                 }
+
                                 event.message?.contains("실패") == true -> {
                                     _paymentState.value = PaymentState.Failed(event.message)
                                 }
@@ -151,10 +186,12 @@ class PaymentViewModel : ViewModel() {
                                 event.message?.contains("처리 중") == true -> {
                                     _paymentState.value = PaymentState.Processing
                                 }
-                                event.message?.contains("완료") == true || 
-                                event.message?.startsWith("TXN") == true -> {
+                                event.message?.contains("완료") == true ||
+                                event.message?.startsWith("TXN") == true ||
+                                event.message?.startsWith("REJ") == true -> {
                                     _paymentState.value = PaymentState.Completed
                                 }
+
                                 event.message?.contains("실패") == true -> {
                                     _paymentState.value = PaymentState.Failed(event.message)
                                 }
