@@ -35,7 +35,7 @@ public class RecommendController {
     }
 
     @GetMapping("/category")
-    public ResponseEntity<ResponseDTO> top3ForCategory(@JwtUserId Integer userId) {
+    public ResponseEntity<ResponseDTO> top3ForCategory(@RequestParam Integer userId) {
 
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
