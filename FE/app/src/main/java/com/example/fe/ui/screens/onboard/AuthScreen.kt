@@ -3,6 +3,7 @@ package com.example.fe.ui.screens.onboard
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,6 +27,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.ui.text.style.TextAlign
 import com.example.fe.ui.theme.SkyBlue
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material.ripple.rememberRipple
 
 enum class Step {
     NAME, SSN, TELECOM, PHONE, CODE
@@ -141,26 +144,17 @@ fun AuthScreen(
             )
         },
         bottomBar = {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .imePadding()
-                .padding(16.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .padding(16.dp)
+            ) {
                 Button(
                     onClick = {
                         Log.d("Click", "다음")
                         if (currentStep == Step.CODE) {
-                            // 인증번호 입력 완료 후 수입 입력 화면으로 이동 (애니메이션 없이)
                             if (code.length == 6) {
-                                navController.navigate(
-                                    "income_input/${name}/${phone}/${ssnFront}",
-                                    NavOptions.Builder()
-                                        .setEnterAnim(0)
-                                        .setExitAnim(0)
-                                        .setPopEnterAnim(0)
-                                        .setPopExitAnim(0)
-                                        .build()
-                                )
-                            } else {
                                 showAgreement = true
                             }
                         }
@@ -177,7 +171,7 @@ fun AuthScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SkyBlue,
                         contentColor = Color.White,
@@ -186,7 +180,8 @@ fun AuthScreen(
                 ) {
                     Text(
                         text = "다음",
-                        fontSize = 22.sp
+                        fontSize = 22.sp,
+                        color = Color.White
                     )
                 }
             }
@@ -204,9 +199,14 @@ fun AuthScreen(
 
             when (currentStep) {
                 Step.NAME -> {
+                    val density = LocalDensity.current
+                    val fontScale = density.fontScale
+                    val titleBaseFontSize = 28.sp
+                    val titleDynamicFontSize = (titleBaseFontSize.value * fontScale).sp
+
                     Text(
                         "이름을 알려주세요", 
-                        fontSize = 28.sp,
+                        fontSize = titleDynamicFontSize,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -223,9 +223,14 @@ fun AuthScreen(
                     )
                 }
                 Step.SSN -> {
+                    val density = LocalDensity.current
+                    val fontScale = density.fontScale
+                    val titleBaseFontSize = 28.sp
+                    val titleDynamicFontSize = (titleBaseFontSize.value * fontScale).sp
+
                     Text(
                         "주민등록번호를 입력해주세요", 
-                        fontSize = 28.sp,
+                        fontSize = titleDynamicFontSize,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -233,23 +238,13 @@ fun AuthScreen(
                     Spacer(Modifier.height(40.dp))
 
                     Box(modifier = Modifier.fillMaxWidth()) {
-                        // 중앙 "-" 배치
-                        Text(
-                            text = "-",
-                            fontSize = 32.sp,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                            color = Color.Black,
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(bottom = 12.dp)
-                        )
-
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             // 앞 6자리 입력 (왼쪽)
-                            Box(modifier = Modifier.weight(0.45f)) {
+                            Box(modifier = Modifier.weight(0.35f)) {
                                 UnderlineTextField(
                                     value = ssnFront,
                                     onValueChange = {
@@ -266,11 +261,29 @@ fun AuthScreen(
                                 )
                             }
 
-                            // 중앙 공간 (하이픈용)
-                            Spacer(modifier = Modifier.weight(0.1f))
+                            // 중앙 "-" 배치
+                            Box(
+                                modifier = Modifier.weight(0.1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val density = LocalDensity.current
+                                val fontScale = density.fontScale
+                                val baseFontSize = 32.sp
+                                val dynamicFontSize = (baseFontSize.value * fontScale).sp
+
+                                Text(
+                                    text = "-",
+                                    fontSize = dynamicFontSize,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
 
                             // 뒷 1자리 입력 (오른쪽)
-                            Box(modifier = Modifier.weight(0.1f)) {
+                            Box(
+                                modifier = Modifier.weight(0.15f),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 UnderlineSingleDigitField(
                                     value = ssnBack,
                                     onValueChange = { if (it.length <= 1) ssnBack = it },
@@ -281,22 +294,27 @@ fun AuthScreen(
                                 )
                             }
 
-                            // 동그라미들 (화면 끝까지 균일하게)
+                            // 동그라미들
                             Box(
-                                modifier = Modifier.weight(0.35f)
+                                modifier = Modifier.weight(0.4f)
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(70.dp)
-                                        .padding(start = 12.dp, bottom = 10.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                        .padding(start = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    val density = LocalDensity.current
+                                    val fontScale = density.fontScale
+                                    val baseFontSize = 24.sp
+                                    val dynamicFontSize = (baseFontSize.value * fontScale).sp
+
                                     repeat(6) {
                                         Text(
                                             "●",
-                                            fontSize = 28.sp,
+                                            fontSize = dynamicFontSize,
                                             color = Color.DarkGray
                                         )
                                     }
@@ -308,9 +326,14 @@ fun AuthScreen(
                     DisplayInfo("이름", name)
                 }
                 Step.TELECOM -> {
+                    val density = LocalDensity.current
+                    val fontScale = density.fontScale
+                    val titleBaseFontSize = 28.sp
+                    val titleDynamicFontSize = (titleBaseFontSize.value * fontScale).sp
+
                     Text(
                         "통신사를 선택해주세요", 
-                        fontSize = 28.sp,
+                        fontSize = titleDynamicFontSize,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -325,9 +348,14 @@ fun AuthScreen(
                     DisplayInfo("주민등록번호", "$ssnFront-$ssnBack●●●●●●")
                 }
                 Step.PHONE -> {
+                    val density = LocalDensity.current
+                    val fontScale = density.fontScale
+                    val titleBaseFontSize = 28.sp
+                    val titleDynamicFontSize = (titleBaseFontSize.value * fontScale).sp
+
                     Text(
                         "휴대폰 번호를 입력해주세요", 
-                        fontSize = 28.sp,
+                        fontSize = titleDynamicFontSize,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -350,9 +378,14 @@ fun AuthScreen(
                     DisplayInfo("통신사", telco)
                 }
                 Step.CODE -> {
+                    val density = LocalDensity.current
+                    val fontScale = density.fontScale
+                    val titleBaseFontSize = 28.sp
+                    val titleDynamicFontSize = (titleBaseFontSize.value * fontScale).sp
+
                     Text(
                         "인증번호를 입력해주세요", 
-                        fontSize = 28.sp,
+                        fontSize = titleDynamicFontSize,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -395,17 +428,28 @@ fun AuthScreen(
                     fontSize = 24.sp
                 )
                 telcos.forEach {
-                    Text(
-                        text = it,
+                    TextButton(
+                        onClick = {
+                            telco = it
+                            showTelcoSheet = false
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                telco = it
-                                showTelcoSheet = false
-                            }
-                            .padding(16.dp),
-                        fontSize = 20.sp
-                    )
+                            .padding(vertical = 4.dp),
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = Color.Black,
+                            disabledContentColor = Color.Gray
+                        ),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        Text(
+                            text = it,
+                            fontSize = 20.sp,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
+                    }
                 }
             }
         }
@@ -430,7 +474,7 @@ fun AuthScreen(
                             modifier = Modifier
                                 .clickable(
                                     indication = null,
-                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                    interactionSource = remember { MutableInteractionSource() }
                                 ) {
                                     if (checkedItems.contains(item)) checkedItems.remove(item)
                                     else checkedItems.add(item)
@@ -450,25 +494,22 @@ fun AuthScreen(
                 Button(
                     onClick = {
                         showAgreement = false
-                        // 동의 완료
-                        if (code.length == 6) {
-                            // 코드가 이미 입력되어 있다면 소득 입력 화면으로 이동 (애니메이션 없이)
-                            navController.navigate(
-                                "income_input/${name}/${phone}/${ssnFront}",
-                                NavOptions.Builder()
-                                    .setEnterAnim(0)
-                                    .setExitAnim(0)
-                                    .setPopEnterAnim(0)
-                                    .setPopExitAnim(0)
-                                    .build()
-                            )
-                        }
+                        // 동의 완료 후 다음 화면으로 이동
+                        navController.navigate(
+                            "income_input/${name}/${phone}/${ssnFront}",
+                            NavOptions.Builder()
+                                .setEnterAnim(0)
+                                .setExitAnim(0)
+                                .setPopEnterAnim(0)
+                                .setPopExitAnim(0)
+                                .build()
+                        )
                     },
                     enabled = checkedItems.size == agreementItems.size,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(4.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SkyBlue,
                         contentColor = Color.White,
@@ -477,7 +518,8 @@ fun AuthScreen(
                 ) {
                     Text(
                         "동의하기",
-                        fontSize = 22.sp
+                        fontSize = 22.sp,
+                        color = Color.White
                     )
                 }
             }
@@ -493,13 +535,20 @@ fun UnderlineTextField(
     modifier: Modifier = Modifier.fillMaxWidth(),
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale
+    val baseFontSize = 20.sp
+    val labelBaseFontSize = 14.sp
+    val dynamicFontSize = (baseFontSize.value * fontScale).sp
+    val labelDynamicFontSize = (labelBaseFontSize.value * fontScale).sp
+
     TextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.height(70.dp),
         singleLine = true,
-        label = { Text(label, fontSize = 20.sp, color = SkyBlue) },
-        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 20.sp, color = Color.Black),
+        label = { Text(label, fontSize = labelDynamicFontSize, color = SkyBlue) },
+        textStyle = androidx.compose.ui.text.TextStyle(fontSize = dynamicFontSize, color = Color.Black),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = SkyBlue,
@@ -520,13 +569,21 @@ fun UnderlineSingleDigitField(
     modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Number
 ) {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale
+    val baseFontSize = 22.sp
+    val labelBaseFontSize = 14.sp
+    val dynamicFontSize = (baseFontSize.value * fontScale).sp
+    val labelDynamicFontSize = (labelBaseFontSize.value * fontScale).sp
+
     TextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.height(70.dp),
+        modifier = modifier,
         singleLine = true,
+        label = { Text("", fontSize = labelDynamicFontSize, color = SkyBlue) },
         textStyle = androidx.compose.ui.text.TextStyle(
-            fontSize = 20.sp,
+            fontSize = dynamicFontSize,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Normal,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             color = Color.Black
@@ -546,40 +603,59 @@ fun UnderlineSingleDigitField(
 
 @Composable
 fun DisplayInfo(label: String, value: String) {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale
+    val baseFontSize = 20.sp
+    val dynamicFontSize = (baseFontSize.value * fontScale).sp
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, fontSize = 20.sp, color = Color.Gray)
-        Text(value, fontSize = 20.sp)
+        Text(label, fontSize = dynamicFontSize, color = Color.Gray)
+        Text(value, fontSize = dynamicFontSize)
     }
 }
 
 @Composable
 fun TelcoSelector(telco: String, onClick: () -> Unit) {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale
+    val labelBaseFontSize = 16.sp
+    val textBaseFontSize = 16.sp
+    val labelDynamicFontSize = (labelBaseFontSize.value * fontScale).sp
+    val textDynamicFontSize = (textBaseFontSize.value * fontScale).sp
+
     Column {
         Text(
             text = "통신사",
             style = MaterialTheme.typography.labelMedium,
-            fontSize = 20.sp,
+            fontSize = labelDynamicFontSize,
             color = SkyBlue
         )
-        Box(
+        TextButton(
+            onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
-                .border(1.dp, SkyBlue, MaterialTheme.shapes.medium)
-                .clickable { onClick() }
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.CenterStart
+                .border(1.dp, SkyBlue, MaterialTheme.shapes.medium),
+            colors = ButtonDefaults.textButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = if (telco.isBlank()) Color.Gray else Color.Black
+            ),
+            contentPadding = PaddingValues(horizontal = 16.dp)
         ) {
-            Text(
-                text = if (telco.isBlank()) "통신사를 선택해주세요" else telco,
-                color = if (telco.isBlank()) Color.Gray else Color.Black,
-                fontSize = 20.sp
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = if (telco.isBlank()) "통신사를 선택해주세요" else telco,
+                    fontSize = textDynamicFontSize
+                )
+            }
         }
     }
 }

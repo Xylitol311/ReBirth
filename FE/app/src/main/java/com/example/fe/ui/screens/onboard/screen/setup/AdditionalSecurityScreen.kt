@@ -27,6 +27,7 @@ import com.example.fe.ui.screens.onboard.auth.FingerprintAuth
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
 import com.example.fe.ui.screens.onboard.components.AuthMethodOption
 import com.example.fe.ui.screens.onboard.screen.setup.security.AdditionalSecurityStep
+import com.example.fe.ui.theme.SkyBlue
 
 /**
  * FragmentActivity를 찾기 위한 확장 함수
@@ -214,7 +215,10 @@ private fun SecurityMethodSelectionScreen(
             title = "지문인증",
             description = "기기에 등록된 지문 인증으로\n빠르게 서비스를 이용할 수 있어요",
             iconResId = R.drawable.fingerprint,
-            onClick = onFingerprintSelected
+            onClick = onFingerprintSelected,
+            iconTint = Color.Black,
+            backgroundColor = Color.White,
+            textColor = Color.Black
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -223,28 +227,35 @@ private fun SecurityMethodSelectionScreen(
             title = "패턴인증",
             description = "나만의 패턴을 그려서\n간편하게 서비스를 이용할 수 있어요",
             iconResId = R.drawable.arrow_right,
-            onClick = onPatternSelected
+            onClick = onPatternSelected,
+            iconTint = Color.Black,
+            backgroundColor = Color.White,
+            textColor = Color.Black
         )
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = onSkip,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF191E3F)
-            ),
+        Box(
             modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()
-                .height(65.dp)
+                .padding(bottom = 16.dp),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            Text(
-                text = "건너뛰기",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Button(
+                onClick = onSkip,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SkyBlue
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+            ) {
+                Text(
+                    text = "건너뛰기",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.height(40.dp))
     }
 }
 

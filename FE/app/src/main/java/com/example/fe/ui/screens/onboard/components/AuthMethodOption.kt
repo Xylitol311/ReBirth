@@ -1,5 +1,7 @@
 package com.example.fe.ui.screens.onboard.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,16 +20,24 @@ fun AuthMethodOption(
     title: String,
     description: String,
     iconResId: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    iconTint: Color = Color.White,
+    backgroundColor: Color = Color(0xFF191E3F),
+    textColor: Color = Color.White
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .border(
+                width = 1.dp,
+                color = Color.LightGray.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(8.dp)
+            ),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF191E3F)
+            containerColor = backgroundColor
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp)
     ) {
         Row(
             modifier = Modifier
@@ -41,7 +51,7 @@ fun AuthMethodOption(
                 modifier = Modifier
                     .size(56.dp)
                     .padding(end = 20.dp),
-                tint = Color.White
+                tint = iconTint
             )
 
             Column(modifier = Modifier.weight(1f)) {
@@ -49,7 +59,7 @@ fun AuthMethodOption(
                     text = title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
-                    color = Color.White
+                    color = textColor
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(

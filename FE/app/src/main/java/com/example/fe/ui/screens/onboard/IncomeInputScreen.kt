@@ -96,7 +96,7 @@ fun IncomeInputScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp),
-                    shape = RoundedCornerShape(8.dp), // 모서리를 둥글게
+                    shape = RoundedCornerShape(16.dp), // 모서리를 둥글게
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SkyBlue, // 하늘색 배경
                         contentColor = Color.White, // 흰색 텍스트
