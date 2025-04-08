@@ -153,19 +153,40 @@ class PaymentViewModel : ViewModel() {
                                 event.message?.contains("결제시작") == true -> {
                                     _paymentState.value = PaymentState.Processing
                                 }
-                                event.message?.startsWith("TXN") == true ||
-                                event.message?.startsWith("REJ") == true -> {  // REJ로 시작하는 메시지도 완료로 처리
-                                    // 트랜잭션 ID가 포함된 메시지는 결제 완료로 처리
 
-                                    // 결제 결과 생성 (실제로는 API 응답에서 가져와야 함)
-                                    _paymentResult.value = PaymentResult(
-                                    amount = 1000,  // 실제로는 응답에서 가져와야 함
-                                    createdAt = "현재시간",  // 실제로는 응답에서 가져와야 함
-                                    approvalCode = event.message ?: ""
-                                )
+                                event.message?.startsWith("TXN") == true -> {
+                                    // TXN으로 시작하는 메시지는 결제 성공으로 처리
+                                    try {
+                                        // 서버에서 받은 결제 결과 데이터 파싱
+                                        val paymentData = event.message.split(",")
+                                        val amount = paymentData[1].toIntOrNull() ?: 0
+                                        val createdAt = formatDateTime(paymentData[2])
+                                        val approvalCode = paymentData[0]
 
-                                    _paymentState.value = PaymentState.Completed
-                                    Log.d("PaymentViewModel", "결제 완료 상태로 변경: ${event.message}")
+                                        _paymentResult.value = PaymentResult(
+                                            amount = amount,
+                                            createdAt = createdAt,
+                                            approvalCode = approvalCode
+                                        )
+
+                                        _paymentState.value = PaymentState.Completed
+                                        Log.d("PaymentViewModel", "결제 성공 완료: ${event.message}")
+                                    } catch (e: Exception) {
+                                        Log.e("PaymentViewModel", "결제 데이터 파싱 오류: ${e.message}")
+                                        // 파싱 오류 시 기본값 사용
+                                        _paymentResult.value = PaymentResult(
+                                            amount = 0,
+                                            createdAt = getCurrentDateTime(),
+                                            approvalCode = event.message ?: ""
+                                        )
+                                        _paymentState.value = PaymentState.Completed
+                                    }
+                                }
+
+                                event.message?.startsWith("REJ") == true -> {
+                                    // REJ로 시작하는 메시지는 결제 실패로 처리
+                                    _paymentState.value = PaymentState.Failed("결제가 거절되었습니다: ${event.message}")
+                                    Log.d("PaymentViewModel", "결제 실패: ${event.message}")
                                 }
 
                                 event.message?.contains("실패") == true -> {
@@ -176,6 +197,7 @@ class PaymentViewModel : ViewModel() {
                                 }
                             }
                         }
+
                         else -> {
                             // 이벤트 타입이 없는 경우 메시지 내용으로 판단
                             Log.d("PaymentViewModel", "처리: 기타 이벤트 - ${event.message}")
@@ -187,9 +209,39 @@ class PaymentViewModel : ViewModel() {
                                     _paymentState.value = PaymentState.Processing
                                 }
                                 event.message?.contains("완료") == true ||
-                                event.message?.startsWith("TXN") == true ||
+                                event.message?.startsWith("TXN") == true -> {
+                                    // TXN으로 시작하는 메시지는 결제 성공으로 처리
+                                    try {
+                                        // 서버에서 받은 결제 결과 데이터 파싱
+                                        val paymentData = event.message.split(",")
+                                        val amount = paymentData[1].toIntOrNull() ?: 0
+                                        val createdAt = formatDateTime(paymentData[2])
+                                        val approvalCode = paymentData[0]
+
+                                        _paymentResult.value = PaymentResult(
+                                            amount = amount,
+                                            createdAt = createdAt,
+                                            approvalCode = approvalCode
+                                        )
+
+                                        _paymentState.value = PaymentState.Completed
+                                        Log.d("PaymentViewModel", "결제 성공 완료: ${event.message}")
+                                    } catch (e: Exception) {
+                                        Log.e("PaymentViewModel", "결제 데이터 파싱 오류: ${e.message}")
+                                        // 파싱 오류 시 기본값 사용
+                                        _paymentResult.value = PaymentResult(
+                                            amount = 0,
+                                            createdAt = getCurrentDateTime(),
+                                            approvalCode = event.message ?: ""
+                                        )
+                                        _paymentState.value = PaymentState.Completed
+                                    }
+                                }
+
                                 event.message?.startsWith("REJ") == true -> {
-                                    _paymentState.value = PaymentState.Completed
+                                    // REJ로 시작하는 메시지는 결제 실패로 처리
+                                    _paymentState.value = PaymentState.Failed("결제가 거절되었습니다: ${event.message}")
+                                    Log.d("PaymentViewModel", "결제 실패: ${event.message}")
                                 }
 
                                 event.message?.contains("실패") == true -> {
@@ -327,8 +379,12 @@ class PaymentViewModel : ViewModel() {
                     val result = response.body()?.data
                     
                     if (result != null) {
-                        // 결제 결과 저장
-                        _paymentResult.value = result
+                        // 결제 결과 저장 (API 응답에서 데이터 가져옴)
+                        _paymentResult.value = PaymentResult(
+                            amount = result.amount,
+                            createdAt = formatDateTime(result.createdAt),
+                            approvalCode = result.approvalCode
+                        )
                         
                         // 결제 상태 업데이트
                         _paymentState.value = PaymentState.Completed
@@ -347,6 +403,33 @@ class PaymentViewModel : ViewModel() {
                 _paymentState.value = PaymentState.Error("결제 처리 중 오류 발생: ${e.message}")
             }
         }
+    }
+
+    // 날짜 포맷팅 함수 추가
+    private fun formatDateTime(dateTimeStr: String): String {
+        return try {
+            // ISO 8601 형식의 날짜 문자열을 파싱
+            val inputFormat = if (dateTimeStr.contains("T")) {
+                java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", java.util.Locale.getDefault())
+            } else {
+                java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+            }
+
+            // 출력 형식 지정 (예: 2025-03-31 15:30)
+            val outputFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+
+            val date = inputFormat.parse(dateTimeStr)
+            date?.let { outputFormat.format(it) } ?: dateTimeStr
+        } catch (e: Exception) {
+            Log.e("PaymentViewModel", "날짜 포맷팅 오류: ${e.message}")
+            dateTimeStr // 오류 시 원본 문자열 반환
+        }
+    }
+
+    // 현재 날짜/시간 가져오기
+    private fun getCurrentDateTime(): String {
+        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+        return dateFormat.format(java.util.Date())
     }
 
     // 카드 추가 함수s
