@@ -152,6 +152,11 @@ class PaymentViewModel : ViewModel() {
                             when {
                                 event.message?.contains("결제시작") == true -> {
                                     _paymentState.value = PaymentState.Processing
+                                    // 최소 처리 시간 보장을 위한 지연 추가
+                                    viewModelScope.launch {
+                                        // 최소 3초 대기 후 결제 결과 확인
+                                        delay(3000)
+                                    }
                                 }
 
                                 event.message?.startsWith("TXN") == true -> {
@@ -169,8 +174,19 @@ class PaymentViewModel : ViewModel() {
                                             approvalCode = approvalCode
                                         )
 
-                                        _paymentState.value = PaymentState.Completed
-                                        Log.d("PaymentViewModel", "결제 성공 완료: ${event.message}")
+                                        viewModelScope.launch {
+                                            // 현재 상태가 Processing인 경우에만 지연 처리
+                                            if (_paymentState.value is PaymentState.Processing) {
+                                                // 최소 3초 대기 후 상태 변경
+                                                delay(3000)
+                                                _paymentState.value = PaymentState.Completed
+                                                Log.d("PaymentViewModel", "결제 성공 상태로 변경 완료 (지연 후)")
+                                            } else {
+                                                // 이미 다른 상태인 경우 즉시 변경
+                                                _paymentState.value = PaymentState.Completed
+                                                Log.d("PaymentViewModel", "결제 성공 상태로 즉시 변경")
+                                            }
+                                        }
                                     } catch (e: Exception) {
                                         Log.e("PaymentViewModel", "결제 데이터 파싱 오류: ${e.message}")
                                         // 파싱 오류 시 기본값 사용
@@ -179,14 +195,24 @@ class PaymentViewModel : ViewModel() {
                                             createdAt = getCurrentDateTime(),
                                             approvalCode = event.message ?: ""
                                         )
+                                    }
+
+                                    viewModelScope.launch {
+                                        if (_paymentState.value is PaymentState.Processing) {
+                                            delay(3000)
+                                        }
                                         _paymentState.value = PaymentState.Completed
                                     }
                                 }
 
                                 event.message?.startsWith("REJ") == true -> {
-                                    // REJ로 시작하는 메시지는 결제 실패로 처리
-                                    _paymentState.value = PaymentState.Failed("결제가 거절되었습니다: ${event.message}")
-                                    Log.d("PaymentViewModel", "결제 실패: ${event.message}")
+                                    viewModelScope.launch {
+                                        if (_paymentState.value is PaymentState.Processing) {
+                                            delay(3000)
+                                        }
+                                        _paymentState.value = PaymentState.Failed("결제가 거절되었습니다: ${event.message}")
+                                        Log.d("PaymentViewModel", "결제 실패: ${event.message}")
+                                    }
                                 }
 
                                 event.message?.contains("실패") == true -> {
@@ -372,7 +398,9 @@ class PaymentViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _paymentState.value = PaymentState.Processing
-                
+
+                val startTime = System.currentTimeMillis()
+
                 val response = paymentRepository.completePayment(token)
                 
                 if (response.isSuccessful && response.body()?.success == true) {
@@ -385,21 +413,45 @@ class PaymentViewModel : ViewModel() {
                             createdAt = formatDateTime(result.createdAt),
                             approvalCode = result.approvalCode
                         )
-                        
+
+                        // 경과 시간 계산
+                        val elapsedTime = System.currentTimeMillis() - startTime
+                        val remainingTime = 3000 - elapsedTime
+
+                        // 최소 3초 보장
+                        if (remainingTime > 0) {
+                            delay(remainingTime)
+                        }
+
                         // 결제 상태 업데이트
                         _paymentState.value = PaymentState.Completed
                         
                         // 로그 출력
                         Log.d("PaymentViewModel", "결제 완료: ${result.approvalCode}, 금액: ${result.amount}, 시간: ${result.createdAt}")
                     } else {
+                        val elapsedTime = System.currentTimeMillis() - startTime
+                        val remainingTime = 3000 - elapsedTime
+                        if (remainingTime > 0) {
+                            delay(remainingTime)
+                        }
+
                         _paymentState.value = PaymentState.Error("결제 결과가 없습니다")
                     }
                 } else {
+                    // 최소 3초 보장
+                    val elapsedTime = System.currentTimeMillis() - startTime
+                    val remainingTime = 3000 - elapsedTime
+                    if (remainingTime > 0) {
+                        delay(remainingTime)
+                    }
+
                     // 오류 처리
                     _paymentState.value = PaymentState.Error("결제 처리 실패: ${response.message()}")
                 }
             } catch (e: Exception) {
                 // 예외 처리
+                delay(3000)
+
                 _paymentState.value = PaymentState.Error("결제 처리 중 오류 발생: ${e.message}")
             }
         }

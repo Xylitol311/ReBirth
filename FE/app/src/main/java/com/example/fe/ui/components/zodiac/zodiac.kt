@@ -24,8 +24,17 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 // 별자리 데이터 클래스
-data class Star(val x: Float, val y: Float, val size: Float = 1f)
+data class Star(
+    val x: Float,
+    val y: Float,
+    val size: Float = 1f
+) {
+    // Offset으로 변환하는 함수
+    fun toOffset(): Offset = Offset(x, y)
+}
+
 data class Constellation(
+    val name: String = "",
     val stars: List<Star>,
     val connections: List<Pair<Int, Int>>,
     val centralStarIndex: Int = 0
@@ -35,18 +44,23 @@ data class Constellation(
 fun DynamicZodiacView(
     cardId: String,
     modifier: Modifier = Modifier,
-    useJSON: Boolean = true,
-    useBackend: Boolean = false, // 백엔드 연동 옵션 추가
+    useJSON: Boolean = false,  // 기본값을 false로 변경
+    useBackend: Boolean = false,
     scrollOffset: Float = 0f,
     horizontalOffset: Float = 0f
 ) {
     // JSON 사용 여부에 따라 별자리 생성 방식 선택
     val constellation = if (useJSON) {
-        rememberZodiacFromJSON(cardId, useBackend)  // 백엔드 연동 옵션 전달
-    } else {
+        // JSON 사용 시 로직 (현재는 사용하지 않음)
         val random = Random(cardId.hashCode())
         remember(cardId) {
-            generateConstellation(random)  // 기존 방식으로 생성
+            generateConstellation(random)  // 임시로 동일한 함수 사용
+        }
+    } else {
+        // 기존 방식으로 생성
+        val random = Random(cardId.hashCode())
+        remember(cardId) {
+            generateConstellation(random)
         }
     }
 
@@ -85,7 +99,7 @@ fun DynamicZodiacView(
             center = Offset(centerX, centerY)
         )
 
-        // 별자리 선 그리기 - JSON에서 가져온 데이터 사용
+        // 별자리 선 그리기
         constellation.connections.forEach { (startIdx, endIdx) ->
             val startStar = constellation.stars[startIdx]
             val endStar = constellation.stars[endIdx]
@@ -95,33 +109,33 @@ fun DynamicZodiacView(
             val endX = centerX + endStar.x * canvasWidth * 0.8f
             val endY = centerY + endStar.y * canvasHeight * 0.8f
 
-            // 선 그리기 - 그라데이션 효과 (더 강하게)
+            // 선 그리기 - 그라데이션 효과
             drawLine(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFFE3F2FD).copy(alpha = 0.95f),  // 더 진한 색상
-                        Color(0xFFBBDEFB).copy(alpha = 0.75f)   // 더 진한 색상
+                        Color(0xFFE3F2FD).copy(alpha = 0.95f),
+                        Color(0xFFBBDEFB).copy(alpha = 0.75f)
                     ),
                     start = Offset(startX, startY),
                     end = Offset(endX, endY)
                 ),
                 start = Offset(startX, startY),
                 end = Offset(endX, endY),
-                strokeWidth = 3.5f * scale,  // 더 굵게
+                strokeWidth = 3.5f * scale,
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 10f), 0f)
             )
 
-            // 선 주변 빛 효과 (더 강하게)
+            // 선 주변 빛 효과
             drawLine(
-                color = Color(0xFFE1F5FE).copy(alpha = 0.5f),  // 더 진한 색상
+                color = Color(0xFFE1F5FE).copy(alpha = 0.5f),
                 start = Offset(startX, startY),
                 end = Offset(endX, endY),
-                strokeWidth = 12f * scale,  // 더 굵게
+                strokeWidth = 12f * scale,
                 cap = StrokeCap.Round
             )
         }
 
-        // 별 그리기 - JSON에서 가져온 데이터 사용
+        // 별 그리기
         constellation.stars.forEachIndexed { index, star ->
             val x = centerX + star.x * canvasWidth * 0.8f
             val y = centerY + star.y * canvasHeight * 0.8f
@@ -129,18 +143,18 @@ fun DynamicZodiacView(
 
             // 별 크기 및 밝기 계산 (중심 별은 더 크고 밝게)
             val starSize = if (isCenterStar) {
-                star.size * 12f * scale  // 더 크게
+                star.size * 12f * scale
             } else {
-                star.size * 7f * scale  // 더 크게
+                star.size * 7f * scale
             }
 
             val starAlpha = if (isCenterStar) {
                 1.0f
             } else {
-                0.9f + (star.size - 0.5f) * 0.6f  // 더 밝게
+                0.9f + (star.size - 0.5f) * 0.6f
             }
 
-            // 별 주변 빛 효과 - 그라데이션 (모든 별에 적용)
+            // 별 주변 빛 효과 - 그라데이션
             val glowRadius = if (isCenterStar) starSize * 8f else starSize * 5f
 
             // 외부 빛 효과 (그라데이션)
@@ -177,7 +191,7 @@ fun DynamicZodiacView(
                 // 주요 방사 효과 - 8방향 긴 선
                 for (i in 0 until 8) {
                     val angle = (i * Math.PI / 4).toFloat()
-                    val rayLength = starSize * 6f  // 더 길게
+                    val rayLength = starSize * 6f
                     val rayEndX = x + cos(angle) * rayLength
                     val rayEndY = y + sin(angle) * rayLength
 
@@ -193,7 +207,7 @@ fun DynamicZodiacView(
                         ),
                         start = Offset(x, y),
                         end = Offset(rayEndX, rayEndY),
-                        strokeWidth = 2.5f * scale,  // 더 굵게
+                        strokeWidth = 2.5f * scale,
                         cap = StrokeCap.Round
                     )
                 }
@@ -232,11 +246,10 @@ fun DynamicZodiacView(
                         center = Offset(x, y),
                         radius = starSize * 12f
                     ),
-                    radius = starSize * 12f,  // 매우 넓게
+                    radius = starSize * 12f,
                     center = Offset(x, y)
                 )
             }
-
             // 일반 별에도 방사 효과 추가 (더 작게)
             else {
                 // 4방향 방사 효과
@@ -281,59 +294,55 @@ fun DynamicZodiacView(
     }
 }
 
-// 별자리 생성 함수 - 교차하지 않는 선 생성 알고리즘 개선
 internal fun generateConstellation(random: Random): Constellation {
-    val starCount = 6 + random.nextInt(3)  // 6-8개의 별 (더 적게)
+    val starCount = 6 + random.nextInt(3)
     val stars = mutableListOf<Star>()
 
-    // 중심 별 (항상 중앙 근처에 위치)
-    val centerStarIndex = 0  // 중심 별 인덱스를 첫 번째로 고정
+    // 중심 별 인덱스
+    val centerStarIndex = 0
 
     // 중심 별 생성
     stars.add(Star(
-        x = (random.nextFloat() * 0.1f - 0.05f),  // 중앙 근처에 위치
+        x = (random.nextFloat() * 0.1f - 0.05f),
         y = (random.nextFloat() * 0.1f - 0.05f),
-        size = 1.8f + random.nextFloat() * 0.4f  // 더 크게
+        size = 1.8f + random.nextFloat() * 0.4f
     ))
 
-    // 나머지 별들을 방사형으로 배치 (교차 방지)
+    // 나머지 별들을 방사형으로 배치
     for (i in 1 until starCount) {
-        // 방사형 배치를 위한 각도 계산 (균등하게 분포)
         val angle = 2 * Math.PI * (i - 1) / (starCount - 1)
-
-        // 거리는 랜덤하게 (하지만 최소 거리 보장)
         val distance = 0.25f + random.nextFloat() * 0.25f
-
-        // 위치 계산
         val x = (cos(angle) * distance).toFloat()
         val y = (sin(angle) * distance).toFloat()
-
-        // 크기는 중심에서 멀수록 작게
         val size = 1.2f - distance * 0.5f + random.nextFloat() * 0.3f
 
         stars.add(Star(x, y, size))
     }
 
-    // 별자리 연결선 생성 (교차 방지)
+    // 별자리 연결선 생성
     val connections = mutableListOf<Pair<Int, Int>>()
 
-    // 1. 중심 별과 다른 별들 연결 (방사형 구조)
+    // 중심 별과 다른 별들 연결
     for (i in 1 until starCount) {
         connections.add(Pair(centerStarIndex, i))
     }
 
-    // 2. 인접한 별들끼리 연결 (원형 구조) - 교차 방지
+    // 인접한 별들끼리 연결
     for (i in 1 until starCount - 1) {
-        // 인접한 별들만 연결 (교차 방지)
-        if (random.nextFloat() > 0.3f) {  // 70% 확률로 연결
+        if (random.nextFloat() > 0.3f) {
             connections.add(Pair(i, i + 1))
         }
     }
 
-    // 마지막 별과 첫 번째 별(중심 제외) 연결 (원 완성)
-    if (starCount > 3 && random.nextFloat() > 0.5f) {  // 50% 확률로 연결
+    // 마지막 별과 첫 번째 별 연결
+    if (starCount > 3 && random.nextFloat() > 0.5f) {
         connections.add(Pair(1, starCount - 1))
     }
 
-    return Constellation(stars, connections, centerStarIndex)
+    return Constellation(
+        name = "별자리",
+        stars = stars,
+        connections = connections,
+        centralStarIndex = centerStarIndex
+    )
 }

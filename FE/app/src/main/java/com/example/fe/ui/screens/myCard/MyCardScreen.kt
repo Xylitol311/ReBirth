@@ -84,7 +84,7 @@ fun MyCardScreen(
 
     // 카드 관리 매니저 초기화
     LaunchedEffect(Unit) {
-        viewModel.loadMyCards(forceRefresh = false)
+        viewModel.loadMyCards()
     }
 
     // 표시할 카드 목록
@@ -155,16 +155,35 @@ fun MyCardScreen(
         }
     }
 
-// 현재 실제 카드 인덱스
-    val currentRealCardIndex by remember {
-        derivedStateOf {
-            if (realCards.isEmpty()) 0 else pagerState.currentPage.coerceIn(0, realCards.size - 1)
+
+    // 현재 실제 카드 인덱스
+    // 1. currentRealCardIndex를 mutableStateOf로 명확하게 정의
+    var currentRealCardIndex by remember { mutableStateOf(0) }
+
+    // 3. 단일 LaunchedEffect로 페이지 변경 감지 (중복 제거)
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged() // 중복 이벤트 방지
+            .collect { page ->
+                if (realCards.isNotEmpty() && page < realCards.size) {
+                    currentRealCardIndex = page
+                    viewModel.updateSelectedCardIndex(page)
+                }
+            }
+    }
+
+    // 4. 카드 데이터 로드 완료 시 초기 카드 선택 강제 설정
+    LaunchedEffect(realCards) {
+        if (realCards.isNotEmpty()) {
+            // 현재 페이지 강제 설정 (이미 0이더라도 상태 업데이트 트리거)
+            currentRealCardIndex = pagerState.currentPage
+            viewModel.updateSelectedCardIndex(currentRealCardIndex)
         }
     }
 
     val coroutineScope = rememberCoroutineScope()
 
-    // 네비게이션 상태 (카드 애니메이션용)
+    // 네비게이션 상태 (카드 애니메이션용)0
     var isNavigating by remember { mutableStateOf(false) }
     var navigatingCardPage by remember { mutableStateOf(-1) }
     
@@ -204,7 +223,7 @@ fun MyCardScreen(
         animationSpec = tween(300, easing = EaseInOut),
         label = "uiTranslationY"
     )
-    
+
     //콘텐츠를 배치
     Box(modifier = Modifier.fillMaxSize()) {
         // 나머지 UI 요소 (헤더와 카드 이름)
@@ -322,12 +341,14 @@ fun MyCardScreen(
                 },
             contentAlignment = Alignment.BottomCenter
         ) {
-            if (realCards.isNotEmpty() && currentRealCardIndex < realCards.size) {
+            if (realCards.isNotEmpty() && pagerState.currentPage < realCards.size) {
+                val currentCardIndex = pagerState.currentPage
+
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = realCards[currentRealCardIndex].name,
+                        text = realCards[currentCardIndex].name,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE0E0E0),
@@ -353,7 +374,7 @@ fun MyCardScreen(
                                 color = Color(0xFFE0E0E0)
                             )
                             Text(
-                                text = "${realCards[currentRealCardIndex].totalSpending}원 / ${realCards[currentRealCardIndex].maxSpending}원",
+                                text = "${realCards[currentCardIndex].totalSpending}원 / ${realCards[currentCardIndex].maxSpending}원",
                                 fontSize = 14.sp,
                                 color = Color(0xFFE0E0E0)
                             )
@@ -363,8 +384,8 @@ fun MyCardScreen(
 
                         LinearProgressIndicator(
                             progress = {
-                                val total = realCards[currentRealCardIndex].totalSpending.toFloat()
-                                val max = realCards[currentRealCardIndex].maxSpending.toFloat()
+                                val total = realCards[currentCardIndex].totalSpending.toFloat()
+                                val max = realCards[currentCardIndex].maxSpending.toFloat()
                                 if (max > 0) total / max else 0f
                             },
                             modifier = Modifier
@@ -395,7 +416,7 @@ fun MyCardScreen(
                                 color = Color(0xFFE0E0E0)
                             )
                             Text(
-                                text = "${realCards[currentRealCardIndex].receivedBenefit}원 / ${realCards[currentRealCardIndex].maxBenefit}원",
+                                text = "${realCards[currentCardIndex].receivedBenefit}원 / ${realCards[currentCardIndex].maxBenefit}원",
                                 fontSize = 14.sp,
                                 color = Color(0xFFE0E0E0)
                             )
@@ -405,8 +426,8 @@ fun MyCardScreen(
 
                         LinearProgressIndicator(
                             progress = {
-                                val received = realCards[currentRealCardIndex].receivedBenefit.toFloat()
-                                val max = realCards[currentRealCardIndex].maxBenefit.toFloat()
+                                val received = realCards[currentCardIndex].receivedBenefit.toFloat()
+                                val max = realCards[currentCardIndex].maxBenefit.toFloat()
                                 if (max > 0) received / max else 0f
                             },
                             modifier = Modifier
