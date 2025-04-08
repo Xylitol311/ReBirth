@@ -4,6 +4,7 @@ package com.kkulmoo.rebirth.payment.infrastructure.repository;
 import com.kkulmoo.rebirth.payment.domain.PaymentCard;
 import com.kkulmoo.rebirth.payment.domain.repository.CardsRepository;
 import com.kkulmoo.rebirth.payment.infrastructure.mapper.PaymentCardEntityMapper;
+import com.kkulmoo.rebirth.payment.presentation.response.PermanentTokenResponseByCardsaDTO;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import org.springframework.stereotype.Repository;
 
@@ -43,15 +44,15 @@ public class CardsRepositoryImpl implements CardsRepository{
 
     //카드 아이디로 카드 가져오기
     @Override
-    public PaymentCard findByCardUniqueNumber(String cardUniqueNumber) {
-        CardEntity card = cardsJpaRepository.findByCardUniqueNumber(cardUniqueNumber);
+    public PaymentCard findByUserIdAndCardUniqueNumber(Integer userId, String cardUniqueNumber) {
+        CardEntity card = cardsJpaRepository.findByUserIdAndCardUniqueNumber(userId,cardUniqueNumber);
 
         return paymentCardEntityMapper.toCards(card);
     }
 
     @Override
-    public void savePermanentToken(PaymentCard paymentCard) {
-        CardEntity card = cardsJpaRepository.findByCardUniqueNumber(paymentCard.getCardUniqueNumber());
+    public void savePermanentToken(Integer userId, PermanentTokenResponseByCardsaDTO permanentTokenResponseByCardsaDTO, PaymentCard paymentCard) {
+        CardEntity card = cardsJpaRepository.findByUserIdAndCardUniqueNumber(userId,paymentCard.getCardUniqueNumber());
         if(card == null) return;
         List<CardEntity> paymentCardList = cardsJpaRepository.findByUserIdAndPaymentCardOrderIsNotNull(card.getUserId());
 

@@ -34,14 +34,14 @@ public class PaymentTokenService {
     private final WebClientService webClientService;
 
     // 결제 카드 등록
-    public void getPermanetTokenFromCardsa(PermanentTokenRequestToCardsaDTO permanentTokenRequestToCardsaDTO){
+    public void getPermanentTokenFromCardsa(Integer userId, PermanentTokenRequestToCardsaDTO permanentTokenRequestToCardsaDTO){
 
         // 카드사로 부터 카드 정보 가져오기
         PermanentTokenResponseByCardsaDTO permanentTokenResponseByCardsaDTO = webClientService.createCard(permanentTokenRequestToCardsaDTO).block();
 
         // 리버스 DB에 결제 카드 정보 등록하기
-        PaymentCard paymentCard = cardsRepository.findByCardUniqueNumber(permanentTokenResponseByCardsaDTO.getCardUniqueNumber());
-        cardsRepository.savePermanentToken(paymentCard);
+        PaymentCard paymentCard = cardsRepository.findByUserIdAndCardUniqueNumber(userId, permanentTokenResponseByCardsaDTO.getCardUniqueNumber());
+        cardsRepository.savePermanentToken(userId, permanentTokenResponseByCardsaDTO, paymentCard);
 
     }
 
