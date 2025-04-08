@@ -7,7 +7,7 @@ object AppConfig {
     // 서버 환경 설정
     object Server {
         // 기본 서버 URL
-//        const val BASE_URL = "http://localhost:8080"
+//        const val BASE_URL = "http://localhost:8080/"
         const val BASE_URL = "https://j12a602.p.ssafy.io/rebirth/"
         
         // API 엔드포인트
@@ -29,8 +29,8 @@ object AppConfig {
     
     // 타임아웃 설정
     object Timeout {
-        const val CONNECT_TIMEOUT_SECONDS = 60L
+        const val CONNECT_TIMEOUT_SECONDS = 30L
         const val READ_TIMEOUT_SECONDS = 60L
-        const val WRITE_TIMEOUT_SECONDS = 60L
+        const val WRITE_TIMEOUT_SECONDS = 30L
     }
 } 

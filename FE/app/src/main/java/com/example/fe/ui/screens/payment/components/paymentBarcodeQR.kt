@@ -3,15 +3,23 @@ package com.example.fe.ui.screens.payment.components
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,9 +33,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
+import com.example.fe.R
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
@@ -35,63 +47,104 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.*
 
 @Composable
-fun PaymentCodeContainer(
-    isBarcodeSelected: Boolean,
-    barcodeData: String,
-    qrData: String,
+fun PaymentBarcodeQRSection(
+    remainingTime: Int,
     refreshTrigger: Int,
+    onRefresh: () -> Unit,
+    paymentToken: String?,
     modifier: Modifier = Modifier
 ) {
-    // 흰색 배경 컨테이너
-    Box(
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .width(350.dp)
-            .height(150.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White),
-        contentAlignment = Alignment.Center
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // 바코드 (왼쪽)
-            Box(
+        // 바코드 표시
+        if (paymentToken != null) {
+            BarcodeView(
+                barcodeData = paymentToken,
+                refreshTrigger = refreshTrigger,
+                barcodeFormat = BarcodeFormat.CODE_128,
                 modifier = Modifier
-                    .weight(2f)
-                    .height(100.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                BarcodeView(
-                    barcodeData = barcodeData,
-                    refreshTrigger = refreshTrigger,
-                    barcodeFormat = BarcodeFormat.CODE_128,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            // QR 코드 (오른쪽)
-            Box(
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .padding(horizontal = 16.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // QR 코드와 새로고침 버튼을 나란히 배치
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .weight(1f)
-                    .height(90.dp),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             ) {
+                // QR 코드 표시
                 QRCodeView(
-                    qrData = qrData,
+                    qrData = paymentToken,
                     refreshTrigger = refreshTrigger,
                     errorCorrectionLevel = ErrorCorrectionLevel.M,
                     margin = 0,
                     modifier = Modifier
-                        .size(90.dp)
-                        .padding(4.dp)
+                        .size(130.dp)
                 )
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                // 새로고침 버튼과 타이머를 세로로 배치
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // 새로고침 버튼
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF2D2A57))
+                            .clickable { onRefresh() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_refresh),
+                            contentDescription = "새로고침",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // 타이머 표시
+                    Text(
+                        text = "${remainingTime}초",
+                        color = if (remainingTime <= 10) Color.Red else Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
+        } else {
+            // 토큰이 없는 경우 로딩 표시
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier
+                    .size(36.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = "토큰을 가져오는 중...",
+                color = Color.White,
+                fontSize = 16.sp
+            )
         }
     }
 }
@@ -125,7 +178,7 @@ fun BarcodeView(
                 val bitMatrix = multiFormatWriter.encode(
                     barcodeData,
                     BarcodeFormat.CODE_128,
-                    250, // 너비 조정
+                    300, // 너비 조정
                     100, // 높이 조정
                     hints
                 )
@@ -156,10 +209,9 @@ fun BarcodeView(
             // 바코드 이미지 컨테이너
             Box(
                 modifier = Modifier
-                    .width(250.dp) // 너비 조정
+                    .width(300.dp) // 너비 조정
                     .height(100.dp) // 높이 조정
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White),
+                    .clip(RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 // 바코드 이미지
@@ -167,8 +219,8 @@ fun BarcodeView(
                     bitmap = barcodeImage!!.asImageBitmap(),
                     contentDescription = "Barcode",
                     modifier = Modifier
-                        .width(250.dp) // 너비 조정
-                        .height(100.dp), // 높이 조정
+                        .width(280.dp) // 너비 조정
+                        .height(80.dp), // 높이 조정
                     contentScale = ContentScale.FillWidth
                 )
             }
@@ -176,7 +228,7 @@ fun BarcodeView(
         } else {
             Box(
                 modifier = Modifier
-                    .width(250.dp) // 너비 조정
+                    .width(300.dp) // 너비 조정
                     .height(100.dp) // 높이 조정
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.White) // 단순 흰색 배경
@@ -214,8 +266,8 @@ fun QRCodeView(
                 val bitMatrix = qrCodeWriter.encode(
                     qrData,
                     BarcodeFormat.QR_CODE,
-                    100,
-                    100,
+                    120,
+                    120,
                     hints
                 )
                 
@@ -226,7 +278,7 @@ fun QRCodeView(
                 for (x in 0 until width) {
                     for (y in 0 until height) {
                         bitmap[x, y] =
-                            if (bitMatrix[x, y]) Color.Black.toArgb() else Color.White.toArgb()
+                            if (bitMatrix[x, y]) Color.White.toArgb() else Color.Transparent.toArgb()
                     }
                 }
                 
