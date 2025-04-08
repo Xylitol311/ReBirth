@@ -1,5 +1,6 @@
 package com.example.fe.ui.components.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,11 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,18 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.R
 
-// TopBar 크기를 상수로 정의
-object TopBarDimensions {
-    // TopBar 컨텐츠 영역의 높이
-    val TOPBAR_HEIGHT = 60.dp
-    
-    // TopBar 내부 상단 패딩
-    val TOPBAR_PADDING_TOP = 8.dp
-    
-    // TopBar의 총 높이 계산 (고정값은 아니고, 상태바 높이에 따라 달라짐)
-    // 참고: 실제 사용 시에는 상태바 높이가 deviceDp로 계산되어야 함
-    val TOPBAR_TOTAL_HEIGHT_APPROXIMATE = TOPBAR_HEIGHT + TOPBAR_PADDING_TOP
-}
+// starry 배경 색상 정의
+private val StarryBackgroundColor = Color(0xFF0A0A1A)
 
 @Composable
 fun TopBar(
@@ -54,21 +42,24 @@ fun TopBar(
 ) {
     Column(
         modifier = Modifier
+            .background(StarryBackgroundColor)
             .fillMaxWidth()
     ) {
-        // 상태바 영역 (완전 투명)
+        // 상태바 영역 (starry 배경색과 동일하게)
         Spacer(
             modifier = Modifier
                 .statusBarsPadding()
                 .fillMaxWidth()
+                .background(StarryBackgroundColor)
         )
         
-        // 실제 탑바 컨텐츠 (완전 투명)
+        // 실제 탑바 컨텐츠
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(TopBarDimensions.TOPBAR_HEIGHT)
-                .padding(top = TopBarDimensions.TOPBAR_PADDING_TOP)
+                .height(60.dp)
+                .background(StarryBackgroundColor)
+                .padding(top = 8.dp) // 모든 컨텐츠를 아래로 내림
         ) {
             // 중앙에 제목 배치
             Text(
@@ -77,12 +68,6 @@ fun TopBar(
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                style = TextStyle(
-                    shadow = Shadow(
-                        color = Color.Black.copy(alpha = 0.6f),
-                        blurRadius = 4f
-                    )
-                ),
                 modifier = Modifier
                     .align(Alignment.Center)
             )
@@ -95,7 +80,7 @@ fun TopBar(
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 뒤로가기 버튼 (showBackButton이 true일 때만 표시) - 그림자 효과 추가
+                // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
                 if (showBackButton) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -103,7 +88,6 @@ fun TopBar(
                         tint = Color.White,
                         modifier = Modifier
                             .size(26.dp)
-                            .shadow(2.dp, ambientColor = Color.Black.copy(alpha = 0.5f))
                             .clickable { onBackClick() }
                     )
                 } else {
@@ -114,27 +98,25 @@ fun TopBar(
                 // 중앙 영역
                 Spacer(modifier = Modifier.weight(1f))
 
-                // 로그아웃 버튼 - 그림자 효과 추가
+                // 로그아웃 버튼
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = "로그아웃",
                     tint = Color.White,
                     modifier = Modifier
                         .size(26.dp)
-                        .shadow(2.dp, ambientColor = Color.Black.copy(alpha = 0.5f))
                         .clickable { onLogoutClick() }
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // 프로필 아이콘 - 그림자 효과 추가
+                // 프로필 아이콘
                 Icon(
                     painter = painterResource(id = R.drawable.ic_person),
                     contentDescription = "프로필",
                     tint = Color.White,
                     modifier = Modifier
                         .size(26.dp)
-                        .shadow(2.dp, ambientColor = Color.Black.copy(alpha = 0.5f))
                         .clickable { onProfileClick() }
                 )
             }
