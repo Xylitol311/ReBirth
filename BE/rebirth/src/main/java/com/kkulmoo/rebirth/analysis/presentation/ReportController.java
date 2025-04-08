@@ -23,7 +23,7 @@ public class ReportController {
     private final ReportService reportService;
 
     @PostMapping("/frommydata")
-    public ResponseEntity<ResponseDTO> getReportFromMyData(@JwtUserId Integer userId) {
+    public ResponseEntity<ResponseDTO> getReportFromMyData(@RequestParam Integer userId) {
         reportService.startWithMyData(userId);
         ResponseDTO responseDTO = ResponseDTO
                 .builder()
@@ -33,8 +33,18 @@ public class ReportController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @PostMapping("/afterstart")
+    public ResponseEntity<ResponseDTO> createReportAfterStart(@RequestParam Integer userId) {
+        reportService.reportWithMyDataAfterStart(userId);
+        ResponseDTO result = new ResponseDTO();
+        result.setSuccess(true);
+        result.setMessage("초기 리포트 생성 완료");
+
+        return ResponseEntity.ok().body(result);
+    }
+
     @GetMapping
-    public ResponseEntity<ResponseDTO> getReportWithPattern(@JwtUserId Integer userId,
+    public ResponseEntity<ResponseDTO> getReportWithPattern(@RequestParam Integer userId,
                                                             @RequestParam int year, @RequestParam int month) {
         ReportWithPatternDTO report = reportService.getReportWithPattern(userId, year, month);
         ResponseDTO result = new ResponseDTO();
@@ -84,8 +94,8 @@ public class ReportController {
         return ResponseEntity.ok().body(result);
     }
 
-    @GetMapping("/test2")
-    public ResponseEntity<ResponseDTO> testTransaction2(@RequestParam Integer userId) {
+    @GetMapping("/updatesummary")
+    public ResponseEntity<ResponseDTO> updateSummary(@RequestParam Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("리포트 갱신 완료");
