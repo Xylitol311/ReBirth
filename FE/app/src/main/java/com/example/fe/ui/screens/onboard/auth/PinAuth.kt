@@ -24,12 +24,14 @@ fun PinAuth(
     val context = LocalContext.current
     var pinInput by remember { mutableStateOf("") }
 
+    // 숫자를 0~9가 아닌 0-9만 섞는 것으로 변경
+    // 이 숫자들은 컴포넌트 내부에서 재구성됨 (1-9는 그리드용, 0은 하단 배치)
+    val shuffledNumbers = remember(currentStep) { (0..9).toList().shuffled() }
 
-    //새로 화면 뜰때 초기화
+    // 새로 화면 뜰 때 초기화
     LaunchedEffect(currentStep) {
         pinInput = ""
     }
-    val shuffledNumbers = remember { (0..9).toList().shuffled() }
 
     Column(
         modifier = Modifier
