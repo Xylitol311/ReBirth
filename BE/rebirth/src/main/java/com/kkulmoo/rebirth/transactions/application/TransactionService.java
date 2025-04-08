@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -96,8 +97,9 @@ public class TransactionService {
                 transactionRepository.saveAllCardTransactions(transactionsWithUserId);
                 log.info("사용자 {}의 {}개 거래내역 일괄 저장 완료", user.getUserId(), transactions.size());
 
+                return transactionsWithUserId;
             }
-            return transactions;
+            return Collections.emptyList();
         } catch (Exception e) {
             log.error("카드 거래내역 처리 중 오류 발생: {}", e.getMessage(), e);
             return null;
