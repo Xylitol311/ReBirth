@@ -21,10 +21,10 @@ data class SignupRequest(
 //2차 회원가입은 헤더 userId만
 
 //3차 패턴 로그임 회원가입
-data class registPatternRequest(
-    val deviceId: String,
+data class PatternNumbersRequest(
     val patternNumbers: String
 )
+
 
 //패턴 정보 받아오기
 data class ReportWithPatternDTO(

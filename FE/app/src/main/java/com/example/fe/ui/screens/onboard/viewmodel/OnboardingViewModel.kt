@@ -14,6 +14,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.fe.data.model.auth.PatternNumbersRequest
 import com.example.fe.data.model.auth.ReportWithPatternDTO
 import com.example.fe.data.network.NetworkClient
 import com.example.fe.data.model.auth.SignupRequest
@@ -270,10 +271,11 @@ class OnboardingViewModel(
                 isLoading = true
                 errorMessage = ""
 
-                Log.d("AuthPattern","${pattern.joinToString("")}")
+                Log.d("AuthPattern","보내는 최종 형태 : ${pattern.joinToString("")}")
                 val response = authApiService.registPattern(
+                    PatternNumbersRequest(
                     patternNumbers = pattern.joinToString("")
-
+                    )
                 )
 
                 if (!response.isSuccessful) {

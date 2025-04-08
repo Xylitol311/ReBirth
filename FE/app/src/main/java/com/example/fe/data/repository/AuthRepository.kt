@@ -1,13 +1,11 @@
 package com.example.fe.data.repository
 
 import com.example.fe.data.model.auth.ApiResponseDTO
+import com.example.fe.data.model.auth.PatternNumbersRequest
 import com.example.fe.data.model.auth.SignupRequest
-import com.example.fe.data.model.auth.registPatternRequest
 import com.example.fe.data.model.auth.userLoginRequest
 import com.example.fe.data.network.NetworkClient
-import com.example.fe.data.network.api.AuthApiService
 import retrofit2.Response
-import javax.inject.Inject
 
 class AuthRepository {
     private val authApiService = NetworkClient.authApiService
@@ -24,7 +22,7 @@ class AuthRepository {
     // token 제거 - Interceptor가 자동으로 처리함
     suspend fun registPattern(patternNumbers: String): Result<Unit> {
         return try {
-            val response = authApiService.registPattern(patternNumbers)
+            val response = authApiService.registPattern(PatternNumbersRequest(patternNumbers))
             handleResponse(response)
         } catch (e: Exception) {
             Result.failure(e)

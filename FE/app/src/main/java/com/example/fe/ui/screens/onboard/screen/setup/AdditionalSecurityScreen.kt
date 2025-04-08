@@ -130,7 +130,7 @@ fun AdditionalSecurityScreen(
                             if (savedPattern != null && pattern.size == savedPattern!!.size &&
                                 pattern.zip(savedPattern!!).all { (a, b) -> a == b }) {
                                 // 패턴이 일치하면 저장하고 완료 화면으로 이동
-
+                                Log.d("AuthPattern","savedpattern ${savedPattern}")
                                 viewModel.registerPattern(
                                     pattern = savedPattern!!,
                                     onSuccess = {
