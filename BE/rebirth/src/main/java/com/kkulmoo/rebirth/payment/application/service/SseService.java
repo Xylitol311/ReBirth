@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class SseService {
 
     private final Map<Integer, SseEmitter> emitterMap = new ConcurrentHashMap<>();
-    private static final long TIMEOUT = 70 * 1000;
+    private static final long TIMEOUT = 1200 * 1000;
     private static final long RECONNECTION_TIMEOUT = 1000L;
     private static final long HEARTBEAT_INTERVAL = 30 * 1000; // 30초
 
@@ -90,17 +90,29 @@ public class SseService {
             try {
                 SseEmitter.SseEventBuilder event = SseEmitter.event()
                         .name("결제중")
-                        .id(String.valueOf("id-2"))
+                        .id(String.valueOf(System.currentTimeMillis())) // 고유한 ID 생성
                         .data(message)
                         .reconnectTime(RECONNECTION_TIMEOUT);
                 emitter.send(event);
+                log.debug("메시지 전송 성공: userId={}", userId);
             } catch (IOException e) {
-                log.error("failure send media position data, userId={}, {}", userId, e.getMessage());
-                emitterMap.remove(userId); // 메시지 전송 실패 시 emitter 제거
-                emitter.complete();
+                log.error("메시지 전송 실패, userId={}, error={}", userId, e.getMessage());
+                // 연결이 끊어진 것으로 판단
+                removeEmitter(userId);
             }
         } else {
             log.warn("해당 userId에 대한 emitter를 찾을 수 없음: {}", userId);
+        }
+    }
+    private void removeEmitter(int userId) {
+        SseEmitter emitter = emitterMap.remove(userId);
+        if (emitter != null) {
+            try {
+                emitter.complete();
+                log.info("Emitter removed for userId: {}", userId);
+            } catch (Exception e) {
+                log.error("Error while completing emitter for userId: {}", userId, e);
+            }
         }
     }
 
