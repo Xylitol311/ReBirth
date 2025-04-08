@@ -75,4 +75,17 @@ public class SseController {
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }
+
+    @PostMapping("/test")
+    public ResponseEntity<?> insertPayDataa(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
+
+        Integer userId = 154;
+        String merchantName = createTransactionRequestDTO.getMerchantName();
+        int amount = createTransactionRequestDTO.getAmount();
+        // 결제 처리 서비스 호출
+        CardTransactionDTO cardTransactionDTO = paymentTransactionService.insertPayData(userId, createTransactionRequestDTO.getToken(), merchantName, amount, createTransactionRequestDTO.getCreatedAt());
+        // 응답 객체 생성 후 반환
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
+        return ResponseEntity.ok(apiResponseDTO);
+    }
 }
