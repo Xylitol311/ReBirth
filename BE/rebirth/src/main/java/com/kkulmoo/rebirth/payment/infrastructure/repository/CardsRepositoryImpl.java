@@ -7,6 +7,7 @@ import com.kkulmoo.rebirth.payment.infrastructure.mapper.PaymentCardEntityMapper
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -42,11 +43,26 @@ public class CardsRepositoryImpl implements CardsRepository{
 
     //카드 아이디로 카드 가져오기
     @Override
-    public PaymentCard findByCardUniqueNumber(String CardUniqueNumber) {
+    public PaymentCard findByCardUniqueNumber(String cardUniqueNumber) {
+        CardEntity card = cardsJpaRepository.findByCardUniqueNumber(cardUniqueNumber);
 
+        return paymentCardEntityMapper.toCards(card);
+    }
 
+    @Override
+    public void savePermanentToken(PaymentCard paymentCard) {
+        CardEntity card = cardsJpaRepository.findByCardUniqueNumber(paymentCard.getCardUniqueNumber());
+        if(card == null) return;
+        List<CardEntity> paymentCardList = cardsJpaRepository.findByUserIdAndPaymentCardOrderIsNotNull(card.getUserId());
 
-        return null;
+        CardEntity payCard = card.toBuilder()
+                .permanentToken(paymentCard.getPermanentToken())
+                .paymentCardOrder((short) (paymentCardList.size()+1)) // 계산해야함
+                .paymentCreatedAt(LocalDateTime.now()) // 현재 시간으로
+                .build();
+
+        cardsJpaRepository.save(payCard);
+
     }
 
 

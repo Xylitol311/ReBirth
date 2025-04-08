@@ -40,7 +40,8 @@ public class PaymentTokenService {
         PermanentTokenResponseByCardsaDTO permanentTokenResponseByCardsaDTO = webClientService.createCard(permanentTokenRequestToCardsaDTO).block();
 
         // 리버스 DB에 결제 카드 정보 등록하기
-
+        PaymentCard paymentCard = cardsRepository.findByCardUniqueNumber(permanentTokenResponseByCardsaDTO.getCardUniqueNumber());
+        cardsRepository.savePermanentToken(paymentCard);
 
     }
 

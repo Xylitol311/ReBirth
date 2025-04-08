@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.payment.infrastructure.repository;
 
+import com.kkulmoo.rebirth.payment.domain.PaymentCard;
 import com.kkulmoo.rebirth.shared.entity.CardEntity;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
 import io.lettuce.core.dynamic.annotation.Param;
@@ -23,4 +24,8 @@ public interface CardsJpaRepository extends JpaRepository<CardEntity, Integer>{
     CardTemplateEntity findCardNameByCardId(int cardId);
 
     List<CardEntity> getByUserId(int userId);
+
+    CardEntity findByCardUniqueNumber(String cardUniqueNumber);
+
+    List<CardEntity> findByUserIdAndPaymentCardOrderIsNotNull(Integer userId);
 }
