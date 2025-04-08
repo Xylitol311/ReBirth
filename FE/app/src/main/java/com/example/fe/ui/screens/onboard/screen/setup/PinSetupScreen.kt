@@ -2,6 +2,7 @@ package com.example.fe.ui.screens.onboard.screen.setup
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -13,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import com.example.fe.data.network.api.AuthApiService
 import com.example.fe.ui.screens.onboard.auth.PinAuth
 import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
@@ -43,6 +45,25 @@ fun PinSetupScreen(
     var pin by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    
+    // 시스템 뒤로가기 처리
+    BackHandler {
+        if (currentStep == PinStep.PIN_CONFIRM) {
+            currentStep = PinStep.PIN
+        } else {
+            // 첫 단계(PIN)에서는 수입 입력 화면으로 돌아감
+            navController.navigate(
+                "income_input/${name}/${phone}/${ssnFront}",
+                NavOptions.Builder()
+                    .setEnterAnim(0)
+                    .setExitAnim(0)
+                    .setPopEnterAnim(0)
+                    .setPopExitAnim(0)
+                    .build()
+            )
+        }
+    }
+    
     // 에러 메시지 표시
     if (errorMessage.isNotEmpty()) {
         LaunchedEffect(errorMessage) {
@@ -53,23 +74,36 @@ fun PinSetupScreen(
 
     Scaffold(
         topBar = {
-            if (currentStep == PinStep.PIN_CONFIRM) {
-                TopAppBar(
-                    title = {},
-                    navigationIcon = {
-                        IconButton(
-                            onClick = { currentStep = PinStep.PIN },
-                            modifier = Modifier.size(54.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.ArrowBack,
-                                contentDescription = "뒤로가기",
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(
+                        onClick = { 
+                            if (currentStep == PinStep.PIN_CONFIRM) {
+                                currentStep = PinStep.PIN
+                            } else {
+                                // 첫 단계(PIN)에서는 수입 입력 화면으로 돌아감
+                                navController.navigate(
+                                    "income_input/${name}/${phone}/${ssnFront}",
+                                    NavOptions.Builder()
+                                        .setEnterAnim(0)
+                                        .setExitAnim(0)
+                                        .setPopEnterAnim(0)
+                                        .setPopExitAnim(0)
+                                        .build()
+                                )
+                            }
+                        },
+                        modifier = Modifier.size(54.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "뒤로가기",
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
-                )
-            }
+                }
+            )
         }
     ) { padding ->
         Box(

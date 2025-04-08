@@ -77,7 +77,7 @@ fun StarryBackground(
 ) {
     // 글로벌 상태 저장
     val starryBackgroundState = remember { StarryBackgroundState() }
-    
+
     // 별들의 위치와 크기를 저장
     val stars = remember {
         List(starCount) {
@@ -87,21 +87,21 @@ fun StarryBackground(
                 size = Random.nextFloat() * 3f + 1f,
                 alpha = Random.nextFloat() * 0.5f + 0.5f,
                 // 모든 별이 같은 속도로 반짝이도록 고정 값 사용
-                flickerSpeed = 0.2f, 
+                flickerSpeed = 0.2f,
                 // 10%의 별만 반짝이도록 설정
                 shouldTwinkle = Random.nextFloat() < 0.1f
             )
         }
     }
-    
+
     // 캔버스 크기 상태
     var canvasSize by remember { mutableStateOf(IntSize(0, 0)) }
-    
+
     // 상태를 글로벌 상태에 저장
     starryBackgroundState.stars = stars
     starryBackgroundState.isInitialized = true
     starryBackgroundState.backgroundColor = Color(0xFF0A0A1A)
-    
+
     // 애니메이션 적용된 가로 오프셋 - 더 빠른 애니메이션
     val animatedHorizontalOffset by animateFloatAsState(
         targetValue = horizontalOffset,
@@ -109,13 +109,13 @@ fun StarryBackground(
         animationSpec = tween(800, easing = EaseInOut),
         label = "horizontalOffset"
     )
-    
+
     // 별의 상태를 업데이트하기 위한 시간 값
     var time by remember { mutableStateOf(0f) }
-    
+
     // 시간 값을 글로벌 상태에 저장
     starryBackgroundState.time = time
-    
+
     // 느린 속도로 시간 업데이트 (500ms마다)
     LaunchedEffect(Unit) {
         while (true) {
@@ -138,7 +138,7 @@ fun StarryBackground(
             ) {
                 val canvasWidth = size.width
                 val canvasHeight = size.height
-                
+
                 // 스크롤 오프셋 (픽셀 단위로 변환)
                 val pixelScrollOffset = scrollOffset / 1000f * canvasHeight
                 // 가로 스크롤 오프셋 (픽셀 단위로 변환)
@@ -146,7 +146,7 @@ fun StarryBackground(
 
                 // 복제할 세트의 수 (위 아래로 각각 하나씩)
                 val repeatSets = 3
-                
+
                 // 3세트의 별을 그림 (현재 위치, 위, 아래)
                 for (setIndex in -1 until repeatSets - 1) {
                     stars.forEach { star ->
@@ -164,7 +164,7 @@ fun StarryBackground(
                         val xPos = (star.x * canvasWidth - xOffset) % canvasWidth
                         // 음수 처리
                         val adjustedX = if (xPos < 0) xPos + canvasWidth else xPos
-                        
+
                         // 별이 화면 내에 있을 때만 그리기
                         if (finalY >= -100 && finalY <= canvasHeight + 100) {
                             drawStar(
@@ -178,7 +178,7 @@ fun StarryBackground(
                     }
                 }
             }
-            
+
             // 내용 표시
             content()
         }
@@ -201,29 +201,37 @@ fun GlassSurface(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(cornerRadius.dp))
-                .blur(radius = 8.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = if (isTopPanel) {
-                            // 상단 패널은 하단 패널과 유사한 색상으로 설정
                             listOf(
-                                Color(0x70203F64),
-                                Color(0x70183050)
+                                Color(0xEE203F64), // 더 불투명하게 (alpha 약 0.93)
+                                Color(0xEE183050)  // 더 불투명하게 (alpha 약 0.93)
                             )
                         } else {
-                            // 하단 패널 색상
                             listOf(
-                                Color(0x70203F64),
-                                Color(0x70183050)
+                                Color(0xEE203F64), // 더 불투명하게 (alpha 약 0.93)
+                                Color(0xEE183050)  // 더 불투명하게 (alpha 약 0.93)
                             )
                         },
                         start = Offset(0f, 0f),
                         end = Offset(0f, Float.POSITIVE_INFINITY)
-                    ),
-                    shape = RoundedCornerShape(cornerRadius.dp)
+                    )
+                )
+                .blur(radius = blurRadius.dp) // blur 효과 적용
+        )
+
+        // 추가 착색 레이어 (약간의 색감 추가)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(cornerRadius.dp))
+                .background(
+                    color = Color(0x22000000) // 약간의 어두운 색 추가
                 )
         )
-        // 테두리와 컨텐츠 레이어 (블러 없음)
+
+        // 테두리와 컨텐츠 레이어
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -232,24 +240,21 @@ fun GlassSurface(
                     if (showBorder) {
                         Modifier.border(
                             width = 1.dp,
-                            color = Color.Transparent, // 테두리 색상 제거 (투명으로 설정)
+                            color = Color(0x33FFFFFF), // 약간 흰색 테두리
                             shape = RoundedCornerShape(cornerRadius.dp)
                         )
-                    } else {
-                        Modifier
-                    }
+                    } else Modifier
                 )
         ) {
-            // 내용 (블러 없음)
             content()
         }
     }
 }
 
 private fun DrawScope.drawStar(
-    center: Offset, 
-    radius: Float, 
-    color: Color, 
+    center: Offset,
+    radius: Float,
+    color: Color,
     time: Float,
     star: Star
 ) {
@@ -260,21 +265,21 @@ private fun DrawScope.drawStar(
     } else {
         0.8f // 반짝이지 않는 별은 일정한 밝기
     }
-    
+
     // 반짝이는 별은 크기도 약간 변화
     val sizeMultiplier = if (star.shouldTwinkle) {
         0.9f + (sin(time * star.flickerSpeed * 0.8f) + 1) / 2f * 0.2f
     } else {
         1.0f
     }
-    
+
     // 별 그리기 (반짝이는 별은 더 밝고 크게)
     drawCircle(
         color = color.copy(alpha = star.alpha * flicker),
         radius = radius * sizeMultiplier,
         center = center
     )
-    
+
     // 별빛 효과 (반짝이는 별은 더 큰 광채)
     val glowSize = if (star.shouldTwinkle) 2.0f else 1.5f
     drawCircle(
@@ -282,7 +287,7 @@ private fun DrawScope.drawStar(
         radius = radius * glowSize * sizeMultiplier,
         center = center
     )
-    
+
     // 반짝이는 별에만 추가 광채 효과
     if (star.shouldTwinkle && flicker > 1.0f) {
         drawCircle(
