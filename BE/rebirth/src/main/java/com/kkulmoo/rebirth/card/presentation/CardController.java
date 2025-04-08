@@ -24,11 +24,12 @@ public class CardController {
     private final CardService cardService;
 
     @GetMapping("/detail/{cardId}/{year}/{month}")
-    public ResponseEntity<ApiResponseDTO<CardDetailResponse>> getMyCardInfo(@PathVariable Integer cardId,
+    public ResponseEntity<ApiResponseDTO<CardDetailResponse>> getMyCardInfo(@JwtUserId Integer userId,
+                                                                            @PathVariable Integer cardId,
                                                                             @PathVariable Integer year,
                                                                             @PathVariable Integer month) {
         try {
-            CardDetailResponse cardDetail = cardService.getCardDetail(new UserId(2), cardId, year, month);
+            CardDetailResponse cardDetail = cardService.getCardDetail(new UserId(userId), cardId, year, month);
             return ResponseEntity.ok(ApiResponseDTO.success("카드 상세 정보 조회 성공", cardDetail));
         } catch (EntityNotFoundException e) {
             log.error("Card not found error", e);  // Add logging here
@@ -42,9 +43,10 @@ public class CardController {
 
     @GetMapping()
     public ResponseEntity<ApiResponseDTO<List<CardResponse>>> getAllCards(@JwtUserId Integer userId) {
+        System.out.println(userId + " dfsafddfsafddfsafddfsafddfsafddfsafddfsafdsafdsa");
         try {
             //todo: 이름 나중에 바꾸기
-            List<CardResponse> cards = cardService.findCardsAll(new UserId(2));
+            List<CardResponse> cards = cardService.findCardsAll(new UserId(userId));
             ApiResponseDTO<List<CardResponse>> response = ApiResponseDTO.success("카드 목록 조회 성공", cards);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -57,7 +59,7 @@ public class CardController {
     public ResponseEntity<ApiResponseDTO<Void>> reorderCards(@JwtUserId Integer userId, @RequestBody List<CardOrderRequest> cardOrders) {
         try {
             //todo: 이름 나중에 바꾸기
-            cardService.updateCardsOrder(new UserId(2), cardOrders);
+            cardService.updateCardsOrder(new UserId(userId), cardOrders);
             ApiResponseDTO<Void> response = ApiResponseDTO.success("카드 순서 변경 성공", null);
             return ResponseEntity.ok(response);
         } catch (Exception e) {

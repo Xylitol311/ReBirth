@@ -70,17 +70,19 @@ public class CardService {
 
         Short spendingTier = reportCardsEntity.getSpendingTier();
         if (spendingTier == null) {
+            System.out.println("값이 있어.");
             spendingTier = 0;  // 기본값 설정
         }
 
         List<BenefitTemplate> benefitTemplates = benefitRepository.findByTemplateId(cardTemplate.getCardTemplateId());
 
-        int amountRemainingNext = maxPerformanceAmount - reportCardsEntity.getMonthSpendingAmount();
+        int amountRemainingNext = maxPerformanceAmount - Math.abs(reportCardsEntity.getMonthSpendingAmount());
         if (amountRemainingNext < 0) amountRemainingNext = 0;
 
         List<CardBenefit> cardBenefits = new ArrayList<>();
 
         for (BenefitTemplate benefitTemplate : benefitTemplates) {
+            System.out.println(benefitTemplate);
             List<Integer> categoryId = benefitTemplate.getCategoryId();
             List<String> categoryString = categoryJpaRepository.findByCategoryIdInOrderByCategoryId(categoryId);
             UserCardBenefit byUserIdAndBenefitId = userCardBenefitRepository
@@ -97,8 +99,7 @@ public class CardService {
                                     .build()
                     );
 
-//            if주석을 풀면된다.
-//            if (spendingTier != null && spendingTier.shortValue() != 0) {
+            if (spendingTier != null && spendingTier.shortValue() != 0) {
                 cardBenefits.add(
                         CardBenefit.builder()
                                 .benefitCategory(categoryString)
@@ -111,16 +112,16 @@ public class CardService {
                                         )
                                 )
                                 .build());
-                //          }
-
+                          }
         }
 
+        System.out.println("++" + cardBenefits.toString());
         return CardDetailResponse.builder()
                 .cardId(cardId)
                 .cardImageUrl(cardTemplate.getCardImgUrl())
                 .cardName(cardTemplate.getCardName())
                 .maxPerformanceAmount(maxPerformanceAmount)
-                .currentPerformanceAmount(reportCardsEntity.getMonthSpendingAmount())
+                .currentPerformanceAmount(Math.abs(reportCardsEntity.getMonthSpendingAmount()))
                 .spendingMaxTier((short) cardTemplate.getPerformanceRange().size())
                 .currentSpendingTier(spendingTier)  // 여기를 변경: reportCardsEntity.getSpendingTier() -> spendingTier
                 .amountRemainingNext(amountRemainingNext)
@@ -227,7 +228,7 @@ public class CardService {
                     .cardId(card.getCardId())
                     .cardImgUrl(template.getCardImgUrl())
                     .cardName(template.getCardName())
-                    .totalSpending(totalSpending)
+                    .totalSpending(Math.abs(totalSpending))
                     .maxSpending(maxSpending)
                     .performanceRange(performanceRange)
                     .receivedBenefitAmount(receivedBenefitAmount)

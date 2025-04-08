@@ -18,4 +18,7 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Integer> {
     Optional<UserEntity> findByPhoneSerialNumber(String phoneSerialNumber);
 
     Optional<UserEntity> findByUserId(Integer userId);
+
+    Optional<UserEntity> findByPhoneSerialNumberAndPhoneNumber(String phoneSerialNumber, String phoneNumber);
+
 }

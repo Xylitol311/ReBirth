@@ -121,6 +121,49 @@ public class AuthService {
         return AuthenticationResult.failure();
     }
 
+
+    public AuthenticationResult validUserV2(String number, String type, String phoneSerialNumber,String phoneNumber) {
+        User user = userRepository.findByPhoneSerialNumberAndPhoneNumber(phoneSerialNumber, phoneNumber);
+
+        if (user == null) return AuthenticationResult.failure();
+
+        //핀 일 경우
+        if (type.equals("PIN")) {
+            String hashedPinNumber = PasswordUtils.encodePassword(number);
+            if (user.getHashedPinNumber().equals(hashedPinNumber)) {
+                return AuthenticationResult.success(user);
+            }
+        } else if (type.equals("PATTERN")) {
+
+            System.out.println("비교할 원본 암호 : " + number);
+
+
+            String hashedPatternNumber = PasswordUtils.encodePassword(number);
+
+            System.out.println("바뀐 암호 : " + hashedPatternNumber);
+
+            System.out.println("패턴" + " " + hashedPatternNumber +"원래 유저거 > "+ user.getHashedPatternNumber()) ;
+            if (user.getHashedPatternNumber().equals(hashedPatternNumber)) {
+                return AuthenticationResult.success(user);
+            }
+        }
+        return AuthenticationResult.failure();
+
+    }
+
+    public AuthenticationResult authenticateWithBiometricV2(String deviceId, String phoneNumber) {
+        try {
+            User user = userRepository.findByPhoneSerialNumberAndPhoneNumber(deviceId, phoneNumber);
+            if (user != null) {
+                return AuthenticationResult.success(user);
+            }
+        } catch (Exception e) {
+            // 로깅 등 예외 처리
+        }
+        return AuthenticationResult.failure();
+    }
+
+
     public String generateAccessToken(UserId userId) {
         return jwtProvider.generateAccessToken(userId);
     }
