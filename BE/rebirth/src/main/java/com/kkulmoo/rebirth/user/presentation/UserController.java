@@ -30,22 +30,21 @@ public class UserController {
 	// 카드 거래내역 불러오기 getCardTransaction
 	@PostMapping("/mydata/card/transactions")
 	public ResponseEntity<ApiResponseDTO<Void>> loadCardTransactions(@JwtUserId Integer userId){
-//		myDataService.getMyCardTransactionData(userId);
+		myDataService.getMyCardTransactionData(userId);
 		return ResponseEntity.ok(ApiResponseDTO.success("카드 거래내역 로드에 성공하였습니다."));
 	}
 
 	// 카드 자산 불러오기(MyCard 갱신)
 	@PostMapping("/mydata/mycard")
 	public ResponseEntity<ApiResponseDTO<Void>> loadMyCard(@JwtUserId Integer userId){
-		 //todo: 이름 바꾸기
-//		  myDataService.loadMyCard(2);
+		  myDataService.loadMyCard(2);
 		 return ResponseEntity.ok(ApiResponseDTO.success("카드 로드에 성공하였습니다."));
 	}
 
 	// 은행 자산 불러오기(account 갱신)
 	@PostMapping("/mydata/bank")
 	public ResponseEntity<ApiResponseDTO<Void>> loadMyBank(@JwtUserId Integer userId){
-//		myDataService.loadMyBankAccount(userId);
+		myDataService.loadMyBankAccount(userId);
 		return ResponseEntity.ok(ApiResponseDTO.success("은행 계좌 로드에 성공하였습니다."));
 	}
 
