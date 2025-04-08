@@ -8,4 +8,6 @@ import java.util.List;
 public interface CardsRepository {
     List<PaymentCard> findByUserId(int userId);
     PaymentCard findByCardUniqueNumber(String CardUniqueNumber);
+
+    void savePermanentToken(PaymentCard paymentCard);
 }

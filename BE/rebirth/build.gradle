@@ -51,6 +51,9 @@ dependencies {
 
 // https://mvnrepository.com/artifact/org.mapstruct/mapstruct
     implementation("org.mapstruct:mapstruct:1.6.3")
+
+// https://mvnrepository.com/artifact/net.nurigo/javaSDK
+    implementation 'net.nurigo:javaSDK:2.2'
 }
 
 tasks.named('test') {
