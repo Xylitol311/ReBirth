@@ -57,6 +57,8 @@ public class AuthService {
 
         // Pattern 번호 암호화
         String hashedPatternNumber = PasswordUtils.encodePassword(patternNumbers);
+        System.out.println("원본 : " + patternNumbers);
+        System.out.println("바뀐거" + hashedPatternNumber);
         User user = userRepository.findByUserId(new UserId(userId));
 
         userRepository.update(User.builder()
@@ -91,10 +93,14 @@ public class AuthService {
             }
         } else if (type.equals("PATTERN")) {
 
+            System.out.println("비교할 원본 암호 : " + number);
+
 
             String hashedPatternNumber = PasswordUtils.encodePassword(number);
 
-            System.out.println("패턴" + " " + hashedPatternNumber +"유저거 > "+ user.getHashedPatternNumber()) ;
+            System.out.println("바뀐 암호 : " + hashedPatternNumber);
+
+            System.out.println("패턴" + " " + hashedPatternNumber +"원래 유저거 > "+ user.getHashedPatternNumber()) ;
             if (user.getHashedPatternNumber().equals(hashedPatternNumber)) {
                 return AuthenticationResult.success(user);
             }
