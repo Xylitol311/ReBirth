@@ -18,6 +18,9 @@ services:
       - REDIS_URL=${REDIS_URL}
       - REDIS_PORT=${REDIS_PORT}
       - SECRET_KEY=${SECRET_KEY}
+      - SMS_API_KEY={SMS_API_KEY}
+      - SMS_API_SECRET={SMS_API_SECRET}
+      - PHONE_NUMBER={PHONE_NUMBER}
     ports:
       - "8081:8080"   # 호스트 포트 8081 → 컨테이너 포트 8080
     networks:
