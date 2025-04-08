@@ -68,7 +68,7 @@ public class TransactionService {
 
     // card내역 가져오기.
     // 카드사에게 이사람이 누구인지 이사람의 어떤 카드의 결제내역을 얻고 싶은지 요청을해야한다.
-    public void getCardTransactionByMyData(User user, List<String> CardUniqueNumbers) {
+    public List<CardTransactionResponse> getCardTransactionByMyData(User user, List<String> CardUniqueNumbers) {
         // CardUniqueNumbers
         List<MyCard> myCardList = cardService.getMyCardListByCardUniqueNumbers(CardUniqueNumbers, user.getUserId().getValue());
 
@@ -95,9 +95,12 @@ public class TransactionService {
                 // 한 번에 모든 트랜잭션 저장
                 transactionRepository.saveAllCardTransactions(transactionsWithUserId);
                 log.info("사용자 {}의 {}개 거래내역 일괄 저장 완료", user.getUserId(), transactions.size());
+
             }
+            return transactions;
         } catch (Exception e) {
             log.error("카드 거래내역 처리 중 오류 발생: {}", e.getMessage(), e);
+            return null;
         }
     }
 }

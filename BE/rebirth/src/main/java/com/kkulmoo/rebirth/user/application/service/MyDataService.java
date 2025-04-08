@@ -4,6 +4,7 @@ import com.kkulmoo.rebirth.card.application.CardService;
 import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.transactions.application.BankPort;
 import com.kkulmoo.rebirth.transactions.application.TransactionService;
+import com.kkulmoo.rebirth.transactions.application.dto.CardTransactionResponse;
 import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.domain.UserRepository;
@@ -22,6 +23,7 @@ public class MyDataService {
     private final UserRepository userRepository;
     private final CardService cardService;
     private final TransactionService transactionService;
+    private final UserCardBenefitService userCardBenefitService;
     private final BankPort bankPort;
 
 
@@ -54,9 +56,13 @@ public class MyDataService {
                 .collect(Collectors.toList());
 
         // 추출한 카드 고유 번호 리스트를 이용해 거래내역 가져오기
-        transactionService.getCardTransactionByMyData(user, cardUniqueNumbers);
+        List<CardTransactionResponse> transactionResponses = transactionService.getCardTransactionByMyData(user, cardUniqueNumbers);
+
 
         cardService.updateCardsLastLoadTime(cards);
+
+        // 혜택 현황 업데이트
+        userCardBenefitService.updateUseCardBenefit(transactionResponses, cards);
     }
 
     // 내 은행 계좌 가져오기
