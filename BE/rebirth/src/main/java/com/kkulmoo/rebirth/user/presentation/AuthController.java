@@ -5,11 +5,11 @@ import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
 import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.user.application.command.CreateUserCommand;
 import com.kkulmoo.rebirth.user.application.service.AuthService;
+import com.kkulmoo.rebirth.user.application.service.CoolSmsService;
 import com.kkulmoo.rebirth.user.domain.User;
-import com.kkulmoo.rebirth.user.presentation.requestDTO.UserCIRequest;
-import com.kkulmoo.rebirth.user.presentation.requestDTO.UserLoginRequest;
-import com.kkulmoo.rebirth.user.presentation.requestDTO.UserSignupRequest;
+import com.kkulmoo.rebirth.user.presentation.requestDTO.*;
 import lombok.RequiredArgsConstructor;
+import net.nurigo.java_sdk.exceptions.CoolsmsException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +22,25 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
 	private final AuthService authService;
+	private final CoolSmsService coolSmsService;
+
+	@PostMapping("/sms")
+	public ResponseEntity<ApiResponseDTO<?>> sendSMS(@RequestBody SendSmsRequest request) throws CoolsmsException {
+		String code = coolSmsService.sendSms(request.getPhoneNumber());
+		return ResponseEntity.ok(ApiResponseDTO.success("메시지 전송 성공",code));
+	}
+
+	@PostMapping("/sms/verify")
+	public ResponseEntity<ApiResponseDTO<?>> verifySMS(@RequestBody VerifySmsRequest request) {
+		boolean isVerified = coolSmsService.verifyCode(request.getPhoneNumber(), request.getCode());
+
+		if (isVerified) {
+			return ResponseEntity.ok(ApiResponseDTO.success("인증 성공"));
+		} else {
+			return ResponseEntity.badRequest().body(ApiResponseDTO.error("인증 실패: 인증번호가 일치하지 않거나 만료되었습니다"));
+		}
+	}
+
 
 	// 회원가입 1차단계
 	@PostMapping("/signup")
