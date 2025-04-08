@@ -1,5 +1,10 @@
 package com.kkulmoo.rebirth.analysis.domain.dto.response;
 
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
 public class PreBenefitDto {
     private Integer userId;
     private Integer paymentCardId;
