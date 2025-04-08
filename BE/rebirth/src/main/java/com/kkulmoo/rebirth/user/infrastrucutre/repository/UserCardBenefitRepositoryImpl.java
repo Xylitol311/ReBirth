@@ -7,6 +7,7 @@ import com.kkulmoo.rebirth.user.infrastrucutre.mapper.UserCardBenefitEntityMappe
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,5 +28,13 @@ public class UserCardBenefitRepositoryImpl implements UserCardBenefitRepository 
         UserCardBenefitEntity entity = userCardBenefitEntityMapper.toUserCardBenefitEntity(userCardBenefit);
         UserCardBenefitEntity savedEntity = userCardBenefitJpaRepository.save(entity);
         return userCardBenefitEntityMapper.toUserCardBenefit(savedEntity);
+    }
+
+    @Override
+    public void saveAll(List<UserCardBenefit> userCardBenefits) {
+        List<UserCardBenefitEntity> entities = userCardBenefits.stream()
+                .map(userCardBenefitEntityMapper::toUserCardBenefitEntity)
+                .toList();
+        userCardBenefitJpaRepository.saveAll(entities);
     }
 }
