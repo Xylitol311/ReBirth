@@ -25,7 +25,7 @@ public interface CardsJpaRepository extends JpaRepository<CardEntity, Integer>{
 
     List<CardEntity> getByUserId(int userId);
 
-    CardEntity findByCardUniqueNumber(String cardUniqueNumber);
-
     List<CardEntity> findByUserIdAndPaymentCardOrderIsNotNull(Integer userId);
+
+    CardEntity findByUserIdAndCardUniqueNumber(Integer userId, String cardUniqueNumber);
 }

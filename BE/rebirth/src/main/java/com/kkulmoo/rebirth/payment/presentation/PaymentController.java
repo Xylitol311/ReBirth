@@ -34,7 +34,7 @@ public class PaymentController {
     public ResponseEntity<?> registPaymentCard(@JwtUserId Integer userId, @RequestBody PermanentTokenRequestToCardsaDTO permanentTokenRequest) {
 
         // 카드 등록하고 영구토큰 가져오기
-        paymentTokenService.getPermanetTokenFromCardsa(permanentTokenRequest);
+        paymentTokenService.getPermanentTokenFromCardsa(userId, permanentTokenRequest);
 
         return ResponseEntity.ok("임시");
     }
