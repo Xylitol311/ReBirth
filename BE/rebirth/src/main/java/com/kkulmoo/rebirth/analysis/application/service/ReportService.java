@@ -290,78 +290,111 @@ public class ReportService {
             monthlyTransactionSummaryJpaRepository.save(report);
         }
 
-        // 월별 요약
-        for (int i = 5; i >= 1; i--) {
-            LocalDateTime now = LocalDateTime.now().minusMonths(i);
-            int year = now.getYear();
-            int month = now.getMonthValue();
-            MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
-
-            // 소비패턴 계산
-            int[] pattern = calculateSpendingPattern(user, now);
-
-            // AI 요약
-            OpenAiChatModel model = OpenAiChatModel.builder()
-                    .baseUrl("http://langchain4j.dev/demo/openai/v1")
-//                    .apiKey("demo")
-                    .modelName("gpt-4o-mini")
-                    .build();
-
-            String question = "다음은 " + user.getUserName() + "님의 한달간 소비 내역이야. 요약해줘. 감성적인 말투로 부탁해.\n";
-
-            List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
-            for (ReportCategoryDTO row : spendingByCategory) {
-                String category = row.getCategory();
-                question = question.concat(category + "카테고리 지출 : " + row.getAmount() + "원\n");
-            }
-            question = question.concat("과소비성향 : " + pattern[0] + "\n");
-            question = question.concat("소비변동성 : " + pattern[1] + "\n");
-            question = question.concat("소비외향성 : " + pattern[2] + "\n");
-            question = question.concat("hint: 과소비 성향은 수입 대비 소비정도를, 소비 변동성은 직전달 대비 소비의 변동성, 소비 외향성은 소비카테고리 기준 외향적 소비 비율을 의미해. 모든 값은 50을 기준으로 생각하고 평가해줘");
-
-
-            String answer = model.chat(question);
-            String consumptionPatternId = "";
-            if (pattern[2] > 50) consumptionPatternId = consumptionPatternId.concat("E"); // 외향형
-            else consumptionPatternId = consumptionPatternId.concat("I"); // 내향헝
-            if (pattern[0] > 50) consumptionPatternId = consumptionPatternId.concat("B"); // 과소비형
-            else consumptionPatternId = consumptionPatternId.concat("M"); // 절약형
-            if (pattern[1] > 50) consumptionPatternId = consumptionPatternId.concat("V"); // 변동형
-            else consumptionPatternId = consumptionPatternId.concat("S"); // 일관형
-            MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(report);
-            System.out.println(mcr);
-            if (mcr == null) {
-
-                MonthlyConsumptionReportEntity monthlyConsumptionReport = MonthlyConsumptionReportEntity
-                        .builder()
-                        .report(report)
-                        .consumptionPatternId(consumptionPatternId)
-                        .overConsumption(pattern[0])
-                        .variation(pattern[1])
-                        .extrovert(pattern[2])
-                        .reportDescription(answer)
-                        .build();
-
-                monthlyConsumptionReportJpaRepository.save(monthlyConsumptionReport);
-            } else {
-                mcr.setReport(report);
-                mcr.setConsumptionPatternId(consumptionPatternId);
-                mcr.setOverConsumption(pattern[0]);
-                mcr.setVariation(pattern[1]);
-                mcr.setExtrovert(pattern[2]);
-                mcr.setReportDescription(answer);
-
-                mcr = monthlyConsumptionReportJpaRepository.save(mcr);
-            }
-        }
+        // 월별 요약(최근 한달만)
         LocalDateTime now = LocalDateTime.now().minusMonths(1);
         int year = now.getYear();
         int month = now.getMonthValue();
+
+        createReport(userId,now);
+
         MonthlyTransactionSummaryEntity mts = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
         MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(mts);
         UserEntity nowUser = userJpaRepository.getReferenceById(user.getUserId());
         nowUser.setConsumptionPatternId(mcr.getConsumptionPatternId());
         nowUser = userJpaRepository.save(nowUser);
+    }
+
+    @Transactional
+    public void reportWithMyDataAfterStart(Integer userId) {
+        // 월별 요약
+        for(int i=5 ; i>=1 ; i--) {
+            LocalDateTime now = LocalDateTime.now().minusMonths(i);
+            createReport(userId,now);
+            updateReport(userId,now);
+        }
+    }
+
+    @Transactional
+    public void createReport(Integer userId, LocalDateTime now) {
+        UserEntity user = userJpaRepository.getReferenceById(userId);
+        int year = now.getYear();
+        int month = now.getMonthValue();
+        MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
+
+        // 소비패턴 계산
+        int[] pattern = calculateSpendingPattern(user, now);
+
+        String answer = "";
+        String consumptionPatternId = "";
+        if (pattern[2] > 50) consumptionPatternId = consumptionPatternId.concat("E"); // 외향형
+        else consumptionPatternId = consumptionPatternId.concat("I"); // 내향헝
+        if (pattern[0] > 50) consumptionPatternId = consumptionPatternId.concat("B"); // 과소비형
+        else consumptionPatternId = consumptionPatternId.concat("M"); // 절약형
+        if (pattern[1] > 50) consumptionPatternId = consumptionPatternId.concat("V"); // 변동형
+        else consumptionPatternId = consumptionPatternId.concat("S"); // 일관형
+        MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(report);
+        System.out.println(mcr);
+        if (mcr == null) {
+
+            MonthlyConsumptionReportEntity monthlyConsumptionReport = MonthlyConsumptionReportEntity
+                    .builder()
+                    .report(report)
+                    .consumptionPatternId(consumptionPatternId)
+                    .overConsumption(pattern[0])
+                    .variation(pattern[1])
+                    .extrovert(pattern[2])
+                    .reportDescription(answer)
+                    .build();
+
+            monthlyConsumptionReportJpaRepository.save(monthlyConsumptionReport);
+        } else {
+            mcr.setReport(report);
+            mcr.setConsumptionPatternId(consumptionPatternId);
+            mcr.setOverConsumption(pattern[0]);
+            mcr.setVariation(pattern[1]);
+            mcr.setExtrovert(pattern[2]);
+            mcr.setReportDescription(answer);
+
+            mcr = monthlyConsumptionReportJpaRepository.save(mcr);
+        }
+    }
+
+    @Transactional
+    public void updateReport(Integer userId, LocalDateTime now) {
+        // GPT 답변 생성
+        UserEntity user = userJpaRepository.getReferenceById(userId);
+        int year = now.getYear();
+        int month = now.getMonthValue();
+        MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
+        MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(report);
+        int[] pattern = new int[] { mcr.getOverConsumption() , mcr.getVariation(), mcr.getExtrovert() };
+
+        // AI 요약
+        OpenAiChatModel model = OpenAiChatModel.builder()
+                .baseUrl("http://langchain4j.dev/demo/openai/v1")
+                // .apiKey("demo")
+                .modelName("gpt-4o-mini")
+                .build();
+
+        String question = "다음은 " + user.getUserName() + "님의 한달간 소비 내역이야. 요약해줘. 감성적인 말투로 부탁해.\n";
+
+        List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
+        for (ReportCategoryDTO row : spendingByCategory) {
+            String category = row.getCategory();
+            question = question.concat(category + "카테고리 지출 : " + row.getAmount() + "원\n");
+        }
+        question = question.concat("과소비성향 : " + pattern[0] + "\n");
+        question = question.concat("소비변동성 : " + pattern[1] + "\n");
+        question = question.concat("소비외향성 : " + pattern[2] + "\n");
+        question = question.concat("hint: 과소비 성향은 수입 대비 소비정도를, 소비 변동성은 직전달 대비 소비의 변동성, 소비 외향성은 소비카테고리 기준 외향적 소비 비율을 의미해. 모든 값은 50을 기준으로 생각하고 평가해줘");
+
+
+        String answer = model.chat(question);
+        System.out.println(mcr);
+        mcr.setReportDescription(answer);
+
+        mcr = monthlyConsumptionReportJpaRepository.save(mcr);
+
     }
 
     @Transactional
@@ -383,32 +416,6 @@ public class ReportService {
             report.setReceivedBenefitAmount(0);
 
             report = monthlyTransactionSummaryJpaRepository.save(report);
-//            List<CardEntity> cards = cardsJpaRepository.findByUserId(user.getUserId());
-//            for (CardEntity card : cards) {
-//                ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), card.getCardId());
-//                ReportCardsEntity reportCardsEntity = ReportCardsEntity
-//                        .builder()
-//                        .cardId(card.getCardId())
-//                        .reportId(report.getReportId())
-//                        .monthSpendingAmount(0)
-//                        .monthBenefitAmount(0)
-//                        .createdAt(report.getCreatedAt())
-//                        .spendingTier((short) 0)
-//                        .build();
-//                if (reportCard == null) {
-//                    int reportCardId = reportCardsJpaRepository.save(reportCardsEntity).getReportCardId();
-//                    reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
-//
-//                } else {
-//                    reportCard.setMonthSpendingAmount(0);
-//                    reportCard.setMonthBenefitAmount(0);
-//                    reportCard.setSpendingTier((short) 0);
-//
-//                    reportCard = reportCardsJpaRepository.save(reportCard);
-//
-//                }
-//
-//            }
 
             List<MonthlySpendingByCategoryAndCardDTO> monthlyTransactions = transactionsJpaRepository.getMonthlySpendingByCategoryAndCard(user.getUserId(), year, month);
 
@@ -511,83 +518,6 @@ public class ReportService {
             monthlyTransactionSummaryJpaRepository.save(report);
         }
 
-        // 월별 요약
-//        for (MonthlyTransactionSummaryEntity report : mtsList) {
-////            LocalDateTime now = LocalDateTime.now().minusMonths(i);
-//            int year = report.getYear();
-//            int month = report.getMonth();
-//            if(year==LocalDateTime.now().getYear() && month==LocalDateTime.now().getMonthValue()) {
-//                continue;
-//            }
-////            MonthlyTranjsactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
-//
-//            LocalDateTime now = LocalDateTime.of(year,month,1,0,0,0);
-//            // 소비패턴 계산
-//            int[] pattern = calculateSpendingPattern(user, now);
-//
-////            // AI 요약
-////            OpenAiChatModel model = OpenAiChatModel.builder()
-////                    .baseUrl("http://langchain4j.dev/demo/openai/v1")
-//////                    .apiKey("demo")
-////                    .modelName("gpt-4o-mini")
-////                    .build();
-////
-////            String question = "다음은 " + user.getUserName() + "님의 한달간 소비 내역이야. 요약해줘. 감성적인 말투로 부탁해.\n";
-////
-////            List<ReportCategoryDTO> spendingByCategory = getTotalSpendingByCategory(user, year, month);
-////            for (ReportCategoryDTO row : spendingByCategory) {
-////                String category = row.getCategory();
-////                question = question.concat(category + "카테고리 지출 : " + row.getAmount() + "원\n");
-////            }
-////            question = question.concat("과소비성향 : " + pattern[0] + "\n");
-////            question = question.concat("소비변동성 : " + pattern[1] + "\n");
-////            question = question.concat("소비외향성 : " + pattern[2] + "\n");
-////            question = question.concat("hint: 과소비 성향은 수입 대비 소비정도를, 소비 변동성은 직전달 대비 소비의 변동성, 소비 외향성은 소비카테고리 기준 외향적 소비 비율을 의미해. 모든 값은 50을 기준으로 생각하고 평가해줘");
-////
-////
-////            String answer = model.chat(question);
-//            String answer = "";
-//            String consumptionPatternId = "";
-//            if (pattern[2] > 50) consumptionPatternId = consumptionPatternId.concat("E"); // 외향형
-//            else consumptionPatternId = consumptionPatternId.concat("I"); // 내향헝
-//            if (pattern[0] > 50) consumptionPatternId = consumptionPatternId.concat("B"); // 과소비형
-//            else consumptionPatternId = consumptionPatternId.concat("M"); // 절약형
-//            if (pattern[1] > 50) consumptionPatternId = consumptionPatternId.concat("V"); // 변동형
-//            else consumptionPatternId = consumptionPatternId.concat("S"); // 일관형
-//            MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(report);
-//            System.out.println(mcr);
-//            if (mcr == null) {
-//
-//                MonthlyConsumptionReportEntity monthlyConsumptionReport = MonthlyConsumptionReportEntity
-//                        .builder()
-//                        .report(report)
-//                        .consumptionPatternId(consumptionPatternId)
-//                        .overConsumption(pattern[0])
-//                        .variation(pattern[1])
-//                        .extrovert(pattern[2])
-//                        .reportDescription(answer)
-//                        .build();
-//
-//                monthlyConsumptionReportJpaRepository.save(monthlyConsumptionReport);
-//            } else {
-//                mcr.setReport(report);
-//                mcr.setConsumptionPatternId(consumptionPatternId);
-//                mcr.setOverConsumption(pattern[0]);
-//                mcr.setVariation(pattern[1]);
-//                mcr.setExtrovert(pattern[2]);
-////                mcr.setReportDescription(answer);
-//
-//                mcr = monthlyConsumptionReportJpaRepository.save(mcr);
-//            }
-//        }
-//        LocalDateTime now = LocalDateTime.now().minusMonths(1);
-//        int year = now.getYear();
-//        int month = now.getMonthValue();
-//        MonthlyTransactionSummaryEntity mts = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
-//        MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(mts);
-//        UserEntity nowUser = userJpaRepository.getReferenceById(user.getUserId());
-//        nowUser.setConsumptionPatternId(mcr.getConsumptionPatternId());
-//        nowUser = userJpaRepository.save(nowUser);
     }
 
     @Transactional
