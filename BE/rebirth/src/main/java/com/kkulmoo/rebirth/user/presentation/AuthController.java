@@ -74,6 +74,8 @@ public class AuthController {
 			@JwtUserId Integer userId,
 			@RequestBody String patternNumbers) {
 
+		System.out.println("패턴로그인등록시 유저 아이디 > " + userId);
+		System.out.println("등록하는 패턴 번호 > " + patternNumbers);
 		//패턴 ID를 업데이트 하기
 		authService.createPatternNum(userId,patternNumbers);
 

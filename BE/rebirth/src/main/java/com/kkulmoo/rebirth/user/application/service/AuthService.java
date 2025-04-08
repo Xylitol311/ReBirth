@@ -62,7 +62,7 @@ public class AuthService {
         User user = userRepository.findByUserId(new UserId(userId));
 
         userRepository.update(User.builder()
-                        .userId(user.getUserId())
+                .userId(user.getUserId())
                 .userName(user.getUserName())
                 .userCI(user.getUserCI())
                 .hashedPinNumber(user.getHashedPinNumber())
