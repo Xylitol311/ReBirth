@@ -53,7 +53,7 @@ fun HomeHeader(
             painter = painterResource(id = R.drawable.earth),
             contentDescription = "Earth",
             modifier = Modifier
-                .size(180.dp)
+                .size(140.dp)
                 .align(Alignment.TopEnd)
                 .offset(y = (-20).dp) // padding 대신 offset 사용
         )

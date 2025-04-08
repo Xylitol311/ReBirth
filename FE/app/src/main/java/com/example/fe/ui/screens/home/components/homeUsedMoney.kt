@@ -119,7 +119,7 @@ fun HomeUsedMoney(
                     onClick = onDetailClick,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .padding(end = 32.dp)
+                        .padding(end = 20.dp)
                         .offset(y = -10.dp)
                 ) {
                     Icon(

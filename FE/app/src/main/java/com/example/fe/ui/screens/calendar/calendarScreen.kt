@@ -296,7 +296,7 @@ fun CalendarScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // 왼쪽 화살표 (<)
@@ -661,7 +661,7 @@ fun CalendarScreen(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(bottom = 12.dp, start = 4.dp),
+                                            .padding(vertical = 12.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         // 이전 월 버튼 (활성화 여부에 따라 스타일 변경)

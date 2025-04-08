@@ -4,5 +4,15 @@
     <style name="Theme.FE" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+    
+    <!-- 스플래시 화면 테마 추가 (최적화) -->
+    <style name="Theme.FE.Splash" parent="Theme.FE">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowContentTransitions">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 </resources>
