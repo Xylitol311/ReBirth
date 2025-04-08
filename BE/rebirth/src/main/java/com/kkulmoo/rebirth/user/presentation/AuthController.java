@@ -70,7 +70,6 @@ public class AuthController {
 			@RequestBody UserLoginRequest userLoginRequest
 	)
 	{
-
 		System.out.println(userLoginRequest.getNumber() + " " + userLoginRequest.getPhoneSerialNumber()+ " " + userLoginRequest.getType());
 
 		AuthenticationResult result;
