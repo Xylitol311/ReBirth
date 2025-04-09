@@ -343,6 +343,13 @@ public class CardService {
                 .map(MyCard::updateLatestLoadDataAt)
                 .collect(Collectors.toList());
 
+
+
+
+
+
+
+
         cardRepository.saveAll(updatedCards);
     }
 

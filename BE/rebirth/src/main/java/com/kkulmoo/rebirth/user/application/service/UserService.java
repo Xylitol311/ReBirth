@@ -40,4 +40,5 @@ public class UserService {
 			throw new UserDeletionException("사용자 삭제에 실패하였습니다. ID: " + userId);
 		}
 	}
+
 }

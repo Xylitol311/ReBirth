@@ -52,7 +52,6 @@ public class UserCardBenefitService {
                         month
                 ).orElseGet(() -> UserCardBenefit.builder() // DB에 데이터가 없으면 새로 생성
                         .userId(cardTransactionResponse.getUserId().getValue())
-                        
                         .benefitTemplateId(cardTransactionResponse.getBenefitId())
 
                         .spendingTier( // 리포트에서 전월 실적 구간 가져오기
