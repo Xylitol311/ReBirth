@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -51,7 +52,7 @@ fun IncomeInputScreen(
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
-                .padding(16.dp)) {
+                .padding(horizontal = 16.dp, vertical = 16.dp))  {
                 Button(
                     onClick = {
                         // 확인 버튼 클릭 시 PIN 설정 화면으로 애니메이션 없이 이동
@@ -68,10 +69,10 @@ fun IncomeInputScreen(
                     enabled = income.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp),
+                        .height(50.dp),
                     shape = RoundedCornerShape(8.dp), // 모서리를 둥글게
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = SkyBlue, // 하늘색 배경
+                        containerColor = Color(0xFF33CCFF), // 하늘색 배경
                         contentColor = Color.White, // 흰색 텍스트
                         disabledContainerColor = Color.LightGray // 비활성화시 밝은 회색
                     )
@@ -89,15 +90,17 @@ fun IncomeInputScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.height(24.dp))
 
-            Text("소비패턴 분석을 위해서\n월 평균 수입을 알려주세요", fontSize = 28.sp)
-            
+            Text("소비패턴 분석을 위해서\n월 평균 수입을 알려주세요", fontSize = 25.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally))
+            Spacer(modifier = Modifier.height(50.dp))
             Row(
                 verticalAlignment = Alignment.Bottom,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth() .padding(horizontal = 16.dp)
             ) {
                 TextField(
                     value = income,
@@ -110,8 +113,9 @@ fun IncomeInputScreen(
                     label = { Text("", color = SkyBlue) },
                     singleLine = true,
                     textStyle = TextStyle(
-                        fontSize = 20.sp,
-                        color = Color.Black
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        textAlign = TextAlign.End
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = TextFieldDefaults.colors(

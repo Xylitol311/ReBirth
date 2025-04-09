@@ -23,8 +23,14 @@ import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.Color.Companion.hsl
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import com.example.fe.ui.theme.SkyBlue
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
+import kotlinx.coroutines.launch
 
 enum class Step {
     NAME, SSN, TELECOM, PHONE, CODE
@@ -38,7 +44,8 @@ fun AuthScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var currentStep by remember { mutableStateOf(Step.NAME) }
     var name by remember { mutableStateOf("") }
     var ssnFront by remember { mutableStateOf("") }
@@ -83,6 +90,8 @@ fun AuthScreen(
         }
     }
 
+
+
     val telcos = listOf("SKT", "KT", "LGU+", "SKT 알뜰폰", "KT 알뜰폰", "LGU+ 알뜰폰")
     val agreementItems = listOf(
         "[필수] 서비스 이용 동의",
@@ -91,6 +100,21 @@ fun AuthScreen(
     )
     val checkedItems = remember { mutableStateListOf<String>() }
 
+
+    LaunchedEffect(checkedItems.size) {
+        if (checkedItems.size == agreementItems.size && currentStep == Step.CODE) {
+            // 모든 약관에 동의하고 인증번호 단계일 때만 이동
+            navController.navigate(
+                "income_input/${name}/${phone}/${ssnFront}",
+                NavOptions.Builder()
+                    .setEnterAnim(0)
+                    .setExitAnim(0)
+                    .setPopEnterAnim(0)
+                    .setPopExitAnim(0)
+                    .build()
+            )
+        }
+    }
     // 시스템 뒤로가기 처리
     BackHandler(enabled = currentStep != Step.NAME) {
         // 첫 단계가 아닌 경우에만 이전 단계로 이동
@@ -100,6 +124,7 @@ fun AuthScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {},
@@ -129,24 +154,46 @@ fun AuthScreen(
                 .padding(16.dp)) {
                 Button(
                     onClick = {
-                        Log.d("Click", "다음")
-                        if (currentStep == Step.CODE) {
-                            // 인증번호 입력 완료 후 수입 입력 화면으로 이동 (애니메이션 없이)
-                            if (code.length == 6) {
-                                navController.navigate(
-                                    "income_input/${name}/${phone}/${ssnFront}",
-                                    NavOptions.Builder()
-                                        .setEnterAnim(0)
-                                        .setExitAnim(0)
-                                        .setPopEnterAnim(0)
-                                        .setPopExitAnim(0)
-                                        .build()
-                                )
-                            } else {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+
+                        when (currentStep) {
+                            Step.PHONE -> {
+                                // 휴대폰 번호 입력 후 다음 버튼 클릭 시 SMS 인증 요청
+//                                viewModel.sendSmsVerification(
+//                                    phoneNumber = phone,
+//                                    onSuccess = {
+//                                        Log.d("AuthSMS","전송완료 ${phone}")
+//                                        currentStep = Step.values()[currentStep.ordinal + 1]
+//                                    },
+//                                    onFailure = { error ->
+//                                        // 에러 처리 (예: 토스트 메시지 표시)
+//                                        Log.e("AuthSMS", error)
+//                                    }
+//                                )
+                                currentStep = Step.values()[currentStep.ordinal + 1]
+                            }
+                            Step.CODE -> {
+                                // 인증번호 입력 후 다음 버튼 클릭 시 SMS 인증 확인
+//                                viewModel.verifySmsCode(
+//                                    phoneNumber = phone,
+//                                    verificationCode = code,
+//                                    onSuccess = {
+//                                        Log.d("AuthSMS","인증 완료 ${phone}")
+//                                        showAgreement = true
+//                                    },
+//                                    onFailure = { error ->
+//                                        // 에러 처리 (예: 토스트 메시지 표시)
+//
+//                                        Log.e("Verify Error", error)
+//                                    }
+//                                )
                                 showAgreement = true
                             }
+                            else -> {
+                                currentStep = Step.values()[currentStep.ordinal + 1]
+                            }
                         }
-                        else currentStep = Step.values()[currentStep.ordinal + 1]
                     },
                     enabled = when (currentStep) {
                         Step.NAME -> name.isNotBlank()
@@ -185,7 +232,12 @@ fun AuthScreen(
 
             when (currentStep) {
                 Step.NAME -> {
-                    Text("이름을 알려주세요", fontSize = 28.sp)
+                    Text("이름을 알려주세요",
+                        fontSize = 25.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp)) // 텍스트와 필드 사이 간격
                     UnderlineTextField(
                         value = name,
                         onValueChange = { name = it },
@@ -196,18 +248,19 @@ fun AuthScreen(
                     )
                 }
                 Step.SSN -> {
-                    Text("주민등록번호를 입력해주세요", fontSize = 28.sp)
-
+                    Text("주민등록번호를 입력해주세요", fontSize = 25.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Spacer(modifier = Modifier.height(24.dp))
                     Box(modifier = Modifier.fillMaxWidth()) {
                         // 중앙 "-" 배치
                         Text(
                             text = "-",
-                            fontSize = 32.sp,
+                            fontSize = 20.sp,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             color = Color.Black,
                             modifier = Modifier
                                 .align(Alignment.Center)
-                                .padding(bottom = 12.dp)
+                                .padding(bottom = 5.dp)
                         )
 
                         Row(
@@ -255,14 +308,14 @@ fun AuthScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(70.dp)
-                                        .padding(start = 12.dp, bottom = 10.dp),
+                                        .padding(bottom = 5.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     repeat(6) {
                                         Text(
                                             "●",
-                                            fontSize = 28.sp,
+                                            fontSize = 20.sp,
                                             color = Color.DarkGray
                                         )
                                     }
@@ -274,7 +327,9 @@ fun AuthScreen(
                     DisplayInfo("이름", name)
                 }
                 Step.TELECOM -> {
-                    Text("통신사를 선택해주세요", fontSize = 28.sp)
+                    Text("통신사를 선택해주세요",fontSize = 25.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Spacer(modifier = Modifier.height(24.dp))
                     TelcoSelector(telco = telco) {
                         Log.d("TELCO_CLICK", "바텀시트 열림")
                         showTelcoSheet = true
@@ -283,7 +338,9 @@ fun AuthScreen(
                     DisplayInfo("주민등록번호", "$ssnFront-$ssnBack●●●●●●")
                 }
                 Step.PHONE -> {
-                    Text("휴대폰 번호를 입력해주세요", fontSize = 28.sp)
+                    Text("휴대폰 번호를 입력해주세요", fontSize = 25.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Spacer(modifier = Modifier.height(24.dp))
                     UnderlineTextField(
                         value = phone,
                         onValueChange = {
@@ -300,7 +357,9 @@ fun AuthScreen(
                     DisplayInfo("통신사", telco)
                 }
                 Step.CODE -> {
-                    Text("인증번호를 입력해주세요", fontSize = 28.sp)
+                    Text("인증번호를 입력해주세요", fontSize = 25.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Spacer(modifier = Modifier.height(24.dp))
                     UnderlineTextField(
                         value = code,
                         onValueChange = { if (it.length <= 6) code = it },
@@ -310,6 +369,22 @@ fun AuthScreen(
                             .focusRequester(codeFocusRequester),
                         keyboardType = KeyboardType.Number
                     )
+                    TextButton(
+                        onClick = {
+//                            viewModel.sendSmsVerification(
+//                                phoneNumber = phone,
+//                                onSuccess = {
+//                                    // 재전송 성공 메시지
+//                                },
+//                                onFailure = { error ->
+//                                    // 에러 처리
+//                                }
+//                            )
+                        }
+                    ) {
+                        Text("인증번호 재전송", color = SkyBlue)
+                    }
+
                     DisplayInfo("이름", name)
                     DisplayInfo("주민등록번호", "$ssnFront-$ssnBack●●●●●●")
                     DisplayInfo("통신사", telco)
@@ -393,18 +468,18 @@ fun AuthScreen(
                     onClick = {
                         showAgreement = false
                         // 동의 완료
-                        if (code.length == 6) {
-                            // 코드가 이미 입력되어 있다면 소득 입력 화면으로 이동 (애니메이션 없이)
-                            navController.navigate(
-                                "income_input/${name}/${phone}/${ssnFront}",
-                                NavOptions.Builder()
-                                    .setEnterAnim(0)
-                                    .setExitAnim(0)
-                                    .setPopEnterAnim(0)
-                                    .setPopExitAnim(0)
-                                    .build()
-                            )
-                        }
+//                        if (code.length == 6) {
+//                            // 코드가 이미 입력되어 있다면 소득 입력 화면으로 이동 (애니메이션 없이)
+//                            navController.navigate(
+//                                "income_input/${name}/${phone}/${ssnFront}",
+//                                NavOptions.Builder()
+//                                    .setEnterAnim(0)
+//                                    .setExitAnim(0)
+//                                    .setPopEnterAnim(0)
+//                                    .setPopExitAnim(0)
+//                                    .build()
+//                            )
+//                        }
                     },
                     enabled = checkedItems.size == agreementItems.size,
                     modifier = Modifier
@@ -422,10 +497,26 @@ fun AuthScreen(
                         fontSize = 22.sp
                     )
                 }
+
+
+
+
+            }
+        }
+    }
+    LaunchedEffect(viewModel.errorMessage) {
+        if (viewModel.errorMessage.isNotBlank()) {
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    message = viewModel.errorMessage,
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.errorMessage = "" // 메시지 표시 후 초기화
             }
         }
     }
 }
+
 
 @Composable
 fun UnderlineTextField(
@@ -435,23 +526,44 @@ fun UnderlineTextField(
     modifier: Modifier = Modifier.fillMaxWidth(),
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
-    TextField(
+    BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.height(70.dp),
+        modifier = modifier
+            .height(70.dp)
+            .background(
+                color = Color.Transparent,
+                shape = RectangleShape
+            ),
         singleLine = true,
-        label = { Text(label, fontSize = 20.sp, color = SkyBlue) },
         textStyle = androidx.compose.ui.text.TextStyle(fontSize = 20.sp, color = Color.Black),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        colors = TextFieldDefaults.colors(
-            focusedIndicatorColor = SkyBlue,
-            unfocusedIndicatorColor = Color.Gray,
-            disabledIndicatorColor = Color.Gray,
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            cursorColor = SkyBlue
-        )
+        decorationBox = { innerTextField ->
+            Column {
+                // 라벨이 선의 맨 왼쪽에 위치하도록 설정
+                Text(
+                    text = label,
+                    fontSize = 20.sp,
+                    color = SkyBlue,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    innerTextField()
+                }
+
+                // 밑줄
+                Divider(
+                    color = if (value.isNotEmpty()) SkyBlue else Color.Gray,
+                    thickness = 1.dp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     )
 }
 
@@ -462,27 +574,42 @@ fun UnderlineSingleDigitField(
     modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Number
 ) {
-    TextField(
+    BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.height(70.dp),
+        modifier = modifier
+            .height(70.dp)
+            .width(50.dp)
+            .background(
+                color = Color.Transparent,
+                shape = RectangleShape
+            ),
         singleLine = true,
         textStyle = androidx.compose.ui.text.TextStyle(
             fontSize = 20.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Normal,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             color = Color.Black
         ),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        colors = TextFieldDefaults.colors(
-            focusedIndicatorColor = SkyBlue,
-            unfocusedIndicatorColor = Color.Gray,
-            disabledIndicatorColor = Color.Gray,
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            cursorColor = SkyBlue
-        )
+        decorationBox = { innerTextField ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 30.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    innerTextField()
+                }
+
+                // 밑줄
+                Divider(
+                    color = if (value.isNotEmpty()) SkyBlue else Color.Gray,
+                    thickness = 1.dp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     )
 }
 
@@ -491,7 +618,7 @@ fun DisplayInfo(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, fontSize = 20.sp, color = Color.Gray)
@@ -511,7 +638,15 @@ fun TelcoSelector(telco: String, onClick: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
-                .border(1.dp, Color.Gray, MaterialTheme.shapes.medium)
+                .border(
+                    1.dp, hsl(
+                        hue = 165f,        // 160-170 범위의 중간값
+                        saturation = 0.8f, // 80%
+                        lightness = 0.75f, // 75%
+                        alpha = 1f,        // 완전 불투명
+                        colorSpace = ColorSpaces.Srgb
+                    ), MaterialTheme.shapes.medium
+                )
                 .clickable { onClick() }
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.CenterStart

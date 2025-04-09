@@ -25,6 +25,17 @@ data class PatternNumbersRequest(
     val patternNumbers: String
 )
 
+//SMS 요청시
+data class SendSmsRequest(
+    val phoneNumber: String
+)
+
+//SMS 인증번호 맞는지 여부
+
+data class VerifySmsRequest(
+    val phoneNumber: String,
+    val code: String
+)
 
 //패턴 정보 받아오기
 data class ReportWithPatternDTO(
@@ -46,6 +57,8 @@ data class ConsumptionPattern(
     val description: String?,
     @SerializedName("img_url") val imgUrl: String?
 )
+
+
 
 //로그인 시
 data class userLoginRequest(

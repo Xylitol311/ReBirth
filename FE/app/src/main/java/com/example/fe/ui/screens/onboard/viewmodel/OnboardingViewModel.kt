@@ -16,12 +16,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.auth.PatternNumbersRequest
 import com.example.fe.data.model.auth.ReportWithPatternDTO
+import com.example.fe.data.model.auth.SendSmsRequest
 import com.example.fe.data.network.NetworkClient
 import com.example.fe.data.model.auth.SignupRequest
+import com.example.fe.data.model.auth.VerifySmsRequest
 import com.example.fe.data.model.auth.userLoginRequest
 import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -61,18 +64,24 @@ class OnboardingViewModel(
     var isLoading by mutableStateOf(false)
         private set
     var errorMessage by mutableStateOf("")
-        private set
+        internal set
 
     // 로컬 인증 정보 (메모리 캐싱)
     private var userPin: String = "000000"
     private var userPattern: List<Int> = listOf(0, 3, 6, 7, 8)
 
+    // AppTokenProvider 인스턴스 추가
+    private val tokenProvider = AppTokenProvider(context)
     init {
         loadUserPreferences()
     }
 
     private fun loadUserPreferences() {
         viewModelScope.launch {
+            context.dataStore.data.first().let { preferences ->
+                userToken = preferences[USER_TOKEN] ?: ""
+                tokenProvider.setToken(userToken)
+            }
             context.dataStore.data.collect { preferences ->
                 isLoggedIn = preferences[IS_LOGGED_IN] ?: false
                 hasBiometricAuth = preferences[HAS_BIOMETRIC_AUTH] ?: false
@@ -102,8 +111,69 @@ class OnboardingViewModel(
 
     fun getUserPin(): String = "000000"
 
-    fun validateUserPin(){
+    // SMS 인증번호 요청
+    fun sendSmsVerification(
+        phoneNumber: String,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                isLoading = true
+                errorMessage = ""
 
+                Log.d("AuthSMS", "${phoneNumber}")
+
+                val response = authApiService.sendSMS(
+                    SendSmsRequest(phoneNumber = phoneNumber)
+                )
+
+                if (!response.isSuccessful) {
+                    Log.e("AuthSMS","${response}")
+                    throw Exception("SMS 전송 실패: ${response.message()}")
+                }
+
+                onSuccess()
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "SMS 전송 중 오류 발생"
+                onFailure(errorMessage)
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    // SMS 인증번호 확인
+    fun verifySmsCode(
+        phoneNumber: String,
+        verificationCode: String,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                isLoading = true
+                errorMessage = ""
+
+                val response = authApiService.verifySMS(
+                    VerifySmsRequest(
+                        phoneNumber = phoneNumber,
+                        code = verificationCode
+                    )
+                )
+
+                if (!response.isSuccessful) {
+                    throw Exception("인증번호 확인 실패: ${response.message()}")
+                }
+
+                onSuccess()
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "인증번호 확인 중 오류 발생"
+                onFailure(errorMessage)
+            } finally {
+                isLoading = false
+            }
+        }
     }
 
     // 로컬 패턴 저장
@@ -260,6 +330,11 @@ class OnboardingViewModel(
         }
     }
 
+
+
+
+
+
     // 서버에 패턴 등록 + 로컬 저장
     fun registerPattern(
         pattern: List<Int>,
@@ -340,7 +415,7 @@ class OnboardingViewModel(
         }
     }
 
-    // 리포트 생성 함수
+    // 젤 최근 한달치 리포트 생성 함수
     fun generateReportFromMyData(
         userId: Int,
         onSuccess: () -> Unit,
@@ -355,10 +430,36 @@ class OnboardingViewModel(
                 if (result.isSuccessful) {
                     onSuccess()
                 } else {
-                    throw Exception("리포트 생성 실패")
+                    throw Exception("회원가입시 리포트 생성 실패")
                 }
             } catch (e: Exception) {
-                errorMessage = e.message ?: "리포트 생성 중 오류 발생"
+                errorMessage = e.message ?: "회원가입 시 리포트 생성 중 오류 발생"
+                onFailure(errorMessage)
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+    //이후 리포트 생성
+    // 리포트 생성 함수
+    fun generateAllReportFromMyData(
+        userId: Int,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                isLoading = true
+                errorMessage = ""
+
+                val result = authApiService.createReportAfterStart(userId)
+                if (result.isSuccessful) {
+                    onSuccess()
+                } else {
+                    throw Exception("전체 리포트 생성 실패")
+                }
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "전체 리포트 생성 중 오류 발생"
                 onFailure(errorMessage)
             } finally {
                 isLoading = false
@@ -378,6 +479,18 @@ class OnboardingViewModel(
         userPin = ""
         userPattern = emptyList()
 
+        tokenProvider.invalidateToken()
+
+        // 3. API 호출로 서버 측 토큰 무효화 (필요 시)
+        try {
+            // 비동기로 서버에 로그아웃 알림
+            viewModelScope.launch(Dispatchers.IO) {
+                // apiService.logout() // 서버 측 토큰 무효화 API 호출
+            }
+        } catch (e: Exception) {
+            Log.e("OnboardingViewModel", "서버 로그아웃 실패", e)
+        }
+
         viewModelScope.launch {
             context.dataStore.edit { preferences ->
                 preferences[IS_LOGGED_IN] = false
@@ -394,12 +507,31 @@ class OnboardingViewModel(
 }
 
 class AppTokenProvider(private val context: Context) : TokenProvider {
+    // 메모리 캐싱을 위한 변수 추가
+    private var cachedToken: String = ""
+
+    // 토큰 설정 메소드 추가
+    fun setToken(token: String) {
+        cachedToken = token
+    }
+
+    // 토큰 무효화 메소드 추가
+    fun invalidateToken() {
+        cachedToken = ""
+    }
+
     override fun getToken(): String {
-        // DataStore는 suspend라서 동기적으로 값을 못 받아옴.
-        // 그래서 runBlocking으로 일시적으로 블로킹해서 값을 가져와야 함.
+        // 캐시된 토큰이 있으면 그것을 반환
+        if (cachedToken.isNotEmpty()) {
+            return cachedToken
+        }
+
+        // 없으면 DataStore에서 가져옴
         return runBlocking {
             val preferences = context.dataStore.data.first()
-            preferences[OnboardingViewModel.USER_TOKEN] ?: ""
+            val token = preferences[OnboardingViewModel.USER_TOKEN] ?: ""
+            cachedToken = token // 캐시에 저장
+            token
         }
     }
 }

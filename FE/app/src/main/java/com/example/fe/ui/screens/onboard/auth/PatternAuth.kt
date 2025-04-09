@@ -50,7 +50,7 @@ fun PatternAuth(
                 AdditionalSecurityStep.PATTERN_CONFIRM -> "패턴을 한 번 더 입력해주세요"
                 else -> ""
             },
-            fontSize = 28.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
