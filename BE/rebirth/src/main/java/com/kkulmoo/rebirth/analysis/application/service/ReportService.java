@@ -279,8 +279,12 @@ public class ReportService {
                 reportCard.setMonthSpendingAmount(count[0]);
                 reportCard.setMonthBenefitAmount(count[1]);
                 reportCard.setSpendingTier(myTierForCard);
-
                 reportCardsJpaRepository.save(reportCard);
+
+                if(i==1) {
+                    card.toBuilder().spendingTier(myTierForCard);
+                    cardsJpaRepository.save(card);
+                }
                 total[0] += count[0];
                 total[1] += count[1];
             }
@@ -290,12 +294,15 @@ public class ReportService {
             monthlyTransactionSummaryJpaRepository.save(report);
         }
 
-        // 월별 요약(최근 한달만)
+        // 월별 요약(최근 두 달만)
+        for(int i=2 ; i>=1 ; i--) {
+            LocalDateTime now = LocalDateTime.now().minusMonths(i);
+            createReport(userId,now);
+
+        }
         LocalDateTime now = LocalDateTime.now().minusMonths(1);
         int year = now.getYear();
         int month = now.getMonthValue();
-
-        createReport(userId,now);
 
         MonthlyTransactionSummaryEntity mts = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
         MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(mts);

@@ -23,7 +23,7 @@ public class ReportController {
     private final ReportService reportService;
 
     @PostMapping("/frommydata")
-    public ResponseEntity<ResponseDTO> getReportFromMyData(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> getReportFromMyData(@JwtUserId Integer userId) {
         reportService.startWithMyData(userId);
         ResponseDTO responseDTO = ResponseDTO
                 .builder()
@@ -34,7 +34,7 @@ public class ReportController {
     }
 
     @PostMapping("/afterstart")
-    public ResponseEntity<ResponseDTO> createReportAfterStart(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> createReportAfterStart(@JwtUserId Integer userId) {
         reportService.reportWithMyDataAfterStart(userId);
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
@@ -44,7 +44,7 @@ public class ReportController {
     }
 
     @GetMapping
-    public ResponseEntity<ResponseDTO> getReportWithPattern(@RequestParam Integer userId,
+    public ResponseEntity<ResponseDTO> getReportWithPattern(@JwtUserId Integer userId,
                                                             @RequestParam int year, @RequestParam int month) {
         ReportWithPatternDTO report = reportService.getReportWithPattern(userId, year, month);
         ResponseDTO result = new ResponseDTO();
@@ -56,7 +56,7 @@ public class ReportController {
     }
 
     @GetMapping("/card")
-    public ResponseEntity<ResponseDTO> getReportCards(@RequestParam Integer userId,
+    public ResponseEntity<ResponseDTO> getReportCards(@JwtUserId Integer userId,
                                                       @RequestParam int year, @RequestParam int month) {
 
         List<ReportCardDTO> reportCards = reportService.getReportCards(userId, year, month);
@@ -69,7 +69,7 @@ public class ReportController {
     }
 
     @GetMapping("/category")
-    public ResponseEntity<ResponseDTO> getReportCategories(@RequestParam Integer userId,
+    public ResponseEntity<ResponseDTO> getReportCategories(@JwtUserId Integer userId,
                                                            @RequestParam int year, @RequestParam int month) {
 
         List<ReportCategoryDTO> reportCategories = reportService.getReportCategories(userId, year,month);
@@ -84,7 +84,7 @@ public class ReportController {
     }
 
     @GetMapping("/test")
-    public ResponseEntity<ResponseDTO> testTransaction(@RequestParam Integer userId, @RequestParam LocalDateTime now) {
+    public ResponseEntity<ResponseDTO> testTransaction(@JwtUserId Integer userId, @RequestParam LocalDateTime now) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         reportService.updateMonthlyTransactionSummary(userId);
@@ -95,7 +95,7 @@ public class ReportController {
     }
 
     @GetMapping("/updatesummary")
-    public ResponseEntity<ResponseDTO> updateSummary(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> updateSummary(@JwtUserId Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("리포트 갱신 완료");

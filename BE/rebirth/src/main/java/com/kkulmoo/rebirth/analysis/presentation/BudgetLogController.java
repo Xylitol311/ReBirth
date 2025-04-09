@@ -23,7 +23,7 @@ public class BudgetLogController {
     private final BudgetLogService budgetLogService;
 
     @GetMapping("/log")
-    public ResponseEntity<ResponseDTO> getMonthlyLog(@RequestParam Integer userId,
+    public ResponseEntity<ResponseDTO> getMonthlyLog(@JwtUserId Integer userId,
                                                      @RequestParam("year") int year,
                                                      @RequestParam("month") int month) {
 
@@ -36,7 +36,7 @@ public class BudgetLogController {
     }
 
     @GetMapping("/transaction")
-    public ResponseEntity<ResponseDTO> getMonthlyTransactions(@RequestParam Integer userId,
+    public ResponseEntity<ResponseDTO> getMonthlyTransactions(@JwtUserId Integer userId,
                                                             @RequestParam("year") int year,
                                                             @RequestParam("month") int month) {
 
@@ -49,7 +49,7 @@ public class BudgetLogController {
     }
 
     @GetMapping("/info")
-    public ResponseEntity<ResponseDTO> getMonthlyBudgetLogInfo(@RequestParam Integer userId,
+    public ResponseEntity<ResponseDTO> getMonthlyBudgetLogInfo(@JwtUserId Integer userId,
                                                                @RequestParam("year") int year,
                                                                @RequestParam("month") int month) {
 
