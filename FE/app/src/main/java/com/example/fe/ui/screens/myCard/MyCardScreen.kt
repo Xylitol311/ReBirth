@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -77,6 +78,15 @@ fun MyCardScreen(
 ) {
     // 현재 화면 밀도 가져오기
     val density = LocalDensity.current.density
+    
+    // 화면 너비 가져오기 (동적으로 패딩 계산하기 위해)
+    val screenWidth = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
+    val cardWidth = 280.dp // 카드 너비 (고정)
+    
+    // 중앙 정렬을 위한 패딩 계산: (화면 너비 - 카드 너비) / 2
+    val horizontalPadding = with(LocalDensity.current) {
+        ((screenWidth - cardWidth) / 2)
+    }
 
     // ViewModel에서 상태 가져오기
     val uiState by viewModel.uiState.collectAsState()
@@ -452,9 +462,9 @@ fun MyCardScreen(
                             state = pagerState,
                             pageSpacing = 0.dp,
                             flingBehavior = flingBehavior,
-                            contentPadding = PaddingValues(start = 100.dp, end = 100.dp),
+                            contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding), // 동적 패딩 적용
                             userScrollEnabled = !isNavigating,
-                            pageSize = PageSize.Fixed(280.dp),
+                            pageSize = PageSize.Fixed(cardWidth), // 고정 카드 너비 사용
                             key = { it }
                         ) { page ->
                             // 현재 페이지와의 거리 계산
@@ -494,7 +504,7 @@ fun MyCardScreen(
                             // 카드 이미지
                             Box(
                                 modifier = Modifier
-                                    .width(280.dp)
+                                    .width(cardWidth)
                                     .height(400.dp)
                                     .zIndex(zIndex)
                                     .graphicsLayer(
@@ -509,7 +519,7 @@ fun MyCardScreen(
                                     // URL이 있는 경우 URL 버전의 VerticalCardLayout 사용
                                     VerticalCardLayout(
                                         cardImageUrl = realCards[page].imageUrl,
-                                        width = 280.dp,
+                                        width = cardWidth,
                                         height = 400.dp,
                                         cornerRadius = 16.dp,
                                         onClick = {

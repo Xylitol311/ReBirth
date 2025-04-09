@@ -90,7 +90,7 @@ fun HomeRecCard(
                     textAlign = TextAlign.Center
                 )
             }
-            
+
             // 현재 화면 밀도 가져오기
             val density = LocalDensity.current
             
@@ -155,14 +155,14 @@ fun HomeRecCard(
                             )
                         } else {
                             // 기본 카드 이미지 사용
-                            HorizontalCardLayout(
+                        HorizontalCardLayout(
                                 cardImage = R.drawable.card,
-                                modifier = Modifier
-                                    .width(280.dp)
-                                    .height(170.dp),
+                            modifier = Modifier
+                                .width(280.dp)
+                                .height(170.dp),
                                 cardName = card.cardName,
-                                cardImageUrl = ""
-                            )
+                            cardImageUrl = ""
+                        )
                         }
                     }
                 }
@@ -175,25 +175,25 @@ fun HomeRecCard(
                 // 카드 혜택 정보 추출
                 val benefits = currentCard.cardInfo.split(",").firstOrNull() ?: "혜택 정보 없음"
                 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
                         text = currentCard.cardName,
-                        fontSize = 18.sp,
-                        color = Color.White.copy(alpha = 0.9f),
-                        textAlign = TextAlign.Center,
-                        maxLines = 1
-                    )
-                    Text(
+                    fontSize = 18.sp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
+                Text(
                         text = benefits,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
                 }
             }
 
