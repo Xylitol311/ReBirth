@@ -50,7 +50,7 @@ public class UserRepositoryImpl implements UserRepository {
 	@Override
 	public User findByPhoneSerialNumberAndHashedPinNumber(String phoneSerialNumber, String hashedPinNumber) {
 		UserEntity userEntity = userJpaRepository
-				.findByPhoneSerialNumberAndPhoneNumber(phoneSerialNumber, hashedPinNumber)
+				.findByPhoneSerialNumberAndHashedPinNumber(phoneSerialNumber, hashedPinNumber)
 				.orElseThrow(() -> new UserNotFoundException("해당 기기 시리얼 번호와 전화번호로 사용자를 찾을 수 없습니다."));
 		return userEntityMapper.toUser(userEntity);
 	}
