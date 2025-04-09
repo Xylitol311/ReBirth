@@ -695,7 +695,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
 
                         // 현재 진행률 계산 (0.0 ~ 1.0)
                         val currentAmount = cardInfo.currentPerformanceAmount.toFloat()
-                        val maxAmount = cardInfo.maxPerformanceAmount.toFloat()
+                        val maxAmount = cardInfo.performanceRange.lastOrNull()?.toFloat() ?: cardInfo.maxPerformanceAmount.toFloat()
                         val currentProgress = (currentAmount / maxAmount).coerceIn(0f, 1f)
 
                         // 현재 실적 바
@@ -707,35 +707,40 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                         )
 
                         // 구간 마커 배치
-                        val maxTier = cardInfo.spendingMaxTier
+                        val performanceRanges = cardInfo.performanceRange
 
-                        // 구간이 1개 이상일 때만 마커 표시 (0구간만 있으면 마커 없음)
-                        if (maxTier > 0) {
+                        // 구간이 1개 이상일 때만 마커 표시 (마지막 인덱스는 제외)
+                        if (performanceRanges.size > 1) {
                             // 레이아웃 내에서 마커 위치 계산을 위한 BoxWithConstraints 사용
                             BoxWithConstraints(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 val barWidth = maxWidth
 
-                                // 1부터 maxTier까지의 마커 표시
-                                for (tier in 1..maxTier) {
-                                    // 각 구간 마커의 위치 계산 (균등 분할)
-                                    // 예: maxTier가 2면, 1번 마커는 1/2 지점에 위치
-                                    val position = tier.toFloat() / (maxTier + 1).toFloat()
+                                // 마커 개수 (마지막 인덱스 제외)
+                                val markerCount = performanceRanges.size - 1
+
+                                // 각 구간별 마커 표시 (마지막 인덱스 제외)
+                                for (i in 0 until markerCount) {
+                                    // 마커 위치는 균등 분할 (예: 마커가 2개면 33%, 66% 위치)
+                                    val position = (i + 1).toFloat() / (markerCount + 1).toFloat()
                                     val xOffset = barWidth * position - 12.dp // 마커 중앙이 위치에 오도록 조정
+
+                                    // 현재 마커가 나타내는 실적 값
+                                    val markerValue = performanceRanges[i]
 
                                     Box(
                                         modifier = Modifier
                                             .size(24.dp)
                                             .offset(x = xOffset)
                                             .background(
-                                                if (cardInfo.currentSpendingTier >= tier) Color(0xFF00BCD4) else Color.Gray.copy(alpha = 0.5f),
+                                                if (cardInfo.currentPerformanceAmount >= markerValue) Color(0xFF006064) else Color.Gray.copy(alpha = 0.5f),
                                                 CircleShape
                                             ),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = tier.toString(),
+                                            text = (i + 1).toString(),
                                             color = Color.White,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold
@@ -771,34 +776,42 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
 
                         // 오른쪽: 금액 정보
                         Column(horizontalAlignment = Alignment.End) {
+                            // 현재 사용 금액에 따른 실적 구간 계산
+                            val currentPerformanceAmount = cardInfo.currentPerformanceAmount
+
+                            // 현재 사용 금액에 해당하는 실적 구간 찾기
+                            val currentPerformanceTarget = cardInfo.performanceRange.lastOrNull { range ->
+                                currentPerformanceAmount >= range
+                            } ?: cardInfo.performanceRange.firstOrNull() ?: 0
+
+                            // 다음 실적 구간 찾기
+                            val nextPerformanceTarget = cardInfo.performanceRange.find { range ->
+                                range > currentPerformanceAmount
+                            } ?: cardInfo.performanceRange.lastOrNull() ?: 0
+
                             Row {
                                 Text(
-                                    text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(cardInfo.currentPerformanceAmount)}원",
+                                    text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(currentPerformanceAmount)}원",
                                     color = Color(0xFF00BCD4),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(cardInfo.maxPerformanceAmount)}원",
+                                    text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(nextPerformanceTarget)}원",
                                     color = Color.White,
                                     fontSize = 16.sp
                                 )
                             }
 
-                            // 다음 구간까지 남은 금액 계산 부분 수정
-                            val nextTierAmount = if (cardInfo.currentSpendingTier < cardInfo.spendingMaxTier) {
-                                // 다음 구간의 금액 계산 (구간별로 균등하게 나눈다고 가정)
-                                val amountPerTier = cardInfo.maxPerformanceAmount / cardInfo.spendingMaxTier
-                                val nextTierThreshold = amountPerTier * (cardInfo.currentSpendingTier + 1) // 다음 구간 임계값
-
-                                // 사용금액 - 실적 으로 계산
-                                nextTierThreshold - cardInfo.currentPerformanceAmount
+                            // 다음 구간까지 남은 금액 계산
+                            val remainingAmount = if (nextPerformanceTarget > currentPerformanceAmount) {
+                                nextPerformanceTarget - currentPerformanceAmount
                             } else {
                                 0 // 이미 최대 구간
                             }
 
                             Text(
-                                text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(nextTierAmount)}원 남음",
+                                text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(remainingAmount)}원 남음",
                                 color = Color.White.copy(alpha = 0.7f),
                                 fontSize = 14.sp
                             )
@@ -825,7 +838,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "${cardInfo.currentSpendingTier}구간 혜택",
+                            text = "${cardInfo.lastMonthPerformance}구간 혜택",
                             color = Color.White,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold
@@ -880,8 +893,14 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                             Spacer(modifier = Modifier.height(12.dp))
 
                             // 혜택 프로그레스 바
-                            val totalAmount = benefit.receivedBenefitAmount + benefit.remainingBenefitAmount
-                            val progress = if (totalAmount > 0) benefit.receivedBenefitAmount.toFloat() / totalAmount else 0f
+                            val totalAmount = benefit.receivedBenefitAmount + benefit.maxBenefitAmount
+                            val progress = if (benefit.maxBenefitAmount == 0) {
+                                1f // 무제한일 경우 프로그레스 바 100% 채움
+                            } else if (totalAmount > 0) {
+                                benefit.receivedBenefitAmount.toFloat() / totalAmount
+                            } else {
+                                0f
+                            }
 
                             Box(
                                 modifier = Modifier
@@ -913,7 +932,11 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
 
                                 // 잔여 혜택 금액
                                 Text(
-                                    text = "잔여 : " + formatAmount(benefit.remainingBenefitAmount) + "원",
+                                    text = if (benefit.maxBenefitAmount == 0) {
+                                        "무제한"
+                                    } else {
+                                        "잔여 : " + formatAmount(benefit.maxBenefitAmount) + "원"
+                                    },
                                     color = Color.White,
                                     fontSize = 18.sp
                                 )

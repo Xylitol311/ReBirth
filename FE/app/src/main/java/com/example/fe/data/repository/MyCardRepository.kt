@@ -1,17 +1,13 @@
 package com.example.fe.data.repository
 
 import android.util.Log
-import com.example.fe.config.AppConfig
 import com.example.fe.data.model.myCard.CardTransactionHistoryResponse
 import com.example.fe.data.model.myCard.MyCardInfoResponse
 import com.example.fe.data.model.myCard.MyCardsResponse
 import com.example.fe.data.network.NetworkClient
 import com.example.fe.data.network.api.CardTransactionHistoryRequest
-import com.example.fe.data.network.api.MyCardApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.util.Calendar
 
 /**
@@ -42,6 +38,7 @@ class MyCardRepository {
                 Log.d(TAG, "카드[$index]: id=${card.cardId}, name=${card.cardName}, imgUrl=${card.cardImgUrl}")
                 Log.d(TAG, "카드[$index] 금액: totalSpending=${card.totalSpending}, maxSpending=${card.maxSpending}")
                 Log.d(TAG, "카드[$index] 혜택: receivedBenefit=${card.receivedBenefitAmount}, maxBenefit=${card.maxBenefitAmount}")
+                Log.d(TAG, "카드[$index] 실적 구간: performanceRange=${card.performanceRange}")
             }
 
             Result.success(response)
@@ -68,6 +65,7 @@ class MyCardRepository {
         try {
             Log.d(TAG, "API 호출: getMyCardInfo(cardId=$cardId, year=$year, month=$month)")
             val response = apiService.getMyCardInfo(cardId, year, month)
+            Log.d(TAG, "API 응답 데이터: data=${response.data}")
             Result.success(response)
         } catch (e: Exception) {
             Log.e(TAG, "getMyCardInfo 오류: ${e.message}")

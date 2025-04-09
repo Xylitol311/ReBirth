@@ -490,7 +490,8 @@ class MyCardViewModel() : ViewModel() {
                 totalSpending = data.totalSpending,
                 maxSpending = data.maxSpending,
                 receivedBenefit = data.receivedBenefitAmount,
-                maxBenefit = data.maxBenefitAmount
+                maxBenefit = data.maxBenefitAmount,
+                performanceRange = data.performanceRange
             )
         }.also {
             Log.d(TAG, "카드 매핑 결과: ${it.size}개의 카드")
@@ -508,12 +509,13 @@ class MyCardViewModel() : ViewModel() {
             spendingMaxTier = data.spendingMaxTier,
             currentSpendingTier = data.currentSpendingTier,
             amountRemainingNext = data.amountRemainingNext,
+            lastMonthPerformance = data.lastMonthPerformance,
             performanceRange = data.performanceRange, // 추가된 필드
             benefits = data.cardBenefits.map { benefit ->
                 BenefitInfo(
                     categories = benefit.benefitCategory, // category에서 benefitCategory로 변경, String에서 List<String>으로 변경
                     receivedBenefitAmount = benefit.receivedBenefitAmount,
-                    remainingBenefitAmount = benefit.remainingBenefitAmount
+                    maxBenefitAmount = benefit.maxBenefitAmount
                 )
             }
         )
@@ -543,7 +545,8 @@ class MyCardViewModel() : ViewModel() {
         val totalSpending: Int = 0,
         val maxSpending: Int = 0,
         val receivedBenefit: Int = 0,
-        val maxBenefit: Int = 0
+        val maxBenefit: Int = 0,
+        val performanceRange: List<Int>
     )
 
     // CardInfo 클래스 수정
@@ -556,6 +559,7 @@ class MyCardViewModel() : ViewModel() {
         val spendingMaxTier: Int,
         val currentSpendingTier: Int,
         val amountRemainingNext: Int,
+        val lastMonthPerformance: Int,
         val performanceRange: List<Int>, // 추가된 필드
         val benefits: List<BenefitInfo>
     )
@@ -564,7 +568,7 @@ class MyCardViewModel() : ViewModel() {
     data class BenefitInfo(
         val categories: List<String>, // String에서 List<String>으로 변경
         val receivedBenefitAmount: Int,
-        val remainingBenefitAmount: Int
+        val maxBenefitAmount: Int
     )
 
     data class TransactionInfo(
