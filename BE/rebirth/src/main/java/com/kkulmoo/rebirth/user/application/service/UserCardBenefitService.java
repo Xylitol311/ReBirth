@@ -81,11 +81,10 @@ public class UserCardBenefitService {
             userCardBenefitMap.put(cardTransactionResponse.getBenefitId(), temp);
         }
         // userCardBenefitMap에 있는 객체들 updatedAt 바꿔서 UserCardBenefit db에 저장.
-        LocalDateTime now = LocalDateTime.now();
         List<UserCardBenefit> list = userCardBenefitMap.values()
                 .stream()
                 .map(benefit -> benefit.toBuilder()
-                        .updateDate(now)
+                        .updateDate(LocalDateTime.now())
                         .build())
                 .collect(Collectors.toList());
         userCardBenefitRepository.saveAll(list);

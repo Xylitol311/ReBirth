@@ -25,11 +25,12 @@ public class TransactionsRepositoryImpl implements TransactionRepository {
 
 
     @Override
-    public Slice<TransactionHistoryDto> getCardTransactionHistoryByCardId(CardTransactionQueryParams params) {
+    public Slice<TransactionHistoryDto> getCardTransactionHistoryByCardId(Integer userId, CardTransactionQueryParams params) {
         return transactionsJpaRepository.findTransactionsByUserIdYearMonth(
-                params.getCardId(),
+                userId,
                 params.getYear(),
                 params.getMonth(),
+                params.getCardUniqueNumber(),
                 params.getPageable());
     }
 

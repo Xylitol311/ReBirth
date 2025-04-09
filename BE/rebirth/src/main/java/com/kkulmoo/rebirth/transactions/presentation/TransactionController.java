@@ -1,6 +1,7 @@
 package com.kkulmoo.rebirth.transactions.presentation;
 
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
+import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.transactions.application.TransactionService;
 import com.kkulmoo.rebirth.transactions.application.dto.TransactionHistoryResponseData;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +19,11 @@ public class TransactionController {
 
     @PostMapping("/card/history")
     public ResponseEntity<ApiResponseDTO<TransactionHistoryResponseData>> getCardTransactionHistory(
+            @JwtUserId Integer userId,
             @RequestBody CardHistoryTransactionRequest request) {
+
         return ResponseEntity.ok(ApiResponseDTO.success("조회 성공",
-                transactionService.getCardTransactionHistory(request)));
+                transactionService.getCardTransactionHistory(userId, request)));
     }
 
 }

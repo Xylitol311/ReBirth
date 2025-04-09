@@ -110,9 +110,9 @@ public class ReportService {
             CardEntity card = cardsJpaRepository.getReferenceById(cardId);
             CardTemplateEntity cardTemplate = cardTemplateJpaRepository.getReferenceById(card.getCardTemplateId());
             short myTierForCard = 0;
-            if(cardTemplate.getPerformanceRange()!=null) {
-                for(int point: cardTemplate.getPerformanceRange()) {
-                    if(Math.abs(count[0])<point) {
+            if (cardTemplate.getPerformanceRange() != null) {
+                for (int point : cardTemplate.getPerformanceRange()) {
+                    if (Math.abs(count[0]) < point) {
                         break;
                     }
                     myTierForCard++;
@@ -247,7 +247,7 @@ public class ReportService {
                 reportCardCategory.setCount(monthlyTransaction.getTransactionCount()); // 결제 횟수
 
                 if (!countByCard.containsKey(monthlyTransaction.getCardId())) {
-                    countByCard.put(monthlyTransaction.getCardId(), new int[]{ monthlyTransaction.getTotalSpending(), monthlyTransaction.getTotalBenefit(), monthlyTransaction.getTransactionCount()});
+                    countByCard.put(monthlyTransaction.getCardId(), new int[]{monthlyTransaction.getTotalSpending(), monthlyTransaction.getTotalBenefit(), monthlyTransaction.getTransactionCount()});
                 } else {
                     int[] chk = countByCard.get(monthlyTransaction.getCardId());
                     chk[0] += monthlyTransaction.getTotalSpending();
@@ -266,10 +266,10 @@ public class ReportService {
                 CardEntity card = cardsJpaRepository.getReferenceById(cardId);
                 CardTemplateEntity cardTemplate = cardTemplateJpaRepository.getReferenceById(card.getCardTemplateId());
                 short myTierForCard = 0;
-                if(cardTemplate.getPerformanceRange()!=null) {
-                    for(int point: cardTemplate.getPerformanceRange()) {
-                        System.out.println(card.getCardName()+" "+count[0]+" 이거 넘나? "+point);
-                        if(Math.abs(count[0])<point) {
+                if (cardTemplate.getPerformanceRange() != null) {
+                    for (int point : cardTemplate.getPerformanceRange()) {
+                        System.out.println(card.getCardName() + " " + count[0] + " 이거 넘나? " + point);
+                        if (Math.abs(count[0]) < point) {
                             break;
                         }
                         myTierForCard++;
@@ -280,6 +280,7 @@ public class ReportService {
                 reportCard.setMonthBenefitAmount(count[1]);
                 reportCard.setSpendingTier(myTierForCard);
                 reportCardsJpaRepository.save(reportCard);
+
 
                 total[0] += count[0];
                 total[1] += count[1];
@@ -300,16 +301,16 @@ public class ReportService {
         }
 
         // 월별 요약(최근 두 달만)
-        for(int i=2 ; i>=1 ; i--) {
+        for (int i = 2; i >= 1; i--) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
-            createReport(userId,now);
+            createReport(userId, now);
 
         }
         LocalDateTime now = LocalDateTime.now().minusMonths(1);
         int year = now.getYear();
         int month = now.getMonthValue();
 
-        MonthlyTransactionSummaryEntity mts = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
+        MonthlyTransactionSummaryEntity mts = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
         MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(mts);
         UserEntity nowUser = userJpaRepository.getReferenceById(user.getUserId());
         nowUser.setConsumptionPatternId(mcr.getConsumptionPatternId());
@@ -319,10 +320,10 @@ public class ReportService {
     @Transactional
     public void reportWithMyDataAfterStart(Integer userId) {
         // 월별 요약
-        for(int i=5 ; i>=1 ; i--) {
+        for (int i = 5; i >= 1; i--) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
-            createReport(userId,now);
-            updateReport(userId,now);
+            createReport(userId, now);
+            updateReport(userId, now);
         }
     }
 
@@ -379,7 +380,7 @@ public class ReportService {
         int month = now.getMonthValue();
         MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
         MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(report);
-        int[] pattern = new int[] { mcr.getOverConsumption() , mcr.getVariation(), mcr.getExtrovert() };
+        int[] pattern = new int[]{mcr.getOverConsumption(), mcr.getVariation(), mcr.getExtrovert()};
 
         // AI 요약
         OpenAiChatModel model = OpenAiChatModel.builder()
@@ -417,7 +418,7 @@ public class ReportService {
 //                .comparing(MonthlyTransactionSummaryEntity::getYear)
 //                .thenComparing(MonthlyTransactionSummaryEntity::getMonth));
 //        for (MonthlyTransactionSummaryEntity report : mtsList) {
-        for (int i = 3; i>=0 ; i--) {
+        for (int i = 3; i >= 0; i--) {
             LocalDateTime now = LocalDateTime.now().minusMonths(i);
             int year = now.getYear();
             int month = now.getMonthValue();
@@ -487,7 +488,7 @@ public class ReportService {
                 reportCardCategory.setCount(monthlyTransaction.getTransactionCount()); // 결제 횟수
 
                 if (!countByCard.containsKey(monthlyTransaction.getCardId())) {
-                    countByCard.put(monthlyTransaction.getCardId(), new int[]{ monthlyTransaction.getTotalSpending(), monthlyTransaction.getTotalBenefit(), monthlyTransaction.getTransactionCount()});
+                    countByCard.put(monthlyTransaction.getCardId(), new int[]{monthlyTransaction.getTotalSpending(), monthlyTransaction.getTotalBenefit(), monthlyTransaction.getTransactionCount()});
                 } else {
                     int[] chk = countByCard.get(monthlyTransaction.getCardId());
                     chk[0] += monthlyTransaction.getTotalSpending();
@@ -506,10 +507,10 @@ public class ReportService {
                 CardEntity card = cardsJpaRepository.getReferenceById(cardId);
                 CardTemplateEntity cardTemplate = cardTemplateJpaRepository.getReferenceById(card.getCardTemplateId());
                 short myTierForCard = 0;
-                if(cardTemplate.getPerformanceRange()!=null) {
-                    for(int point: cardTemplate.getPerformanceRange()) {
-                        System.out.println(card.getCardName()+" "+count[0]+" 이거 넘나? "+point);
-                        if(Math.abs(count[0])<point) {
+                if (cardTemplate.getPerformanceRange() != null) {
+                    for (int point : cardTemplate.getPerformanceRange()) {
+                        System.out.println(card.getCardName() + " " + count[0] + " 이거 넘나? " + point);
+                        if (Math.abs(count[0]) < point) {
                             break;
                         }
                         myTierForCard++;
@@ -535,7 +536,7 @@ public class ReportService {
     @Transactional
     public int[] calculateSpendingPattern(UserEntity user, LocalDateTime now) {
         // 필요한 정보 - 월평균 수입, 월 총 지출, 카테고리별 지출, 전 월 지출
-        int monthlyIncome = user.getAverageMonthlyIncome()+1;
+        int monthlyIncome = user.getAverageMonthlyIncome() + 1;
         int year = now.getYear();
         int month = now.getMonthValue();
         MonthlyTransactionSummaryEntity report = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), year, month);
@@ -545,7 +546,7 @@ public class ReportService {
         int preYear = lastMonth.getYear();
         int preMonth = lastMonth.getMonthValue();
         MonthlyTransactionSummaryEntity preReport = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(), preYear, preMonth);
-        if(preReport == null) {
+        if (preReport == null) {
             preReport = MonthlyTransactionSummaryEntity
                     .builder()
                     .year(preYear)
@@ -558,8 +559,8 @@ public class ReportService {
         int overConsumption = Math.min(100, Math.abs(100 * report.getTotalSpending()) / monthlyIncome);
         // 변동성 계산
         int variation = 50;
-        if(report.getTotalSpending() != 0 && preReport != null) {
-        variation = Math.abs(100*(preReport.getTotalSpending() - report.getTotalSpending()) / (report.getTotalSpending()));
+        if (report.getTotalSpending() != 0 && preReport != null) {
+            variation = Math.abs(100 * (preReport.getTotalSpending() - report.getTotalSpending()) / (report.getTotalSpending()));
         }
         variation = Math.min(100, variation);
 
@@ -586,8 +587,8 @@ public class ReportService {
         }
 
         int extrovert = 0;
-        if(report.getTotalSpending() != 0) {
-            extrovert = Math.abs(100*extrovertSpendAmount / report.getTotalSpending());
+        if (report.getTotalSpending() != 0) {
+            extrovert = Math.abs(100 * extrovertSpendAmount / report.getTotalSpending());
         }
 
         int[] result = new int[3];
@@ -606,7 +607,9 @@ public class ReportService {
 
     public ReportWithPatternDTO getReportWithPattern(Integer userId, int year, int month) {
         MonthlyTransactionSummaryEntity summary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(userId, year, month);
-        if(summary == null) { return null; }
+        if (summary == null) {
+            return null;
+        }
         MonthlyConsumptionReportEntity report = monthlyConsumptionReportJpaRepository.getReferenceById(summary.getReportId());
         ConsumptionPatternEntity pattern = consumptionPatternJpaRepository.getReferenceById(report.getConsumptionPatternId());
 
@@ -619,7 +622,7 @@ public class ReportService {
         }
         MonthlyTransactionSummaryEntity preSummary = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(userId, preYear, preMonth);
 
-        if(preSummary == null) {
+        if (preSummary == null) {
             preSummary = MonthlyTransactionSummaryEntity
                     .builder()
                     .year(preYear)
@@ -651,7 +654,7 @@ public class ReportService {
             minSpending = 2000001;
             maxSpending = 2500000;
             groupName = "200만원 ~ 250만원";
-        } else if (Math.abs(summary.getTotalSpending())  > 2500001 && Math.abs(summary.getTotalSpending()) <= 3000000) {
+        } else if (Math.abs(summary.getTotalSpending()) > 2500001 && Math.abs(summary.getTotalSpending()) <= 3000000) {
             minSpending = 2500001;
             maxSpending = 3000000;
             groupName = "250만원 ~ 300만원";

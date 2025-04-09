@@ -2,6 +2,7 @@ package com.kkulmoo.rebirth.transactions.application;
 
 import com.kkulmoo.rebirth.card.application.CardPort;
 import com.kkulmoo.rebirth.card.application.CardService;
+import com.kkulmoo.rebirth.card.domain.CardRepository;
 import com.kkulmoo.rebirth.card.domain.MyCard;
 import com.kkulmoo.rebirth.transactions.application.dto.*;
 import com.kkulmoo.rebirth.transactions.application.mapper.TransactionHistoryMapper;
@@ -35,16 +36,19 @@ public class TransactionService {
     private final CardService cardService;
     private final TransactionHistoryMapper mapper;
     private final MerchantCache merchantCache;
+    private final CardRepository cardRepository;
 
-    public TransactionHistoryResponseData getCardTransactionHistory(CardHistoryTransactionRequest request) {
+    public TransactionHistoryResponseData getCardTransactionHistory(Integer userId, CardHistoryTransactionRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getPageSize());
 
+        MyCard myCard = cardRepository.findById(request.getCardId()).get();
+
         CardTransactionQueryParams params = new CardTransactionQueryParams(
-                request.getCardId(), request.getYear(), request.getMonth(), pageable
+                myCard.getCardUniqueNumber(), request.getYear(), request.getMonth(), pageable
         );
 
         Slice<TransactionHistoryDto> transactions =
-                transactionRepository.getCardTransactionHistoryByCardId(params);
+                transactionRepository.getCardTransactionHistoryByCardId(userId,params);
 
         return mapper.toResponseData(transactions);
     }

@@ -9,8 +9,9 @@ import org.springframework.data.domain.Slice;
 import java.util.List;
 
 public interface TransactionRepository {
+    Slice<TransactionHistoryDto> getCardTransactionHistoryByCardId(Integer userId, CardTransactionQueryParams params);
+
     void saveAllCardTransactions(List<CardTransactionResponse> transactionResponse);
     void saveAllBankTransactions(List<BankTransactionResponse> transactionResponse);
-    Slice<TransactionHistoryDto> getCardTransactionHistoryByCardId(CardTransactionQueryParams params);
 
 }
