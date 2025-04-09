@@ -23,13 +23,6 @@ public class CardsRepositoryImpl implements CardsRepository{
         this.paymentCardEntityMapper = paymentCardEntityMapper;
     }
 
-    //사용자 결제 카드 등록
-
-    // cardUniqueId로 검색해서 가져오기
-
-
-    // 업데이트 해주기
-
 
     //사용자 보유 카드 리스트 가져오기
     @Override
