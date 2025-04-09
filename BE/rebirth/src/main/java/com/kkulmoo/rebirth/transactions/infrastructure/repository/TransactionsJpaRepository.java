@@ -78,7 +78,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
 
 
     @Query("""
-            SELECT DISTINCT new com.kkulmoo.rebirth.analysis.domain.dto.response.DailyTransactionsDTO(
+             SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.DailyTransactionsDTO(
                 t.createdAt,
                 c.categoryName,
                 m.merchantName,
@@ -98,8 +98,25 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
                 AND ct.status = 'APPROVED'
                 ORDER BY t.createdAt DESC
             """)
-    List<DailyTransactionsDTO> getMonthlyTransactions(int userId, int year, int month);
+    List<DailyTransactionsDTO> getCardSpending(int userId, int year, int month);
 
+    @Query("""
+      SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.DailyTransactionsDTO(
+        t.createdAt,
+        '입금',
+        '입금',
+        t.amount,
+        '입금'
+      )
+      FROM TransactionEntity t
+      JOIN BankTransactionEntity b ON t.transactionId = b.transactionId
+      WHERE t.userId = :userId
+      AND YEAR(t.createdAt) = :year
+      AND MONTH(t.createdAt) = :month
+      AND b.bankTransactionType = 'DEPOSIT'
+      ORDER BY t.createdAt DESC
+    """)
+    List<DailyTransactionsDTO> getBankDeposits(int userId, int year, int month);
 
     @Query("SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.MonthlyLogInfoDTO(" +
             "COALESCE(SUM(t.amount), 0), " +  // 1. 당월 총 소비 금액
