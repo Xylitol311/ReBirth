@@ -78,7 +78,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
 
 
     @Query("""
-            SELECT new com.kkulmoo.rebirth.analysis.domain.dto.response.DailyTransactionsDTO(
+            SELECT DISTINCT new com.kkulmoo.rebirth.analysis.domain.dto.response.DailyTransactionsDTO(
                 t.createdAt,
                 c.categoryName,
                 m.merchantName,
