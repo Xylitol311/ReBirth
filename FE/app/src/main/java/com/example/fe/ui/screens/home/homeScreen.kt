@@ -41,12 +41,13 @@ import com.example.fe.ui.navigation.NavRoutes
 import com.example.fe.ui.screens.home.components.HomeRecCard
 import com.example.fe.ui.screens.home.components.HomeTransaction
 import com.example.fe.ui.screens.home.components.HomeUsedMoney
+import androidx.compose.ui.platform.LocalContext
 
 val LightBlue = Color(0xFFADD8E6)
 
 @Composable
 fun HomeHeader(
-    userName: String = "김싸피님",
+    userName: String,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -61,7 +62,7 @@ fun HomeHeader(
             modifier = Modifier
                 .size(140.dp)
                 .align(Alignment.TopEnd)
-                .offset(y = (-20).dp) // padding 대신 offset 사용
+                .offset(y = (-20).dp)
         )
         
         // 텍스트를 왼쪽 하단에 배치하고 아래로 내림
@@ -71,7 +72,7 @@ fun HomeHeader(
                 .align(Alignment.BottomStart)
         ) {
             Text(
-                text = userName,
+                text = "${userName}님",
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 color = LightBlue
@@ -92,8 +93,10 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onScrollOffsetChange: (Float) -> Unit = {}
 ) {
-    val viewModel: HomeViewModel = viewModel()
+    val context = LocalContext.current
+    val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory(context))
     val uiState by viewModel.uiState.collectAsState()
+    val userName by viewModel.userName.collectAsState()
     val scrollState = rememberScrollState()
     var scrollOffset by remember { mutableStateOf(0f) }
 
@@ -149,7 +152,7 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // 헤더 (사용자 이름과 행성)
-                    HomeHeader()
+                    HomeHeader(userName = userName)
 
                     // 이번 달 소비 금액
                     HomeUsedMoney(

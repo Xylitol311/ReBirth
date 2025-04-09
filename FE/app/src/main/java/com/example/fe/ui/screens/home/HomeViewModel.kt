@@ -1,7 +1,12 @@
 package com.example.fe.ui.screens.home
 
+import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.PreBenefitFeedbackData
 import com.example.fe.data.model.SpendingItem
@@ -11,14 +16,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.fe.ui.screens.onboard.viewmodel.dataStore
+import kotlinx.coroutines.flow.first
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(private val context: Context) : ViewModel() {
     private val TAG = "HomeViewModel"
     private val repository = HomeRepository()
 
     // UI 상태
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    // 사용자 이름 상태
+    private val _userName = MutableStateFlow("")
+    val userName: StateFlow<String> = _userName.asStateFlow()
 
     // 소비 금액 상태
     private val _totalSpendingAmount = MutableStateFlow(0)
@@ -48,6 +60,21 @@ class HomeViewModel : ViewModel() {
 
     init {
         loadData()
+        loadUserName()
+    }
+
+    private fun loadUserName() {
+        viewModelScope.launch {
+            try {
+                val preferences = context.dataStore.data.first()
+                val userName = preferences[stringPreferencesKey("user_name")] ?: "사용자"
+                _userName.value = userName
+                Log.d(TAG, "사용자 이름 로드 성공: $userName")
+            } catch (e: Exception) {
+                Log.e(TAG, "사용자 이름 로드 실패", e)
+                _userName.value = "사용자"
+            }
+        }
     }
 
     private fun loadData() {
@@ -91,6 +118,16 @@ class HomeViewModel : ViewModel() {
 
     fun refresh() {
         loadData()
+    }
+
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return HomeViewModel(context) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
     }
 }
 

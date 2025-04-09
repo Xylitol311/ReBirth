@@ -1,6 +1,7 @@
 package com.example.fe.ui.screens.onboard.auth
 
 import android.util.Log
+import android.util.Base64
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,7 +23,21 @@ import com.example.fe.ui.screens.onboard.components.NumberPad
 import com.example.fe.ui.screens.onboard.components.PinDots
 import com.example.fe.ui.screens.onboard.components.device.DeviceInfoManager
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
+import org.json.JSONObject
 
+fun decodeJwtPayload(token: String): String {
+    try {
+        val parts = token.split(".")
+        if (parts.size >= 2) {
+            val payload = parts[1]
+            val decodedBytes = Base64.decode(payload, Base64.URL_SAFE)
+            return String(decodedBytes)
+        }
+    } catch (e: Exception) {
+        Log.e("JWT", "토큰 디코딩 실패", e)
+    }
+    return ""
+}
 
 @Composable
 fun PinLoginAuth(
@@ -67,6 +82,24 @@ fun PinLoginAuth(
                         phoneSerialNumber = deviceInfoManager.getDeviceId(),
                         onSuccess = {
                             Log.d("PinInputTest", "로그인 성공: $pinInput")
+                            Log.d("UserInfo", "로그인 상태: ${viewModel.isLoggedIn}")
+                            Log.d("UserInfo", "사용자 이름: ${viewModel.userName}")
+                            
+                            // JWT 토큰 디코딩 및 로그 출력
+                            val token = viewModel.userToken
+                            if (token.isNotEmpty()) {
+                                val decodedPayload = decodeJwtPayload(token)
+                                try {
+                                    val jsonPayload = JSONObject(decodedPayload)
+                                    Log.d("JWT", "토큰 페이로드: $decodedPayload")
+                                    Log.d("JWT", "사용자 ID: ${jsonPayload.optString("sub", "")}")
+                                    Log.d("JWT", "만료 시간: ${jsonPayload.optLong("exp", 0)}")
+                                    // 기타 필요한 클레임 정보 출력
+                                } catch (e: Exception) {
+                                    Log.e("JWT", "JSON 파싱 실패", e)
+                                }
+                            }
+                            
                             onSuccessfulLogin()
                         },
                         onFailure = { error ->
@@ -78,6 +111,5 @@ fun PinLoginAuth(
                 }
             }
         )
-
     }
 }
