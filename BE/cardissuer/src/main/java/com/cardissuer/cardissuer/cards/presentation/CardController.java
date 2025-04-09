@@ -49,7 +49,6 @@ public class CardController {
     @PostMapping("/create")
     public ResponseEntity<?> createCard(@RequestBody CardCreateRequest request) {
         try {
-
             // 모든 정보를 cardService에 넘겨서 처리
             cardService.createCard(request);
             // 성공 응답 반환
@@ -59,4 +58,5 @@ public class CardController {
                     .body("카드 생성 중 오류 발생: " + e.getMessage());
         }
     }
+
 }

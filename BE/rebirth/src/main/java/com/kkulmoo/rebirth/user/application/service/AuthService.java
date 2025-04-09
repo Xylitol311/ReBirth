@@ -124,7 +124,7 @@ public class AuthService {
 
 
     public AuthenticationResult validUserV2(String number, String type, String phoneSerialNumber,String phoneNumber) {
-        User user = userRepository.findByPhoneSerialNumberAndPhoneNumber(phoneSerialNumber, phoneNumber);
+        User user = userRepository.findByPhoneSerialNumberAndHashedPinNumber(phoneSerialNumber, phoneNumber);
 
         if (user == null) return AuthenticationResult.failure();
 
@@ -154,7 +154,7 @@ public class AuthService {
 
     public AuthenticationResult authenticateWithBiometricV2(String deviceId, String phoneNumber) {
         try {
-            User user = userRepository.findByPhoneSerialNumberAndPhoneNumber(deviceId, phoneNumber);
+            User user = userRepository.findByPhoneSerialNumberAndHashedPinNumber(deviceId, phoneNumber);
             if (user != null) {
                 return AuthenticationResult.success(user);
             }
