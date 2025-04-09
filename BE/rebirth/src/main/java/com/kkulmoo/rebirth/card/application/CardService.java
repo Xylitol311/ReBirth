@@ -47,13 +47,12 @@ public class CardService {
 
         // 최대 실적양.
         Integer maxPerformanceAmount = 0;
+
         try {
             maxPerformanceAmount = cardTemplate.getPerformanceRange().get(cardTemplate.getPerformanceRange().size() - 1);
         } catch (IndexOutOfBoundsException e) {
             // 인덱스가 범위를 벗어난 경우 0으로 설정
         }
-
-        System.out.println(Arrays.toString(cardTemplate.getPerformanceRange().toArray()));
 
         // 해당 값이 없는경우도 있어.
         ReportCardsEntity reportCardsEntity = reportCardsJpaRepository.getByUserIdAndCardIdAndYearAndMonth(
@@ -68,8 +67,10 @@ public class CardService {
                         .spendingTier((short) 0)
                         .build());
 
+        // 저번달 기준으로 잡은 이번달 실적?
         Short spendingTier = reportCardsEntity.getSpendingTier();
-        if (spendingTier == null) {
+
+                if (spendingTier == null) {
             System.out.println("값이 있어.");
             spendingTier = 0;  // 기본값 설정
         }
@@ -104,11 +105,10 @@ public class CardService {
                         CardBenefit.builder()
                                 .benefitCategory(categoryString)
                                 .receivedBenefitAmount(byUserIdAndBenefitId.getBenefitAmount())
-                                .remainingBenefitAmount(
-                                        calculateRemainingBenefit(
+                                .maxBenefitAmount(
+                                        getMaxBenefit(
                                                 benefitTemplate,
-                                                spendingTier,
-                                                byUserIdAndBenefitId.getBenefitAmount()
+                                                spendingTier
                                         )
                                 )
                                 .build());
@@ -130,7 +130,7 @@ public class CardService {
                 .build();
     }
 
-    private Integer calculateRemainingBenefit(BenefitTemplate template, int spendingTier, Integer receivedAmount) {
+    private Short getMaxBenefit(BenefitTemplate template, int spendingTier) {
         try {
             // 총 혜택 금액 가져오기 (null이면 0 사용)
             List<Short> amounts = template.getBenefitUsageAmount();
@@ -138,12 +138,8 @@ public class CardService {
                     ? amounts.get(spendingTier)
                     : 0;
 
-            // receivedAmount가 null이면 0으로 처리
-            int received = receivedAmount != null ? receivedAmount : 0;
+            return totalAmount;
 
-            // 남은 혜택 금액 계산 (음수면 0 반환)
-            int remaining = totalAmount - received;
-            return Math.max(0, remaining);
         } catch (Exception e) {
             return 0; // 예외 발생 시 0 반환
         }

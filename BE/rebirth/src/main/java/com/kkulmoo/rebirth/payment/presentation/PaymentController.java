@@ -35,7 +35,6 @@ public class PaymentController {
         // 카드 등록하고 영구토큰 가져오기
         paymentTokenService.getPermanentTokenFromCardsa(userId, permanentTokenRequest);
 
-
         return ResponseEntity.ok("임시");
     }
 

@@ -4,7 +4,6 @@ package com.kkulmoo.rebirth.card.domain;
 import com.kkulmoo.rebirth.analysis.domain.enums.BenefitType;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.util.List;
