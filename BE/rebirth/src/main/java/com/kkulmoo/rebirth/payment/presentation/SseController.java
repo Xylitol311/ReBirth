@@ -28,12 +28,13 @@ public class SseController {
     // 토큰 관련 기능을 제공하는 서비스
     private final PaymentTokenService paymentTokenService;
 
+
     // 특정 유저의 SSE 구독 엔드포인트
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> subscribe(@JwtUserId Integer userId) {
-        log.info("SSE 연결 요청 - userId: {}", userId);
+    public ResponseEntity<SseEmitter> subscribe(@JwtUserId Integer userId,@RequestParam("uniqueId") String uniqueId) {
+        log.info("SSE 연결 요청 - userId: {}", uniqueId);
         // SSE 구독 생성 - 서비스에서 이미 모든 핸들러 설정 및 관리를 담당
-        SseEmitter emitter = sseService.subscribe(userId);
+        SseEmitter emitter = sseService.subscribe(userId,uniqueId);
         return ResponseEntity.ok(emitter);
     }
 
@@ -48,12 +49,15 @@ public class SseController {
         int userId = Integer.parseInt(tokenInfo[1]);
         String merchantName = createTransactionRequestDTO.getMerchantName();
         int amount = createTransactionRequestDTO.getAmount();
+        //userId에 맵핑된 uniqueId 엔드포인트 불러오기
+        String uniqueId = sseService.getUniqueId(String.valueOf(userId));
+
         // 결제 시작 알림을 SSE를 통해 전송
-        sseService.sendToUser(userId, "결제시작");
+        sseService.sendToUser(uniqueId, "결제시작");
         // 결제 처리 서비스 호출
         CardTransactionDTO cardTransactionDTO = paymentTransactionService.processPayment(userId, permanentToken, merchantName, amount);
         // 결제 결과 알림을 SSE를 통해 전송
-        sseService.sendToUser(userId, cardTransactionDTO.getApprovalCode());
+        sseService.sendToUser(uniqueId, cardTransactionDTO.getApprovalCode());
         // 응답 객체 생성 후 반환
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
