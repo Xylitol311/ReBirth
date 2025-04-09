@@ -1,1 +1,1 @@
-# A602팀 README.md
+# Re:birth README.md
