@@ -55,7 +55,14 @@ pipeline {
             steps {
                 echo '애플리케이션 서비스 배포 중...'
                 echo '기존 애플리케이션 컨테이너 종료 및 제거...'
-                sh 'docker-compose -f docker-compose.app.yml down'
+
+                // 남아 있는 컨테이너 강제 제거 (이름 충돌 방지)
+                sh '''
+                docker ps -a --filter "name=-app" --format "{{.Names}}" | xargs -r docker rm -f || true
+                '''
+                // 네트워크나 orphan 컨테이너 포함 제거
+                sh 'docker-compose -f docker-compose.app.yml down --remove-orphans || true'
+
                 echo '변경된 설정으로 컨테이너 생성...'
                 sh 'docker-compose -f docker-compose.app.yml up -d'
                 echo 'nginx reload 실행...'
