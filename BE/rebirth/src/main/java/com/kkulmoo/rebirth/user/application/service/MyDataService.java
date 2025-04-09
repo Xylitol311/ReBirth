@@ -62,8 +62,7 @@ public class MyDataService {
 
         cardService.updateCardsLastLoadTime(cards);
 
-
-//        reportService.startWithMyData(user.getUserId().getValue());
+        reportService.startWithMyData(user.getUserId().getValue());
 
         userCardBenefitService.updateUseCardBenefit(transactionResponses, cards);
 

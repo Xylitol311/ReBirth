@@ -2,12 +2,15 @@ package com.kkulmoo.rebirth.payment.application.service;
 
 import com.kkulmoo.rebirth.payment.domain.CardTemplate;
 import com.kkulmoo.rebirth.payment.domain.PaymentCard;
-import com.kkulmoo.rebirth.payment.domain.repository.CardsRepository;
 import com.kkulmoo.rebirth.payment.domain.repository.CardTemplateRepository;
+import com.kkulmoo.rebirth.payment.domain.repository.CardsRepository;
 import com.kkulmoo.rebirth.payment.domain.repository.DisposableTokenRepository;
 import com.kkulmoo.rebirth.payment.presentation.request.PermanentTokenRequestToCardsaDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PermanentTokenResponseByCardsaDTO;
+import com.kkulmoo.rebirth.user.domain.User;
+import com.kkulmoo.rebirth.user.domain.UserId;
+import com.kkulmoo.rebirth.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,12 +35,21 @@ public class PaymentTokenService {
     private final PaymentOnlineEncryption paymentOnlineEncryption;
     // 카드사로 부터 응답
     private final WebClientService webClientService;
+    private final UserRepository userRepository;
 
     // 결제 카드 등록
     public void getPermanentTokenFromCardsa(Integer userId, PermanentTokenRequestToCardsaDTO permanentTokenRequestToCardsaDTO){
 
+        User user = userRepository.findByUserId(new UserId(userId));
+
+        System.out.println(user.getUserName());
+        permanentTokenRequestToCardsaDTO.setUserCI(user.getUserCI());
+
         // 카드사로 부터 카드 정보 가져오기
         PermanentTokenResponseByCardsaDTO permanentTokenResponseByCardsaDTO = webClientService.createCard(permanentTokenRequestToCardsaDTO).block();
+
+        System.out.println(permanentTokenResponseByCardsaDTO.toString());
+        System.out.println(userId);
 
         // 리버스 DB에 결제 카드 정보 등록하기
         PaymentCard paymentCard = cardsRepository.findByUserIdAndCardUniqueNumber(userId, permanentTokenResponseByCardsaDTO.getCardUniqueNumber());

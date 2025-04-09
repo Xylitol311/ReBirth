@@ -9,7 +9,6 @@ import com.kkulmoo.rebirth.payment.presentation.request.PermanentTokenRequestToC
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.OnlinePayResponseDTO;
 import com.kkulmoo.rebirth.payment.presentation.response.PaymentTokenResponseDTO;
-import com.kkulmoo.rebirth.payment.presentation.response.PermanentTokenResponseByCardsaDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +34,7 @@ public class PaymentController {
 
         // 카드 등록하고 영구토큰 가져오기
         paymentTokenService.getPermanentTokenFromCardsa(userId, permanentTokenRequest);
+
 
         return ResponseEntity.ok("임시");
     }
