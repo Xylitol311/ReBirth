@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.R
+import com.example.fe.data.model.cardRecommend.CardInfoApi
 import com.example.fe.ui.components.cards.HorizontalCardLayout
 import kotlin.math.abs
 import kotlin.math.pow
@@ -51,18 +53,20 @@ import androidx.compose.foundation.shape.CircleShape
 import com.example.fe.ui.components.backgrounds.GlassSurface
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.res.painterResource
-
-data class CardRecommendation(
-    val cardImage: Int,
-    val title: String,
-    val benefit: String
-)
+import com.example.fe.ui.screens.home.HomeViewModel
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeRecCard(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel
 ) {
+    val recommendedCards by viewModel.recommendedCards.collectAsState()
+    
+    // 추천 카드가 없는 경우 표시하지 않음
+    if (recommendedCards.isEmpty()) return
+    
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
@@ -86,31 +90,13 @@ fun HomeRecCard(
                     textAlign = TextAlign.Center
                 )
             }
-            
-            val cardRecommendations = listOf(
-                CardRecommendation(
-                    cardImage = R.drawable.card,
-                    title = "하나 VIVA e Platinum 카드",
-                    benefit = "카페 최대 20% 할인"
-                ),
-                CardRecommendation(
-                    cardImage = R.drawable.card,
-                    title = "신한 Deep Dream 카드",
-                    benefit = "식당 최대 15% 할인"
-                ),
-                CardRecommendation(
-                    cardImage = R.drawable.card,
-                    title = "KB 국민 톡톡 카드",
-                    benefit = "쇼핑 최대 10% 할인"
-                )
-            )
 
             // 현재 화면 밀도 가져오기
             val density = LocalDensity.current
             
             // 페이저 상태
             val pagerState = rememberPagerState(
-                pageCount = { cardRecommendations.size },
+                pageCount = { recommendedCards.size },
                 initialPage = 0
             )
 
@@ -155,39 +141,60 @@ fun HomeRecCard(
                             )
                     ) {
                         // 카드 이미지
+                        val card = recommendedCards[page]
+                        val hasImageUrl = card.imageUrl.isNotEmpty()
+                        
+                        if (hasImageUrl) {
+                            // Coil을 사용하여 API로부터 받은 이미지 URL을 로드
+                            AsyncImage(
+                                model = card.imageUrl,
+                                contentDescription = card.cardName,
+                                modifier = Modifier
+                                    .width(280.dp)
+                                    .height(170.dp)
+                            )
+                        } else {
+                            // 기본 카드 이미지 사용
                         HorizontalCardLayout(
-                            cardImage = cardRecommendations[page].cardImage,
+                                cardImage = R.drawable.card,
                             modifier = Modifier
                                 .width(280.dp)
                                 .height(170.dp),
-                            cardName = cardRecommendations[page].title,
+                                cardName = card.cardName,
                             cardImageUrl = ""
                         )
+                        }
                     }
                 }
             }
 
             // 카드 정보 (현재 선택된 카드)
-            val currentCard = cardRecommendations[pagerState.currentPage]
+            if (recommendedCards.isNotEmpty() && pagerState.currentPage < recommendedCards.size) {
+                val currentCard = recommendedCards[pagerState.currentPage]
+                
+                // 카드 혜택 정보 추출
+                val benefits = currentCard.cardInfo.split(",").firstOrNull() ?: "혜택 정보 없음"
+                
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = currentCard.title,
+                        text = currentCard.cardName,
                     fontSize = 18.sp,
                     color = Color.White.copy(alpha = 0.9f),
                     textAlign = TextAlign.Center,
                     maxLines = 1
                 )
                 Text(
-                    text = currentCard.benefit,
+                        text = benefits,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 4.dp)
                 )
+                }
             }
 
             // 페이지 인디케이터
@@ -196,7 +203,7 @@ fun HomeRecCard(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                repeat(cardRecommendations.size) { index ->
+                repeat(recommendedCards.size) { index ->
                     val isSelected = index == pagerState.currentPage
                     Box(
                         modifier = Modifier

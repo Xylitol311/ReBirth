@@ -119,10 +119,14 @@ fun HomeScreen(
             )
 
             // 혜택을 놓친 거래 내역
-            HomeTransaction()
+            HomeTransaction(
+                viewModel = viewModel
+            )
 
             // 추천 카드
-            HomeRecCard()
+            HomeRecCard(
+                viewModel = viewModel
+            )
         }
 
     }

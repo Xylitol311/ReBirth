@@ -1,5 +1,6 @@
 package com.example.fe.data.network
 
+import com.example.fe.data.model.PreBenefitFeedbackResponse
 import com.example.fe.data.model.SummaryResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -13,6 +14,9 @@ interface SummaryService {
 
     @GET("api/main/summary/category")
     suspend fun getSummaryCategory(@Query("userId") userId: Int): SummaryCategoryResponse
+    
+    @GET("api/main/prebenefit")
+    suspend fun getPreBenefitFeedback(@Query("userId") userId: Int): PreBenefitFeedbackResponse
 }
 
 data class SummaryCardResponse(
