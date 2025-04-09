@@ -42,6 +42,7 @@ public class UserCardBenefitService {
             if (userCardBenefitMap.containsKey(cardTransactionResponse.getBenefitId())){
                 temp = userCardBenefitMap.get(cardTransactionResponse.getBenefitId());
             }
+
             // 2. Map에 없으면 DB에서 조회
             else {
                 temp = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(

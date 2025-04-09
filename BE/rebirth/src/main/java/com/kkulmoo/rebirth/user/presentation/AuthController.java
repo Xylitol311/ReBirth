@@ -117,4 +117,36 @@ public class AuthController {
 				.body(ApiResponseDTO.error("로그인번호가 틀렸습니다."));
 	}
 
+	@PostMapping("/login/v2")
+	public ResponseEntity<ApiResponseDTO<Void>> loginV2(
+			@RequestBody UserLoginRequest userLoginRequest
+	)
+	{
+		System.out.println(userLoginRequest.getNumber() + " " + userLoginRequest.getPhoneSerialNumber()+ " " + userLoginRequest.getType());
+
+		AuthenticationResult result;
+
+		if(userLoginRequest.getType().equals("fingerprint")){
+			result = authService.authenticateWithBiometricV2(userLoginRequest.getPhoneSerialNumber(), userLoginRequest.getPhoneNumber());
+		} else{
+			result =authService.validUserV2(
+					userLoginRequest.getNumber(),
+					userLoginRequest.getType(),
+					userLoginRequest.getPhoneSerialNumber(),
+					userLoginRequest.getPhoneNumber()
+			);
+		}
+
+		if(result.getIsSuccess()){
+			String jwtToken = authService.generateAccessToken(result.getUser().getUserId());
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Authorization", "Bearer " + jwtToken);
+			return ResponseEntity.status(HttpStatus.OK)
+					.headers(headers)
+					.body(ApiResponseDTO.success("로그인이 완료되었습니다."));
+		}
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(ApiResponseDTO.error("로그인번호가 틀렸습니다."));
+	}
+
 }

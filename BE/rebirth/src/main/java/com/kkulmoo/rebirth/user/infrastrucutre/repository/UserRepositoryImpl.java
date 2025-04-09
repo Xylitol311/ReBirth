@@ -47,13 +47,13 @@ public class UserRepositoryImpl implements UserRepository {
 		return userEntityMapper.toUser(userEntity);
 	}
 
-
-//	@Override
-//	public User findByPhoneSerialNumber(String phoneSerialNumber) {
-//		UserEntity userEntity = userJpaRepository.findByPhoneSerialNumber(phoneSerialNumber)
-//				.orElseThrow(() -> new UserNotFoundException("핸드폰시리얼 넘버를 찾을 수 없습니다. ID: " + phoneSerialNumber));
-//		return userEntityMapper.toUser(userEntity);
-//	}
+	@Override
+	public User findByPhoneSerialNumberAndPhoneNumber(String phoneSerialNumber, String phoneNumber) {
+		UserEntity userEntity = userJpaRepository
+				.findByPhoneSerialNumberAndPhoneNumber(phoneSerialNumber, phoneNumber)
+				.orElseThrow(() -> new UserNotFoundException("해당 기기 시리얼 번호와 전화번호로 사용자를 찾을 수 없습니다."));
+		return userEntityMapper.toUser(userEntity);
+	}
 
 
 }

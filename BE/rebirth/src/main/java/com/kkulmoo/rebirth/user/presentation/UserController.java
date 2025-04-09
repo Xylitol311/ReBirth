@@ -1,8 +1,10 @@
 package com.kkulmoo.rebirth.user.presentation;
 
+import com.kkulmoo.rebirth.analysis.application.service.ReportService;
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
 import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.user.application.service.MyDataService;
+import com.kkulmoo.rebirth.user.application.service.UserCardBenefitService;
 import com.kkulmoo.rebirth.user.application.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,8 @@ public class UserController {
 
 	private final UserService userService;
 	private final MyDataService myDataService;
+	private final UserCardBenefitService userCardBenefitService;
+	private final ReportService reportService;
 
 	// 은행 계좌 거래내역 불러오기 bankTransaction
 	@PostMapping("/mydata/bank/transactions")
@@ -50,6 +54,7 @@ public class UserController {
 
 	@PostMapping("/mydata/all")
 	public ResponseEntity<ApiResponseDTO<Void>> loadAllMyData(@JwtUserId Integer userId) {
+		System.out.println(userId);
 
 		try {
 			myDataService.loadMyBankAccount(userId);
@@ -73,6 +78,38 @@ public class UserController {
 
 		return ResponseEntity.ok(ApiResponseDTO.success("전체 마이데이터 로드에 성공하였습니다."));
 	}
+
+	@PostMapping("/mydata/all/v2")
+	public ResponseEntity<ApiResponseDTO<Void>> loadAllMyDataV2(@JwtUserId Integer userId) {
+		System.out.println(userId);
+
+		try {
+			myDataService.loadMyBankAccount(userId);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponseDTO.error("은행 계좌 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
+		}
+
+		try {
+			myDataService.loadMyCard(userId);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponseDTO.error("카드 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
+		}
+		try {
+			myDataService.loadMyBankTransaction(userId);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(ApiResponseDTO.error("은행 거래내역 마이데이터 로드에 실패하였습니다: " + e.getMessage()));
+		}
+
+
+		return ResponseEntity.ok(ApiResponseDTO.success("전체 마이데이터 로드에 성공하였습니다."));
+	}
+
+
+
+
 
 	// todo: UserId를 Integer에서 UserId로 바꿔야함
 	@DeleteMapping

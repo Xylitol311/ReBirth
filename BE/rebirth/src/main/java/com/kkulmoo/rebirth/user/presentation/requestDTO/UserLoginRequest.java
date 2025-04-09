@@ -13,5 +13,5 @@ public class UserLoginRequest {
     String type;
     String number;
     String phoneSerialNumber;
-
+    String phoneNumber;
 }

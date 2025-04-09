@@ -1,12 +1,12 @@
 package com.kkulmoo.rebirth.payment.presentation.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 @AllArgsConstructor
 @Getter
 @Builder
+@Setter
+@ToString
 public class PermanentTokenRequestToCardsaDTO {
     String userCI;
     String cardNumber;
