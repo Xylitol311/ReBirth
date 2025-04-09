@@ -1,13 +1,16 @@
 package com.example.fe.ui.screens.myCard
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +26,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -69,6 +74,7 @@ import com.example.fe.ui.screens.myCard.MyCardViewModel.MyCardUiState
 import java.text.NumberFormat
 import java.util.Locale
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MyCardScreen(
@@ -503,15 +509,30 @@ fun MyCardScreen(
                                     color = Color(0xFFE0E0E0)
                                 )
                             }
+
+                            // 현재 사용 금액에 따른 실적 구간 계산
+                            val currentPerformanceAmount = realCards[currentCardIndex].totalSpending
+                            val performanceRanges = realCards[currentCardIndex].performanceRange
+
+                            // 현재 사용 금액에 해당하는 실적 구간 찾기
+                            val currentPerformanceTarget = performanceRanges.lastOrNull { range ->
+                                currentPerformanceAmount >= range
+                            } ?: performanceRanges.firstOrNull() ?: 0
+
+                            // 다음 실적 구간 찾기
+                            val nextPerformanceTarget = performanceRanges.find { range ->
+                                range > currentPerformanceAmount
+                            } ?: performanceRanges.lastOrNull() ?: 0
+
                             Row {
                                 Text(
-                                    text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].totalSpending)}원",
+                                    text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(currentPerformanceAmount)}원",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF00BCD4)  // 금액 부분 청록색으로 변경
+                                    color = Color(0xFF00BCD4)
                                 )
                                 Text(
-                                    text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].maxSpending)}원",
+                                    text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(nextPerformanceTarget)}원",
                                     fontSize = 16.sp,
                                     color = Color.White
                                 )
@@ -520,19 +541,80 @@ fun MyCardScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        LinearProgressIndicator(
-                            progress = {
-                                val total = realCards[currentCardIndex].totalSpending.toFloat()
-                                val max = realCards[currentCardIndex].maxSpending.toFloat()
-                                if (max > 0) total / max else 0f
-                            },
+                        // 프로그레스 바 컨테이너
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),  // 둥근 모서리 추가
-                            color = Color(0xFF00BCD4),
-                            trackColor = Color(0x33FFFFFF)
-                        )
+                                .height(16.dp)
+                        ) {
+                            // 배경 바
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(16.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0x33FFFFFF))
+                            )
+
+                            // 현재 진행률 계산 (0.0 ~ 1.0)
+                            val currentAmount = realCards[currentCardIndex].totalSpending.toFloat()
+                            val maxAmount = realCards[currentCardIndex].performanceRange.lastOrNull()?.toFloat() ?:
+                            realCards[currentCardIndex].maxSpending.toFloat()
+                            val currentProgress = (currentAmount / maxAmount).coerceIn(0f, 1f)
+
+                            // 현재 실적 바
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(currentProgress)
+                                    .height(16.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF00BCD4))
+                            )
+
+                            // 구간 마커 배치
+                            val performanceRanges = realCards[currentCardIndex].performanceRange
+
+                            // 구간이 1개 이상일 때만 마커 표시 (마지막 인덱스는 제외)
+                            if (performanceRanges.size > 1) {
+                                // 레이아웃 내에서 마커 위치 계산을 위한 BoxWithConstraints 사용
+                                BoxWithConstraints(
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    val barWidth = maxWidth
+
+                                    // 마커 개수 (마지막 인덱스 제외)
+                                    val markerCount = performanceRanges.size - 1
+
+                                    // 각 구간별 마커 표시 (마지막 인덱스 제외)
+                                    for (i in 0 until markerCount) {
+                                        // 마커 위치는 균등 분할 (예: 마커가 2개면 33%, 66% 위치)
+                                        val position = (i + 1).toFloat() / (markerCount + 1).toFloat()
+                                        val xOffset = barWidth * position - 3.dp // 마커 중앙이 위치에 오도록 조정
+
+                                        // 현재 마커가 나타내는 실적 값
+                                        val markerValue = performanceRanges[i]
+
+                                        Box(
+                                            modifier = Modifier
+                                                .size(16.dp)
+                                                .offset(x = xOffset)
+                                                .background(
+                                                    if (realCards[currentCardIndex].totalSpending >= markerValue) Color(0xFF006064) else Color.Gray.copy(alpha = 0.5f),
+                                                    CircleShape
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = (i + 1).toString(),
+                                                color = Color.White,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -568,12 +650,15 @@ fun MyCardScreen(
                                     color = Color(0xFF00BCD4)  // 금액 부분 청록색으로 변경
                                 )
                                 Text(
-                                    text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].maxBenefit)}원",
+                                    text = if (realCards[currentCardIndex].maxBenefit == 0) {
+                                        " / 무제한"
+                                    } else {
+                                        " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].maxBenefit)}원"
+                                    },
                                     fontSize = 16.sp,
                                     color = Color.White
                                 )
-                            }
-                        }
+                            }                        }
 
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -581,11 +666,17 @@ fun MyCardScreen(
                             progress = {
                                 val received = realCards[currentCardIndex].receivedBenefit.toFloat()
                                 val max = realCards[currentCardIndex].maxBenefit.toFloat()
-                                if (max > 0) received / max else 0f
+                                if (max == 0f) {
+                                    1f  // maxBenefit이 0이면 무제한이므로 프로그레스 바를 100% 채움
+                                } else if (max > 0) {
+                                    (received / max).coerceIn(0f, 1f)  // 1.0을 넘지 않도록 제한
+                                } else {
+                                    0f
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(8.dp)
+                                .height(16.dp)
                                 .clip(RoundedCornerShape(4.dp)),  // 둥근 모서리 추가
                             color = Color(0xFF00BCD4),
                             trackColor = Color(0x33FFFFFF)

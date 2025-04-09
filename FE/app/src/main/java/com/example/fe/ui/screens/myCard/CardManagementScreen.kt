@@ -63,20 +63,7 @@ data class CardSwapInfo(
 fun CardManagementScreen(
     onBackClick: () -> Unit
 ) {
-    // 초기 카드 데이터
-    val initialCards = remember {
-        listOf(
-            CardItemWithVisibility(CardItem(1, "토스 신한카드 Mr.Life", "•••• •••• •••• 3456")),
-            CardItemWithVisibility(CardItem(2, "현대카드", "•••• •••• •••• 4567")),
-            CardItemWithVisibility(CardItem(3, "삼성카드", "•••• •••• •••• 5678"))
-        )
-    }
-    
-    // 카드 매니저 초기화
-    LaunchedEffect(Unit) {
-        CardOrderManager.initializeIfEmpty(initialCards)
-    }
-    
+
     // 상태 관리
     var cards by remember { mutableStateOf(CardOrderManager.sortedCards.toList()) }
     var hasChanges by remember { mutableStateOf(false) }
