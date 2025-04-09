@@ -5,5 +5,5 @@ public interface UserRepository{
 	boolean update(User user);
 	User save(User user);
 	User findByPhoneSerialNumber(String phoneSerialNumber);
-	User findByPhoneSerialNumberAndPhoneNumber(String phoneSerialNumber, String phoneNumber);
+	User findByPhoneSerialNumberAndHashedPinNumber(String phoneSerialNumber, String hashedPinNumber);
 }
