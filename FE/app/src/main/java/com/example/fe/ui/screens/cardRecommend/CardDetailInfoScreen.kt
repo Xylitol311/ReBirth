@@ -1,5 +1,6 @@
 package com.example.fe.ui.screens.cardRecommend
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,6 +16,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,16 +41,27 @@ import kotlinx.coroutines.launch
 fun CardDetailInfoScreen(
     viewModel: CardRecommendViewModel,
     cardId: Int,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    navController: androidx.navigation.NavController? = null // 옵션으로 NavController 추가
 ) {
-    // 화면이 표시될 때 카드 상세 정보 로드
+    // 화면이 표시될 때 카드 상세 정보 로드 - 오류 처리 개선
     LaunchedEffect(cardId) {
-        viewModel.loadCardDetail(cardId)
+        try {
+            viewModel.loadCardDetail(cardId)
+            Log.d("CardDetailInfoScreen", "Loading card detail for id: $cardId")
+        } catch (e: Exception) {
+            Log.e("CardDetailInfoScreen", "Error loading card detail", e)
+        }
     }
 
     // UI 상태 가져오기
     val uiState = viewModel.uiState
-    val cardDetail = viewModel.getSelectedCardDetailForUI()
+    val cardDetail = try {
+        viewModel.getSelectedCardDetailForUI()
+    } catch (e: Exception) {
+        Log.e("CardDetailInfoScreen", "Error getting card detail UI", e)
+        null
+    }
 
     // 로딩 상태 처리
     if (uiState.isLoadingCardDetail) {
@@ -64,10 +80,22 @@ fun CardDetailInfoScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "오류: ${uiState.errorCardDetail}",
-                color = Color.Red
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "오류: ${uiState.errorCardDetail}",
+                    color = Color.Red
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Button(
+                    onClick = onBackClick
+                ) {
+                    Text("뒤로 가기")
+                }
+            }
         }
         return
     }
@@ -78,10 +106,22 @@ fun CardDetailInfoScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "카드 정보를 찾을 수 없습니다.",
-                color = Color.White
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "카드 정보를 찾을 수 없습니다.",
+                    color = Color.White
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Button(
+                    onClick = onBackClick
+                ) {
+                    Text("뒤로 가기")
+                }
+            }
         }
         return
     }
@@ -113,6 +153,35 @@ fun CardDetailInfoScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            // 뒤로가기 버튼 추가
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 뒤로가기 아이콘
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "뒤로 가기",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { onBackClick() }
+                        .padding(4.dp)
+                )
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                // 화면 타이틀
+                Text(
+                    text = "카드 상세 정보",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
             // 스크롤 가능한 콘텐츠
             LazyColumn(
                 state = lazyListState,

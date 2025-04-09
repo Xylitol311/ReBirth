@@ -38,31 +38,17 @@ fun HomeUsedMoney(
     onDetailClick: () -> Unit = {},
     viewModel: HomeViewModel
 ) {
-    // API 데이터 (사용하지 않음)
+    // API 데이터 가져오기
     val totalSpendingAmount: StateFlow<Int> = viewModel.totalSpendingAmount
     val totalBenefitAmount: StateFlow<Int> = viewModel.totalBenefitAmount
     val goodList: StateFlow<List<SpendingItem>> = viewModel.goodList
     val badList: StateFlow<List<SpendingItem>> = viewModel.badList
 
-    // API 데이터 수집 (사용하지 않음)
+    // API 데이터 수집
     val spendingAmount by totalSpendingAmount.collectAsState()
     val benefitAmount by totalBenefitAmount.collectAsState()
     val goodItems by goodList.collectAsState()
     val badItems by badList.collectAsState()
-
-    // 임시 데이터 설정
-    // 사진에 표시된 금액대로 설정
-    val tempSpendingAmount = 150000
-    val tempBenefitAmount = 1000
-    
-    // 임시 카테고리 데이터
-    val tempGoodItems = listOf(
-        TempSpendingItem("카페", 50000, 500, R.drawable.ic_shopping),
-        TempSpendingItem("음식점", 30000, 300, R.drawable.ic_shopping),
-        TempSpendingItem("편의점", 20000, 200, R.drawable.ic_shopping)
-    )
-    
-    val tempBadItems = emptyList<TempSpendingItem>() // 아쉬움 탭은 비어있게 설정
 
     var selectedTabIndex by remember { mutableStateOf(0) }
 
@@ -97,7 +83,7 @@ fun HomeUsedMoney(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "${tempSpendingAmount}원", // 임시 데이터 사용
+                        text = "${spendingAmount}원", // 실제 API 데이터 사용
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF00E1FF)
@@ -106,7 +92,7 @@ fun HomeUsedMoney(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "받은 혜택 ${tempBenefitAmount}원", // 임시 데이터 사용
+                        text = "받은 혜택 ${benefitAmount}원", // 실제 API 데이터 사용
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -186,11 +172,11 @@ fun HomeUsedMoney(
                 }
             }
             
-            // 카테고리별 소비 내역 - 임시 데이터 사용
-            TempCategorySpendingList(
+            // 카테고리별 소비 내역 - 실제 API 데이터 사용
+            CategorySpendingList(
                 selectedTabIndex = selectedTabIndex,
-                goodList = tempGoodItems,
-                badList = tempBadItems
+                goodList = goodItems,
+                badList = badItems
             )
         }
     }
@@ -294,7 +280,7 @@ private fun TempCategoryRow(
     }
 }
 
-// 기존 컴포넌트는 유지 (사용하지 않음)
+// 실제 카테고리 지출 목록 컴포넌트
 @Composable
 private fun CategorySpendingList(
     selectedTabIndex: Int,
@@ -324,7 +310,8 @@ private fun CategorySpendingList(
                     category = item.category,
                     amount = item.amount,
                     benefit = item.benefit,
-                    isGoodTab = selectedTabIndex == 1
+                    isGoodTab = selectedTabIndex == 1,
+                    iconResId = getCategoryIcon(item.category)
                 )
             }
         }
@@ -336,7 +323,8 @@ private fun CategoryRow(
     category: String,
     amount: Int,
     benefit: Int,
-    isGoodTab: Boolean
+    isGoodTab: Boolean,
+    iconResId: Int = R.drawable.ic_shopping
 ) {
     Row(
         modifier = Modifier
@@ -351,7 +339,7 @@ private fun CategoryRow(
             modifier = Modifier.weight(1f)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_shopping),
+                painter = painterResource(id = iconResId),
                 contentDescription = category,
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
@@ -376,20 +364,30 @@ private fun CategoryRow(
                 fontWeight = FontWeight.Medium
             )
             
-            if (isGoodTab) {
-                Text(
-                    text = "+${benefit}원",
-                    fontSize = 18.sp,
-                    color = Color(0xFF4285F4)
-                )
-            } else {
-                Text(
-                    text = "-${benefit}원",
-                    fontSize = 18.sp,
-                    color = Color(0xFFFF5252)
-                )
-            }
+            // 혜택 금액 텍스트 색상 - 좋음(파란색)/아쉬움(빨간색)
+            val benefitColor = if (isGoodTab) Color(0xFF00E1FF) else Color(0xFFFF5252)
+            val benefitPrefix = if (isGoodTab) "+" else "-"
+            
+            Text(
+                text = "$benefitPrefix${benefit}원 혜택",
+                fontSize = 18.sp,
+                color = benefitColor
+            )
         }
+    }
+}
+
+// 카테고리에 맞는 아이콘 리소스 ID 반환 함수
+private fun getCategoryIcon(category: String): Int {
+    return when (category) {
+        "식비" -> R.drawable.ic_restaurant
+        "쇼핑" -> R.drawable.ic_shopping
+        "교통" -> R.drawable.ic_coffee
+        "여가" -> R.drawable.ic_coffee
+        "의료" -> R.drawable.ic_coffee
+        "통신" -> R.drawable.ic_coffee
+        "교육" -> R.drawable.ic_coffee
+        else -> R.drawable.ic_shopping // 기본 아이콘
     }
 }
 

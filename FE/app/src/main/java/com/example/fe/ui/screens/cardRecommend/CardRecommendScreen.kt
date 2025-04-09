@@ -37,6 +37,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import com.example.fe.ui.components.backgrounds.GlassSurface
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
+import androidx.navigation.NavController
+import androidx.hilt.navigation.compose.hiltViewModel
 
 
 // 카드 데이터 클래스
@@ -61,10 +63,19 @@ data class FilterTag(
 @Composable
 fun CardRecommendScreen(
     viewModel: CardRecommendViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-    onCardClick: (CardInfo) -> Unit = {}
+    onCardClick: (Int) -> Unit
 ) {
     val uiState = viewModel.uiState
     var selectedTabIndex by remember { mutableStateOf(0) }
+
+    // 카드 클릭 이벤트 핸들러 추가
+    val handleCardClick: (Int) -> Unit = { cardId ->
+        try {
+            onCardClick(cardId)
+        } catch (e: Exception) {
+            Log.e("CardRecommendScreen", "Navigation error: ${e.message}")
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // 상단 탭 바
@@ -134,8 +145,8 @@ fun CardRecommendScreen(
         when (selectedTabIndex) {
             0 -> PersonalizedRecommendations(
                 uiState = uiState,
-                onRefresh = {viewModel.loadRecommendations()},
-                onCardClick = onCardClick
+                onRefresh = { viewModel.loadRecommendations() },
+                onCardClick = handleCardClick
             )
             1 -> CardFinder(
                 filterTags = uiState.filterTags,
@@ -151,7 +162,7 @@ fun CardRecommendScreen(
                 } ?: emptyList(),
                 isLoading = uiState.isLoadingSearch,
                 error = uiState.errorSearch,
-                onCardClick = onCardClick
+                onCardClick = handleCardClick
             )
         }
     }
@@ -161,7 +172,7 @@ fun CardRecommendScreen(
 fun PersonalizedRecommendations(
     uiState: CardRecommendUiState,
     onRefresh: () -> Unit,
-    onCardClick: (CardInfo) -> Unit
+    onCardClick: (Int) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -215,16 +226,7 @@ fun PersonalizedRecommendations(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         val cards = uiState.top3ForAll.recommendCards?.map { cardInfo ->
-                            CardInfo(
-                                id = cardInfo.cardId,
-                                name = cardInfo.cardName,
-                                company = "",  // API에서 제공하지 않음
-                                benefits = listOf(cardInfo.cardInfo),
-                                annualFee = "",  // API에서 제공하지 않음
-                                minSpending = "",  // API에서 제공하지 않음
-                                cardImage = cardInfo.imageUrl,
-                                icons = listOf()  // 필요시 파싱 로직 추가
-                            )
+                            cardInfo.cardId to ""  // 카드 ID만 전달
                         } ?: emptyList()
                         CardCarousel(cards = cards, onCardClick = onCardClick)
                     } else if (uiState.isLoading) {
@@ -287,16 +289,7 @@ fun PersonalizedRecommendations(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             val cards = category.recommendCards.map { cardInfo ->
-                                CardInfo(
-                                    id = cardInfo.cardId,
-                                    name = cardInfo.cardName,
-                                    company = "",  // API에서 제공하지 않음
-                                    benefits = listOf(cardInfo.cardInfo),
-                                    annualFee = "",  // API에서 제공하지 않음
-                                    minSpending = "",  // API에서 제공하지 않음
-                                    cardImage = cardInfo.imageUrl,
-                                    icons = listOf()  // 필요시 파싱 로직 추가
-                                )
+                                cardInfo.cardId to ""  // 카드 ID만 전달하고 이름은 빈 문자열로 설정
                             }
 
                             CardCarousel(cards = cards, onCardClick = onCardClick)
@@ -339,7 +332,6 @@ fun PersonalizedRecommendations(
                 }
             }
         }
-
     }
 }
 
@@ -351,7 +343,7 @@ fun CardFinder(
     cards: List<CardInfo>,
     isLoading: Boolean,
     error: String?,
-    onCardClick: (CardInfo) -> Unit
+    onCardClick: (Int) -> Unit
 ) {
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -454,7 +446,7 @@ fun CardFinder(
             }
         } else {
             items(cards) { card ->
-                CardListItem(card = card, onClick = { onCardClick(card) })
+                CardListItem(card = card, onClick = { onCardClick(card.id) })
             }
         }
 
@@ -524,9 +516,10 @@ fun FilterTagRow(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CardCarousel(
-    cards: List<CardInfo>,
-    onCardClick: (CardInfo) -> Unit
+    cards: List<Pair<Int, String>>,
+    onCardClick: (Int) -> Unit
 ) {
+    // 카드 ID 목록을 3개 이상이 되도록 확장
     val extendedCards = if (cards.size < 3) {
         cards + cards + cards
     } else {
@@ -579,7 +572,7 @@ fun CardCarousel(
                                     pagerState.animateScrollToPage(page)
                                 }
                             } else {
-                                onCardClick(extendedCards[page])
+                                onCardClick(extendedCards[page].first)
                             }
                         }
                 ) {
@@ -594,7 +587,7 @@ fun CardCarousel(
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.card),
-                                contentDescription = extendedCards[page].name,
+                                contentDescription = "카드 이미지",
                                 contentScale = ContentScale.FillWidth,
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -623,7 +616,7 @@ fun CardCarousel(
                             )
 
                             Text(
-                                text = extendedCards[page].name,
+                                text = extendedCards[page].second,
                                 color = Color.White,
                                 fontSize = 16.sp,
                                 textAlign = TextAlign.Center,
@@ -644,7 +637,7 @@ fun CardCarousel(
 @Composable
 fun CardListItem(
     card: CardInfo,
-    onClick: () -> Unit
+    onClick: (Int) -> Unit
 ) {
     GlassSurface(
         modifier = Modifier
@@ -655,7 +648,7 @@ fun CardListItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(onClick = { onClick(card.id) })
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
