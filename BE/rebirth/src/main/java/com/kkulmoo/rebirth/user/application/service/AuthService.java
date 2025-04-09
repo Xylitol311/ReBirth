@@ -81,6 +81,7 @@ public class AuthService {
 
 
     public AuthenticationResult validUser(String number, String type, String phoneSerialNumber) {
+
         User user = userRepository.findByPhoneSerialNumber(phoneSerialNumber);
 
         if (user == null) return AuthenticationResult.failure();
