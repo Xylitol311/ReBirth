@@ -1,23 +1,39 @@
 package com.example.fe.ui.screens.payment
 
+import android.content.Context
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.payment.PaymentResult
 import com.example.fe.data.model.payment.TokenInfo
 import com.example.fe.data.network.api.QRTokenRequest
 import com.example.fe.data.repository.PaymentRepository
+import com.example.fe.ui.screens.onboard.viewmodel.AppTokenProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class PaymentViewModel : ViewModel() {
+
+class PaymentViewModel(private val context: Context) : ViewModel() {
     init {
         Log.d("PaymentViewModel", "PaymentViewModel 초기화됨")
     }
-    
+
+    // 팩토리 클래스 추가
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(PaymentViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return PaymentViewModel(context) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+
     private val paymentRepository = PaymentRepository()
     
     // 결제 상태 Flow
@@ -35,10 +51,10 @@ class PaymentViewModel : ViewModel() {
     // 현재 선택된 카드 이름 (cardId 대신 cardName 사용)
     private val _selectedCardName = MutableStateFlow<String?>(null)
     val selectedCardName: StateFlow<String?> = _selectedCardName
-    
-    // 사용자 ID (실제 앱에서는 로그인 정보에서 가져와야 함)
-    private val userId = "2" // 임시 사용자 ID
-    
+
+    // 사용자 ID
+    private val userId= AppTokenProvider(context).getToken()
+
     // QR 토큰 전송 및 결제 정보 가져오기
     private val _paymentInfo = MutableStateFlow<PaymentInfo?>(null)
     val paymentInfo: StateFlow<PaymentInfo?> = _paymentInfo
@@ -64,7 +80,7 @@ class PaymentViewModel : ViewModel() {
             _paymentState.value = PaymentState.Loading
 
             Log.e("PaymentViewModel", "initializePaymentProcess getPaymentTokens")
-            paymentRepository.getPaymentTokens(userId)
+            paymentRepository.getPaymentTokens()
                 .onSuccess { tokens ->
                     Log.e("PaymentViewModel", "initializePaymentProcess getPaymentTokens success")
                     // API 응답에서 토큰 값이 null일 경우 대비

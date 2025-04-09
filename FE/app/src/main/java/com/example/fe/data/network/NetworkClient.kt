@@ -5,6 +5,8 @@ import com.example.fe.config.AppConfig
 import com.example.fe.data.network.Interceptor.AuthInterceptor
 import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.data.network.api.AuthApiService
+import com.example.fe.data.network.api.MyCardApiService
+import com.example.fe.data.network.api.PaymentApiService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -34,10 +36,13 @@ object NetworkClient {
             .build()
 
         authApiService = retrofit.create(AuthApiService::class.java)
+        paymentApiService = retrofit.create(PaymentApiService::class.java)
+        myCardApiService = retrofit.create(MyCardApiService::class.java)
     }
     private lateinit var retrofit: Retrofit
     lateinit var authApiService: AuthApiService
-
+    lateinit var paymentApiService: PaymentApiService
+    lateinit var myCardApiService: MyCardApiService
 
 }
 

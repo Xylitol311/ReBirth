@@ -3,6 +3,7 @@ package com.example.fe.data.repository
 import android.util.Log
 import com.example.fe.config.AppConfig
 import com.example.fe.data.model.payment.*
+import com.example.fe.data.network.NetworkClient
 import com.example.fe.data.network.api.PaymentApiService
 import com.example.fe.data.network.api.QRTokenRequest
 import com.example.fe.data.network.client.PaymentSseClient
@@ -14,20 +15,16 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class PaymentRepository {
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(AppConfig.Server.BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-    
-    private val paymentApiService = retrofit.create(PaymentApiService::class.java)
+
+    private val paymentApiService = NetworkClient.paymentApiService
     private val paymentSseClient = PaymentSseClient()
     
     // 결제 토큰 요청
-    suspend fun getPaymentTokens(userId: String): Result<List<TokenInfo>> {
-        Log.d("PaymentRepository", "getPaymentTokens 시작: userId=$userId")
+    suspend fun getPaymentTokens(): Result<List<TokenInfo>> {
+        Log.d("PaymentRepository", "getPaymentTokens 시작")
         
         return try {
-            val response = paymentApiService.getPaymentToken(userId)
+            val response = paymentApiService.getPaymentToken()
             Log.d("PaymentRepository", "API 응답: ${response.code()}")
 
             

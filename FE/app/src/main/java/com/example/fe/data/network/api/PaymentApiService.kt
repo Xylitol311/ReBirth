@@ -14,7 +14,7 @@ import okhttp3.RequestBody
 interface PaymentApiService {
     
     @GET("api/payment/disposabletoken")
-    suspend fun getPaymentToken(@Query("userId") userId: String): Response<ApiResponse<List<TokenInfo>>>
+    suspend fun getPaymentToken(): Response<ApiResponse<List<TokenInfo>>>
 
     @POST("api/payment/onlinedisposabletoken")
     suspend fun sendQRToken(@Body tokenRequest: QRTokenRequest): Response<ApiResponse<QRPaymentResponse>>

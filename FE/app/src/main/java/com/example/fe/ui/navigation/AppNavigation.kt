@@ -67,14 +67,21 @@ object NavRoutes {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+
     val context = LocalContext.current
+    // ViewModel을 상위 Composable 함수에서 가져오기
+    val paymentViewModel: PaymentViewModel = viewModel(
+        factory = PaymentViewModel.Factory(context)
+    )
+
     val deviceInfoManager = remember { AndroidDeviceInfoManager(context) }
     val viewModel: OnboardingViewModel = viewModel(
         factory = OnboardingViewModelFactory(deviceInfoManager,context)
     )
+
     // 로그아웃을 위한 ViewModel
 
-
+// 박종원
     // 로그아웃 처리 함수
     val handleLogout = {
         viewModel.logout()
@@ -179,8 +186,6 @@ fun AppNavigation() {
         }
     )
 
-    // ViewModel을 상위 Composable 함수에서 가져오기
-    val paymentViewModel: PaymentViewModel = viewModel()
 
     // QR 스캐너와 카드 OCR 스캔 화면 표시 여부
     var showQRScanner by remember { mutableStateOf(false) }

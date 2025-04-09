@@ -41,6 +41,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.ui.res.painterResource
+import com.example.fe.R
 import com.example.fe.ui.components.cards.HorizontalCardLayout
 import com.example.fe.ui.screens.payment.PaymentCardInfo
 import kotlin.math.abs
@@ -299,7 +301,7 @@ fun AddCardButton(
             // 테두리 추가
             .border(
                 width = 2.dp,
-                color = Color(0xFF4CAF50).copy(alpha = lerp(0.5f, 0.8f, centeredness)),
+                color = Color(0xFF00BCD4).copy(alpha = lerp(0.5f, 0.8f, centeredness)),
                 shape = RoundedCornerShape(16.dp)
             )
             // 배경색 추가 (약간 투명하게)
@@ -325,22 +327,21 @@ fun AddCardButton(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            // 카드 추가 UI - 이 부분을 클릭하면 카드 추가 화면이 열림
+
+            // 카드 추가 UI - 아이콘만 표시
             Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF4CAF50).copy(alpha = lerp(0.5f, 0.7f, centeredness))),
+                    .size(40.dp)  // 아이콘 크기만큼만 영역 지정
+                    .clickable { /* 카드 추가 화면으로 이동하는 코드 */ },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    painter = painterResource(id = R.drawable.ic_add),
                     contentDescription = "카드 추가",
-                    tint = Color.White,
+                    tint = Color(0xFF3F51B5),  // 아이콘 색상을 0xFF3F51B5로 설정
                     modifier = Modifier.size(40.dp)
                 )
             }
-            
             Spacer(modifier = Modifier.height(16.dp))
             
             // 텍스트

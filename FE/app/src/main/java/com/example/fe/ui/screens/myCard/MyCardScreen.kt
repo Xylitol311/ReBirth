@@ -22,6 +22,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
@@ -57,12 +58,16 @@ import kotlin.math.absoluteValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fe.ui.components.cards.VerticalCardLayout
 import com.example.fe.ui.screens.myCard.MyCardViewModel.CardItem
 import com.example.fe.ui.screens.myCard.MyCardViewModel.CardItemWithVisibility
 import com.example.fe.ui.screens.myCard.MyCardViewModel.CardOrderManager
 import com.example.fe.ui.screens.myCard.MyCardViewModel.MyCardUiState
+import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -77,6 +82,9 @@ fun MyCardScreen(
 ) {
     // 현재 화면 밀도 가져오기
     val density = LocalDensity.current.density
+
+    // 화면 너비 가져오기
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
     // ViewModel에서 상태 가져오기
     val uiState by viewModel.uiState.collectAsState()
@@ -330,17 +338,127 @@ fun MyCardScreen(
             }
         }
 
-        // 카드 이름을 별도로 배치 (카드 바로 위에)
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 460.dp)  // 카드 이름 위치 올림
                 .graphicsLayer {
-                    alpha = if (isNavigating) uiAlpha else cardsAppearAlpha
-                    translationY = if (isNavigating) uiTranslationY else cardsAppearTranslationY
+                    // 등장 애니메이션 적용
+                    translationY = cardsAppearTranslationY
+                    alpha = cardsAppearAlpha
                 },
-            contentAlignment = Alignment.BottomCenter
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center // 중앙 정렬
         ) {
+            // 카드 슬라이더 (화면 중앙에 배치)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp), // 카드 높이 고정
+                contentAlignment = Alignment.Center // 중앙 정렬
+            ) {
+                // 중앙 정렬을 위한 Box
+                if (realCards.isNotEmpty()) {
+                    HorizontalPager(
+                        state = pagerState,
+                        pageSpacing = 0.dp,
+                        flingBehavior = flingBehavior,
+                        contentPadding = PaddingValues(
+                            start = (screenWidth - 280.dp) / 2,
+                            end = (screenWidth - 280.dp) / 2
+                        ),
+                        userScrollEnabled = !isNavigating,
+                        pageSize = PageSize.Fixed(280.dp),
+                        key = { it }
+                    ) { page ->
+                        // 현재 페이지와의 거리 계산
+                        val pageOffset = (
+                                (pagerState.currentPage - page) + pagerState
+                                    .currentPageOffsetFraction
+                                ).absoluteValue
+
+                        // 현재 카드는 더 크게, 다른 카드는 작게
+                        val baseScale = if (page == pagerState.currentPage) 1.3f else 0.85f
+
+                        // 각 카드에 대한 애니메이션 결정
+                        val isSelected = isNavigating && page == navigatingCardPage
+                        val isNonSelected = isNavigating && page != navigatingCardPage
+
+                        // 모든 카드의 투명도 애니메이션
+                        val cardAlpha by animateFloatAsState(
+                            targetValue = if (isNavigating) 0f else 1f,
+                            animationSpec = tween(300, easing = EaseInOut),
+                            label = "cardAlpha"
+                        )
+
+                        // 선택된 카드의 Z-Index
+                        val zIndex by animateFloatAsState(
+                            targetValue = if (isSelected) 100f else 0f,
+                            animationSpec = tween(100),
+                            label = "zIndex"
+                        )
+
+                        // 선택된 카드 스케일
+                        val selectedScale by animateFloatAsState(
+                            targetValue = if (isSelected) 1.0f else baseScale,
+                            animationSpec = tween(300),
+                            label = "selectedScale"
+                        )
+
+                        // 카드 이미지
+                        Box(
+                            modifier = Modifier
+                                .width(280.dp)
+                                .height(400.dp)
+                                .zIndex(zIndex)
+                                .graphicsLayer(
+                                    scaleX = selectedScale,
+                                    scaleY = selectedScale,
+                                    alpha = cardAlpha,
+                                    clip = false,
+                                    cameraDistance = 12f * density
+                                )
+                        ) {
+                            if (realCards[page].imageUrl.isNotEmpty()) {
+                                // URL이 있는 경우 URL 버전의 VerticalCardLayout 사용
+                                VerticalCardLayout(
+                                    cardImageUrl = realCards[page].imageUrl,
+                                    width = 280.dp,
+                                    height = 400.dp,
+                                    cornerRadius = 16.dp,
+                                    onClick = {
+                                        if (page == pagerState.currentPage) {
+                                            isNavigating = true
+                                            navigatingCardPage = page
+
+                                            coroutineScope.launch {
+                                                delay(300)
+                                                onCardClick(realCards[page])
+                                            }
+                                        } else {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(page)
+                                            }
+                                        }
+                                    }
+                                )
+                            } else {
+
+                            }
+                        }
+                    }
+                } else if (!isLoading && uiState !is MyCardUiState.Error) {
+                    // 카드가 없는 경우 메시지 표시
+                    Text(
+                        text = "등록된 카드가 없습니다",
+                        color = Color(0xFFE0E0E0),
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
+            // 카드 이름을 별도로 배치 (카드 바로 아래)
             if (realCards.isNotEmpty() && pagerState.currentPage < realCards.size) {
                 val currentCardIndex = pagerState.currentPage
 
@@ -349,38 +467,58 @@ fun MyCardScreen(
                 ) {
                     Text(
                         text = realCards[currentCardIndex].name,
-                        fontSize = 20.sp,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE0E0E0),
-                        textAlign = TextAlign.Center
+                        color = Color(0xFF00BCD4),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,                      // 한 줄로 제한
+                        overflow = TextOverflow.Ellipsis,  // 넘치면 말줄임표로 표시
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)   // 양쪽 여백 추가
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // 사용 금액 진행 상태
                     Column(
                         modifier = Modifier
-                            .width(240.dp)
-                            .padding(vertical = 4.dp),
+                            .width(300.dp)
+                            .padding(vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "사용 금액",
-                                fontSize = 14.sp,
-                                color = Color(0xFFE0E0E0)
-                            )
-                            Text(
-                                text = "${realCards[currentCardIndex].totalSpending}원 / ${realCards[currentCardIndex].maxSpending}원",
-                                fontSize = 14.sp,
-                                color = Color(0xFFE0E0E0)
-                            )
+                            Row {
+                                Text(
+                                    text = "사용 금액",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF00BCD4)
+                                )
+                                Text(
+                                    text = " / 실적",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFFE0E0E0)
+                                )
+                            }
+                            Row {
+                                Text(
+                                    text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].totalSpending)}원",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF00BCD4)  // 금액 부분 청록색으로 변경
+                                )
+                                Text(
+                                    text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].maxSpending)}원",
+                                    fontSize = 16.sp,
+                                    color = Color.White
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         LinearProgressIndicator(
                             progress = {
@@ -390,39 +528,54 @@ fun MyCardScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RectangleShape),
-                            color = Color(0xFF4CAF50),
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),  // 둥근 모서리 추가
+                            color = Color(0xFF00BCD4),
                             trackColor = Color(0x33FFFFFF)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // 혜택 금액 진행 상태
                     Column(
                         modifier = Modifier
-                            .width(240.dp)
-                            .padding(vertical = 4.dp),
+                            .width(300.dp)
+                            .padding(vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "혜택 금액",
-                                fontSize = 14.sp,
-                                color = Color(0xFFE0E0E0)
-                            )
-                            Text(
-                                text = "${realCards[currentCardIndex].receivedBenefit}원 / ${realCards[currentCardIndex].maxBenefit}원",
-                                fontSize = 14.sp,
-                                color = Color(0xFFE0E0E0)
-                            )
+                            Row {
+                                Text(
+                                    text = "받은 혜택",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF00BCD4)
+                                )
+                                Text(
+                                    text = " / 총 혜택",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFFE0E0E0)
+                                )
+                            }
+                            Row {
+                                Text(
+                                    text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].receivedBenefit)}원",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF00BCD4)  // 금액 부분 청록색으로 변경
+                                )
+                                Text(
+                                    text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].maxBenefit)}원",
+                                    fontSize = 16.sp,
+                                    color = Color.White
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         LinearProgressIndicator(
                             progress = {
@@ -432,136 +585,10 @@ fun MyCardScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RectangleShape),
-                            color = Color(0xFF2196F3),
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),  // 둥근 모서리 추가
+                            color = Color(0xFF00BCD4),
                             trackColor = Color(0x33FFFFFF)
-                        )
-                    }
-                }
-            }
-        }
-
-        // 카드 슬라이더 (화면 중앙 하단에 배치)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 20.dp)  // 하단 패딩 줄임
-                .graphicsLayer {
-                    // 등장 애니메이션 적용
-                    translationY = cardsAppearTranslationY
-                    alpha = cardsAppearAlpha
-                },
-            contentAlignment = Alignment.BottomCenter  // 하단 중앙 정렬로 변경
-        ) {
-            // 중앙 정렬을 위한 Box
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                // 오프셋 적용을 위한 추가 컨테이너
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)  // 하단 중앙으로 변경
-                        .padding(bottom = 40.dp)  // 하단 여백 줄임
-                        .graphicsLayer {
-                            translationX = 0f
-                        }
-                ) {
-                    if (realCards.isNotEmpty()) {
-                        HorizontalPager(
-                            state = pagerState,
-                            pageSpacing = 0.dp,
-                            flingBehavior = flingBehavior,
-                            contentPadding = PaddingValues(start = 100.dp, end = 100.dp),
-                            userScrollEnabled = !isNavigating,
-                            pageSize = PageSize.Fixed(280.dp),
-                            key = { it }
-                        ) { page ->
-                            // 현재 페이지와의 거리 계산
-                            val pageOffset = (
-                                    (pagerState.currentPage - page) + pagerState
-                                        .currentPageOffsetFraction
-                                    ).absoluteValue
-
-                            // 현재 카드는 더 크게, 다른 카드는 작게
-                            val baseScale = if (page == pagerState.currentPage) 1.3f else 0.85f
-
-                            // 각 카드에 대한 애니메이션 결정
-                            val isSelected = isNavigating && page == navigatingCardPage
-                            val isNonSelected = isNavigating && page != navigatingCardPage
-
-                            // 모든 카드의 투명도 애니메이션
-                            val cardAlpha by animateFloatAsState(
-                                targetValue = if (isNavigating) 0f else 1f,
-                                animationSpec = tween(300, easing = EaseInOut),
-                                label = "cardAlpha"
-                            )
-
-                            // 선택된 카드의 Z-Index
-                            val zIndex by animateFloatAsState(
-                                targetValue = if (isSelected) 100f else 0f,
-                                animationSpec = tween(100),
-                                label = "zIndex"
-                            )
-
-                            // 선택된 카드 스케일
-                            val selectedScale by animateFloatAsState(
-                                targetValue = if (isSelected) 1.0f else baseScale,
-                                animationSpec = tween(300),
-                                label = "selectedScale"
-                            )
-
-                            // 카드 이미지
-                            Box(
-                                modifier = Modifier
-                                    .width(280.dp)
-                                    .height(400.dp)
-                                    .zIndex(zIndex)
-                                    .graphicsLayer(
-                                        scaleX = selectedScale,
-                                        scaleY = selectedScale,
-                                        alpha = cardAlpha,
-                                        clip = false,
-                                        cameraDistance = 12f * density
-                                    )
-                            ) {
-                                if (realCards[page].imageUrl.isNotEmpty()) {
-                                    // URL이 있는 경우 URL 버전의 VerticalCardLayout 사용
-                                    VerticalCardLayout(
-                                        cardImageUrl = realCards[page].imageUrl,
-                                        width = 280.dp,
-                                        height = 400.dp,
-                                        cornerRadius = 16.dp,
-                                        onClick = {
-                                            if (page == pagerState.currentPage) {
-                                                isNavigating = true
-                                                navigatingCardPage = page
-
-                                                coroutineScope.launch {
-                                                    delay(300)
-                                                    onCardClick(realCards[page])
-                                                }
-                                            } else {
-                                                coroutineScope.launch {
-                                                    pagerState.animateScrollToPage(page)
-                                                }
-                                            }
-                                        }
-                                    )
-                                } else {
-
-                                }
-                            }
-                        }
-                    } else if (!isLoading && uiState !is MyCardUiState.Error) {
-                        // 카드가 없는 경우 메시지 표시
-                        Text(
-                            text = "등록된 카드가 없습니다",
-                            color = Color(0xFFE0E0E0),
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(16.dp)
                         )
                     }
                 }
