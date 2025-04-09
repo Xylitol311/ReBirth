@@ -9,8 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -37,7 +39,6 @@ fun PatternLoginScreen(
         }
     }
 }
-
 @Composable
 fun PatternLoginContent(
     viewModel: OnboardingViewModel,
@@ -47,40 +48,51 @@ fun PatternLoginContent(
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        Spacer(modifier = Modifier.height(80.dp))
         Text(
-            "패턴을 입력해주세요",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 32.dp)
+            text = "패턴 로그인",
+            fontSize = 24.sp,
+            textAlign = TextAlign.Center
         )
 
-        PatternLockView(
-            modifier = Modifier
-                .size(300.dp)
-                .padding(16.dp),
-            patternSize = 3,
-            onPatternComplete = { pattern ->
+        Spacer(modifier = Modifier.height(16.dp))
 
-                val patternString = pattern.joinToString("") // 숫자 리스트 → String 변환
-                Log.d("AuthLoginPattern","${patternString}")
-                viewModel.login(
-                    type = "PATTERN",
-                    number = patternString,
-                    phoneSerialNumber = deviceInfoManager.getDeviceId(),
-                    onSuccess = {
-                        Log.d("AuthLoginPattern", "로그인 성공: $patternString")
-                        onLoginSuccess()
-                    },
-                    onFailure = { error ->
-                        Log.d("AuthLoginPattern", "${patternString}/${deviceInfoManager.getDeviceId()}")
-                        Log.e("AuthLoginPattern", "${error}")
-                        Toast.makeText(context, "로그인 실패: $error", Toast.LENGTH_SHORT).show()
+        Text(
+            text = "4개 이상의 점을 연결하여\n패턴을 입력해주세요",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center,
+            color = Color.Gray
+        )
+
+
+        Spacer(modifier = Modifier.height(60.dp))
+
+            PatternLockView(
+                patternSize = 3,
+                onPatternComplete = { pattern ->
+                    if (pattern.size >= 4) {
+                        val patternString = pattern.joinToString("")
+                        viewModel.login(
+                            type = "PATTERN",
+                            number = patternString,
+                            phoneSerialNumber = deviceInfoManager.getDeviceId(),
+                            onSuccess = onLoginSuccess,
+                            onFailure = { error ->
+                                Toast.makeText(context, "로그인 실패: $error", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    } else {
+                        Toast.makeText(context, "패턴은 최소 4개 점을 연결해야 합니다", Toast.LENGTH_SHORT).show()
                     }
-                )
-            }
-        )
+                }
+            )
+
+
     }
 }

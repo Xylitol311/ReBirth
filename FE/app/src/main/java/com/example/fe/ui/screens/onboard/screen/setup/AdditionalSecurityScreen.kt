@@ -33,6 +33,7 @@ import com.example.fe.ui.screens.onboard.auth.FingerprintAuth
 import com.example.fe.ui.screens.onboard.auth.PatternAuth
 import com.example.fe.ui.screens.onboard.components.AuthMethodOption
 import com.example.fe.ui.screens.onboard.screen.setup.security.AdditionalSecurityStep
+import com.example.fe.ui.theme.SkyBlue
 
 /**
  * FragmentActivity를 찾기 위한 확장 함수
@@ -87,6 +88,8 @@ fun AdditionalSecurityScreen(
                 )
             }
         }
+
+
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (currentStep) {
@@ -198,11 +201,11 @@ private fun SecurityMethodSelectionScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(100.dp))
 
         Text(
             text = "추가 인증수단 선택",
-            fontSize = 20.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
 
@@ -210,7 +213,7 @@ private fun SecurityMethodSelectionScreen(
 
         Text(
             text = "지문인증 또는 패턴인증으로\n보다 간편하게 로그인 해보세요.",
-            fontSize = 14.sp,
+            fontSize = 18.sp,
             textAlign = TextAlign.Center,
             color = Color.Gray
         )
@@ -328,19 +331,19 @@ private fun SecurityCompleteScreen(onNext: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Spacer(modifier = Modifier.height(120.dp))
+        Spacer(modifier = Modifier.height(240.dp))
 
         Text(
             text = "보안 설정 완료",
             fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = "앱을 더욱 안전하게 보호할 수 있어요",
-            fontSize = 16.sp,
+            fontSize = 18.sp,
             color = Color.Gray,
             textAlign = TextAlign.Center
         )
@@ -350,11 +353,15 @@ private fun SecurityCompleteScreen(onNext: () -> Unit) {
         Button(
             onClick = onNext,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF00D9FF)
+                containerColor = SkyBlue,
+                contentColor = Color.White,
+                disabledContainerColor = Color.LightGray
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(60.dp),
+            shape = RoundedCornerShape(8.dp),
+
         ) {
             Text(
                 text = "다음",

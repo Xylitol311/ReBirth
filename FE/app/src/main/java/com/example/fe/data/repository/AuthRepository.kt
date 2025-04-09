@@ -42,9 +42,9 @@ class AuthRepository {
         }
     }
 
-    suspend fun generateReportFromMyData(userId: Int): Result<Unit> {
+    suspend fun generateReportFromMyData(): Result<Unit> {
         return try {
-            val response = authApiService.generateReportFromMyData(userId)
+            val response = authApiService.generateReportFromMyData()
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {

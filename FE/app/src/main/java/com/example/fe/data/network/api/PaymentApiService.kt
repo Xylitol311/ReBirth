@@ -1,5 +1,7 @@
 package com.example.fe.data.network.api
 
+import com.example.fe.data.model.auth.ApiResponseDTO
+import com.example.fe.data.model.auth.SendSmsRequest
 import com.example.fe.data.model.payment.ApiResponse
 import com.example.fe.data.model.payment.CardRegistrationRequest
 import com.example.fe.data.model.payment.TokenInfo

@@ -12,10 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,8 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.fe.R
 import com.example.fe.ui.components.backgrounds.StarryBackground
@@ -35,12 +41,13 @@ import com.example.fe.ui.navigation.NavRoutes
 import com.example.fe.ui.screens.home.components.HomeRecCard
 import com.example.fe.ui.screens.home.components.HomeTransaction
 import com.example.fe.ui.screens.home.components.HomeUsedMoney
+import androidx.compose.ui.platform.LocalContext
 
 val LightBlue = Color(0xFFADD8E6)
 
 @Composable
 fun HomeHeader(
-    userName: String = "김싸피님",
+    userName: String,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -53,9 +60,9 @@ fun HomeHeader(
             painter = painterResource(id = R.drawable.earth),
             contentDescription = "Earth",
             modifier = Modifier
-                .size(180.dp)
+                .size(140.dp)
                 .align(Alignment.TopEnd)
-                .offset(y = (-20).dp) // padding 대신 offset 사용
+                .offset(y = (-20).dp)
         )
         
         // 텍스트를 왼쪽 하단에 배치하고 아래로 내림
@@ -65,7 +72,7 @@ fun HomeHeader(
                 .align(Alignment.BottomStart)
         ) {
             Text(
-                text = userName,
+                text = "${userName}님",
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 color = LightBlue
@@ -84,54 +91,90 @@ fun HomeHeader(
 fun HomeScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    onScrollOffsetChange: (Float) -> Unit = {} // 파라미터 추가
+    onScrollOffsetChange: (Float) -> Unit = {}
 ) {
-    val viewModel = remember { HomeViewModel() }
-
+    val context = LocalContext.current
+    val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory(context))
+    val uiState by viewModel.uiState.collectAsState()
+    val userName by viewModel.userName.collectAsState()
     val scrollState = rememberScrollState()
     var scrollOffset by remember { mutableStateOf(0f) }
 
     // 스크롤 오프셋 변경 감지
     LaunchedEffect(scrollState) {
         snapshotFlow { scrollState.value.toFloat() }.collect { offset ->
-            onScrollOffsetChange(offset)  // 콜백 호출
+            onScrollOffsetChange(offset)
+            scrollOffset = offset
         }
     }
-
 
     StarryBackground(scrollOffset = scrollOffset) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // 헤더 (사용자 이름과 행성)
-            HomeHeader()
+        when (uiState) {
+            is HomeUiState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
+            is HomeUiState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = (uiState as HomeUiState.Error).message,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        Button(
+                            onClick = { viewModel.refresh() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF00BCD4)
+                            )
+                        ) {
+                            Text("다시 시도")
+                        }
+                    }
+                }
+            }
+            is HomeUiState.Success -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 헤더 (사용자 이름과 행성)
+                    HomeHeader(userName = userName)
 
-            // 이번 달 소비 금액
-            HomeUsedMoney(
-                onDetailClick = {
-                    navController.navigate(NavRoutes.HOME_DETAIL)
-                },
-                viewModel = viewModel
-            )
+                    // 이번 달 소비 금액
+                    HomeUsedMoney(
+                        onDetailClick = {
+                            navController.navigate(NavRoutes.HOME_DETAIL)
+                        },
+                        viewModel = viewModel
+                    )
 
-            // 혜택을 놓친 거래 내역
-            HomeTransaction(
-                viewModel = viewModel
-            )
+                    // 혜택을 놓친 거래 내역
+                    HomeTransaction(
+                        viewModel = viewModel
+                    )
 
-            // 추천 카드
-            HomeRecCard(
-                viewModel = viewModel
-            )
+                    // 추천 카드
+                    HomeRecCard(
+                        viewModel = viewModel
+                    )
+                }
+            }
         }
-
     }
-
-
 
     data class Quadruple<A, B, C, D>(
         val first: A,
