@@ -279,7 +279,10 @@ public class ReportService {
                 reportCard.setMonthSpendingAmount(count[0]);
                 reportCard.setMonthBenefitAmount(count[1]);
                 reportCard.setSpendingTier(myTierForCard);
-
+                if(i==1) {
+                    card.toBuilder().spendingTier(myTierForCard);
+                    cardsJpaRepository.save(card);
+                }
                 reportCardsJpaRepository.save(reportCard);
                 total[0] += count[0];
                 total[1] += count[1];
