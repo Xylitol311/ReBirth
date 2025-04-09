@@ -187,7 +187,7 @@ public class ReportService {
 
             }
 
-            List<MonthlySpendingByCategoryAndCardDTO> monthlyTransactions = transactionsJpaRepository.getMonthlySpendingByCategoryAndCard(user.getUserId(), year, month);
+            List<MonthlySpendingByCategoryAndCardDTO> monthlyTransactions = transactionsJpaRepository.getMonthlySpendingByCategoryAndCard(userId, year, month);
 
             Map<Integer, int[]> countByCard = new HashMap<>();
             for (MonthlySpendingByCategoryAndCardDTO monthlyTransaction : monthlyTransactions) {

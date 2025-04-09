@@ -1,5 +1,6 @@
 package com.kkulmoo.rebirth.payment.application.service;
 
+import com.kkulmoo.rebirth.payment.domain.repository.SseUUIDRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +20,18 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class SseService {
 
-    private final Map<Integer, SseEmitter> emitterMap = new ConcurrentHashMap<>();
+    private final SseUUIDRepository sseUUIDRepository;
+
+    private final Map<String, SseEmitter> emitterMap = new ConcurrentHashMap<>();
     private static final long TIMEOUT = 1200 * 1000;
     private static final long RECONNECTION_TIMEOUT = 1000L;
     private static final long HEARTBEAT_INTERVAL = 10 * 1000; // 30초
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    public SseService(SseUUIDRepository sseUUIDRepository) {
+        this.sseUUIDRepository = sseUUIDRepository;
+    }
 
     @PostConstruct
     public void init() {
@@ -37,16 +44,20 @@ public class SseService {
         scheduler.shutdown();
     }
 
-    public SseEmitter subscribe(int userId) {
+    public SseEmitter subscribe(int userId, String uniqueId) {
         SseEmitter emitter = createEmitter();
 
         // SseEmitter를 userId와 매핑하여 emitterMap에 저장
-        emitterMap.put(userId, emitter);
+        emitterMap.put(uniqueId, emitter);
+
+        // redis에 맵핑해서 저장하기
+        sseUUIDRepository.saveUuid(String.valueOf(userId),uniqueId);
 
         // 연결 세션 timeout 이벤트 핸들러 등록
         emitter.onTimeout(() -> {
             log.info("server sent event timed out : userId={}", userId);
             emitterMap.remove(userId);
+            sseUUIDRepository.deleteUuid(String.valueOf(userId));
             emitter.complete();
         });
 
@@ -54,6 +65,7 @@ public class SseService {
         emitter.onError(e -> {
             log.info("server sent event error occurred : userId={}, message={}", userId, e.getMessage());
             emitterMap.remove(userId);
+            sseUUIDRepository.deleteUuid(String.valueOf(userId));
             emitter.complete();
         });
 
@@ -62,6 +74,7 @@ public class SseService {
             if (emitterMap.remove(userId) != null) {
                 log.info("server sent event removed in emitter cache: userId={}", userId);
             }
+            sseUUIDRepository.deleteUuid(String.valueOf(userId));
 
             log.info("disconnected by completed server sent event: userId={}", userId);
         });
@@ -83,9 +96,9 @@ public class SseService {
         return emitter;
     }
 
-    public void sendToUser(int userId, String message) {
-        log.info("유저한테 sse 보내는중: {}", userId);
-        SseEmitter emitter = emitterMap.get(userId);
+    public void sendToUser(String uniqueId, String message) {
+        log.info("유저한테 sse 보내는중: {}", uniqueId);
+        SseEmitter emitter = emitterMap.get(uniqueId);
         if (emitter != null) {
             try {
                 SseEmitter.SseEventBuilder event = SseEmitter.event()
@@ -94,24 +107,24 @@ public class SseService {
                         .data(message)
                         .reconnectTime(RECONNECTION_TIMEOUT);
                 emitter.send(event);
-                log.debug("메시지 전송 성공: userId={}", userId);
+                log.debug("메시지 전송 성공: userId={}", uniqueId);
             } catch (IOException e) {
-                log.error("메시지 전송 실패, userId={}, error={}", userId, e.getMessage());
+                log.error("메시지 전송 실패, userId={}, error={}", uniqueId, e.getMessage());
                 // 연결이 끊어진 것으로 판단
-                removeEmitter(userId);
+                removeEmitter(uniqueId);
             }
         } else {
-            log.warn("해당 userId에 대한 emitter를 찾을 수 없음: {}", userId);
+            log.warn("해당 userId에 대한 emitter를 찾을 수 없음: {}", uniqueId);
         }
     }
-    private void removeEmitter(int userId) {
-        SseEmitter emitter = emitterMap.remove(userId);
+    private void removeEmitter(String uniqueId) {
+        SseEmitter emitter = emitterMap.remove(uniqueId);
         if (emitter != null) {
             try {
                 emitter.complete();
-                log.info("Emitter removed for userId: {}", userId);
+                log.info("Emitter removed for userId: {}", uniqueId);
             } catch (Exception e) {
-                log.error("Error while completing emitter for userId: {}", userId, e);
+                log.error("Error while completing emitter for userId: {}", uniqueId, e);
             }
         }
     }
@@ -123,28 +136,28 @@ public class SseService {
         log.debug("Sending heartbeat to all connected clients. Current connections: {}", emitterMap.size());
 
         // ConcurrentModificationException 방지를 위해 복사본 사용
-        List<Integer> deadEmitters = new ArrayList<>();
+        List<String> deadEmitters = new ArrayList<>();
 
-        emitterMap.forEach((userId, emitter) -> {
+        emitterMap.forEach((uniqueId, emitter) -> {
             try {
                 SseEmitter.SseEventBuilder event = SseEmitter.event()
                         .name("heartbeat")
                         .data("ping")
                         .reconnectTime(RECONNECTION_TIMEOUT);
                 emitter.send(event);
-                log.debug("Heartbeat sent to userId: {}", userId);
+                log.debug("Heartbeat sent to userId: {}", uniqueId);
             } catch (IOException e) {
-                log.warn("Failed to send heartbeat to userId: {}. Marking for removal.", userId);
-                deadEmitters.add(userId);
+                log.warn("Failed to send heartbeat to userId: {}. Marking for removal.", uniqueId);
+                deadEmitters.add(uniqueId);
             }
         });
 
         // 실패한 emitter 정리
-        for (Integer userId : deadEmitters) {
-            SseEmitter emitter = emitterMap.remove(userId);
+        for (String uniqueId : deadEmitters) {
+            SseEmitter emitter = emitterMap.remove(uniqueId);
             if (emitter != null) {
                 emitter.complete();
-                log.info("Removed dead emitter for userId: {}", userId);
+                log.info("Removed dead emitter for userId: {}",uniqueId);
             }
         }
     }
@@ -158,5 +171,9 @@ public class SseService {
 
     private SseEmitter createEmitter() {
         return new SseEmitter(TIMEOUT);
+    }
+
+    public String getUniqueId(String userId){
+        return sseUUIDRepository.findById(userId);
     }
 }

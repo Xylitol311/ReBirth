@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -24,7 +26,14 @@ public class BudgetLogService {
     }
 
     public List<DailyTransactionsDTO> getMonthlyTransactions(int userId, int year, int month) {
-        List<DailyTransactionsDTO> monthlyTransactions = transactionsJpaRepository.getMonthlyTransactions(userId, year, month);
+        List<DailyTransactionsDTO> spendingList = transactionsJpaRepository.getCardSpending(userId, year, month);
+        List<DailyTransactionsDTO> depositList = transactionsJpaRepository.getBankDeposits(userId, year, month);
+
+        List<DailyTransactionsDTO> monthlyTransactions = new ArrayList<>();
+        monthlyTransactions.addAll(spendingList);
+        monthlyTransactions.addAll(depositList);
+
+        monthlyTransactions.sort(Comparator.comparing(DailyTransactionsDTO::getDate).reversed());
         return monthlyTransactions;
     }
 
