@@ -364,19 +364,14 @@ fun CardOCRScanScreen(
                     cardNumber = if (isManualInputMode) "" else cardNumber,
                     expiryDate = if (isManualInputMode) "" else expiryDate,
                     onConfirm = {
-                        // 카드 정보 저장 - 수정된 부분
-                        viewModel.registCard(
-                            cardNumber = cardNumber.replace(" ", ""),
-                            password = cardPinPrefix, // 카드 비밀번호 앞 두자리
-                            cvc = cvcInput // CVC 코드
-                        )
                         onComplete()
                     },
                     onCancel = {
                         showCardConfirmation = false
                         isManualInputMode = false // 모드 초기화
                         resetScan()
-                    }
+                    },
+                    viewModel = viewModel
                 )
             }
         } else {

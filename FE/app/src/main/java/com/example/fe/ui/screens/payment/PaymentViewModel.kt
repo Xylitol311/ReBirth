@@ -120,8 +120,8 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
                     // 토큰을 받은 후 바로 SSE 연결 시작
                     if (tokens.isNotEmpty()) {
                         // SSE 연결 시작 (userId 사용)
-                         Log.e("PaymentViewModel", "Starting SSE connection with userId: $userId")
-                         connectToPaymentEvents(userId)
+                         Log.e("PaymentViewModel", "Starting SSE connection with userId:")
+                         connectToPaymentEvents()
                     }
                 }
                 .onFailure { error ->
@@ -138,9 +138,9 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
     }
     
     // SSE 연결 시작
-    private fun connectToPaymentEvents(userId: String) {
+    private fun connectToPaymentEvents() {
         viewModelScope.launch {
-            paymentRepository.connectToPaymentEvents(userId)
+            paymentRepository.connectToPaymentEvents()
                 .catch { e ->
                     Log.e("PaymentViewModel", "Error in SSE connection: ${e.message}")
                     _paymentState.value = PaymentState.Error("SSE 연결 오류: ${e.message}")
@@ -151,7 +151,7 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
                         Log.d("PaymentViewModel", "타임아웃으로 인한 SSE 재연결 시도 ($reconnectDelay ms 후)")
                         delay(reconnectDelay)
                         isReconnecting = false
-                        connectToPaymentEvents(userId)
+                        connectToPaymentEvents()
                     }
 
                 }
@@ -164,7 +164,7 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
                         Log.d("PaymentViewModel", "타임아웃 이벤트 감지, SSE 재연결 시도 ($reconnectDelay ms 후)")
                         delay(reconnectDelay)
                         isReconnecting = false
-                        connectToPaymentEvents(userId)
+                        connectToPaymentEvents()
                         return@collect
                     }
 
@@ -321,9 +321,30 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
     
     // 토큰 갱신 요청
     fun refreshTokens() {
-        initializePaymentProcess()
+        viewModelScope.launch {
+            try {
+                Log.d("PaymentViewModel", "토큰 새로고침 시작")
+                _paymentState.value = PaymentState.Loading
+
+                // 토큰 가져오기
+                val result = paymentRepository.getPaymentTokens()
+
+                result.fold(
+                    onSuccess = { tokens ->
+                        Log.d("PaymentViewModel", "토큰 새로고침 성공: ${tokens.size}개")
+                        _paymentState.value = PaymentState.TokensReceived(tokens)
+                    },
+                    onFailure = { error ->
+                        Log.e("PaymentViewModel", "토큰 새로고침 실패: ${error.message}")
+                        _paymentState.value = PaymentState.Error("토큰을 가져오는데 실패했습니다: ${error.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e("PaymentViewModel", "토큰 새로고침 예외 발생: ${e.message}")
+                _paymentState.value = PaymentState.Error("토큰을 가져오는데 실패했습니다: ${e.message}")
+            }
+        }
     }
-    
     // 결제 프로세스 종료
     fun stopPaymentProcess() {
         paymentRepository.disconnectFromPaymentEvents()
@@ -511,22 +532,17 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
         return dateFormat.format(java.util.Date())
     }
 
-    // 카드 등록 함수 개선
     fun registCard(cardNumber: String, password: String, cvc: String) {
         viewModelScope.launch {
             try {
                 // 상태 업데이트: 로딩 중
                 _cardRegistrationState.value = CardRegistrationState.Loading
-                _paymentState.value = PaymentState.Loading
 
                 Log.d("PaymentViewModel", "카드 등록 시작: $cardNumber")
 
-                // 카드 번호에서 하이픈 제거
-                val cleanCardNumber = cardNumber.filter { it.isDigit() }
-
                 // 실제 API 호출
                 val result = paymentRepository.registerPaymentCard(
-                    cardNumber = cleanCardNumber,
+                    cardNumber = cardNumber,
                     password = password,
                     cvc = cvc
                 )
@@ -538,34 +554,25 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
                         // 성공 상태로 업데이트
                         _cardRegistrationState.value = CardRegistrationState.Success("카드가 성공적으로 등록되었습니다")
 
-                        // 카드 목록 새로고침 (토큰 갱신)
+                        // 토큰 새로고침 (카드 목록 갱신)
                         refreshTokens()
-
-                        // 결제 상태 업데이트
-                        _paymentState.value = PaymentState.Ready
                     },
                     onFailure = { error ->
-                        Log.e("PaymentViewModel", "카드 등록 실패: ${error.message}", error)
+                        Log.e("PaymentViewModel", "카드 등록 실패: ${error.message}")
 
-                        // 오류 상태로 업데이트
+                        // 실패 상태로 업데이트
                         _cardRegistrationState.value = CardRegistrationState.Error(
                             error.message ?: "카드 등록에 실패했습니다"
                         )
-
-                        // 결제 상태 업데이트
-                        _paymentState.value = PaymentState.Error("카드 등록 실패: ${error.message}")
                     }
                 )
             } catch (e: Exception) {
-                Log.e("PaymentViewModel", "카드 등록 중 예외 발생", e)
+                Log.e("PaymentViewModel", "카드 등록 예외 발생: ${e.message}")
 
-                // 예외 발생 시 오류 상태로 업데이트
+                // 예외 발생 시 실패 상태로 업데이트
                 _cardRegistrationState.value = CardRegistrationState.Error(
                     e.message ?: "카드 등록 중 오류가 발생했습니다"
                 )
-
-                // 결제 상태 업데이트
-                _paymentState.value = PaymentState.Error("카드 등록 중 오류 발생: ${e.message}")
             }
         }
     }

@@ -14,6 +14,7 @@ import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import java.util.concurrent.TimeUnit
+import java.util.UUID
 
 class PaymentSseClient {
     private val TAG = "PaymentSseClient"
@@ -27,9 +28,13 @@ class PaymentSseClient {
         .build()
     
     // SSE 연결 및 이벤트 수신을 Flow로 제공
-    fun connectToPaymentEvents(userId: String): Flow<PaymentEvent> = callbackFlow {
-        val sseUrl = "${AppConfig.Server.BASE_URL}${AppConfig.Server.Endpoints.PAYMENT_EVENTS}?userId=$userId"
-        Log.d(TAG, "Connecting to SSE URL: $sseUrl")
+    fun connectToPaymentEvents(): Flow<PaymentEvent> = callbackFlow {
+        // 고유한 UUID 생성
+        val sessionUuid = UUID.randomUUID().toString()
+
+        // UUID를 쿼리 파라미터로 사용
+        val sseUrl = "${AppConfig.Server.BASE_URL}${AppConfig.Server.Endpoints.PAYMENT_EVENTS}?sessionId=$sessionUuid"
+        Log.d(TAG, "Connecting to SSE URL with UUID: $sseUrl")
         
         val request = Request.Builder()
             .url(sseUrl)

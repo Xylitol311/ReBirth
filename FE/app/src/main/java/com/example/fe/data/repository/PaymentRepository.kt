@@ -56,9 +56,9 @@ class PaymentRepository {
     }
 
     // SSE 연결 및 이벤트 수신
-    fun connectToPaymentEvents(userId: String): Flow<PaymentEvent> {
-        Log.e("PaymentRepository", "Connecting to payment events. UserId: $userId")
-        return paymentSseClient.connectToPaymentEvents(userId)
+    fun connectToPaymentEvents(): Flow<PaymentEvent> {
+        Log.e("PaymentRepository", "Connecting to payment events.")
+        return paymentSseClient.connectToPaymentEvents()
     }
     
     // SSE 연결 종료
