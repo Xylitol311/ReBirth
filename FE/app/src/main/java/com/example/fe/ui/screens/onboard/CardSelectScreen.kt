@@ -124,12 +124,6 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "카드사 전체선택",
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
                 Box(
                     modifier = Modifier
                         .size(24.dp)
@@ -158,6 +152,13 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
                         )
                     }
                 }
+
+                Text(
+                    "카드사 전체선택",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -168,7 +169,7 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
+                    .padding(horizontal = 18.dp)
             ) {
                 items(cardList) { card ->
                     CardItem(
@@ -208,7 +209,7 @@ fun CardItem(
             .fillMaxWidth()
             .aspectRatio(1.2f)
             .border(
-                width = if (isSelected) 1.dp else 0.5.dp,
+                width = if (isSelected) 3.dp else 1.5.dp,
                 color = if (isSelected) SkyBlue else Color.LightGray,
                 shape = RoundedCornerShape(8.dp)
             )
@@ -217,7 +218,7 @@ fun CardItem(
                 shape = RoundedCornerShape(8.dp)
             )
             .clickable(onClick = onClick)
-            .padding(12.dp)
+            .padding(28.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
