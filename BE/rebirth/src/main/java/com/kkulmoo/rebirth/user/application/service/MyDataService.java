@@ -59,7 +59,6 @@ public class MyDataService {
         // 추출한 카드 고유 번호 리스트를 이용해 거래내역 가져오기
         List<CardTransactionResponse> transactionResponses = transactionService.getCardTransactionByMyData(user, cardUniqueNumbers);
 
-
         cardService.updateCardsLastLoadTime(cards);
 
         reportService.startWithMyData(user.getUserId().getValue());
