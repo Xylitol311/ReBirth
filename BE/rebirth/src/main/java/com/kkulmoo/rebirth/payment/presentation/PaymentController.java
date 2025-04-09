@@ -41,7 +41,7 @@ public class PaymentController {
 
     // 오프라인 일회용 토큰 생성 엔드포인트
     @GetMapping("/disposabletoken")
-    public ResponseEntity<?> getDisposableToken(@RequestParam(value = "userId") int userId) throws Exception {
+    public ResponseEntity<?> getDisposableToken(@JwtUserId Integer userId) throws Exception {
         // 사용자 보유 카드의 영구토큰과 템플릿 ID 조회
         List<String[]> cardInfo = paymentTokenService.getAllUsersPermanentTokenAndTemplateId(userId);
         // 오프라인 일회용 토큰 생성 및 DB 저장
