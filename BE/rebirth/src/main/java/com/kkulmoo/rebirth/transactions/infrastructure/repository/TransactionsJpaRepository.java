@@ -87,7 +87,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
                 )
                 FROM TransactionEntity t
                 JOIN CardTransactionEntity ct ON t.transactionId = ct.transactionId
-                JOIN CardEntity card ON ct.cardUniqueNumber = card.cardUniqueNumber
+                JOIN CardEntity card ON ct.cardUniqueNumber = card.cardUniqueNumber AND card.userId = :userId
                 JOIN MerchantEntity m ON ct.merchantId = m.merchantId
                 JOIN SubcategoryEntity sc ON m.subcategory.subcategoryId = sc.subcategoryId
                 JOIN CategoryEntity c ON sc.category.categoryId = c.categoryId
