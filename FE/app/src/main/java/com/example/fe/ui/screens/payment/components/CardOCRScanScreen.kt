@@ -1,6 +1,7 @@
 package com.example.fe.ui.screens.payment.components
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.provider.MediaStore
 import android.util.Log
@@ -8,22 +9,59 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -32,23 +70,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import android.content.ContentValues
 import com.example.fe.ui.screens.payment.PaymentViewModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import kotlinx.coroutines.delay
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 
 @Composable
 fun CardOCRScanScreen(
@@ -78,7 +108,12 @@ fun CardOCRScanScreen(
 
     // 카드 정보
     var cardNumber by remember { mutableStateOf("") }
+    var cardNumberInput by remember { mutableStateOf(cardNumber) }
     var expiryDate by remember { mutableStateOf("") }
+    var expiryDateInput by remember { mutableStateOf(expiryDate) }
+    var cardPinPrefix by remember { mutableStateOf("") }
+    var cvcInput by remember { mutableStateOf("") }
+
     var cardholderName by remember { mutableStateOf("") }
     var cardType by remember { mutableStateOf("") }
     var cardIssuer by remember { mutableStateOf("") }
@@ -148,41 +183,51 @@ fun CardOCRScanScreen(
     var recognitionAttempts by remember { mutableIntStateOf(0) }
     var lastRecognitionTime by remember { mutableLongStateOf(0L) }
 
+// 이미지 분석기 부분 수정
     val imageAnalyzer = remember {
         ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
             .apply {
                 setAnalyzer(cameraExecutor) { imageProxy ->
+                    // 카드 확인 화면이 표시 중이면 분석 건너뛰기
+                    if (showCardConfirmation) {
+                        imageProxy.close()
+                        return@setAnalyzer
+                    }
+
                     processImageWithTextRecognition(
                         imageProxy = imageProxy,
                         textRecognizer = textRecognizer
                     ) { number, expiry, name ->
                         // 현재 시간 확인
                         val currentTime = System.currentTimeMillis()
-                        
-                        // 3초마다 인식 시도 횟수 증가
-                        if (currentTime - lastRecognitionTime > 3000) {
+
+                        // 3초마다 인식 시도 횟수 증가 (카드 확인 화면이 표시되지 않은 경우에만)
+                        if (currentTime - lastRecognitionTime > 3000 && !showCardConfirmation) {
                             recognitionAttempts++
                             lastRecognitionTime = currentTime
-                            
+
                             // 인식 시도가 5회 이상이고 아직 카드 번호가 인식되지 않았다면
-                            if (recognitionAttempts >= 5 && cardNumberCache.isEmpty()) {
+                            if (recognitionAttempts >= 5 && cardNumberCache.isEmpty() && !showCardConfirmation) {
                                 scope.launch {
                                     withContext(Dispatchers.Main) {
-                                        // 에러 메시지 표시
-                                        hasError = true
-                                        errorMessage = "카드를 인식하기 어렵습니다.\n카드를 프레임 안에 잘 위치시키고 다시 시도해주세요."
-                                        // 인식 초기화
-                                        recognitionAttempts = 0
-                                        cardNumberCache.clear()
-                                        expiryDateCache.clear()
-                                        recognitionProgress = 0f
+                                        // 카드 확인 화면이 표시되지 않은 경우에만 에러 메시지 표시
+                                        if (!showCardConfirmation) {
+                                            // 에러 메시지 표시
+                                            hasError = true
+                                            errorMessage = "카드를 인식하기 어렵습니다.\n카드를 프레임 안에 잘 위치시키고 다시 시도해주세요."
+                                            // 인식 초기화
+                                            recognitionAttempts = 0
+                                            cardNumberCache.clear()
+                                            expiryDateCache.clear()
+                                            recognitionProgress = 0f
+                                        }
                                     }
                                 }
                             }
                         }
-                        
+
                         // 카드가 감지되었는지 확인 - 카드 번호와 만료일만 확인
                         isCardDetected = number.isNotEmpty() || expiry.isNotEmpty()
 
@@ -203,23 +248,26 @@ fun CardOCRScanScreen(
                             }
                         }
 
-                        // 캐시에서 가장 빈번한 결과 선택
-                        if (cardNumberCache.size >= 10 && expiryDateCache.size >= 5) {
+                        // 캐시에서 가장 빈번한 결과 선택 (카드 확인 화면이 표시되지 않은 경우에만)
+                        if (cardNumberCache.size >= 10 && expiryDateCache.size >= 5 && !showCardConfirmation) {
                             val bestCardNumber = getMostFrequentResult(cardNumberCache)
                             val bestExpiryDate = getMostFrequentResult(expiryDateCache)
 
                             scope.launch {
                                 withContext(Dispatchers.Main) {
-                                    cardNumber = bestCardNumber
-                                    expiryDate = bestExpiryDate
-                                    isRecognitionComplete = true
-                                    
-                                    // 카드 정보가 모두 인식되면 하단 팝업 표시
-                                    if (bestCardNumber.isNotEmpty() && bestExpiryDate.isNotEmpty()) {
-                                        // 인식 완료 후 1초 후에 팝업 표시
-                                        delay(1000)
-                                        isScanning = false
-                                        showBottomPopup = true
+                                    // 카드 확인 화면이 표시되지 않은 경우에만 상태 업데이트
+                                    if (!showCardConfirmation) {
+                                        cardNumber = bestCardNumber
+                                        expiryDate = bestExpiryDate
+                                        isRecognitionComplete = true
+
+                                        // 카드 정보가 모두 인식되면 하단 팝업 표시
+                                        if (bestCardNumber.isNotEmpty() && bestExpiryDate.isNotEmpty()) {
+                                            // 인식 완료 후 1초 후에 팝업 표시
+                                            delay(1000)
+                                            isScanning = false
+                                            showBottomPopup = true
+                                        }
                                     }
                                 }
                             }
@@ -228,7 +276,6 @@ fun CardOCRScanScreen(
                 }
             }
     }
-
     // previewView 변수를 컴포저블 레벨에서 정의
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
 
@@ -301,92 +348,6 @@ fun CardOCRScanScreen(
         }
     }
 
-    // 카메라 프리뷰 설정
-    val preview = remember {
-        Preview.Builder().build()
-    }
-
-    // 이미지 캡처 함수
-    val captureImage = {
-        isScanning = true
-
-        // 현재 프리뷰에서 이미지 캡처 및 분석
-        val imageCapture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            .build()
-
-        cameraController?.unbindAll()
-        camera = cameraController?.bindToLifecycle(
-            lifecycleOwner,
-            CameraSelector.DEFAULT_BACK_CAMERA,
-            preview,
-            imageCapture
-        )
-
-        // 이미지 캡처
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(
-            context.contentResolver,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            ContentValues()
-        ).build()
-
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    // 저장된 이미지 분석
-                    val imageUri = outputFileResults.savedUri
-                    if (imageUri != null) {
-                        val image = InputImage.fromFilePath(context, imageUri)
-                        textRecognizer.process(image)
-                            .addOnSuccessListener { visionText ->
-                                // 인식 전에 이전 결과 초기화
-                                cardNumber = ""
-                                expiryDate = ""
-
-                                // 인식된 텍스트에서 카드 정보 추출
-                                val cardInfo = extractCardInfo(visionText)
-
-                                // 인식 결과가 있을 때만 값 설정 - 카드 번호와 만료일만 설정
-                                if (cardInfo.first.isNotEmpty()) cardNumber = cardInfo.first
-                                if (cardInfo.second.isNotEmpty()) expiryDate = cardInfo.second
-
-                                // 스캔 완료 후 상태 업데이트
-                                isScanning = false
-
-                                // 카드 번호가 인식된 경우에만 하단 팝업 표시
-                                if (cardNumber.isNotEmpty()) {
-                                    showBottomPopup = true
-                                } else {
-                                    // 인식 실패 시 메시지 표시 및 다시 스캔 준비
-                                    hasError = true
-                                    errorMessage = "카드 정보를 인식할 수 없습니다. 다시 시도해주세요."
-                                }
-                            }
-                            .addOnFailureListener { e ->
-                                Log.e("CardOCRScanScreen", "텍스트 인식 실패", e)
-                                isScanning = false
-
-                                // 실패 시 메시지 표시 및 다시 스캔 준비
-                                hasError = true
-                                errorMessage = "텍스트 인식에 실패했습니다. 다시 시도해주세요."
-                            }
-                    }
-                }
-
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e("CardOCRScanScreen", "이미지 캡처 실패", exception)
-                    isScanning = false
-
-                    // 실패 시 메시지 표시 및 다시 스캔 준비
-                    hasError = true
-                    errorMessage = "이미지 캡처에 실패했습니다. 다시 시도해주세요."
-                }
-            }
-        )
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -402,22 +363,15 @@ fun CardOCRScanScreen(
                 CardConfirmationScreen(
                     cardNumber = if (isManualInputMode) "" else cardNumber,
                     expiryDate = if (isManualInputMode) "" else expiryDate,
-                    cardIssuer = if (isManualInputMode) "" else cardIssuer,
                     onConfirm = {
-                        // 카드 정보 저장
-                        viewModel.addCard(
-                            cardName = "내 카드",
-                            cardNumber = cardNumber,
-                            expiryDate = expiryDate,
-                            cvv = "123" // 임시 CVV
-                        )
                         onComplete()
                     },
                     onCancel = {
                         showCardConfirmation = false
                         isManualInputMode = false // 모드 초기화
                         resetScan()
-                    }
+                    },
+                    viewModel = viewModel
                 )
             }
         } else {

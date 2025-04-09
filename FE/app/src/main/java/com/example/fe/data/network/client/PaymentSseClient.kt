@@ -3,6 +3,7 @@ package com.example.fe.data.network.client
 import android.util.Log
 import com.example.fe.config.AppConfig
 import com.example.fe.data.model.payment.PaymentEvent
+import com.example.fe.data.network.Interceptor.TokenProvider
 import com.google.gson.Gson
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -14,11 +15,12 @@ import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import java.util.concurrent.TimeUnit
+import java.util.UUID
 
-class PaymentSseClient {
+class PaymentSseClient(private val tokenProvider: TokenProvider) {
     private val TAG = "PaymentSseClient"
     private var eventSource: EventSource? = null
-    
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(AppConfig.Timeout.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
@@ -27,15 +29,19 @@ class PaymentSseClient {
         .build()
     
     // SSE 연결 및 이벤트 수신을 Flow로 제공
-    fun connectToPaymentEvents(userId: String): Flow<PaymentEvent> = callbackFlow {
-        val sseUrl = "${AppConfig.Server.BASE_URL}${AppConfig.Server.Endpoints.PAYMENT_EVENTS}?userId=$userId"
-        Log.d(TAG, "Connecting to SSE URL: $sseUrl")
+    fun connectToPaymentEvents(): Flow<PaymentEvent> = callbackFlow {
+        // 고유한 UUID 생성
+        val sessionUuid = UUID.randomUUID().toString()
+
+        // UUID를 쿼리 파라미터로 사용
+        val sseUrl = "${AppConfig.Server.BASE_URL}${AppConfig.Server.Endpoints.PAYMENT_EVENTS}?uniqueId=$sessionUuid"
+        Log.d(TAG, "Connecting to SSE URL with UUID: $sseUrl")
         
         val request = Request.Builder()
             .url(sseUrl)
-            .header("Accept", "text/event-stream")
+            .header("Accept", "text/event-stream").header("Authorization", tokenProvider.getToken())
             .build()
-        
+
         val listener = object : EventSourceListener() {
             override fun onOpen(eventSource: EventSource, response: Response) {
                 Log.d(TAG, "SSE connection opened successfully")
