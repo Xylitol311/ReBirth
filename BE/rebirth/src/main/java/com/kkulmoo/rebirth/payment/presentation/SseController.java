@@ -1,6 +1,7 @@
 package com.kkulmoo.rebirth.payment.presentation;
 
 import com.kkulmoo.rebirth.common.ApiResponseDTO.ApiResponseDTO;
+import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.payment.application.service.PaymentTokenService;
 import com.kkulmoo.rebirth.payment.application.service.PaymentTransactionService;
 import com.kkulmoo.rebirth.payment.application.service.SseService;
@@ -29,7 +30,7 @@ public class SseController {
 
     // 특정 유저의 SSE 구독 엔드포인트
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> subscribe(@RequestParam(value = "userId") int userId) {
+    public ResponseEntity<SseEmitter> subscribe(@JwtUserId Integer userId) {
         log.info("SSE 연결 요청 - userId: {}", userId);
         // SSE 구독 생성 - 서비스에서 이미 모든 핸들러 설정 및 관리를 담당
         SseEmitter emitter = sseService.subscribe(userId);
@@ -77,14 +78,14 @@ public class SseController {
     }
 
     @PostMapping("/test")
-    public ResponseEntity<?> insertPayDataa(@RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
-
-        Integer userId = 215;
+    public ResponseEntity<?> insertPayDataa(
+            @JwtUserId Integer userId,
+            @RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
         String merchantName = createTransactionRequestDTO.getMerchantName();
         int amount = createTransactionRequestDTO.getAmount();
         // 결제 처리 서비스 호출
-        CardTransactionDTO cardTransactionDTO = paymentTransactionService.insertPayDataTest(userId, createTransactionRequestDTO.getToken(), merchantName, amount, createTransactionRequestDTO.getCreatedAt());
+        CardTransactionDTO cardTransactionDTO = paymentTransactionService.insertPayData(userId, createTransactionRequestDTO.getToken(), merchantName, amount, createTransactionRequestDTO.getCreatedAt());
         // 응답 객체 생성 후 반환
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);

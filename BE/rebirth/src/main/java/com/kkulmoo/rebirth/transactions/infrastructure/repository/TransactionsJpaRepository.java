@@ -33,11 +33,13 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
             "LEFT JOIN s.category c " +           // category 조인
             "WHERE t.userId = :userId " +
             "AND EXTRACT(YEAR FROM t.createdAt) = :year AND EXTRACT(MONTH FROM t.createdAt) = :month " +
+            "AND ct.cardUniqueNumber = :cardUniqueNumber "+
             "ORDER BY t.createdAt DESC")
     Slice<TransactionHistoryDto> findTransactionsByUserIdYearMonth(
             @Param("userId") Integer userId,
             @Param("year") Integer year,
             @Param("month") Integer month,
+            @Param("cardUniqueNumber") String cardUniqueNumber,
             Pageable pageable);
 
 

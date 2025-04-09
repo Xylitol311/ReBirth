@@ -38,8 +38,9 @@ public class MyCard {
 		this.paymentCardOrder = newOrder;
 	}
 
-	public MyCard updateLatestLoadDataAt() {
-		this.latestLoadDataAt = LocalDateTime.now();
+	public MyCard updateLatestLoadDataAt(LocalDateTime updateLatestLoadDataAt) {
+		this.latestLoadDataAt = updateLatestLoadDataAt.plusSeconds(1);
 		return this;
 	}
+
 }

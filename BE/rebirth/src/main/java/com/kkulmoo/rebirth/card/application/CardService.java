@@ -338,9 +338,11 @@ public class CardService {
     }
 
 
-    public void updateCardsLastLoadTime(List<MyCard> myCard) {
-        List<MyCard> updatedCards = myCard.stream()
-                .map(MyCard::updateLatestLoadDataAt)
+    public void updateCardsLastLoadTime(List<MyCard> myCards, LocalDateTime loadedTime) {
+        LocalDateTime timeToUse = loadedTime != null ? loadedTime : LocalDateTime.now();
+
+        List<MyCard> updatedCards = myCards.stream()
+                .map(card -> card.updateLatestLoadDataAt(timeToUse))
                 .collect(Collectors.toList());
 
         cardRepository.saveAll(updatedCards);
