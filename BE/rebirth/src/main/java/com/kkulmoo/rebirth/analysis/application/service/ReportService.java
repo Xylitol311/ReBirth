@@ -290,12 +290,15 @@ public class ReportService {
             monthlyTransactionSummaryJpaRepository.save(report);
         }
 
-        // 월별 요약(최근 한달만)
+        // 월별 요약(최근 두 달만)
+        for(int i=2 ; i>=1 ; i--) {
+            LocalDateTime now = LocalDateTime.now().minusMonths(i);
+            createReport(userId,now);
+
+        }
         LocalDateTime now = LocalDateTime.now().minusMonths(1);
         int year = now.getYear();
         int month = now.getMonthValue();
-
-        createReport(userId,now);
 
         MonthlyTransactionSummaryEntity mts = monthlyTransactionSummaryJpaRepository.getByUserIdAndYearMonth(user.getUserId(),year, month);
         MonthlyConsumptionReportEntity mcr = monthlyConsumptionReportJpaRepository.getByReport(mts);
