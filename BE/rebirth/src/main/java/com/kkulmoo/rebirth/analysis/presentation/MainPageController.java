@@ -21,7 +21,7 @@ public class MainPageController {
     private final MainPageService mainPageService;
 
     @GetMapping("/summary")
-    public ResponseEntity<ResponseDTO> getSummary(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> getSummary(@JwtUserId Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("메인페이지 요약 조회 완료");
@@ -31,7 +31,7 @@ public class MainPageController {
     }
 
     @GetMapping("/summary/card")
-    public ResponseEntity<ResponseDTO> getSummaryCard(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> getSummaryCard(@JwtUserId Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("메인페이지 카드별 요약 조회 완료");
@@ -42,7 +42,7 @@ public class MainPageController {
     }
 
     @GetMapping("/summary/category")
-    public ResponseEntity<ResponseDTO> getSummaryCategory(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> getSummaryCategory(@JwtUserId Integer userId) {
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
         result.setMessage("메인페이지 카테고리별 요약 조회 완료");
@@ -53,7 +53,7 @@ public class MainPageController {
     }
 
     @GetMapping("/prebenefit")
-    public ResponseEntity<ResponseDTO> getPrebenefit(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> getPrebenefit(@JwtUserId Integer userId) {
         // TODO: 직전 거래 혜택 정보 불러오기
         PreBenefitDto preBenefitDto = mainPageService.getPreBenefit(userId);
 

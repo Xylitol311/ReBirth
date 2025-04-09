@@ -23,7 +23,7 @@ public class RecommendController {
     private final RecommendService recommendService;
 
     @GetMapping("/top3")
-    public ResponseEntity<ResponseDTO> top3ForAll(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> top3ForAll(@JwtUserId Integer userId) {
 
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
@@ -35,7 +35,7 @@ public class RecommendController {
     }
 
     @GetMapping("/category")
-    public ResponseEntity<ResponseDTO> top3ForCategory(@RequestParam Integer userId) {
+    public ResponseEntity<ResponseDTO> top3ForCategory(@JwtUserId Integer userId) {
 
         ResponseDTO result = new ResponseDTO();
         result.setSuccess(true);
