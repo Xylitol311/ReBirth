@@ -282,15 +282,17 @@ public class ReportService {
                 reportCardsJpaRepository.save(reportCard);
 
 
-                System.out.println(i + "찍히나요?");
-                if (i == 1) {
-                    card.setSpendingTier(myTierForCard);
-                    cardsJpaRepository.save(card);
-                    System.out.println("카드 ID: " + card.getCardId() + "의 지출 등급이 " + myTierForCard + "로 업데이트되었습니다.");
-                }
-                System.out.println(i + "찍히나요?");
                 total[0] += count[0];
                 total[1] += count[1];
+            }
+
+            if(i==1) {
+                for(CardEntity card: cards) {
+                    ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), card.getCardId());
+                    CardEntity newCard = card.toBuilder().spendingTier(reportCard.getSpendingTier()).build();
+                    cardsJpaRepository.save(newCard);
+
+                }
             }
 
             report.setTotalSpending(total[0]);
