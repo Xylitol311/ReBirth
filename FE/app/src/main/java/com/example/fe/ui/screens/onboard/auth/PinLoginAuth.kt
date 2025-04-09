@@ -37,22 +37,20 @@ fun PinLoginAuth(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp),
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(0.1f))
+        Spacer(modifier = Modifier.weight(0.2f))
 
         Text(
             "비밀번호를 입력해주세요",
-            fontSize = 28.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.weight(0.15f))
+        Spacer(modifier = Modifier.weight(0.05f))
 
         PinDots(pinInput.length)
-
         Spacer(modifier = Modifier.weight(0.3f))
 
         NumberPad(
@@ -81,6 +79,5 @@ fun PinLoginAuth(
             }
         )
 
-        Spacer(modifier = Modifier.weight(0.05f))
     }
 }

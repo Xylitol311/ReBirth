@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.graphics.Color.Companion.hsl
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.colorspace.ColorSpaces
+import androidx.compose.ui.text.style.TextAlign
 import com.example.fe.ui.theme.SkyBlue
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import kotlinx.coroutines.launch
@@ -55,7 +56,8 @@ fun AuthScreen(
     var code by remember { mutableStateOf("") }
     var showTelcoSheet by remember { mutableStateOf(false) }
     var showAgreement by remember { mutableStateOf(false) }
-
+    var verificationError by remember { mutableStateOf(false) } // 인증 오류 상태 추가
+    val telcoSelectedColor = Color(0xFFE0F7FF)
     // 각 단계별 포커스 요청을 위한 FocusRequester 객체들
     val nameFocusRequester = remember { FocusRequester() }
     val ssnFrontFocusRequester = remember { FocusRequester() }
@@ -90,7 +92,12 @@ fun AuthScreen(
         }
     }
 
-
+    // 코드 입력 시 오류 상태 초기화
+    LaunchedEffect(code) {
+        if (verificationError && code.isNotEmpty()) {
+            verificationError = false
+        }
+    }
 
     val telcos = listOf("SKT", "KT", "LGU+", "SKT 알뜰폰", "KT 알뜰폰", "LGU+ 알뜰폰")
     val agreementItems = listOf(
@@ -100,21 +107,6 @@ fun AuthScreen(
     )
     val checkedItems = remember { mutableStateListOf<String>() }
 
-
-    LaunchedEffect(checkedItems.size) {
-        if (checkedItems.size == agreementItems.size && currentStep == Step.CODE) {
-            // 모든 약관에 동의하고 인증번호 단계일 때만 이동
-            navController.navigate(
-                "income_input/${name}/${phone}/${ssnFront}",
-                NavOptions.Builder()
-                    .setEnterAnim(0)
-                    .setExitAnim(0)
-                    .setPopEnterAnim(0)
-                    .setPopExitAnim(0)
-                    .build()
-            )
-        }
-    }
     // 시스템 뒤로가기 처리
     BackHandler(enabled = currentStep != Step.NAME) {
         // 첫 단계가 아닌 경우에만 이전 단계로 이동
@@ -124,7 +116,9 @@ fun AuthScreen(
     }
 
     Scaffold(
+        modifier = Modifier.systemBarsPadding(), // 시스템 바 영역을 고려한 패딩 추가
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets.systemBars,
         topBar = {
             TopAppBar(
                 title = {},
@@ -151,6 +145,7 @@ fun AuthScreen(
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
+                .navigationBarsPadding()
                 .padding(16.dp)) {
                 Button(
                     onClick = {
@@ -160,35 +155,37 @@ fun AuthScreen(
                         when (currentStep) {
                             Step.PHONE -> {
                                 // 휴대폰 번호 입력 후 다음 버튼 클릭 시 SMS 인증 요청
-//                                viewModel.sendSmsVerification(
-//                                    phoneNumber = phone,
-//                                    onSuccess = {
-//                                        Log.d("AuthSMS","전송완료 ${phone}")
-//                                        currentStep = Step.values()[currentStep.ordinal + 1]
-//                                    },
-//                                    onFailure = { error ->
-//                                        // 에러 처리 (예: 토스트 메시지 표시)
-//                                        Log.e("AuthSMS", error)
-//                                    }
-//                                )
-                                currentStep = Step.values()[currentStep.ordinal + 1]
+                                viewModel.sendSmsVerification(
+                                    phoneNumber = phone,
+                                    onSuccess = {
+                                        Log.d("AuthSMS","전송완료 ${phone}")
+                                        currentStep = Step.values()[currentStep.ordinal + 1]
+                                    },
+                                    onFailure = { error ->
+                                        // 에러 처리 (예: 토스트 메시지 표시)
+
+                                        Log.e("AuthSMS", error)
+                                    }
+                                )
+
                             }
                             Step.CODE -> {
                                 // 인증번호 입력 후 다음 버튼 클릭 시 SMS 인증 확인
-//                                viewModel.verifySmsCode(
-//                                    phoneNumber = phone,
-//                                    verificationCode = code,
-//                                    onSuccess = {
-//                                        Log.d("AuthSMS","인증 완료 ${phone}")
-//                                        showAgreement = true
-//                                    },
-//                                    onFailure = { error ->
-//                                        // 에러 처리 (예: 토스트 메시지 표시)
-//
-//                                        Log.e("Verify Error", error)
-//                                    }
-//                                )
-                                showAgreement = true
+                                viewModel.verifySmsCode(
+                                    phoneNumber = phone,
+                                    verificationCode = code,
+                                    onSuccess = {
+                                        Log.d("AuthSMS","인증 완료 ${phone}")
+                                        showAgreement = true
+                                    },
+                                    onFailure = { error ->
+                                        // 인증 실패 시 오류 표시
+                                        verificationError = true
+                                        Log.e("Verify Error", error)
+                                    }
+                                )
+                                // 인증 성공 시에만 동의 화면으로 이동하도록 수정
+
                             }
                             else -> {
                                 currentStep = Step.values()[currentStep.ordinal + 1]
@@ -214,7 +211,7 @@ fun AuthScreen(
                     )
                 ) {
                     Text(
-                        text = "다음",
+                        text = if (currentStep == Step.PHONE) "인증번호 받기" else "다음",
                         fontSize = 22.sp
                     )
                 }
@@ -225,7 +222,8 @@ fun AuthScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .systemBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(20.dp) // 간격 증가
         ) {
             Spacer(Modifier.height(24.dp))
@@ -302,15 +300,13 @@ fun AuthScreen(
 
                             // 동그라미들 (화면 끝까지 균일하게)
                             Box(
-                                modifier = Modifier.weight(0.35f)
+                                modifier = Modifier.weight(0.35f).height(70.dp), // 높이 통일
+                                contentAlignment = Alignment.BottomCenter
                             ) {
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(70.dp)
-                                        .padding(bottom = 5.dp),
+                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalAlignment = Alignment.Bottom // 기준선 맞추기
                                 ) {
                                     repeat(6) {
                                         Text(
@@ -360,29 +356,74 @@ fun AuthScreen(
                     Text("인증번호를 입력해주세요", fontSize = 25.sp,
                         modifier = Modifier.align(Alignment.CenterHorizontally))
                     Spacer(modifier = Modifier.height(24.dp))
-                    UnderlineTextField(
-                        value = code,
-                        onValueChange = { if (it.length <= 6) code = it },
-                        label = "인증번호",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(codeFocusRequester),
-                        keyboardType = KeyboardType.Number
-                    )
-                    TextButton(
-                        onClick = {
-//                            viewModel.sendSmsVerification(
-//                                phoneNumber = phone,
-//                                onSuccess = {
-//                                    // 재전송 성공 메시지
-//                                },
-//                                onFailure = { error ->
-//                                    // 에러 처리
-//                                }
-//                            )
-                        }
+
+                    // 인증번호 입력 필드와 재전송 버튼을 나란히 배치
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("인증번호 재전송", color = SkyBlue)
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // 인증번호 입력 필드 (왼쪽)
+                            Box(modifier = Modifier.weight(0.65f)) {
+                                UnderlineTextField(
+                                    value = code,
+                                    onValueChange = { if (it.length <= 6) code = it },
+                                    label = "인증번호",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .focusRequester(codeFocusRequester),
+                                    keyboardType = KeyboardType.Number,
+                                    isError = verificationError
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            // 재전송 버튼 (오른쪽) - 이미지와 같은 형태
+                            Box(
+                                modifier = Modifier
+                                    .weight(0.45f)
+                                    .align(Alignment.Bottom)
+                                    .height(48.dp)
+                                    .border(
+                                        width = 1.dp,
+                                        color = SkyBlue,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable {
+                                        // 인증번호 재전송 로직
+                                        viewModel.sendSmsVerification(
+                                            phoneNumber = phone,
+                                            onSuccess = {
+                                                // 재전송 성공 메시지
+                                            },
+                                            onFailure = { error ->
+                                                // 에러 처리
+                                            }
+                                        )
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "인증번호 재전송",
+                                    color = SkyBlue,
+                                    fontSize = 16.sp,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+
+                        // 오류 메시지 표시
+                        if (verificationError) {
+                            Text(
+                                text = "인증번호가 틀렸습니다",
+                                color = Color.Red,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                            )
+                        }
                     }
 
                     DisplayInfo("이름", name)
@@ -393,6 +434,7 @@ fun AuthScreen(
             }
         }
     }
+
 
     if (showTelcoSheet) {
         Log.d("TELCO_SHOW", "바텀시트 표시됨")
@@ -411,19 +453,26 @@ fun AuthScreen(
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 24.sp
                 )
-                telcos.forEach {
-                    Text(
-                        text = it,
+                telcos.forEach { telcoItem ->
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            // 선택한 통신사에 배경색 적용
+                            .background(
+                                color = if (telcoItem == telco) telcoSelectedColor else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            )
                             .clickable {
-                                telco = it
+                                telco = telcoItem
                                 showTelcoSheet = false
                             }
-                            .padding(16.dp),
-                        fontSize = 20.sp
-                    )
-                }
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = telcoItem,
+                            fontSize = 20.sp
+                        )
+                    }}
             }
         }
     }
@@ -436,12 +485,13 @@ fun AuthScreen(
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 24.sp
                 )
+                Spacer(Modifier.height(24.dp))
                 agreementItems.forEach { item ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp)
+                            .padding(vertical = 8.dp)
                     ) {
                         Box(
                             modifier = Modifier
@@ -457,10 +507,10 @@ fun AuthScreen(
                             Text(
                                 text = "✔",
                                 color = if (checkedItems.contains(item)) SkyBlue else Color.Gray,
-                                fontSize = 26.sp
+                                fontSize = 20.sp
                             )
                         }
-                        Text(item, fontSize = 20.sp)
+                        Text(item, fontSize = 18.sp)
                     }
                 }
                 Spacer(Modifier.height(24.dp))
@@ -468,18 +518,18 @@ fun AuthScreen(
                     onClick = {
                         showAgreement = false
                         // 동의 완료
-//                        if (code.length == 6) {
-//                            // 코드가 이미 입력되어 있다면 소득 입력 화면으로 이동 (애니메이션 없이)
-//                            navController.navigate(
-//                                "income_input/${name}/${phone}/${ssnFront}",
-//                                NavOptions.Builder()
-//                                    .setEnterAnim(0)
-//                                    .setExitAnim(0)
-//                                    .setPopEnterAnim(0)
-//                                    .setPopExitAnim(0)
-//                                    .build()
-//                            )
-//                        }
+                        if (code.length == 6) {
+                            // 코드가 이미 입력되어 있다면 소득 입력 화면으로 이동 (애니메이션 없이)
+                            navController.navigate(
+                                "income_input/${name}/${phone}/${ssnFront}",
+                                NavOptions.Builder()
+                                    .setEnterAnim(0)
+                                    .setExitAnim(0)
+                                    .setPopEnterAnim(0)
+                                    .setPopExitAnim(0)
+                                    .build()
+                            )
+                        }
                     },
                     enabled = checkedItems.size == agreementItems.size,
                     modifier = Modifier
@@ -504,6 +554,7 @@ fun AuthScreen(
             }
         }
     }
+
     LaunchedEffect(viewModel.errorMessage) {
         if (viewModel.errorMessage.isNotBlank()) {
             scope.launch {
@@ -524,7 +575,8 @@ fun UnderlineTextField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    isError: Boolean = false // 오류 상태 매개변수 추가
 ) {
     BasicTextField(
         value = value,
@@ -544,7 +596,7 @@ fun UnderlineTextField(
                 Text(
                     text = label,
                     fontSize = 20.sp,
-                    color = SkyBlue,
+                    color = if (isError) Color.Red else SkyBlue,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
@@ -558,7 +610,7 @@ fun UnderlineTextField(
 
                 // 밑줄
                 Divider(
-                    color = if (value.isNotEmpty()) SkyBlue else Color.Gray,
+                    color = if (isError) Color.Red else if (value.isNotEmpty()) SkyBlue else Color.Gray,
                     thickness = 1.dp,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -592,17 +644,32 @@ fun UnderlineSingleDigitField(
         ),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         decorationBox = { innerTextField ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = modifier
+                    .height(70.dp)
+                    .width(50.dp)
+                    .padding(bottom = 3.dp),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 30.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    innerTextField()
+                    BasicTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center,
+                            color = Color.Black
+                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                        decorationBox = { innerTextField -> innerTextField() },
+                    )
                 }
 
-                // 밑줄
                 Divider(
                     color = if (value.isNotEmpty()) SkyBlue else Color.Gray,
                     thickness = 1.dp,
@@ -632,20 +699,15 @@ fun TelcoSelector(telco: String, onClick: () -> Unit) {
         Text(
             text = "통신사",
             style = MaterialTheme.typography.labelMedium,
-            fontSize = 20.sp
+            fontSize = 20.sp,
+            color = Color(0xFF21CDFD)
         )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
                 .border(
-                    1.dp, hsl(
-                        hue = 165f,        // 160-170 범위의 중간값
-                        saturation = 0.8f, // 80%
-                        lightness = 0.75f, // 75%
-                        alpha = 1f,        // 완전 불투명
-                        colorSpace = ColorSpaces.Srgb
-                    ), MaterialTheme.shapes.medium
+                    1.dp, Color(0xFF21CDFD), MaterialTheme.shapes.medium
                 )
                 .clickable { onClick() }
                 .padding(horizontal = 16.dp),

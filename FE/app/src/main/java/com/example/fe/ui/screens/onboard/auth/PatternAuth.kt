@@ -11,6 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -41,7 +42,7 @@ fun PatternAuth(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(0.1f))
+        Spacer(modifier = Modifier.height(80.dp))
 
         // 단계에 따른 안내 텍스트 표시
         Text(
@@ -51,7 +52,6 @@ fun PatternAuth(
                 else -> ""
             },
             fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
 
@@ -65,7 +65,8 @@ fun PatternAuth(
                 else -> ""
             },
             fontSize = 18.sp,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = Color.Gray
         )
 
         Spacer(modifier = Modifier.weight(1f))
