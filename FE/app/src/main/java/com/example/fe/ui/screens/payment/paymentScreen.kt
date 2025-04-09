@@ -334,7 +334,7 @@ fun PaymentScreen(
             }
         }
     }
-
+// 990806 박종원
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -360,8 +360,8 @@ fun PaymentScreen(
                                 modifier = Modifier.padding(8.dp)
                             ) {
                                 Text(
-                                    text = "당신만의 별자리를 추가해보세요",
-                                    fontSize = 18.sp,
+                                    text = "결제 카드 등록",
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     textAlign = TextAlign.Center,
@@ -369,9 +369,9 @@ fun PaymentScreen(
                                 )
 
                                 Text(
-                                    text = "혜택을 챙겨드릴 카드를 등록해주세요",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    text = "다른 별자리를 등록해 보세요",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
                                     color = Color.White,
                                     textAlign = TextAlign.Center
                                 )

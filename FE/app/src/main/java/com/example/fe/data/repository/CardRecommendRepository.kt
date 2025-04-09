@@ -2,16 +2,16 @@ package com.example.fe.data.repository
 
 import android.util.Log
 import com.example.fe.config.AppConfig
-import com.example.fe.data.model.cardRecommend.*
+import com.example.fe.data.model.cardRecommend.CardSearchParameters
+import com.example.fe.data.model.cardRecommend.CategoryRecommendation
+import com.example.fe.data.model.cardRecommend.SearchByParameterResponse
+import com.example.fe.data.model.cardRecommend.Top3ForAllResponse
 import com.example.fe.data.network.api.CardRecommendApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 
 /**
  * 카드 추천 관련 데이터를 관리하는 리포지토리

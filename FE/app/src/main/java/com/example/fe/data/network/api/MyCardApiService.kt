@@ -26,7 +26,6 @@ interface MyCardApiService {
     // GET getMyCards /api/cards
     @GET("api/cards")
     suspend fun getMyCards(
-        @Header("Authorization") token: String
     ): MyCardsResponse
 }
 

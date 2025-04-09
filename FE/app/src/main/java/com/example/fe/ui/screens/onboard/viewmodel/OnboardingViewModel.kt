@@ -318,6 +318,20 @@ class OnboardingViewModel(
                     Log.d("Login", "로그인 실패: ${response}")
                     throw Exception("로그인 실패: ${response.message()}")
                 }
+                // 헤더에서 토큰 꺼내기
+                val token = response.headers()["Authorization"]?: throw Exception("토큰이 없습니다.")
+
+                Log.d("AuthToken","${token}")
+                Log.d("AuthToken","${response.headers()}")
+
+                // 토큰 저장 및 Interceptor 초기화
+                userToken = token
+
+
+                context.dataStore.edit { preferences ->
+                    preferences[USER_TOKEN] = token
+                }
+
 
                 // JWT 토큰 저장 등 필요한 후처리 작업이 있다면 여기에
                 onSuccess()
@@ -522,9 +536,9 @@ class AppTokenProvider(private val context: Context) : TokenProvider {
 
     override fun getToken(): String {
         // 캐시된 토큰이 있으면 그것을 반환
-        if (cachedToken.isNotEmpty()) {
-            return cachedToken
-        }
+//        if (cachedToken.isNotEmpty()) {
+//            return cachedToken
+//        }
 
         // 없으면 DataStore에서 가져옴
         return runBlocking {

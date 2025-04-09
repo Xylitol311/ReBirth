@@ -1,23 +1,22 @@
 package com.example.fe.ui.screens.myCard
 
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.myCard.CardTransactionHistoryResponse
 import com.example.fe.data.model.myCard.MyCardInfoResponse
-import com.example.fe.data.repository.MyCardRepository
 import com.example.fe.data.model.myCard.MyCardsResponse
-import com.example.fe.ui.screens.myCard.MyCardViewModel.CardItem
+import com.example.fe.data.repository.MyCardRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import androidx.compose.runtime.State
 
 class MyCardViewModel() : ViewModel() {
     private val TAG = "MyCardViewModel"
@@ -58,9 +57,6 @@ class MyCardViewModel() : ViewModel() {
     private val _selectedTab = mutableStateOf(CardDetailTab.BENEFIT)
     val selectedTab: State<CardDetailTab> = _selectedTab
 
-    // 거래 내역 캐시를 위한 맵 추가
-    private val transactionCache = mutableMapOf<Pair<Int, Int>, List<TransactionInfo>>()
-
     fun loadMyCards() {
         Log.d(TAG, "loadMyCards 호출")
         viewModelScope.launch {
@@ -75,10 +71,10 @@ class MyCardViewModel() : ViewModel() {
             Log.d(TAG, "상태 변경: Loading")
 
             try {
-                val token = "Bearer YOUR_TOKEN"
-                Log.d(TAG, "API 요청 시작: GET /my-cards, 토큰=${token.take(15)}...")
 
-                val result = myCardRepository.getMyCards(token)
+                Log.d(TAG, "API 요청 시작: GET /my-cards")
+
+                val result = myCardRepository.getMyCards()
                 Log.d(TAG, "Repository 호출: getMyCards 완료")
 
                 if (result.isSuccess) {

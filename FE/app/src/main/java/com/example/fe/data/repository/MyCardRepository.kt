@@ -5,6 +5,7 @@ import com.example.fe.config.AppConfig
 import com.example.fe.data.model.myCard.CardTransactionHistoryResponse
 import com.example.fe.data.model.myCard.MyCardInfoResponse
 import com.example.fe.data.model.myCard.MyCardsResponse
+import com.example.fe.data.network.NetworkClient
 import com.example.fe.data.network.api.CardTransactionHistoryRequest
 import com.example.fe.data.network.api.MyCardApiService
 import kotlinx.coroutines.Dispatchers
@@ -18,24 +19,19 @@ import java.util.Calendar
  */
 class MyCardRepository {
     private val TAG = "MyCardRepository"
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(AppConfig.Server.BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    private val apiService = retrofit.create(MyCardApiService::class.java)
+    private val apiService = NetworkClient.myCardApiService
 
     /**
      * 사용자의 모든 카드 목록을 가져옵니다.
      * @param token 사용자 인증 토큰
      * @return 카드 목록 응답
      */
-    suspend fun getMyCards(token: String): Result<MyCardsResponse> = withContext(Dispatchers.IO) {
+    suspend fun getMyCards(): Result<MyCardsResponse> = withContext(Dispatchers.IO) {
         Log.d(TAG, "getMyCards 호출")
 
         try {
             Log.d(TAG, "API 호출: getMyCards")
-            val response = apiService.getMyCards(token)
+            val response = apiService.getMyCards()
 
             // 응답 데이터 로깅 추가
             Log.d(TAG, "API 응답 받음: success=${response.success}, message=${response.message}")
