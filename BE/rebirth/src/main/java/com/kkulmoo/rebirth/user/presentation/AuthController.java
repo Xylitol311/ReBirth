@@ -15,6 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @CrossOrigin
 @RestController
 @RequestMapping("/api/auth")
@@ -87,7 +90,7 @@ public class AuthController {
 	//로그인 할 경우 - 패턴/핀/지문에 따라 다르게 처리)
 	//패턴/PIN일 경우 까서 확인하기, 지문일 경우 jwt 토큰만 넘겨주면 됨
 	@PostMapping("/login")
-	public ResponseEntity<ApiResponseDTO<Void>> login(
+	public ResponseEntity<ApiResponseDTO<Map<String,String>>> login(
 			@RequestBody UserLoginRequest userLoginRequest
 	)
 	{
@@ -109,9 +112,11 @@ public class AuthController {
 			String jwtToken = authService.generateAccessToken(result.getUser().getUserId());
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Authorization", "Bearer " + jwtToken);
+			Map<String, String> map = new HashMap<>();
+			map.put("userName", result.getUser().getUserName());
 			return ResponseEntity.status(HttpStatus.OK)
 					.headers(headers)
-					.body(ApiResponseDTO.success("로그인이 완료되었습니다."));
+					.body(ApiResponseDTO.success("로그인이 완료되었습니다.", map));
 		}
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 				.body(ApiResponseDTO.error("로그인번호가 틀렸습니다."));
