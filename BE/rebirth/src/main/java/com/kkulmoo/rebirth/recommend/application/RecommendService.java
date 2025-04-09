@@ -41,6 +41,7 @@ public class RecommendService {
         // 2. 가져온 카테고리에 해당하는 혜택 템플릿 다 가져오자. 보유 여부 관계 없이
         Map<Integer,Double> scoreForCards = new HashMap<>();
         for(AvgAmountByCategoryDTO avgAmountByCategory : avgAmountByCategoryList) {
+           System.out.println("이거 추천: "+avgAmountByCategory);
            List<BenefitTemplateEntity> benefitsForCategory = benefitTemplateJpaRepository.findByCategoryId(avgAmountByCategory.getCategoryId());
            totalSpending += avgAmountByCategory.getTotalSpending();
            // 3. 템플릿 하나하나 보면서 카테고리별 점수 계산, 맵에다 카드별로 점수 합산

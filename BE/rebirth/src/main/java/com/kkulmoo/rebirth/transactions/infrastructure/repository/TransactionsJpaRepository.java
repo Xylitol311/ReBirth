@@ -49,7 +49,7 @@ public interface TransactionsJpaRepository extends JpaRepository<TransactionEnti
             "CAST(COUNT(t.transactionId) AS int)) " +
             "FROM TransactionEntity t " +
             "JOIN CardTransactionEntity ct ON t.transactionId = ct.transactionId " +
-            "JOIN CardEntity cd ON ct.cardUniqueNumber = cd.cardUniqueNumber " +
+            "JOIN CardEntity cd ON ct.cardUniqueNumber = cd.cardUniqueNumber AND cd.userId =:userId " +
             "JOIN MerchantEntity m ON ct.merchantId = m.merchantId " +
             "JOIN SubcategoryEntity sc ON m.subcategory.subcategoryId = sc.subcategoryId " +
             "JOIN CategoryEntity c ON sc.category.categoryId = c.categoryId " +
