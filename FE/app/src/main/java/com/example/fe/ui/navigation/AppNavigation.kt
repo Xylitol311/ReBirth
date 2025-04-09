@@ -420,8 +420,8 @@ fun AppNavigation() {
                     }
                     composable(BottomNavItem.CardRecommend.route) {
                         CardRecommendScreen(
-                            onCardClick = { cardInfo ->
-                                navController.navigate("card_detail_info/${cardInfo}")
+                            onCardClick = { cardId ->
+                                navController.navigate("card_detail_info/$cardId")
                             }
                         )
                     }
@@ -476,15 +476,19 @@ fun AppNavigation() {
                     }
 
                     composable(
-                        route = "card_detail_info/{cardId}",
+                        route = NavRoutes.CARD_DETAIL_INFO,
                         arguments = listOf(navArgument("cardId") { type = NavType.IntType })
                     ) { backStackEntry ->
                         val cardId = backStackEntry.arguments?.getInt("cardId") ?: 0
-
+                        val cardRecommendViewModel: CardRecommendViewModel = viewModel()
+                        
                         CardDetailInfoScreen(
                             viewModel = cardRecommendViewModel,
                             cardId = cardId,
-                            onBackClick = { navController.popBackStack() }
+                            onBackClick = {
+                                navController.popBackStack()
+                            },
+                            navController = navController
                         )
                     }
 
