@@ -34,8 +34,8 @@ public class PaymentController {
 
         // 카드 등록하고 영구토큰 가져오기
         paymentTokenService.getPermanentTokenFromCardsa(userId, permanentTokenRequest);
-
-        return ResponseEntity.ok("임시");
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "카드 등록 완료", null);
+        return ResponseEntity.ok(apiResponseDTO);
     }
 
     // 오프라인 일회용 토큰 생성 엔드포인트
@@ -100,6 +100,7 @@ public class PaymentController {
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }
+
 
 
 
