@@ -44,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -83,15 +82,6 @@ fun MyCardScreen(
 ) {
     // 현재 화면 밀도 가져오기
     val density = LocalDensity.current.density
-    
-    // 화면 너비 가져오기 (동적으로 패딩 계산하기 위해)
-    val screenWidth = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
-    val cardWidth = 280.dp // 카드 너비 (고정)
-    
-    // 중앙 정렬을 위한 패딩 계산: (화면 너비 - 카드 너비) / 2
-    val horizontalPadding = with(LocalDensity.current) {
-        ((screenWidth - cardWidth) / 2)
-    }
 
     // 화면 너비 가져오기
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
