@@ -4,6 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,26 +35,79 @@ fun IncomeInputScreen(
     var income by remember { mutableStateOf("") }
     val incomeFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-    
+
+    // 알림 표시 상태 관리
+    var showAlert by remember { mutableStateOf(false) }
+
     // 뒤로가기 기능 비활성화
     BackHandler(enabled = true) {
         // 아무 동작도 하지 않음 (뒤로가기 동작 차단)
     }
-    
+
     LaunchedEffect(Unit) {
         incomeFocusRequester.requestFocus()
         keyboardController?.show()
     }
 
+    // 알림 다이얼로그
+    if (showAlert) {
+        AlertDialog(
+            onDismissRequest = { showAlert = false },
+            title = {
+                Text(
+                    text = "입력 제한",
+                    fontSize = 18.sp // 글자 크기 줄임
+                )
+            },
+            text = {
+                Text(
+                    text = "2,100,000,000원 이상 기입할 수 없습니다."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showAlert = false
+                        income = "2099999999"
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = Color.Black // 확인 버튼 텍스트 색상
+                    )
+                ) {
+                    Text("확인")
+                }
+            },
+            containerColor = Color.White,
+            titleContentColor = SkyBlue,
+            textContentColor = Color.Black
+        )
+    }
+
     Scaffold(
         topBar = {
-            // 상단 앱바 없음 (뒤로가기 버튼 제거)
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navController.navigate("auth")
+                        },
+                        modifier = Modifier.size(54.dp) // 아이콘 버튼 크기 증가
+                    ) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "뒤로가기",
+                            modifier = Modifier.size(32.dp) // 아이콘 크기 증가
+                        )
+                    }
+                }
+            )
         },
         bottomBar = {
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
-                .padding(horizontal = 16.dp, vertical = 16.dp))  {
+                .padding(16.dp)) {
                 Button(
                     onClick = {
                         // 확인 버튼 클릭 시 PIN 설정 화면으로 애니메이션 없이 이동
@@ -69,12 +124,12 @@ fun IncomeInputScreen(
                     enabled = income.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(8.dp), // 모서리를 둥글게
+                        .height(60.dp),
+                    shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF33CCFF), // 하늘색 배경
-                        contentColor = Color.White, // 흰색 텍스트
-                        disabledContainerColor = Color.LightGray // 비활성화시 밝은 회색
+                        containerColor = SkyBlue,
+                        contentColor = Color.White,
+                        disabledContainerColor = Color.LightGray
                     )
                 ) {
                     Text(
@@ -90,30 +145,45 @@ fun IncomeInputScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top, // Changed from Center to Top
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(80.dp)) // Add space at the top for better positioning
 
-            Text("소비패턴 분석을 위해서\n월 평균 수입을 알려주세요", fontSize = 25.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally))
-            Spacer(modifier = Modifier.height(50.dp))
+            Text("소비패턴 분석을 위해서",
+                fontSize = 24.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Text("월 평균 수입을 알려주세요",
+                fontSize = 24.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+            // Add a smaller spacer between text and TextField
+            Spacer(Modifier.height(32.dp))
+
+            // Removed weight modifier from Row
             Row(
-                verticalAlignment = Alignment.Bottom,
-                modifier = Modifier.fillMaxWidth() .padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 TextField(
                     value = income,
-                    onValueChange = { newValue -> 
+                    onValueChange = { newValue ->
                         // 숫자만 입력 가능하도록
                         if (newValue.all { char -> char.isDigit() }) {
-                            income = newValue 
+                            // 21억 이상인지 확인
+                            if (newValue.length > 10 || (newValue.length == 10 && newValue > "2100000000")) {
+                                showAlert = true
+                            } else {
+                                income = newValue
+                            }
                         }
                     },
                     label = { Text("", color = SkyBlue) },
                     singleLine = true,
                     textStyle = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = 20.sp,
                         color = Color.Black,
                         textAlign = TextAlign.End
                     ),
@@ -126,18 +196,20 @@ fun IncomeInputScreen(
                         cursorColor = SkyBlue
                     ),
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(0.6f)
                         .focusRequester(incomeFocusRequester)
                 )
-                
+
                 Spacer(modifier = Modifier.width(8.dp))
-                
+
                 Text(
                     text = "원",
-                    fontSize = 20.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    fontSize = 25.sp,
                 )
             }
+
+            // Add more space at the bottom to push content up
+            Spacer(Modifier.weight(1f))
         }
     }
-} 
+}

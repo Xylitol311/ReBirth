@@ -1,5 +1,7 @@
 package com.example.fe.data.network.api
 
+import com.example.fe.data.model.auth.ApiResponseDTO
+import com.example.fe.data.model.auth.SendSmsRequest
 import com.example.fe.data.model.payment.ApiResponse
 import com.example.fe.data.model.payment.TokenInfo
 import com.example.fe.data.model.payment.QRPaymentResponse
@@ -21,6 +23,8 @@ interface PaymentApiService {
 
     @POST("api/payment/onlineprogresspay")
     suspend fun completePayment(@Body requestBody: RequestBody): Response<ApiResponse<PaymentResult>>
+
+
 }
 
 // QR 토큰 요청 데이터 클래스

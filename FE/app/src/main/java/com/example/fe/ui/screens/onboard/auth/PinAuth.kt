@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.sp
 import com.example.fe.ui.screens.onboard.components.NumberPad
 import com.example.fe.ui.screens.onboard.components.PinDots
 import com.example.fe.ui.screens.onboard.screen.setup.PinStep
-
 @Composable
 fun PinAuth(
     currentStep: PinStep,
@@ -35,11 +34,10 @@ fun PinAuth(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp),
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(0.1f))
+        Spacer(modifier = Modifier.weight(0.2f))
 
         Text(
             text = if (currentStep == PinStep.PIN) {
@@ -47,11 +45,11 @@ fun PinAuth(
             } else {
                 "비밀번호를 다시 입력해주세요"
             },
-            fontSize = 28.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.weight(0.15f))
+        Spacer(modifier = Modifier.weight(0.05f))
 
         PinDots(pinInput.length)
 
@@ -63,8 +61,5 @@ fun PinAuth(
             onInputChange = { pinInput = it },
             onComplete = { onPinConfirmed(pinInput) }
         )
-
-        Spacer(modifier = Modifier.weight(0.05f))
     }
 }
-
