@@ -281,12 +281,17 @@ public class ReportService {
                 reportCard.setSpendingTier(myTierForCard);
                 reportCardsJpaRepository.save(reportCard);
 
-                if(i==1) {
-                    CardEntity newCard = card.toBuilder().spendingTier(myTierForCard).build();
-                    cardsJpaRepository.save(newCard);
-                }
                 total[0] += count[0];
                 total[1] += count[1];
+            }
+
+            if(i==1) {
+                for(CardEntity card: cards) {
+                    ReportCardsEntity reportCard = reportCardsJpaRepository.getByReportIdAndCardId(report.getReportId(), card.getCardId());
+                    CardEntity newCard = card.toBuilder().spendingTier(reportCard.getSpendingTier()).build();
+                    cardsJpaRepository.save(newCard);
+
+                }
             }
 
             report.setTotalSpending(total[0]);
