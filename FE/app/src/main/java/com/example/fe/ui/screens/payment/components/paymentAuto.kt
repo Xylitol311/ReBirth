@@ -207,7 +207,7 @@ fun ConstellationCarousel(
         // 각 별자리를 원형으로 배치 (더 큰 크기로, 더 멀리 떨어지게)
         constellations.forEachIndexed { index, constellation ->
             val angle = Math.toRadians((rotation + index * (360f / constellations.size)).toDouble())
-            val distance = radius * 0.8f  // 0.6f에서 0.8f로 증가하여 더 멀리 배치
+            val distance = radius * 1f  // 0.6f에서 0.8f로 증가하여 더 멀리 배치
             val x = centerX + cos(angle).toFloat() * distance
             val y = centerY + sin(angle).toFloat() * distance
             

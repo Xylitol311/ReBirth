@@ -769,7 +769,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                         // 왼쪽: 실적/사용금액 정보
                         Column {
                             Text(
-                                text = "실적 / 사용금액",
+                                text = "사용금액 / 실적",
                                 color = Color.White,
                                 fontSize = 14.sp
                             )
@@ -796,11 +796,13 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                                 )
                             }
 
-                            // 다음 구간까지 남은 금액 계산
+                            // 다음 구간까지 남은 금액 계산 부분 수정
                             val nextTierAmount = if (cardInfo.currentSpendingTier < cardInfo.spendingMaxTier) {
                                 // 다음 구간의 금액 계산 (구간별로 균등하게 나눈다고 가정)
                                 val amountPerTier = cardInfo.maxPerformanceAmount / cardInfo.spendingMaxTier
-                                val nextTierThreshold = amountPerTier * cardInfo.currentSpendingTier
+                                val nextTierThreshold = amountPerTier * (cardInfo.currentSpendingTier + 1) // 다음 구간 임계값
+
+                                // 사용금액 - 실적 으로 계산
                                 nextTierThreshold - cardInfo.currentPerformanceAmount
                             } else {
                                 0 // 이미 최대 구간

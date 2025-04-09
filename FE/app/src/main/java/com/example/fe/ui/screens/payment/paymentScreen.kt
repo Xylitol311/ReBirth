@@ -42,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -53,17 +52,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fe.R
 import com.example.fe.ui.components.backgrounds.GlassSurface
 import com.example.fe.ui.components.zodiac.DynamicZodiacView
-import com.example.fe.ui.screens.payment.components.BarcodeView
 import com.example.fe.ui.screens.payment.components.ConstellationCarousel
 import com.example.fe.ui.screens.payment.components.PaymentAddCardSection
 import com.example.fe.ui.screens.payment.components.PaymentCardScroll
 import com.example.fe.ui.screens.payment.components.PaymentCodeContainer
+import com.example.fe.ui.screens.payment.components.PaymentProcessing
 import com.example.fe.ui.screens.payment.components.PaymentResultScreen
-import com.example.fe.ui.screens.payment.components.QRCodeView
 import com.example.fe.ui.screens.payment.components.QRScannerScreen
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import kotlinx.coroutines.delay
+
+// 화면 상태를 열거형으로 관리
+enum class PaymentScreenState {
+    CARD_SELECTION,  // 카드 선택 화면
+    PROCESSING,      // 결제 진행 중 화면
+    RESULT           // 결제 결과 화면
+}
 
 // 카드 정보 데이터 클래스
 data class PaymentCardInfo(
@@ -86,6 +89,16 @@ fun PaymentScreen(
     onShowPaymentInfo: () -> Unit = {} // 결제 정보 화면 표시 콜백 추가
 ) {
 
+    // 현재 화면 상태
+    var screenState by remember { mutableStateOf(PaymentScreenState.CARD_SELECTION) }
+
+    var showResult by remember { mutableStateOf(false) }
+// 결제 상태 관찰 부분 수정
+    val paymentState by viewModel.paymentState.collectAsState()
+// 결제 처리 중 화면 표시 여부
+    val isProcessing = paymentState is PaymentViewModel.PaymentState.Processing
+// 결제 결과 화면 표시 여부 - 별도 상태로 관리
+    var showPaymentResult by remember { mutableStateOf(false) }
     // 스크롤 오프셋 추적 (우주 배경 효과용)
     var scrollOffset by remember { mutableFloatStateOf(0f) }
     val lazyListState = rememberLazyListState()
@@ -131,8 +144,6 @@ fun PaymentScreen(
     val cardWidth = 280.dp
     val horizontalPadding = (screenWidth - cardWidth) / 2
 
-    // 결제 상태 관찰
-    val paymentState by viewModel.paymentState.collectAsState()
 
     // 바코드/QR 탭 선택 상태 (true: 바코드, false: QR)
     var isBarcodeSelected by remember { mutableStateOf(true) }
@@ -140,8 +151,29 @@ fun PaymentScreen(
     var showInternalQRScanner by remember { mutableStateOf(false) }
 
     val paymentResult by viewModel.paymentResult.collectAsState()
-    val showPaymentResult = paymentState is PaymentViewModel.PaymentState.Completed ||
-            paymentState is PaymentViewModel.PaymentState.Failed
+
+// 결제 상태 변경 감지 및 화면 상태 업데이트
+    LaunchedEffect(paymentState) {
+        Log.d("PaymentScreen", "결제 상태 변경: $paymentState")
+
+        when (paymentState) {
+            is PaymentViewModel.PaymentState.Processing -> {
+                screenState = PaymentScreenState.PROCESSING
+                Log.d("PaymentScreen", "화면 상태 변경: PROCESSING")
+            }
+            is PaymentViewModel.PaymentState.Completed,
+            is PaymentViewModel.PaymentState.Failed -> {
+                screenState = PaymentScreenState.RESULT
+                Log.d("PaymentScreen", "화면 상태 변경: RESULT")
+            }
+            else -> {
+                // 결과 화면이 아니라면 카드 선택 화면으로
+                if (screenState != PaymentScreenState.RESULT) {
+                    screenState = PaymentScreenState.CARD_SELECTION
+                }
+            }
+        }
+    }
 
     // 탭 선택 시 내부 QR 스캐너 표시 여부 업데이트
     LaunchedEffect(isBarcodeSelected) {
@@ -639,22 +671,7 @@ fun PaymentScreen(
                         .fillMaxWidth()
                         .height(screenHeight * 0.3f)
                 )
-
-//            // 카메라 아이콘 클릭 시 QR 스캐너 표시
-//            IconButton(
-//                onClick = onShowQRScanner,
-//                modifier = Modifier.size(48.dp)
-//            ) {
-//                Icon(
-//                    painter = painterResource(id = R.drawable.ic_camera),
-//                    contentDescription = "QR 스캔",
-//                    tint = Color.White,
-//                    modifier = Modifier.size(24.dp)
-//                )
-//            }
-
             }
-
         }
 
 // QR 스캔 모드일 때는 전체 화면 QR 스캐너 표시 (탭 제외)
@@ -708,20 +725,47 @@ fun PaymentScreen(
         }
     }
 
-    if (showPaymentResult) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0x99000000)) // 반투명 배경
-        ) {
-            PaymentResultScreen(
-                paymentResult = paymentResult,
-                isSuccess = paymentState is PaymentViewModel.PaymentState.Completed,
-                onConfirm = {
-                    // 결제 결과 확인 후 홈 화면으로 이동
-                    onNavigateToHome()
+// 화면 상태에 따라 다른 UI 표시
+    when (screenState) {
+        PaymentScreenState.CARD_SELECTION -> {
+            // 카드 선택 화면은 이미 표시되어 있음
+        }
+
+        PaymentScreenState.PROCESSING -> {
+            // 결제 처리 중 화면 표시
+            PaymentProcessing(
+                paymentState = when (paymentState) {
+                    is PaymentViewModel.PaymentState.Processing -> "Processing"
+                    is PaymentViewModel.PaymentState.Completed -> "Completed"
+                    is PaymentViewModel.PaymentState.Failed -> "Failed"
+                    else -> "Idle"
+                },
+                onMinimumTimeElapsed = {
+                    // 최소 3초가 지난 후 결과 화면으로 전환
+                    if (paymentState is PaymentViewModel.PaymentState.Completed ||
+                        paymentState is PaymentViewModel.PaymentState.Failed) {
+                        screenState = PaymentScreenState.RESULT
+                    }
                 }
             )
+        }
+
+        PaymentScreenState.RESULT -> {
+            // 결제 결과 화면 표시
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0x99000000))
+            ) {
+                PaymentResultScreen(
+                    paymentResult = paymentResult,
+                    isSuccess = paymentState is PaymentViewModel.PaymentState.Completed,
+                    onConfirm = {
+                        // 결제 결과 확인 후 홈 화면으로 이동
+                        onNavigateToHome()
+                    }
+                )
+            }
         }
     }
 
