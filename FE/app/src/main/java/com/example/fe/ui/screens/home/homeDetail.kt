@@ -6,54 +6,30 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.fe.R
-import com.example.fe.ui.components.backgrounds.GlassSurface
-import androidx.compose.foundation.clickable
-import androidx.compose.material.Divider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.graphics.graphicsLayer
+import coil.compose.AsyncImage
+import com.example.fe.data.model.CardSummary
+import com.example.fe.data.model.CategorySummary
 import com.example.fe.config.AppConfig
-import com.example.fe.data.network.CardSummary
-import com.example.fe.data.network.CategorySummary
 import com.example.fe.data.network.SummaryService
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import coil.compose.AsyncImage
 
 @Composable
 fun HomeDetailScreen(
@@ -184,7 +160,6 @@ fun CardUsageList(cardUsages: List<CardSummary>) {
 
 @Composable
 fun CardUsageItem(cardUsage: CardSummary) {
-    // 사진에 맞게 어두운 파란색 배경 추가
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -397,6 +372,9 @@ fun TempCategoryUsageItem(categoryUsage: TempCategorySummary) {
 
 @Composable
 fun CategoryUsageList(categoryUsages: List<CategorySummary>) {
+    // 전체 금액 계산
+    val totalAmount = categoryUsages.sumOf { it.amount }
+
     if (categoryUsages.isEmpty()) {
         Box(
             modifier = Modifier
@@ -414,7 +392,10 @@ fun CategoryUsageList(categoryUsages: List<CategorySummary>) {
     } else {
         LazyColumn {
             items(categoryUsages) { categoryUsage ->
-                CategoryUsageItem(categoryUsage)
+                CategoryUsageItem(
+                    categoryUsage = categoryUsage,
+                    totalAmount = totalAmount
+                )
                 
                 // 카테고리 사이에 구분선 추가 (마지막이 아니면)
                 if (categoryUsage != categoryUsages.last()) {
@@ -422,7 +403,7 @@ fun CategoryUsageList(categoryUsages: List<CategorySummary>) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp),
-                        color = Color(0xFF1E2D4D),  // 사진과 비슷한 색상
+                        color = Color(0xFF1E2D4D),
                         thickness = 1.dp
                     )
                 }
@@ -432,14 +413,23 @@ fun CategoryUsageList(categoryUsages: List<CategorySummary>) {
 }
 
 @Composable
-fun CategoryUsageItem(categoryUsage: CategorySummary) {
-    // 임시 컴포넌트와 같은 스타일로 변경
+fun CategoryUsageItem(
+    categoryUsage: CategorySummary,
+    totalAmount: Int
+) {
+    // 비율 계산 (소수점 첫째 자리에서 반올림)
+    val percentage = if (totalAmount > 0) {
+        ((categoryUsage.amount.toFloat() / totalAmount.toFloat()) * 100).toInt()
+    } else {
+        0
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 24.dp)  // 임시 컴포넌트와 동일한 패딩
+            .padding(vertical = 8.dp, horizontal = 24.dp)
     ) {
-        // 카테고리 이름과 퍼센트 (값 임의 설정)
+        // 카테고리 이름과 퍼센트
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -449,17 +439,16 @@ fun CategoryUsageItem(categoryUsage: CategorySummary) {
         ) {
             Text(
                 text = categoryUsage.category,
-                fontSize = 28.sp,  // 임시 컴포넌트와 동일한 크기
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E1FF)  // 밝은 파란색으로 변경
+                color = Color(0xFF00E1FF)
             )
             
-            // 퍼센트 임의 설정 (API 응답에 없으면 33%로 고정)
             Text(
-                text = "33%",
-                fontSize = 28.sp,  // 임시 컴포넌트와 동일한 크기
+                text = "$percentage%",
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E1FF)  // 밝은 파란색으로 변경
+                color = Color(0xFF00E1FF)
             )
         }
         
@@ -472,13 +461,13 @@ fun CategoryUsageItem(categoryUsage: CategorySummary) {
         ) {
             Text(
                 text = "소비금액",
-                fontSize = 18.sp,  // 임시 컴포넌트와 동일한 크기
+                fontSize = 18.sp,
                 color = Color.White
             )
             
             Text(
-                text = "${categoryUsage.amount}원",
-                fontSize = 20.sp,  // 임시 컴포넌트와 동일한 크기
+                text = "${formatAmount(categoryUsage.amount)}원",
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.White
             )
@@ -493,18 +482,23 @@ fun CategoryUsageItem(categoryUsage: CategorySummary) {
         ) {
             Text(
                 text = "받은 혜택",
-                fontSize = 18.sp,  // 임시 컴포넌트와 동일한 크기
+                fontSize = 18.sp,
                 color = Color.White
             )
             
             Text(
-                text = "${categoryUsage.benefit}원",
-                fontSize = 20.sp,  // 임시 컴포넌트와 동일한 크기
+                text = "${formatAmount(categoryUsage.benefit)}원",
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.White
             )
         }
     }
+}
+
+// 금액 포맷팅 함수
+private fun formatAmount(amount: Int): String {
+    return String.format("%,d", amount)
 }
 
 // 데이터 클래스
@@ -530,9 +524,3 @@ data class TempCategorySummary(
     val amount: Int,
     val benefit: Int
 )
-
-@Preview(showBackground = true)
-@Composable
-fun HomeDetailScreenPreview() {
-    HomeDetailScreen()
-}

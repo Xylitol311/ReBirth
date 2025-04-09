@@ -68,6 +68,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.foundation.Canvas
+import kotlin.math.abs
 
 // 컴포저블 외부에서 시간 파싱하는 함수
 fun parseTimeFromDateTime(dateTimeString: String): String {
@@ -394,6 +395,109 @@ fun CalendarScreen(
                                                 }
                                             }
                                         )
+                                    }
+                                }
+                            }
+                        }
+
+                        // 당월 소비 현황
+                        item {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            monthlyInfo?.let { info ->
+                                GlassSurface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    cornerRadius = 16f
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    ) {
+                                        Text(
+                                            text = "당월 소비 현황",
+                                            color = Color.White,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(bottom = 16.dp)
+                                        )
+                                        Text(
+                                            text = "${abs(info.totalSpendingAmount)}원 소비",
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontSize = 24.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "최다 소비 ${info.categoryName}",
+                                            color = Color.White,
+                                            fontSize = 16.sp
+                                        )
+                                        Text(
+                                            text = if (info.monthlyDifferenceAmount > 0)
+                                                "지난달보다 ${info.monthlyDifferenceAmount}원 더 소비"
+                                            else
+                                                "지난달보다 ${abs(info.monthlyDifferenceAmount)}원 절약",
+                                            color = Color.White,
+                                            fontSize = 16.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // 월별 소비 기록
+                        item {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            GlassSurface(
+                                modifier = Modifier.fillMaxWidth(),
+                                cornerRadius = 16f
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = "월별 소비 기록",
+                                        color = Color.White,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    )
+
+                                    if (transactions.isEmpty()) {
+                                        Text(
+                                            text = "거래 내역이 없습니다",
+                                            color = Color.Gray,
+                                            fontSize = 16.sp,
+                                            modifier = Modifier.padding(vertical = 16.dp)
+                                        )
+                                    } else {
+                                        var currentDate: String? = null
+                                        transactions.forEach { transaction ->
+                                            val transactionDate = transaction.date.substring(0, 10)
+                                            
+                                            if (currentDate != transactionDate) {
+                                                if (currentDate != null) {
+                                                    Divider(
+                                                        color = Color.White.copy(alpha = 0.2f),
+                                                        modifier = Modifier.padding(vertical = 8.dp)
+                                                    )
+                                                }
+                                                currentDate = transactionDate
+                                                
+                                                val date = LocalDate.parse(transactionDate)
+                                                Text(
+                                                    text = "${date.monthValue}월 ${date.dayOfMonth}일",
+                                                    color = Color.White,
+                                                    fontSize = 18.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(vertical = 8.dp)
+                                                )
+                                            }
+                                            
+                                            DailyTransactionItem(transaction = transaction)
+                                        }
                                     }
                                 }
                             }
@@ -793,8 +897,6 @@ fun ReportPager(
             viewModel.updateReportScrollOffset(offset)
         }
     }
-
-    // 테스트 데이터 관련 코드 제거
 
     // 데이터 유무 확인 - 테스트 데이터 없이 실제 데이터만 사용
     val hasComparisonData = reportData != null &&
@@ -1793,13 +1895,9 @@ fun ConsumptionTypePage(reportData: ReportData) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // reportDescription을 표시
-            val reportText = reportData.reportDescription.ifEmpty {
-                "당신은 지구적인 초화로운 소비를 지향. 절약을 절묘하게 탐구. 블루모던 소비를 거리 지향합니다. 당신은 지구적변 초화로운 소비를 처음하시는 군요. 절약을 절묘하게 심고, 블루모던 소비를 거의 하지 않습니다. REBIRTH와 함께 현명한 소비를 하러가요."
-            }
-            
+            // reportDescription 표시
             Text(
-                text = reportText,
+                text = reportData.reportDescription,
                 color = Color.White.copy(alpha = 0.9f),
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,
@@ -1826,34 +1924,31 @@ fun ConsumptionTypePage(reportData: ReportData) {
             )
 
             // 외향성 게이지
-            val extroversion = 67 // 임시 데이터
             GaugeBar(
                 label = "외향성",
-                value = extroversion,
+                value = 0,
                 maxValue = 100,
-                color = Color(0xFF2196F3) // 파란색 계열
+                color = Color(0xFF2196F3)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // 안정성 게이지
-            val stability = 70 // 임시 데이터
             GaugeBar(
                 label = "안정성",
-                value = stability,
+                value = 0,
                 maxValue = 100,
-                color = Color(0xFF4CAF50) // 녹색 계열
+                color = Color(0xFF4CAF50)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // 저축성 게이지
-            val savingTendency = 51 // 임시 데이터
             GaugeBar(
                 label = "저축성",
-                value = savingTendency,
+                value = 0,
                 maxValue = 100,
-                color = Color(0xFFFF00FF) // 분홍색 계열
+                color = Color(0xFFFF00FF)
             )
         }
     }
