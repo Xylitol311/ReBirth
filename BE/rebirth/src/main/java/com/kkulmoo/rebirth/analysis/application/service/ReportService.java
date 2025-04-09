@@ -38,9 +38,9 @@ public class ReportService {
     private final CardTemplateJpaRepository cardTemplateJpaRepository;
 
     @Transactional
-    public void updateMonthlyTransactionSummary(Integer userId) {
+    public void updateMonthlyTransactionSummary(Integer userId, LocalDateTime now) {
         UserEntity user = userJpaRepository.getReferenceById(userId);
-        LocalDateTime now = LocalDateTime.now();
+
         int year = now.getYear();
         int month = now.getMonthValue();
 
@@ -61,8 +61,6 @@ public class ReportService {
                         .build();
                 int reportCardId = reportCardsJpaRepository.save(newReportCard).getReportCardId();
                 reportCard = reportCardsJpaRepository.getReferenceById(reportCardId);
-
-
             }
 
             // 그냥 결제 단건 혜택만 고려

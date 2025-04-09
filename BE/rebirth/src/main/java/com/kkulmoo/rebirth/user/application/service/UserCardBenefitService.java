@@ -8,24 +8,29 @@ import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
 import com.kkulmoo.rebirth.user.domain.repository.UserCardBenefitRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserCardBenefitService {
     private final UserCardBenefitRepository userCardBenefitRepository;
     private final ReportCardsJpaRepository reportCardsJpaRepository;
 
     public void updateUseCardBenefit(List<CardTransactionResponse> cardTransactionResponses, List<MyCard> cards) {
+        log.info("임시저장소 유저 혜택 저장소 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+
         // 실적 조회 시 사용할 카드 (고유번호:보유카드 ID) Map
         Map<String, Integer> cardIdMap = new HashMap<>();
-        for(MyCard myCard : cards){
+        for (MyCard myCard : cards) {
             cardIdMap.put(myCard.getCardUniqueNumber(), myCard.getCardId());
         }
 
@@ -36,45 +41,24 @@ public class UserCardBenefitService {
             int year = cardTransactionResponse.getCreatedAt().getYear();
             int month = cardTransactionResponse.getCreatedAt().getMonthValue();
 
-            UserCardBenefit temp = null;
+            System.out.println(year + ": year");
+            System.out.println(month + ": month");
+
             // 이번 달 혜택 정보 가져오기
-            // 1. Map에 있는지 먼저 확인
-            if (userCardBenefitMap.containsKey(cardTransactionResponse.getBenefitId())){
-                temp = userCardBenefitMap.get(cardTransactionResponse.getBenefitId());
-            }
-
-            // 2. Map에 없으면 DB에서 조회
-            else {
-                temp = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
-                        cardTransactionResponse.getUserId().getValue(),
-                        cardTransactionResponse.getBenefitId(),
-                        year,
-                        month
-                ).orElseGet(() -> UserCardBenefit.builder() // DB에 데이터가 없으면 새로 생성
-                        .userId(cardTransactionResponse.getUserId().getValue())
-                        .benefitTemplateId(cardTransactionResponse.getBenefitId())
-
-                        .spendingTier( // 리포트에서 전월 실적 구간 가져오기
-                                findSpendingTier(
-                                        cardTransactionResponse
-                                        , cardIdMap.get(cardTransactionResponse.getCardUniqueNumber()
-                                        )
-                                )
-                        )
-                        .benefitCount((short)0)
-                        .benefitAmount(0)
-                        .year(year)
-                        .month(month)
-                        .build());
-            }
+            UserCardBenefit temp = getUserCardBenefit(
+                    cardTransactionResponse.getUserId().getValue()
+                    , cardTransactionResponse.getBenefitId()
+                    , cardIdMap.get(cardTransactionResponse.getCardUniqueNumber())
+                    , cardTransactionResponse.getCreatedAt()
+            );
 
             // 거절 건이 아니면서 실적이 있는 경우에만 업데이트
-            if (!cardTransactionResponse.getApprovalCode().startsWith("REG") && cardTransactionResponse.getBenefitAmount() != 0) {
+            log.info("거절 건이 아니면서 실적이 있는 경우에만 업데이트: {}", temp.toString());
+            if (!cardTransactionResponse.getApprovalCode().startsWith("REJ") && cardTransactionResponse.getBenefitAmount() != 0) {
                 temp = temp.toBuilder()
-                        .benefitCount((short)(temp.getBenefitCount() + 1))
+                        .benefitCount((short) (temp.getBenefitCount() + 1))
                         .benefitAmount(temp.getBenefitAmount() + cardTransactionResponse.getBenefitAmount())
                         .build();
-
             }
 
             // 수정된 객체를 Map에 저장
@@ -90,9 +74,9 @@ public class UserCardBenefitService {
         userCardBenefitRepository.saveAll(list);
     }
 
-    private short findSpendingTier(CardTransactionResponse cardTransactionResponse, Integer cardId) {
+    public short findSpendingTier(CardTransactionResponse cardTransactionResponse, Integer cardId) {
         int month = cardTransactionResponse.getCreatedAt().getMonthValue() == 1 ?
-                12 : cardTransactionResponse.getCreatedAt().getMonthValue();
+                12 : cardTransactionResponse.getCreatedAt().getMonthValue() - 1;
         int year = cardTransactionResponse.getCreatedAt().getMonthValue() == 1 ?
                 cardTransactionResponse.getCreatedAt().getYear() - 1
                 : cardTransactionResponse.getCreatedAt().getYear();
@@ -106,5 +90,41 @@ public class UserCardBenefitService {
         return latestReport.getSpendingTier();
     }
 
+    public UserCardBenefit getUserCardBenefit(int userId, Integer benefitId, Integer cardId, LocalDateTime createdAt) {
+        Optional<UserCardBenefit> userCardBenefitOptional = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
+                userId,
+                benefitId,
+                createdAt.getYear(),
+                createdAt.getMonthValue()
+        );
+
+        if (userCardBenefitOptional.isPresent()) {
+            return userCardBenefitOptional.get();
+        }
+
+
+        int lastMonth = createdAt.getMonthValue() == 1 ?
+                12 : createdAt.getMonthValue();
+        int lastYear = createdAt.getMonthValue() == 1 ?
+                createdAt.getYear() - 1
+                : createdAt.getYear();
+        short spendingTier = reportCardsJpaRepository.getByUserIdAndCardIdAndYearAndMonth(
+                userId,
+                cardId,
+                lastYear,
+                lastMonth).get().getSpendingTier();
+
+        UserCardBenefit userCardBenefit = UserCardBenefit.builder()
+                .userId(userId)
+                .benefitTemplateId(benefitId)
+                .spendingTier(spendingTier)
+                .benefitCount((short) 0)
+                .benefitAmount(0)
+                .year(createdAt.getYear())
+                .month(createdAt.getMonthValue())
+                .build();
+
+        return userCardBenefit;
+    }
 
 }

@@ -3,12 +3,14 @@ package com.kkulmoo.rebirth.user.domain;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Builder(toBuilder = true)
 @Getter
 @AllArgsConstructor
+@ToString
 public class UserCardBenefit {
     private Integer userCardBenefitId;
     private Integer userId;
