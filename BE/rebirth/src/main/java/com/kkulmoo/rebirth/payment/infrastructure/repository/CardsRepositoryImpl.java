@@ -57,7 +57,7 @@ public class CardsRepositoryImpl implements CardsRepository{
         List<CardEntity> paymentCardList = cardsJpaRepository.findByUserIdAndPaymentCardOrderIsNotNull(card.getUserId());
 
         CardEntity payCard = card.toBuilder()
-                .permanentToken(paymentCard.getPermanentToken())
+                .permanentToken(permanentTokenResponseByCardsaDTO.getToken())
                 .paymentCardOrder((short) (paymentCardList.size()+1)) // 계산해야함
                 .paymentCreatedAt(LocalDateTime.now()) // 현재 시간으로
                 .build();
