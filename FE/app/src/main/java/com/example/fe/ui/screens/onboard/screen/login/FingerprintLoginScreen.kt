@@ -49,7 +49,7 @@ fun FingerprintLoginScreen(
                 FingerprintAuthComposable { success ->
                     if (success) {
                         viewModel.login(
-                            type = "finger",
+                            type = "fingerprint",
                             number =  null,
                             phoneSerialNumber = deviceInfoManager.getDeviceId(),
                             onSuccess = {

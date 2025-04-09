@@ -59,50 +59,6 @@ fun PaymentAddCardSection(
     }
 }
 
-
-// 카드 추가 버튼 (가로 스크롤에 표시될 항목)
-@Composable
-fun AddCardButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .width(280.dp)
-            .height(180.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF2D2A57))
-            .border(
-                width = 2.dp,
-                color = Color.White.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "카드 추가",
-                tint = Color.White,
-                modifier = Modifier.size(48.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "새 카드 추가",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
 // 이미지 처리 함수
 @OptIn(ExperimentalGetImage::class)
 internal fun processImageWithTextRecognition(

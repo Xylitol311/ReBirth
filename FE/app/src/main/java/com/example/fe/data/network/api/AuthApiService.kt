@@ -3,7 +3,9 @@ package com.example.fe.data.network.api
 import com.example.fe.data.model.auth.ApiResponseDTO
 import com.example.fe.data.model.auth.PatternNumbersRequest
 import com.example.fe.data.model.auth.ReportWithPatternDTO
+import com.example.fe.data.model.auth.SendSmsRequest
 import com.example.fe.data.model.auth.SignupRequest
+import com.example.fe.data.model.auth.VerifySmsRequest
 import com.example.fe.data.model.auth.userLoginRequest
 import retrofit2.Response
 import retrofit2.http.Body
@@ -39,9 +41,30 @@ interface AuthApiService {
         @Query("userId") userId: Int
     ): Response<ApiResponseDTO<Unit>>
 
+    @POST("api/report/afterstart")
+    suspend fun createReportAfterStart(
+        @Query("userId") userId: Int
+    ): Response<ApiResponseDTO<Unit>>
+
+
     // 로그인
     @POST("api/auth/login")
     suspend fun login(
         @Body request: userLoginRequest
     ): Response<ApiResponseDTO<Unit>>
+
+    // sms 요청하기
+    @POST("api/auth/sms")
+    suspend fun sendSMS(
+        @Body request: SendSmsRequest
+    ): Response<ApiResponseDTO<String>>
+
+    //sms 일치여부 확인하기
+    // sms 요청하기
+    @POST("api/auth/sms/verify")
+    suspend fun verifySMS(
+        @Body request: VerifySmsRequest
+    ): Response<ApiResponseDTO<String>>
+
+
 }

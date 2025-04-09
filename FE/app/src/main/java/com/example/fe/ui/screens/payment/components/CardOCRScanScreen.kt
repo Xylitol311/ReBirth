@@ -503,6 +503,36 @@ fun CardOCRScanScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+// 직접 입력 버튼 추가 (수정됨)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = statusBarPadding.calculateTopPadding() + 56.dp) // 상단 바 높이(56.dp) 고려
+                    .padding(horizontal = 24.dp)
+                    .align(Alignment.TopCenter)
+            ) {
+                Button(
+                    onClick = {
+                        // 직접 입력 모드로 설정하고 확인 화면으로 이동
+                        isManualInputMode = true
+                        showCardConfirmation = true
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2196F3)
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.Center) // 가운데 정렬
+                        .width(200.dp) // 너비 지정
+                        .height(36.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "직접 입력해서 등록",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
 
             // 중앙 영역 - 카드 스캔 영역
             Box(
@@ -612,38 +642,7 @@ fun CardOCRScanScreen(
                     }
                 }
             }
-
-            // 직접 입력 버튼 추가
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
-            ) {
-                Button(
-                    onClick = {
-                        // 직접 입력 모드로 설정하고 확인 화면으로 이동
-                        isManualInputMode = true
-                        showCardConfirmation = true
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2196F3)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "직접 입력해서 등록",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            // 하단 팝업 - 스캔 결과 표시
+// 하단 팝업 - 스캔 결과 표시 (수정됨)
             if (showBottomPopup) {
                 // 반투명 검정색 배경
                 Box(
@@ -656,13 +655,16 @@ fun CardOCRScanScreen(
                             interactionSource = remember { MutableInteractionSource() }
                         )
                 )
-                
+
                 // 하단 팝업
                 Box(
                     modifier = Modifier
                         .fillMaxSize(),
                     contentAlignment = Alignment.BottomCenter
                 ) {
+                    // 네이티브 하단 바 패딩 가져오기
+                    val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
+
                     AnimatedVisibility(
                         visible = showBottomPopup,
                         enter = slideInVertically(initialOffsetY = { it }),
@@ -670,9 +672,10 @@ fun CardOCRScanScreen(
                     ) {
                         Column(
                             modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.White, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                            .padding(16.dp)
+                                .fillMaxWidth()
+                                .background(Color.White, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                .padding(16.dp)
+                                .padding(bottom = navigationBarPadding.calculateBottomPadding()) // 네이티브 하단 바 고려
                         ) {
                             Text(
                                 text = "스캔한 정보를 확인해주세요",
@@ -733,9 +736,9 @@ fun CardOCRScanScreen(
                             ) {
                                 // 재촬영 버튼
                                 Button(
-                                    onClick = { 
+                                    onClick = {
                                         showBottomPopup = false
-                                        resetScan() 
+                                        resetScan()
                                     },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color.LightGray
@@ -752,7 +755,7 @@ fun CardOCRScanScreen(
                                     onClick = {
                                         // 팝업 닫기
                                         showBottomPopup = false
-                                        
+
                                         // CardConfirmationScreen으로 이동
                                         showCardConfirmation = true
                                     },

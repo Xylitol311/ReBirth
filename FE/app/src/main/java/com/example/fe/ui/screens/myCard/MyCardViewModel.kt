@@ -1,23 +1,22 @@
 package com.example.fe.ui.screens.myCard
 
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.myCard.CardTransactionHistoryResponse
 import com.example.fe.data.model.myCard.MyCardInfoResponse
-import com.example.fe.data.repository.MyCardRepository
 import com.example.fe.data.model.myCard.MyCardsResponse
-import com.example.fe.ui.screens.myCard.MyCardViewModel.CardItem
+import com.example.fe.data.repository.MyCardRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import androidx.compose.runtime.State
 
 class MyCardViewModel() : ViewModel() {
     private val TAG = "MyCardViewModel"
@@ -58,17 +57,8 @@ class MyCardViewModel() : ViewModel() {
     private val _selectedTab = mutableStateOf(CardDetailTab.BENEFIT)
     val selectedTab: State<CardDetailTab> = _selectedTab
 
-    // 거래 내역 캐시를 위한 맵 추가
-    private val transactionCache = mutableMapOf<Pair<Int, Int>, List<TransactionInfo>>()
-
-    fun loadMyCards(forceRefresh: Boolean = false) {
-
-        if (isDataLoaded && !forceRefresh) {
-            Log.d(TAG, "이미 데이터가 로드되어 있어 중복 호출 무시")
-            return
-        }
-
-        Log.d(TAG, "loadMyCards 호출: forceRefresh=$forceRefresh")
+    fun loadMyCards() {
+        Log.d(TAG, "loadMyCards 호출")
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
@@ -81,10 +71,10 @@ class MyCardViewModel() : ViewModel() {
             Log.d(TAG, "상태 변경: Loading")
 
             try {
-                val token = "Bearer YOUR_TOKEN"
-                Log.d(TAG, "API 요청 시작: GET /my-cards, 토큰=${token.take(15)}... forceRefresh=$forceRefresh")
 
-                val result = myCardRepository.getMyCards(token, forceRefresh)
+                Log.d(TAG, "API 요청 시작: GET /my-cards")
+
+                val result = myCardRepository.getMyCards()
                 Log.d(TAG, "Repository 호출: getMyCards 완료")
 
                 if (result.isSuccess) {
@@ -147,15 +137,15 @@ class MyCardViewModel() : ViewModel() {
     /**
      * 특정 카드의 상세 정보를 가져옵니다.
      */
+// getMyCardInfo 함수 수정
     fun getMyCardInfo(
         cardId: Int,
         year: Int = Calendar.getInstance().get(Calendar.YEAR),
-        month: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
-        forceRefresh: Boolean = false
+        month: Int = Calendar.getInstance().get(Calendar.MONTH) + 1
     ) {
         _selectedCardId.value = cardId
 
-        Log.d(TAG, "getMyCardInfo 호출: cardId=$cardId, year=$year, month=$month, forceRefresh=$forceRefresh")
+        Log.d(TAG, "getMyCardInfo 호출: cardId=$cardId, year=$year, month=$month")
         viewModelScope.launch {
             // 이전 상태 유지하면서 로딩 표시
             _cardInfoState.value = when (val currentState = _cardInfoState.value) {
@@ -168,7 +158,7 @@ class MyCardViewModel() : ViewModel() {
             try {
                 Log.d(TAG, "API 요청 시작: GET /api/cards/detail/$cardId/$year/$month")
 
-                val result = myCardRepository.getMyCardInfo(cardId, year, month, forceRefresh)
+                val result = myCardRepository.getMyCardInfo(cardId, year, month)
                 Log.d(TAG, "Repository 호출: getMyCardInfo 완료")
 
                 if (result.isSuccess) {
@@ -179,6 +169,7 @@ class MyCardViewModel() : ViewModel() {
                         val cardInfo = mapResponseToCardInfo(response)
                         _cardInfoState.value = CardInfoState.Success(cardInfo)
                         loadedCardInfoIds.add(cardId)
+
                         Log.d(TAG, "카드 상세 정보 로드 성공: $cardInfo")
                     } else {
                         val message = response?.message ?: "카드 상세 정보를 가져오는데 실패했습니다."
@@ -231,44 +222,17 @@ class MyCardViewModel() : ViewModel() {
         }
     }
 
-    /**
-     * 특정 카드의 거래 내역을 가져옵니다.
-     */
+    // getCardTransactionHistory 함수 수정
     fun getCardTransactionHistory(
         cardId: Int,
         month: Int = selectedMonth.value,
         page: Int = 0, // 0부터 시작하도록 변경
-        pageSize: Int = 20,
-        forceRefresh: Boolean = false
+        pageSize: Int = 20
     ) {
         _selectedCardId.value = cardId
         _selectedMonth.value = month
 
-        // 첫 페이지이고 이미 로드된 경우 중복 호출 방지 (forceRefresh가 true인 경우는 예외)
-        val monthsForCard = loadedTransactionHistoryIds.getOrPut(cardId) { mutableSetOf() }
-
-        // 중요: 이미 로드된 데이터가 있으면 그 데이터를 상태에 반영
-        val existingState = _transactionHistoryState.value
-        if (existingState is TransactionHistoryState.Success) {
-            // 이미 성공 상태라면 그대로 유지
-            return
-        }
-
-        // 이전에 로드된 데이터가 있는지 확인하고 있으면 그 데이터를 사용
-        val cachedTransactions = transactionCache[Pair(cardId, month)]
-        if (cachedTransactions != null) {
-            _transactionHistoryState.value = TransactionHistoryState.Success(
-                transactions = cachedTransactions,
-                allTransactions = cachedTransactions,
-                currentPage = 0,
-                pageSize = pageSize,
-                hasMore = cachedTransactions.size >= pageSize
-            )
-            Log.d(TAG, "캐시된 거래 내역 사용: ${cachedTransactions.size}개 항목")
-            return
-        }
-
-        Log.d(TAG, "getCardTransactionHistory 호출: cardId=$cardId, month=$month, page=$page, forceRefresh=$forceRefresh")
+        Log.d(TAG, "getCardTransactionHistory 호출: cardId=$cardId, month=$month, page=$page")
         viewModelScope.launch {
             // 이전 상태 유지하면서 로딩 표시
             _transactionHistoryState.value = when (val currentState = _transactionHistoryState.value) {
@@ -300,7 +264,7 @@ class MyCardViewModel() : ViewModel() {
                 val year = Calendar.getInstance().get(Calendar.YEAR) // 현재 연도 사용
                 Log.d(TAG, "API 요청 시작: POST /api/card/history (cardId=$cardId, month=$month, year=$year, page=$page)")
 
-                val result = myCardRepository.getCardTransactionHistory(token, cardId, page, pageSize, month, forceRefresh, year)
+                val result = myCardRepository.getCardTransactionHistory(token, cardId, page, pageSize, month, year)
                 Log.d(TAG, "Repository 호출: getCardTransactionHistory 완료")
 
                 if (result.isSuccess) {
@@ -332,9 +296,8 @@ class MyCardViewModel() : ViewModel() {
 
                         // 로드된 월 기록 (첫 페이지만)
                         if (page == 0) {
+                            val monthsForCard = loadedTransactionHistoryIds.getOrPut(cardId) { mutableSetOf() }
                             monthsForCard.add(month)
-                            // 캐시에 저장
-                            transactionCache[Pair(cardId, month)] = allTransactions
                         }
 
                         Log.d(TAG, "카드 거래 내역 로드 성공: ${newTransactions.size}개 항목, 총 ${allTransactions.size}개, 더 로드 가능: ${pagination.hasMore}")
@@ -393,9 +356,7 @@ class MyCardViewModel() : ViewModel() {
                 errorMessage = message
                 Log.e(TAG, "예외 발생: 타입=${e.javaClass.simpleName}, 메시지=${e.message}", e)
             } finally {
-                if (page == 0) {
-                    isLoading = false
-                }
+                isLoading = false
                 _isLoadingMoreTransactions.value = false
             }
         }
@@ -420,7 +381,7 @@ class MyCardViewModel() : ViewModel() {
 
             try {
                 currentPage++
-                getCardTransactionHistory(cardId, month, currentPage, pageSize, false)
+                getCardTransactionHistory(cardId, month, currentPage, pageSize)
             } catch (e: Exception) {
                 Log.e(TAG, "추가 거래 내역 로드 중 오류 발생", e)
             } finally {
@@ -496,23 +457,21 @@ class MyCardViewModel() : ViewModel() {
         }
     }
 
-    /**
-     * 모든 데이터를 새로고침합니다.
-     */
+    // refreshAllData 함수 수정
     fun refreshAllData() {
         isDataLoaded = false
         loadedCardInfoIds.clear()
         loadedTransactionHistoryIds.clear()
 
-        loadMyCards(forceRefresh = true)
+        loadMyCards()
 
         _selectedCardId.value?.let { cardId ->
             when (_selectedTab.value) {
                 CardDetailTab.BENEFIT -> {
                     val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-                    getMyCardInfo(cardId, currentYear, _selectedMonth.value, forceRefresh = true)
+                    getMyCardInfo(cardId, currentYear, _selectedMonth.value)
                 }
-                CardDetailTab.TRANSACTION -> getCardTransactionHistory(cardId, _selectedMonth.value, 1, forceRefresh = true)
+                CardDetailTab.TRANSACTION -> getCardTransactionHistory(cardId, _selectedMonth.value, 1)
             }
         }
     }
@@ -573,23 +532,6 @@ class MyCardViewModel() : ViewModel() {
                 benefitAmount = transaction.receivedBenefitAmount ?: 0 // null 처리
             )
         } ?: emptyList()
-    }
-
-    fun refreshCards() {
-        Log.d(TAG, "refreshCards 호출")
-        loadMyCards(forceRefresh = true)
-    }
-
-    fun clearCardCache(cardId: Int) {
-        Log.d(TAG, "clearCardCache 호출: cardId=$cardId")
-        myCardRepository.clearCardCache(cardId)
-        Log.d(TAG, "카드 캐시 삭제 완료: cardId=$cardId")
-    }
-
-    fun clearAllCardCache() {
-        Log.d(TAG, "clearAllCardCache 호출")
-        myCardRepository.clearAllCache()
-        Log.d(TAG, "모든 카드 캐시 삭제 완료")
     }
 
     // CardItem 클래스 확장 (추가 정보 포함)
@@ -740,6 +682,22 @@ class MyCardViewModel() : ViewModel() {
         // 리스너에게 변경 알림
         private fun notifyListeners() {
             listeners.forEach { it.invoke() }
+        }
+    }
+
+    // MyCardViewModel.kt에 추가
+    fun updateSelectedCardIndex(index: Int) {
+        viewModelScope.launch {
+            if (_cards.value.isNotEmpty() && index < _cards.value.size) {
+                // 선택된 카드 정보 업데이트
+                val selectedCard = _cards.value[index]
+
+                // 필요한 경우 추가 데이터 로드
+                // 예: getMyCardInfo(selectedCard.id, currentYear, currentMonth)
+
+                // 현재 선택된 카드 ID 업데이트
+                _selectedCardId.value = selectedCard.id
+            }
         }
     }
 }

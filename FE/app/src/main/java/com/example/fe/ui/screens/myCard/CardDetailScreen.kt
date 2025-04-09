@@ -94,50 +94,39 @@ fun CardDetailScreen(
     val isLoadingMoreTransactions by viewModel.isLoadingMoreTransactions.collectAsState()
     val canLoadMoreTransactions by viewModel.canLoadMoreTransactions.collectAsState()
 
-    // 탭 변경 시 거래 내역 초기화 - 수정
-    LaunchedEffect(key1 = selectedTab) {
-        if (selectedTab == 0) {
-            // 이미 로드된 데이터가 있는지 확인
-            val currentState = transactionHistoryState
-            if (currentState !is MyCardViewModel.TransactionHistoryState.Success ||
-                currentState.allTransactions.isEmpty()) {
-                // 데이터가 없을 때만 초기화 및 로드
-                viewModel.resetTransactionPagination()
-                viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 10)
-            }
-        }
-    }
-
-// 월 변경 시 거래 내역과 카드 정보 모두 초기화
-    LaunchedEffect(key1 = selectedMonth) {
-        // 탭에 상관없이 거래 내역 초기화 및 로드
-        viewModel.resetTransactionPagination()
-        viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 10)
-
-        // 월이 변경될 때마다 카드 정보도 업데이트 (탭에 상관없이)
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-        viewModel.getMyCardInfo(cardId, currentYear, selectedMonth)
-    }
-
-// 카드 정보 로드 (초기 로드)
-    LaunchedEffect(key1 = cardId) {
+    LaunchedEffect(key1 = cardId, key2 = selectedMonth, key3 = selectedTab) {
+        // 초기 설정
         viewModel.setSelectedCard(cardId)
-        viewModel.setSelectedTab(MyCardViewModel.CardDetailTab.BENEFIT)
+        viewModel.setSelectedTab(
+            if (selectedTab == 0) MyCardViewModel.CardDetailTab.TRANSACTION
+            else MyCardViewModel.CardDetailTab.BENEFIT
+        )
 
-        // 초기 로드 시에도 현재 선택된 월로 카드 정보 로드
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-        viewModel.getMyCardInfo(cardId, currentYear, selectedMonth)
-    }
+        // 월이 변경되었는지 확인
+        val monthChanged = selectedMonth != viewModel.selectedMonth.value
+        // 카드가 변경되었는지 확인
+        val cardChanged = cardId != viewModel.selectedCardId.value
 
-// 탭 변경 시에만 필요한 설정
-    LaunchedEffect(key1 = selectedTab) {
+        // 월 설정 업데이트
         viewModel.setSelectedMonth(selectedMonth)
-        if (selectedTab == 0) {
-            // 탭이 변경될 때 이미 로드된 데이터가 있는지 확인
+
+        // 카드 정보는 항상 로드 (월이 변경되거나 카드가 변경될 때)
+        if (monthChanged || cardChanged) {
+            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+            viewModel.getMyCardInfo(cardId, currentYear, selectedMonth)
+        }
+
+        // 월이 변경되면 항상 거래 내역 초기화 (탭에 상관없이)
+        if (monthChanged || cardChanged) {
+            viewModel.resetTransactionPagination()
+            // 거래 내역 데이터 로드 (탭에 상관없이)
+            viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 10)
+        }
+        // 탭이 내역이고 데이터가 없는 경우에만 추가 로드
+        else if (selectedTab == 0) {
             val currentState = transactionHistoryState
             if (currentState !is MyCardViewModel.TransactionHistoryState.Success ||
                 currentState.allTransactions.isEmpty()) {
-                // 데이터가 없을 때만 초기화 및 로드
                 viewModel.resetTransactionPagination()
                 viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 10)
             }
@@ -769,7 +758,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                         // 왼쪽: 실적/사용금액 정보
                         Column {
                             Text(
-                                text = "실적 / 사용금액",
+                                text = "사용금액 / 실적",
                                 color = Color.White,
                                 fontSize = 14.sp
                             )
@@ -796,11 +785,13 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                                 )
                             }
 
-                            // 다음 구간까지 남은 금액 계산
+                            // 다음 구간까지 남은 금액 계산 부분 수정
                             val nextTierAmount = if (cardInfo.currentSpendingTier < cardInfo.spendingMaxTier) {
                                 // 다음 구간의 금액 계산 (구간별로 균등하게 나눈다고 가정)
                                 val amountPerTier = cardInfo.maxPerformanceAmount / cardInfo.spendingMaxTier
-                                val nextTierThreshold = amountPerTier * cardInfo.currentSpendingTier
+                                val nextTierThreshold = amountPerTier * (cardInfo.currentSpendingTier + 1) // 다음 구간 임계값
+
+                                // 사용금액 - 실적 으로 계산
                                 nextTierThreshold - cardInfo.currentPerformanceAmount
                             } else {
                                 0 // 이미 최대 구간

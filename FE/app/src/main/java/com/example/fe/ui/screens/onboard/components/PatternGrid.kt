@@ -18,9 +18,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.hypot
+
 
 @Composable
 fun PatternGrid(
@@ -30,13 +32,11 @@ fun PatternGrid(
 ) {
     val rows = 3
     val columns = 3
-    val pointRadius = 16.dp
-    val pointCount = rows * columns
+    val pointRadius = 20.dp
+    val spacing = 100.dp // 점 간 간격을 넉넉하게
+    val pointColor = Color(0xFF00D9FF)
     val touchSlop = 35f
-    val gridSize = 400.dp
-    val spacing = gridSize / 1.5f
 
-    val pointColor = Color(0xFF4169E1)
     val density = LocalDensity.current
     val pointRadiusPx = with(density) { pointRadius.toPx() }
 
@@ -44,134 +44,111 @@ fun PatternGrid(
     var isDragging by remember { mutableStateOf(false) }
     var currentDragPoint by remember { mutableStateOf<Offset?>(null) }
 
-    val points = remember {
-        List(pointCount) { idx ->
+    val spacingPx = with(LocalDensity.current) { spacing.toPx() }
+
+    val points = remember(spacingPx) {
+        List(rows * columns) { idx ->
             val row = idx / columns
             val col = idx % columns
-            val centerX = col * (spacing.value) + (spacing.value / 2)
-            val centerY = row * (spacing.value) + (spacing.value / 2)
+            val centerX = col * spacingPx + spacingPx / 2
+            val centerY = row * spacingPx + spacingPx / 2
             Offset(centerX, centerY)
         }
     }
 
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier.wrapContentSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Spacer(modifier = Modifier.height(150.dp))
+        Box(
+            modifier = Modifier
+                .size(spacing * columns) // 전체 그리드 크기
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            isDragging = true
+                            currentDragPoint = offset
+                            currentPattern = listOf()
 
-            Box(
-                modifier = Modifier
-                    .size(gridSize)
-                    .background(Color.Transparent)
-                    .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDragStart = { offset ->
-                                isDragging = true
-                                currentDragPoint = offset
-                                currentPattern = listOf()
-
-                                points.forEachIndexed { index, point ->
-                                    if (hypot(offset.x - point.x, offset.y - point.y) <= pointRadiusPx + touchSlop) {
-                                        currentPattern = listOf(index)
-                                    }
+                            points.forEachIndexed { index, point ->
+                                if (hypot(offset.x - point.x, offset.y - point.y) <= pointRadiusPx + touchSlop) {
+                                    currentPattern = listOf(index)
                                 }
-                            },
-                            onDrag = { change, _ ->
-                                change.consume()
-                                currentDragPoint = change.position
-
-                                points.forEachIndexed { index, point ->
-                                    if (!currentPattern.contains(index) &&
-                                        hypot(change.position.x - point.x, change.position.y - point.y) <= pointRadiusPx + touchSlop) {
-                                        currentPattern = currentPattern + index
-                                    }
-                                }
-                            },
-                            onDragEnd = {
-                                isDragging = false
-                                currentDragPoint = null
-                                if (!showConfirmButton) {
-                                    onPatternComplete(currentPattern)
-                                }
-                            },
-                            onDragCancel = {
-                                isDragging = false
-                                currentDragPoint = null
-                                currentPattern = listOf()
                             }
+                        },
+                        onDrag = { change, _ ->
+                            change.consume()
+                            currentDragPoint = change.position
+
+                            points.forEachIndexed { index, point ->
+                                if (!currentPattern.contains(index) &&
+                                    hypot(change.position.x - point.x, change.position.y - point.y) <= pointRadiusPx + touchSlop
+                                ) {
+                                    currentPattern = currentPattern + index
+                                }
+                            }
+                        },
+                        onDragEnd = {
+                            isDragging = false
+                            currentDragPoint = null
+                            if (!showConfirmButton) {
+                                onPatternComplete(currentPattern)
+                            }
+                        },
+                        onDragCancel = {
+                            isDragging = false
+                            currentDragPoint = null
+                            currentPattern = listOf()
+                        }
+                    )
+                }
+        ) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                if (currentPattern.isNotEmpty()) {
+                    for (i in 0 until currentPattern.size - 1) {
+                        val start = points[currentPattern[i]]
+                        val end = points[currentPattern[i + 1]]
+
+                        drawLine(
+                            color = pointColor,
+                            start = start,
+                            end = end,
+                            strokeWidth = 10f,
+                            cap = StrokeCap.Round
                         )
                     }
-            ) {
-                Canvas(modifier = Modifier.matchParentSize()) {
-                    if (currentPattern.isNotEmpty()) {
-                        for (i in 0 until currentPattern.size - 1) {
-                            val start = points[currentPattern[i]]
-                            val end = points[currentPattern[i + 1]]
 
-                            drawLine(
-                                color = pointColor,
-                                start = start,
-                                end = end,
-                                strokeWidth = 12f,
-                                cap = StrokeCap.Round
-                            )
-                        }
-
-                        if (isDragging && currentPattern.isNotEmpty() && currentDragPoint != null) {
-                            val start = points[currentPattern.last()]
-                            drawLine(
-                                color = pointColor,
-                                start = start,
-                                end = currentDragPoint!!,
-                                strokeWidth = 12f,
-                                cap = StrokeCap.Round
-                            )
-                        }
+                    if (isDragging && currentPattern.isNotEmpty() && currentDragPoint != null) {
+                        val start = points[currentPattern.last()]
+                        drawLine(
+                            color = pointColor,
+                            start = start,
+                            end = currentDragPoint!!,
+                            strokeWidth = 10f,
+                            cap = StrokeCap.Round
+                        )
                     }
-                }
-
-                points.forEachIndexed { index, offset ->
-                    val isSelected = currentPattern.contains(index)
-
-                    Box(
-                        modifier = Modifier
-                            .size(pointRadius * 2)
-                            .offset(
-                                x = with(density) { offset.x.toDp() } - pointRadius,
-                                y = with(density) { offset.y.toDp() } - pointRadius
-                            )
-                            .background(
-                                color = if (isSelected) pointColor else pointColor.copy(alpha = 0.6f),
-                                shape = CircleShape
-                            )
-                    )
                 }
             }
 
-            if (showConfirmButton && currentPattern.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(0.dp))
-                Button(
-                    onClick = { onPatternComplete(currentPattern) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF191E3F)
-                    ),
+            // 점 그리기
+            points.forEachIndexed { index, offset ->
+                val isSelected = currentPattern.contains(index)
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                        .padding(horizontal = 24.dp)
-                ) {
-                    Text(
-                        text = "확인",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                        .size(pointRadius * 2)
+                        .offset {
+                            IntOffset(
+                                (offset.x - pointRadius.toPx()).toInt(),
+                                (offset.y - pointRadius.toPx()).toInt()
+                            )
+                        }
+                        .background(
+                            color = if (isSelected) pointColor else Color.LightGray.copy(alpha = 0.3f),
+                            shape = CircleShape
+                        )
+                )
             }
         }
     }

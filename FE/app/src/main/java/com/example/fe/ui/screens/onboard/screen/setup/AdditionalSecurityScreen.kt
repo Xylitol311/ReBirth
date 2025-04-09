@@ -6,15 +6,21 @@ import android.util.Log
 import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -187,42 +193,43 @@ private fun SecurityMethodSelectionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
+            .background(Color(0xFFF9F9FB))
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Spacer(modifier = Modifier.height(60.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
         Text(
-            "추가 인증수단 선택",
-            fontSize = 28.sp,
+            text = "추가 인증수단 선택",
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "지문인증 또는 패턴인증으로\n더욱 안전하게 로그인 하세요.",
-            fontSize = 20.sp,
+            text = "지문인증 또는 패턴인증으로\n보다 간편하게 로그인 해보세요.",
+            fontSize = 14.sp,
             textAlign = TextAlign.Center,
             color = Color.Gray
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(36.dp))
 
-        AuthMethodOption(
-            title = "지문인증",
-            description = "기기에 등록된 지문 인증으로\n빠르게 서비스를 이용할 수 있어요",
+        AuthCardItem(
             iconResId = R.drawable.fingerprint,
+            title = "지문인증",
+            description = "휴대폰에 등록되어 있는 지문정보를\n사용하여 사용자 인증을 합니다.",
             onClick = onFingerprintSelected
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        AuthMethodOption(
+        AuthCardItem(
+            iconResId = R.drawable.pattern,
             title = "패턴인증",
-            description = "나만의 패턴을 그려서\n간편하게 서비스를 이용할 수 있어요",
-            iconResId = R.drawable.arrow_right,
+            description = "내가 설정한 패턴을 이용해서\n사용자 인증을 합니다.",
             onClick = onPatternSelected
         )
 
@@ -230,21 +237,79 @@ private fun SecurityMethodSelectionScreen(
 
         Button(
             onClick = onSkip,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF191E3F)
-            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(65.dp)
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF00D1FF)
+            ),
+            shape = RoundedCornerShape(8.dp)
         ) {
             Text(
                 text = "건너뛰기",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+@Composable
+fun AuthCardItem(
+    iconResId: Int,
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = iconResId),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(32.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = title,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = description,
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowRight,
+                contentDescription = "화살표",
+                modifier = Modifier.size(16.dp),
+                tint = Color.Gray
+            )
+        }
     }
 }
 
@@ -257,28 +322,48 @@ private fun SecurityMethodSelectionScreen(
 @Composable
 private fun SecurityCompleteScreen(onNext: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
+        Spacer(modifier = Modifier.height(120.dp))
+
         Text(
-            "보안 설정이 완료되었습니다",
-            fontSize = 28.sp,
+            text = "보안 설정 완료",
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "앱을 더욱 안전하게 보호할 수 있어요",
+            fontSize = 16.sp,
+            color = Color.Gray,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
 
         Button(
             onClick = onNext,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF191E3F)
+                containerColor = Color(0xFF00D9FF)
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp),
+                .height(52.dp)
         ) {
-            Text(text = "다음", fontSize = 22.sp)
+            Text(
+                text = "다음",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }

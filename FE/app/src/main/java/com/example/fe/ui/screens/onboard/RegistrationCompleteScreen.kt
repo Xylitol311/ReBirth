@@ -1,19 +1,25 @@
 package com.example.fe.ui.screens.onboard
 
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -21,8 +27,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -83,6 +91,17 @@ fun RegistrationCompleteScreen(navController: NavController, viewModel: Onboardi
                             reportData = it
                             isLoading = false
                             screenState = CompleteScreenState.SPENDING_TYPE
+                            Log.e("AuthReport","그 후 리포트 가져올 준비중")
+                            viewModel.generateAllReportFromMyData(
+                                userId = 2,
+                                onSuccess={
+                                    Log.d("AuthReport","그 후 리포트 가져옴!")
+                                },
+                            onFailure={
+                                Log.e("AuthReport","그 후 리포트 못 가져옴")
+                            }
+                            )
+
                         },
                         onFailure = {
                             errorMessage = it
@@ -138,23 +157,25 @@ fun RegistrationCompleteContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
+            Spacer(modifier = Modifier.height(120.dp))
+
             Text(
                 text = "등록이 완료됐어요!",
-                fontSize = 24.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "내 소비 유형을 확인해보세요",
@@ -165,104 +186,51 @@ fun RegistrationCompleteContent(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // 채움 버튼
             Button(
                 onClick = onCheckSpendingType,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF191E3F)
-                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-            ) {
-                Text("내 소비 유형 확인하기")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = onSkip,
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF5F5F5),
-                    contentColor = Color.Black
+                    containerColor = Color(0xFF00D9FF),
+                    contentColor = Color.White
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-            ) {
-                Text("홈으로 가기")
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun IncomeInputDialog(
-    income: String,
-    onIncomeChange: (String) -> Unit,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "월 평균 수입을 입력해주세요",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    text = "내 소비 유형 확인하기",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                OutlinedTextField(
-                    value = income,
-                    onValueChange = { newValue ->
-                        // 숫자만 입력 가능하도록
-                        if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
-                            onIncomeChange(newValue)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF3366FF),
-                        unfocusedBorderColor = Color.Gray
-                    ),
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        keyboardType = KeyboardType.Number
-                    ),
-                    singleLine = true,
-                    suffix = { Text("원") }
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = onConfirm,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF191E3F)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Text("입력")
-                }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 테두리 버튼
+            OutlinedButton(
+                onClick = onSkip,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                border = BorderStroke(1.dp, Color(0xFF00D9FF)),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF00D9FF)
+                )
+            ) {
+                Text(
+                    text = "홈으로 가기",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
+
 @Composable
 fun SpendingTypeContent(
     report: ReportWithPatternDTO,
@@ -270,118 +238,110 @@ fun SpendingTypeContent(
 ) {
     val pattern = report.consumptionPattern
 
-    // 안전하게 값 가져오기
     val groupName = report.groupName ?: "소비 유형"
-    val variation = (report.variation ?: 0) / 100f
-    val extrovert = (report.extrovert ?: 0) / 100f
-    val overConsumption = (report.overConsumption ?: 0) / 100f
+    val variation = (report.variation ?: 0)
+    val extrovert = (report.extrovert ?: 0)
+    val overConsumption = (report.overConsumption ?: 0)
     val patternName = pattern?.patternName ?: "소비 유형"
     val reportDesc = report.reportDescription ?: ""
     val patternDesc = pattern?.description ?: ""
     val imgUrl = pattern?.imgUrl
 
-    // 별 배경 추가
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    val scrollState = rememberScrollState()
+
+    Scaffold(
+        containerColor = Color.Transparent,
+        bottomBar = {
+            // 하단 버튼
+            Button(
+                onClick = onGoHome,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00D9FF),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .navigationBarsPadding() // ← 소프트 내비게이션 바 대비
+            ) {
+                Text("홈으로", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    ) { paddingValues ->
         StarryBackground(scrollOffset = 0f, starCount = 150, horizontalOffset = 0f) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(paddingValues)
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(scrollState)
+                    .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
             ) {
+                Spacer(modifier = Modifier.height(48.dp))
+
                 Text(
-                    text = "당신의 소비는\n$groupName 입니다.",
-                    fontSize = 24.sp,
+                    text = "당신의 소비는\n$patternName 입니다.",
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     textAlign = TextAlign.Center,
-                    lineHeight = 36.sp
+                    lineHeight = 32.sp
                 )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // 지구 이미지 (URL 이미지 로딩)
-                imgUrl?.let {
-                    AsyncImage(
-                        model = it,
-                        contentDescription = patternName,
-                        modifier = Modifier.size(150.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // 소비 점수 표시
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("유형별", color = Color.White, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LinearProgressIndicator(
-                        progress = extrovert.coerceIn(0f, 1f),
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                        color = Color(0xFF3366FF),
-                        trackColor = Color.Gray.copy(alpha = 0.3f)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text("안정성", color = Color.White, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LinearProgressIndicator(
-                        progress = variation.coerceIn(0f, 1f),
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                        color = Color(0xFF3366FF),
-                        trackColor = Color.Gray.copy(alpha = 0.3f)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text("저축성", color = Color.White, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LinearProgressIndicator(
-                        progress = overConsumption.coerceIn(0f, 1f),
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                        color = Color(0xFF3366FF),
-                        trackColor = Color.Gray.copy(alpha = 0.3f)
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = "#여행 #교육 #문화생활",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                Image(
+                    painter = painterResource(id = R.drawable.earth),
+                    contentDescription = null,
+                    modifier = Modifier.size(180.dp)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "$reportDesc\n\n$patternDesc",
+                    text = reportDesc,
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 14.sp,
                     lineHeight = 22.sp,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                Button(
-                    onClick = onGoHome,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color(0xFF191E3F)
-                    ),
-                    modifier = Modifier.fillMaxWidth().height(48.dp)
-                ) {
-                    Text("홈으로 가기")
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    ScoreBar(title = "외향성", value = extrovert)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ScoreBar(title = "안정성", value = variation)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ScoreBar(title = "저축성", value = overConsumption)
                 }
+
+                Spacer(modifier = Modifier.height(48.dp)) // 하단 버튼 영역 확보
             }
         }
+    }
+}
+
+@Composable
+fun ScoreBar(title: String, value: Int) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(title, color = Color.White, fontSize = 14.sp)
+            Text("${value}/100", color = Color.White, fontSize = 14.sp)
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = (value / 100f).coerceIn(0f, 1f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = Color(0xFF00D9FF),
+            trackColor = Color.Gray.copy(alpha = 0.3f)
+        )
     }
 }

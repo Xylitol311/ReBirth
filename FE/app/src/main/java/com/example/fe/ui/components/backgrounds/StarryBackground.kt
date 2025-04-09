@@ -190,64 +190,51 @@ fun StarryBackground(
 fun GlassSurface(
     modifier: Modifier = Modifier,
     cornerRadius: Float = 16f,
-    isTopPanel: Boolean = false, // 상단 패널 여부를 결정하는 매개변수 추가
+    isTopPanel: Boolean = false,
     blurRadius: Float = 10f,
-    showBorder: Boolean = false, // 테두리 표시 여부를 결정하는 매개변수 추가, 기본값 false로 변경
+    showBorder: Boolean = false,
     content: @Composable BoxScope.() -> Unit
 ) {
-    Box(modifier = modifier) {
-        // 배경 레이어 (블러 효과 적용)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(cornerRadius.dp))
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = if (isTopPanel) {
-                            listOf(
-                                Color(0xEE203F64), // 더 불투명하게 (alpha 약 0.93)
-                                Color(0xEE183050)  // 더 불투명하게 (alpha 약 0.93)
-                            )
-                        } else {
-                            listOf(
-                                Color(0xEE203F64), // 더 불투명하게 (alpha 약 0.93)
-                                Color(0xEE183050)  // 더 불투명하게 (alpha 약 0.93)
-                            )
-                        },
-                        start = Offset(0f, 0f),
-                        end = Offset(0f, Float.POSITIVE_INFINITY)
+    // 배경색 정의 - 더 눈에 띄는 색상으로 변경
+    val backgroundColor = if (isTopPanel) {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xAA203F64), // 투명도 수정
+                Color(0xAA183050)  // 투명도 수정
+            ),
+            start = Offset(0f, 0f),
+            end = Offset(0f, Float.POSITIVE_INFINITY)
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xAA203F64), // 투명도 수정
+                Color(0xAA183050)  // 투명도 수정
+            ),
+            start = Offset(0f, 0f),
+            end = Offset(0f, Float.POSITIVE_INFINITY)
+        )
+    }
+
+    // 기본 컨테이너
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(cornerRadius.dp))
+            .background(backgroundColor)
+            .then(
+                if (showBorder) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = Color(0x33FFFFFF),
+                        shape = RoundedCornerShape(cornerRadius.dp)
                     )
-                )
-                .blur(radius = blurRadius.dp) // blur 효과 적용
-        )
-
-        // 추가 착색 레이어 (약간의 색감 추가)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(cornerRadius.dp))
-                .background(
-                    color = Color(0x22000000) // 약간의 어두운 색 추가
-                )
-        )
-
-        // 테두리와 컨텐츠 레이어
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(cornerRadius.dp))
-                .then(
-                    if (showBorder) {
-                        Modifier.border(
-                            width = 1.dp,
-                            color = Color(0x33FFFFFF), // 약간 흰색 테두리
-                            shape = RoundedCornerShape(cornerRadius.dp)
-                        )
-                    } else Modifier
-                )
-        ) {
-            content()
-        }
+                } else {
+                    Modifier
+                }
+            )
+    ) {
+        // 내용물
+        content()
     }
 }
 
