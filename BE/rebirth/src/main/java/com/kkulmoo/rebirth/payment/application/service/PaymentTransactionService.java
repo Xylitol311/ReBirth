@@ -87,7 +87,7 @@ public class PaymentTransactionService {
         // 추천 카드 결제가 아닌 경우 실제 카드 혜택 계산
         CalculatedBenefitDto realBenefit = null;
         if (!"rebirth".equals(requestToken)) {
-            myCardDto = cardRepository.findByPermanentToken(requestToken)
+            myCardDto = cardRepository.findCardByPermanentTokenAndUserId(requestToken, userId)
                     .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다."));
             realBenefit = benefitService.calculateRealBenefit(userId, amount, merchantJoinDto, myCardDto, createdAt);
             if (realBenefit != null) {
