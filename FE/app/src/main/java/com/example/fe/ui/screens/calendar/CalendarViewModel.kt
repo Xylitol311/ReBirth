@@ -261,31 +261,23 @@ class CalendarViewModel : ViewModel() {
             _error.value = null
             
             try {
-                if (useDebugMode) {
-                    // 디버그 모드일 경우 더미 데이터 사용
-                    Log.d(TAG, "Using dummy data for $yearMonth")
-                    _monthlyData.value = repository.getDummyMonthlyLog(yearMonth)
-                } else {
-                    // 실제 API 호출
-                    Log.d(TAG, "Loading data for $yearMonth")
-                    repository.getMonthlyLog(yearMonth).fold(
-                        onSuccess = { data ->
-                            _monthlyData.value = data
-                            Log.d(TAG, "Successfully loaded ${data.size} days of data")
-                        },
-                        onFailure = { e ->
-                            _error.value = e.message ?: "Unknown error occurred"
-                            Log.e(TAG, "Error loading monthly data: ${e.message}", e)
-                            // 에러 발생 시 더미 데이터로 대체
-                            _monthlyData.value = repository.getDummyMonthlyLog(yearMonth)
-                        }
-                    )
-                }
+                // 실제 API 호출
+                Log.d(TAG, "Loading data for $yearMonth")
+                repository.getMonthlyLog(yearMonth).fold(
+                    onSuccess = { data ->
+                        _monthlyData.value = data
+                        Log.d(TAG, "Successfully loaded ${data.size} days of data")
+                    },
+                    onFailure = { e ->
+                        _error.value = e.message ?: "Unknown error occurred"
+                        Log.e(TAG, "Error loading monthly data: ${e.message}", e)
+                        _monthlyData.value = emptyList()
+                    }
+                )
             } catch (e: Exception) {
                 _error.value = e.message ?: "Unknown error occurred"
                 Log.e(TAG, "Unexpected error: ${e.message}", e)
-                // 예외 발생 시 더미 데이터로 대체
-                _monthlyData.value = repository.getDummyMonthlyLog(yearMonth)
+                _monthlyData.value = emptyList()
             } finally {
                 _isLoading.value = false
             }

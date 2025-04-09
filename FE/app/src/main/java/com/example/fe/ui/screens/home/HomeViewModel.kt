@@ -2,44 +2,38 @@ package com.example.fe.ui.screens.home
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.example.fe.config.AppConfig
+import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.PreBenefitFeedbackData
 import com.example.fe.data.model.SpendingItem
 import com.example.fe.data.model.cardRecommend.CardInfoApi
-import com.example.fe.data.model.cardRecommend.Top3ForAllResponse
-import com.example.fe.data.network.SummaryService
-import com.example.fe.data.network.api.CardRecommendApiService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.example.fe.data.repository.HomeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 class HomeViewModel : ViewModel() {
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(AppConfig.Server.BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    private val TAG = "HomeViewModel"
+    private val repository = HomeRepository()
 
-    private val summaryService = retrofit.create(SummaryService::class.java)
-    private val cardRecommendService = retrofit.create(CardRecommendApiService::class.java)
+    // UI 상태
+    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    // 상태 변수들
+    // 소비 금액 상태
     private val _totalSpendingAmount = MutableStateFlow(0)
     val totalSpendingAmount: StateFlow<Int> = _totalSpendingAmount.asStateFlow()
 
     private val _totalBenefitAmount = MutableStateFlow(0)
     val totalBenefitAmount: StateFlow<Int> = _totalBenefitAmount.asStateFlow()
 
+    // 소비 리스트 상태
     private val _goodList = MutableStateFlow<List<SpendingItem>>(emptyList())
     val goodList: StateFlow<List<SpendingItem>> = _goodList.asStateFlow()
 
     private val _badList = MutableStateFlow<List<SpendingItem>>(emptyList())
     val badList: StateFlow<List<SpendingItem>> = _badList.asStateFlow()
-    
+
     // 직전 거래 피드백 상태
     private val _preBenefitFeedback = MutableStateFlow<PreBenefitFeedbackData?>(null)
     val preBenefitFeedback: StateFlow<PreBenefitFeedbackData?> = _preBenefitFeedback.asStateFlow()
@@ -48,59 +42,60 @@ class HomeViewModel : ViewModel() {
     private val _recommendedCards = MutableStateFlow<List<CardInfoApi>>(emptyList())
     val recommendedCards: StateFlow<List<CardInfoApi>> = _recommendedCards.asStateFlow()
 
+    // 검색 결과 상태
+    private val _searchResults = MutableStateFlow<List<CardInfoApi>>(emptyList())
+    val searchResults: StateFlow<List<CardInfoApi>> = _searchResults.asStateFlow()
+
     init {
-        fetchSummary()
-        fetchPreBenefitFeedback()
-        fetchRecommendedCards()
+        loadData()
     }
 
-    private fun fetchSummary() {
-        CoroutineScope(Dispatchers.IO).launch {
+    private fun loadData() {
+        viewModelScope.launch {
             try {
-                val response = summaryService.getSummary(1) // 임시로 userId 1 사용
-                Log.d("HomeViewModel", "Summary Response: $response")
-                
-                if (response.success) {
-                    _totalSpendingAmount.value = response.data.totalSpendingAmount
-                    _totalBenefitAmount.value = response.data.totalBenefitAmount
-                    _goodList.value = response.data.goodList
-                    _badList.value = response.data.badList
-                }
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Error fetching summary: ${e.message}")
-            }
-        }
-    }
-    
-    private fun fetchPreBenefitFeedback() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = summaryService.getPreBenefitFeedback(1) // 임시로 userId 1 사용
-                Log.d("HomeViewModel", "PreBenefitFeedback Response: $response")
-                
-                if (response.success) {
-                    _preBenefitFeedback.value = response.data
-                }
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Error fetching pre-benefit feedback: ${e.message}")
-            }
-        }
-    }
-    
-    private fun fetchRecommendedCards() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = cardRecommendService.getTop3ForAll(1) // 임시로 userId 1 사용
-                Log.d("HomeViewModel", "Recommended Cards Response: $response")
-                
-                if (response.success) {
-                    response.data?.recommendCards?.let { cards ->
-                        _recommendedCards.value = cards
+                _uiState.value = HomeUiState.Loading
+
+                // 병렬로 API 호출
+                val summaryResult = repository.getSummary()
+                val feedbackResult = repository.getPreBenefitFeedback()
+
+                // 결과 처리
+                when {
+                    summaryResult.isSuccess && feedbackResult.isSuccess -> {
+                        // Summary 데이터 처리
+                        summaryResult.getOrNull()?.data?.let { data ->
+                            _totalSpendingAmount.value = data.totalSpendingAmount
+                            _totalBenefitAmount.value = data.totalBenefitAmount
+                            _goodList.value = data.goodList
+                            _badList.value = data.badList
+                        }
+
+                        // Feedback 데이터 처리
+                        feedbackResult.getOrNull()?.data?.let { data ->
+                            _preBenefitFeedback.value = data
+                        }
+
+                        _uiState.value = HomeUiState.Success
+                    }
+                    else -> {
+                        val error = summaryResult.exceptionOrNull() ?: feedbackResult.exceptionOrNull()
+                        _uiState.value = HomeUiState.Error(error?.message ?: "알 수 없는 오류가 발생했습니다.")
                     }
                 }
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "Error fetching recommended cards: ${e.message}")
+                Log.e(TAG, "데이터 로드 중 오류 발생", e)
+                _uiState.value = HomeUiState.Error(e.message ?: "알 수 없는 오류가 발생했습니다.")
             }
         }
     }
+
+    fun refresh() {
+        loadData()
+    }
+}
+
+sealed class HomeUiState {
+    object Loading : HomeUiState()
+    object Success : HomeUiState()
+    data class Error(val message: String) : HomeUiState()
 } 

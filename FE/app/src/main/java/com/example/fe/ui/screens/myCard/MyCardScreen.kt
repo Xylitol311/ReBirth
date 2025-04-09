@@ -358,16 +358,20 @@ fun MyCardScreen(
             ) {
                 // 중앙 정렬을 위한 Box
                 if (realCards.isNotEmpty()) {
+                    // 카드 너비와 화면 너비 계산
+                    val cardWidth = 280.dp
+                    val horizontalPadding = (screenWidth - cardWidth) / 2
+
                     HorizontalPager(
                         state = pagerState,
                         pageSpacing = 0.dp,
                         flingBehavior = flingBehavior,
                         contentPadding = PaddingValues(
-                            start = (screenWidth - 280.dp) / 2,
-                            end = (screenWidth - 280.dp) / 2
+                            start = horizontalPadding,
+                            end = horizontalPadding
                         ),
                         userScrollEnabled = !isNavigating,
-                        pageSize = PageSize.Fixed(280.dp),
+                        pageSize = PageSize.Fixed(cardWidth),
                         key = { it }
                     ) { page ->
                         // 현재 페이지와의 거리 계산
