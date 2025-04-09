@@ -43,7 +43,6 @@ public class CardController {
 
     @GetMapping()
     public ResponseEntity<ApiResponseDTO<List<CardResponse>>> getAllCards(@JwtUserId Integer userId) {
-        System.out.println(userId + " dfsafddfsafddfsafddfsafddfsafddfsafddfsafdsafdsa");
         try {
             //todo: 이름 나중에 바꾸기
             List<CardResponse> cards = cardService.findCardsAll(new UserId(userId));

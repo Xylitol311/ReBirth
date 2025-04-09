@@ -11,6 +11,7 @@ import com.kkulmoo.rebirth.user.domain.User;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class MyDataService {
     private final UserRepository userRepository;
     private final CardService cardService;
@@ -63,10 +65,25 @@ public class MyDataService {
         List<CardTransactionResponse> transactionResponses = transactionService.getCardTransactionByMyData(user, cardUniqueNumbers);
         updateCardsLastLoadTimeFromTransactions(cards, transactionResponses);
 
+        log.debug("유저 정보 - userId: {}, 카드별 마지막 업데이트 이후", user.getUserId());
 
         reportService.startWithMyData(user.getUserId().getValue());
 
         userCardBenefitService.updateUseCardBenefit(transactionResponses, cards);
+    }
+
+    @Transactional
+    public void loadMyTransactionByCardsForPayment(User user, List<MyCard> cards) {
+        List<String> cardUniqueNumbers = cards.stream()
+                .map(MyCard::getCardUniqueNumber)
+                .collect(Collectors.toList());
+
+        // 추출한 카드 고유 번호 리스트를 이용해 거래내역 가져오기
+        List<CardTransactionResponse> transactionResponses = transactionService.getCardTransactionByMyData(user, cardUniqueNumbers);
+
+        updateCardsLastLoadTimeFromTransactions(cards, transactionResponses);
+
+        log.debug("유저 정보 - userId: {}, 카드별 마지막 업데이트 이후", user.getUserId());
     }
 
     public void updateCardsLastLoadTimeFromTransactions(List<MyCard> myCards, List<CardTransactionResponse> transactionResponses) {
@@ -96,6 +113,7 @@ public class MyDataService {
         if (!updatedCards.isEmpty()) {
             cardRepository.saveAll(updatedCards);
         }
+
     }
 
 

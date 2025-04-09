@@ -106,4 +106,9 @@ public class CardRepositoryImpl implements CardRepository {
                 .map(cardEntityMapper::toCard);
     }
 
+    @Override
+    public Optional<MyCard> findCardByPermanentTokenAndUserId(String permanentToken, Integer userId) {
+        return cardJpaRepository.findByPermanentTokenAndUserId(permanentToken, userId)
+                .map(cardEntityMapper::toCard);    }
+
 }

@@ -21,4 +21,6 @@ public interface CardJpaRepository extends JpaRepository<CardEntity,Integer> {
 	Integer countByUserId(Integer userId);
 
 	Optional<CardEntity> findByPermanentToken(String permanentToken);
+
+	Optional<CardEntity> findByPermanentTokenAndUserId(String permanentToken, Integer userId);
 }

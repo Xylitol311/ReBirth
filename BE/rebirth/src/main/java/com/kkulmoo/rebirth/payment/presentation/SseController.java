@@ -79,7 +79,7 @@ public class SseController {
 
     @PostMapping("/test")
     public ResponseEntity<?> insertPayDataa(
-            @JwtUserId Integer userId,
+            @RequestParam Integer userId,
             @RequestBody CreateTransactionRequestDTO createTransactionRequestDTO) throws Exception {
 
         String merchantName = createTransactionRequestDTO.getMerchantName();

@@ -12,9 +12,12 @@ import com.kkulmoo.rebirth.payment.presentation.request.CreateTransactionRequest
 import com.kkulmoo.rebirth.payment.presentation.response.CalculatedBenefitDto;
 import com.kkulmoo.rebirth.payment.presentation.response.CardTransactionDTO;
 import com.kkulmoo.rebirth.user.application.service.MyDataService;
+import com.kkulmoo.rebirth.user.application.service.UserCardBenefitService;
 import com.kkulmoo.rebirth.user.domain.User;
+import com.kkulmoo.rebirth.user.domain.UserCardBenefit;
 import com.kkulmoo.rebirth.user.domain.UserId;
 import com.kkulmoo.rebirth.user.domain.UserRepository;
+import com.kkulmoo.rebirth.user.domain.repository.UserCardBenefitRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +50,8 @@ public class PaymentTransactionService {
     // 마이데이터 호출
     private final MyDataService myDataService;
     private final ReportService reportService;
+    private final UserCardBenefitRepository userCardBenefitRepository;
+    private final UserCardBenefitService userCardBenefitService;
 
     public CardTransactionDTO processPayment(int userId, String requestToken, String merchantName, int amount) {
         log.info("processPayment 시작 - userId: {}, merchantName: {}, amount: {}, requestToken: {}",
@@ -57,10 +62,10 @@ public class PaymentTransactionService {
                 merchantJoinDto.getCategoryId(),
                 merchantJoinDto.getSubCategoryId(),
                 merchantJoinDto.getMerchantId());
-
+        LocalDateTime createdAt = LocalDateTime.now();
 
         // 추천 카드 혜택 정보 계산
-        CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto);
+        CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto, createdAt);
         if (recommendedBenefit != null) {
             log.info("추천 혜택 - myCardId: {}, permanentToken: {}, benefitId: {}, benefitAmount: {}, benefitType: {}",
                     recommendedBenefit.getMyCardId(), recommendedBenefit.getPermanentToken(),
@@ -70,6 +75,7 @@ public class PaymentTransactionService {
         }
 
         // 기본 혜택 정보 적용
+
         MyCard myCardDto = (recommendedBenefit != null) ?
                 cardRepository.findByPermanentToken(recommendedBenefit.getPermanentToken())
                         .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다.")) : null;
@@ -83,7 +89,7 @@ public class PaymentTransactionService {
         if (!"rebirth".equals(requestToken)) {
             myCardDto = cardRepository.findByPermanentToken(requestToken)
                     .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다."));
-            realBenefit = benefitService.calculateRealBenefit(userId, amount, merchantJoinDto, myCardDto);
+            realBenefit = benefitService.calculateRealBenefit(userId, amount, merchantJoinDto, myCardDto, createdAt);
             if (realBenefit != null) {
                 log.info("실제 혜택 - myCardId: {}, permanentToken: {}, benefitId: {}, benefitAmount: {}, benefitType: {}",
                         realBenefit.getMyCardId(), realBenefit.getPermanentToken(),
@@ -104,7 +110,7 @@ public class PaymentTransactionService {
         log.info("카드사 요청 페이로드 - benefitId: {}", benefitId);
         log.info("카드사 요청 페이로드 - benefitType: {}", benefitType.name());
         log.info("카드사 요청 페이로드 - benefitAmount: {}", benefitAmount);
-        log.info("카드사 요청 페이로드 - createdAt: {}", LocalDateTime.now());
+        log.info("카드사 요청 페이로드 - createdAt: {}", createdAt);
         CreateTransactionRequestToCardsaDTO transactionRequest = CreateTransactionRequestToCardsaDTO.builder()
                 .token(permanentToken)
                 .amount(amount)
@@ -112,7 +118,7 @@ public class PaymentTransactionService {
                 .benefitId(benefitId)
                 .benefitType(benefitType.name())
                 .benefitAmount(benefitAmount)
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
 
         // 카드사에 결제 요청 후 결과 수신
@@ -122,6 +128,19 @@ public class PaymentTransactionService {
                     cardTransactionDTO.getApprovalCode(), cardTransactionDTO.getCreatedAt());
         } else {
             log.warn("카드사 응답이 null입니다.");
+        }
+
+        // 혜택 현황 업데이트
+        if (benefitId != null) {
+            UserCardBenefit userCardBenefit = userCardBenefitService.getUserCardBenefit(userId, benefitId, myCardDto.getCardId(), createdAt);
+
+            userCardBenefitRepository.save(
+                    userCardBenefit.toBuilder()
+                            .benefitCount((short) (userCardBenefit.getBenefitCount() + 1))
+                            .benefitAmount(userCardBenefit.getBenefitAmount() + benefitAmount)
+                            .updateDate(createdAt)
+                            .build()
+            );
         }
 
         // 결제 피드백 정보 업데이트
@@ -148,8 +167,8 @@ public class PaymentTransactionService {
         User user = userRepository.findByUserId(new UserId(userId));
         log.info("유저 정보 - userId: {}, userName: {}", user.getUserId(), user.getUserName());
         List<MyCard> myCards = Arrays.asList(myCardDto);
-        myDataService.loadMyTransactionByCards(user, myCards);
-        reportService.updateMonthlyTransactionSummary(userId);
+        myDataService.loadMyTransactionByCardsForPayment(user, myCards);
+        reportService.updateMonthlyTransactionSummary(userId, LocalDateTime.now());
 
         return cardTransactionDTO;
     }
@@ -195,7 +214,7 @@ public class PaymentTransactionService {
                 merchantJoinDto.getMerchantId());
 
         // 추천 카드 혜택 정보 계산
-        CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto);
+        CalculatedBenefitDto recommendedBenefit = benefitService.recommendPaymentCard(userId, amount, merchantJoinDto, createdAt);
         if (recommendedBenefit != null) {
             log.info("추천 혜택 - myCardId: {}, permanentToken: {}, benefitId: {}, benefitAmount: {}, benefitType: {}",
                     recommendedBenefit.getMyCardId(), recommendedBenefit.getPermanentToken(),
@@ -218,7 +237,7 @@ public class PaymentTransactionService {
         if (!"rebirth".equals(requestToken)) {
             myCardDto = cardRepository.findByPermanentToken(requestToken)
                     .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다."));
-            realBenefit = benefitService.calculateRealBenefit(userId, amount, merchantJoinDto, myCardDto);
+            realBenefit = benefitService.calculateRealBenefit(userId, amount, merchantJoinDto, myCardDto, createdAt);
             if (realBenefit != null) {
                 log.info("실제 혜택 - myCardId: {}, permanentToken: {}, benefitId: {}, benefitAmount: {}, benefitType: {}",
                         realBenefit.getMyCardId(), realBenefit.getPermanentToken(),
@@ -259,17 +278,33 @@ public class PaymentTransactionService {
             log.warn("카드사 응답이 null입니다.");
         }
 
+        // 혜택 현황 업데이트
+        if (benefitId != null) {
+            UserCardBenefit userCardBenefit = userCardBenefitService.getUserCardBenefit(userId, benefitId, myCardDto.getCardId(), createdAt);
+
+            userCardBenefitRepository.save(
+                    userCardBenefit.toBuilder()
+                            .benefitCount((short) (userCardBenefit.getBenefitCount() + 1))
+                            .benefitAmount(userCardBenefit.getBenefitAmount() + benefitAmount)
+                            .updateDate(createdAt)
+                            .build()
+            );
+        }
+
         // 마이데이터 호출 및 혜택 현황 업데이트
         User user = userRepository.findByUserId(new UserId(userId));
         log.info("유저 정보 - userId: {}, userName: {}", user.getUserId(), user.getUserName());
         List<MyCard> myCards = Arrays.asList(myCardDto);
 
         // 마이데이터 가져오기 호출
-        myDataService.loadMyTransactionByCards(user, myCards);
+        log.info("유저 정보 - userId: {} + 마이데이터 호출하기직전 ++++++ ", user.getUserId());
+        myDataService.loadMyTransactionByCardsForPayment(user, myCards);
+
         // 리포트 업데이트(이것도 현재 기준이라 없애야 할듯?)
-        reportService.updateMonthlyTransactionSummary(userId);
+        reportService.updateMonthlyTransactionSummary(userId, createdAt);
 
         return cardTransactionDTO;
     }
+
 
 }
