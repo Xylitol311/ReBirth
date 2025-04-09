@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.payment.PaymentResult
 import com.example.fe.data.model.payment.TokenInfo
+import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.data.network.api.QRTokenRequest
 import com.example.fe.data.repository.PaymentRepository
 import com.example.fe.ui.screens.onboard.viewmodel.AppTokenProvider
@@ -17,6 +18,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class PaymentViewModel(private val context: Context) : ViewModel() {
@@ -34,8 +38,9 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
             throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
-
-    private val paymentRepository = PaymentRepository()
+    private val paymentRepository = PaymentRepository(
+        tokenProvider = AppTokenProvider(context)
+    )
     
     // 결제 상태 Flow
     private val _paymentState = MutableStateFlow<PaymentState>(PaymentState.Idle)
@@ -510,13 +515,13 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
         return try {
             // ISO 8601 형식의 날짜 문자열을 파싱
             val inputFormat = if (dateTimeStr.contains("T")) {
-                java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", java.util.Locale.getDefault())
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
             } else {
-                java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             }
 
             // 출력 형식 지정 (예: 2025-03-31 15:30)
-            val outputFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+            val outputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
             val date = inputFormat.parse(dateTimeStr)
             date?.let { outputFormat.format(it) } ?: dateTimeStr
@@ -528,8 +533,8 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
 
     // 현재 날짜/시간 가져오기
     private fun getCurrentDateTime(): String {
-        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
-        return dateFormat.format(java.util.Date())
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        return dateFormat.format(Date())
     }
 
     fun registCard(cardNumber: String, password: String, cvc: String) {

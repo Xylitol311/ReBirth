@@ -7,6 +7,7 @@ import com.example.fe.data.model.payment.PaymentEvent
 import com.example.fe.data.model.payment.PaymentResult
 import com.example.fe.data.model.payment.QRPaymentResponse
 import com.example.fe.data.model.payment.TokenInfo
+import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.data.network.NetworkClient
 import com.example.fe.data.network.api.QRTokenRequest
 import com.example.fe.data.network.client.PaymentSseClient
@@ -15,10 +16,10 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 
-class PaymentRepository {
+class PaymentRepository(private val tokenProvider: TokenProvider) {
 
     private val paymentApiService = NetworkClient.paymentApiService
-    private val paymentSseClient = PaymentSseClient()
+    private val paymentSseClient = PaymentSseClient(tokenProvider = tokenProvider)
     
     // 결제 토큰 요청
     suspend fun getPaymentTokens(): Result<List<TokenInfo>> {
