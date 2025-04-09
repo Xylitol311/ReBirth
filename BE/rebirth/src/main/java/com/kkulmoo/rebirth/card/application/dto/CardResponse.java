@@ -19,5 +19,6 @@ public class CardResponse {
     private Integer maxSpending;
     private List<Integer> performanceRange;
     private Integer receivedBenefitAmount;
+    private Short currentTier;
     private Integer maxBenefitAmount;
 }
