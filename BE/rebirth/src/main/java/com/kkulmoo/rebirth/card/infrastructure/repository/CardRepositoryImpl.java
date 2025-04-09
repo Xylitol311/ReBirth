@@ -100,11 +100,6 @@ public class CardRepositoryImpl implements CardRepository {
         return cardJpaRepository.countByUserId(userId.getValue());
     }
 
-    @Override
-    public Optional<MyCard> findByPermanentToken(String permanentToken) {
-        return cardJpaRepository.findByPermanentToken(permanentToken)
-                .map(cardEntityMapper::toCard);
-    }
 
     @Override
     public Optional<MyCard> findCardByPermanentTokenAndUserId(String permanentToken, Integer userId) {

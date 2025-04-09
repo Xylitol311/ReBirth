@@ -28,8 +28,6 @@ public interface CardRepository {
 
     Integer countByUserId(UserId userId);
 
-    Optional<MyCard> findByPermanentToken(String permanentToken);
-
     Optional<MyCard> findCardByPermanentTokenAndUserId(String permanentToken, Integer userId);
 
 }

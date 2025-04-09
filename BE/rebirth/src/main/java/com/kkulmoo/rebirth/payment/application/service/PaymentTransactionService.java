@@ -77,7 +77,7 @@ public class PaymentTransactionService {
         // 기본 혜택 정보 적용
 
         MyCard myCardDto = (recommendedBenefit != null) ?
-                cardRepository.findByPermanentToken(recommendedBenefit.getPermanentToken())
+                cardRepository.findCardByPermanentTokenAndUserId(recommendedBenefit.getPermanentToken(), userId)
                         .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다.")) : null;
         BenefitType benefitType = (recommendedBenefit != null) ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT;
         Integer benefitAmount = (recommendedBenefit != null) ? recommendedBenefit.getBenefitAmount() : 0;
@@ -225,7 +225,7 @@ public class PaymentTransactionService {
 
         // 기본 혜택 정보 적용
         MyCard myCardDto = (recommendedBenefit != null) ?
-                cardRepository.findByPermanentToken(recommendedBenefit.getPermanentToken())
+                cardRepository.findCardByPermanentTokenAndUserId(recommendedBenefit.getPermanentToken(), userId)
                         .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다.")) : null;
         BenefitType benefitType = (recommendedBenefit != null) ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT;
         Integer benefitAmount = (recommendedBenefit != null) ? recommendedBenefit.getBenefitAmount() : 0;
@@ -235,7 +235,7 @@ public class PaymentTransactionService {
         // 추천 카드 결제가 아닌 경우 실제 카드 혜택 계산
         CalculatedBenefitDto realBenefit = null;
         if (!"rebirth".equals(requestToken)) {
-            myCardDto = cardRepository.findByPermanentToken(requestToken)
+            myCardDto = cardRepository.findCardByPermanentTokenAndUserId(requestToken,userId)
                     .orElseThrow(() -> new EntityNotFoundException("해당 카드를 찾을 수 없습니다."));
             realBenefit = benefitService.calculateRealBenefit(userId, amount, merchantJoinDto, myCardDto, createdAt);
             if (realBenefit != null) {
