@@ -14,6 +14,7 @@ import com.example.fe.ui.screens.onboard.viewmodel.AppTokenProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
@@ -62,6 +63,16 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
     // 결제 결과 저장
     private val _paymentResult = MutableStateFlow<PaymentResult?>(null)
     val paymentResult: StateFlow<PaymentResult?> = _paymentResult
+
+    // 카드 등록 상태 클래스
+    sealed class CardRegistrationState {
+        object Initial : CardRegistrationState()
+        object Loading : CardRegistrationState()
+        data class Success(val message: String) : CardRegistrationState()
+        data class Error(val message: String) : CardRegistrationState()
+    }
+    private val _cardRegistrationState = MutableStateFlow<CardRegistrationState>(CardRegistrationState.Initial)
+    val cardRegistrationState: StateFlow<CardRegistrationState> = _cardRegistrationState.asStateFlow()
 
     private var isReconnecting = false
     private val reconnectDelay = 1000L // 1초 후 재연결
@@ -358,8 +369,8 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
     }
 
     // 사용자 ID 가져오기 (현재는 하드코딩된 값 반환)
-    private fun getUserId(): Int {
-        return 2  // 임시로 고정된 사용자 ID 반환
+    private fun getUserId(): String {
+        return userId  // 임시로 고정된 사용자 ID 반환
     }
 
     // QR 토큰 전송
@@ -500,36 +511,67 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
         return dateFormat.format(java.util.Date())
     }
 
-    // 카드 추가 함수s
-    fun addCard(cardName: String, cardNumber: String, expiryDate: String, cvv: String) {
+    // 카드 등록 함수 개선
+    fun registCard(cardNumber: String, password: String, cvc: String) {
         viewModelScope.launch {
             try {
+                // 상태 업데이트: 로딩 중
+                _cardRegistrationState.value = CardRegistrationState.Loading
                 _paymentState.value = PaymentState.Loading
-                
-                // 카드 추가 API 호출 (실제 구현 필요)
-                // 예시: paymentRepository.addCard(userId, cardName, cardNumber, expiryDate, cvv)
-                
-                // 임시 구현: 로컬에서만 카드 추가 (실제로는 API 호출 후 응답 처리 필요)
-                val newCard = PaymentCardInfo(
-                    cardName = cardName,
-                    cardImageUrl = "", // 기본 이미지 사용
-                    constellationInfo = "{}" // 기본 별자리 정보
+
+                Log.d("PaymentViewModel", "카드 등록 시작: $cardNumber")
+
+                // 카드 번호에서 하이픈 제거
+                val cleanCardNumber = cardNumber.filter { it.isDigit() }
+
+                // 실제 API 호출
+                val result = paymentRepository.registerPaymentCard(
+                    cardNumber = cleanCardNumber,
+                    password = password,
+                    cvc = cvc
                 )
-                
-                // 카드 목록에 추가 (임시 구현)
-                val currentCards = _cards.value.toMutableList()
-                currentCards.add(newCard)
-                _cards.value = currentCards
-                
-                // 상태 업데이트
-                _paymentState.value = PaymentState.Ready
-                
-                // 토스트 메시지 표시 (실제 앱에서는 Context 필요)
-                // Toast.makeText(context, "카드가 추가되었습니다", Toast.LENGTH_SHORT).show()
-                
+
+                result.fold(
+                    onSuccess = {
+                        Log.d("PaymentViewModel", "카드 등록 성공")
+
+                        // 성공 상태로 업데이트
+                        _cardRegistrationState.value = CardRegistrationState.Success("카드가 성공적으로 등록되었습니다")
+
+                        // 카드 목록 새로고침 (토큰 갱신)
+                        refreshTokens()
+
+                        // 결제 상태 업데이트
+                        _paymentState.value = PaymentState.Ready
+                    },
+                    onFailure = { error ->
+                        Log.e("PaymentViewModel", "카드 등록 실패: ${error.message}", error)
+
+                        // 오류 상태로 업데이트
+                        _cardRegistrationState.value = CardRegistrationState.Error(
+                            error.message ?: "카드 등록에 실패했습니다"
+                        )
+
+                        // 결제 상태 업데이트
+                        _paymentState.value = PaymentState.Error("카드 등록 실패: ${error.message}")
+                    }
+                )
             } catch (e: Exception) {
-                _paymentState.value = PaymentState.Error("카드 추가 실패: ${e.message}")
+                Log.e("PaymentViewModel", "카드 등록 중 예외 발생", e)
+
+                // 예외 발생 시 오류 상태로 업데이트
+                _cardRegistrationState.value = CardRegistrationState.Error(
+                    e.message ?: "카드 등록 중 오류가 발생했습니다"
+                )
+
+                // 결제 상태 업데이트
+                _paymentState.value = PaymentState.Error("카드 등록 중 오류 발생: ${e.message}")
             }
         }
     }
-} 
+
+    // 카드 등록 상태 초기화
+    fun resetCardRegistrationState() {
+        _cardRegistrationState.value = CardRegistrationState.Initial
+    }
+}
