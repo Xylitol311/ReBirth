@@ -55,6 +55,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.res.painterResource
 import com.example.fe.ui.screens.home.HomeViewModel
 import coil.compose.AsyncImage
+import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -63,14 +65,43 @@ fun HomeRecCard(
     viewModel: HomeViewModel
 ) {
     val recommendedCards by viewModel.recommendedCards.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
     
-    // 추천 카드가 없는 경우 표시하지 않음
-    if (recommendedCards.isEmpty()) return
+    // 추천 카드가 없는 경우 검색 결과에서 카드 표시
+    val cardsToShow = if (recommendedCards.isEmpty()) {
+        searchResults.take(3) // 검색 결과에서 상위 3개 카드만 표시
+    } else {
+        recommendedCards
+    }
+    
+    // 카드가 하나도 없는 경우 기본 카드 표시
+    if (cardsToShow.isEmpty()) {
+        GlassSurface(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 30.dp, vertical = 8.dp),
+            cornerRadius = 16f
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "추천 카드가 없습니다",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        return
+    }
     
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(horizontal = 30.dp, vertical = 8.dp),
         cornerRadius = 16f
     ) {
         Column(
@@ -96,7 +127,7 @@ fun HomeRecCard(
             
             // 페이저 상태
             val pagerState = rememberPagerState(
-                pageCount = { recommendedCards.size },
+                pageCount = { cardsToShow.size },
                 initialPage = 0
             )
 
@@ -141,7 +172,7 @@ fun HomeRecCard(
                             )
                     ) {
                         // 카드 이미지
-                        val card = recommendedCards[page]
+                        val card = cardsToShow[page]
                         val hasImageUrl = card.imageUrl.isNotEmpty()
                         
                         if (hasImageUrl) {
@@ -155,45 +186,45 @@ fun HomeRecCard(
                             )
                         } else {
                             // 기본 카드 이미지 사용
-                        HorizontalCardLayout(
+                            HorizontalCardLayout(
                                 cardImage = R.drawable.card,
-                            modifier = Modifier
-                                .width(280.dp)
-                                .height(170.dp),
+                                modifier = Modifier
+                                    .width(280.dp)
+                                    .height(170.dp),
                                 cardName = card.cardName,
-                            cardImageUrl = ""
-                        )
+                                cardImageUrl = ""
+                            )
                         }
                     }
                 }
             }
 
             // 카드 정보 (현재 선택된 카드)
-            if (recommendedCards.isNotEmpty() && pagerState.currentPage < recommendedCards.size) {
-                val currentCard = recommendedCards[pagerState.currentPage]
+            if (cardsToShow.isNotEmpty() && pagerState.currentPage < cardsToShow.size) {
+                val currentCard = cardsToShow[pagerState.currentPage]
                 
                 // 카드 혜택 정보 추출
                 val benefits = currentCard.cardInfo.split(",").firstOrNull() ?: "혜택 정보 없음"
                 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
                         text = currentCard.cardName,
-                    fontSize = 18.sp,
-                    color = Color.White.copy(alpha = 0.9f),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1
-                )
-                Text(
+                        fontSize = 18.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
+                    Text(
                         text = benefits,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
 
@@ -203,7 +234,7 @@ fun HomeRecCard(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                repeat(recommendedCards.size) { index ->
+                repeat(cardsToShow.size) { index ->
                     val isSelected = index == pagerState.currentPage
                     Box(
                         modifier = Modifier

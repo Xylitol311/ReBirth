@@ -38,8 +38,8 @@ fun FingerprintLoginScreen(
                 Spacer(modifier = Modifier.weight(0.1f))
 
                 Text(
-                    "지문 인증",
-                    fontSize = 28.sp,
+                    "생체 인증을 진행해 주세요",
+                    fontSize = 25.sp,
                     fontWeight = FontWeight.Medium
                 )
 

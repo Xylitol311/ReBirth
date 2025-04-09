@@ -27,7 +27,6 @@ interface AuthApiService {
 
     @GET("api/report")
     suspend fun getReportWithPattern(
-        @Query("userId") userId: String,
         @Query("year") year: Int,
         @Query("month") month: Int
     ): Response<ApiResponseDTO<ReportWithPatternDTO>>
@@ -38,12 +37,10 @@ interface AuthApiService {
 
     @POST("api/report/frommydata")
     suspend fun generateReportFromMyData(
-        @Query("userId") userId: Int
     ): Response<ApiResponseDTO<Unit>>
 
     @POST("api/report/afterstart")
     suspend fun createReportAfterStart(
-        @Query("userId") userId: Int
     ): Response<ApiResponseDTO<Unit>>
 
 
@@ -65,6 +62,7 @@ interface AuthApiService {
     suspend fun verifySMS(
         @Body request: VerifySmsRequest
     ): Response<ApiResponseDTO<String>>
+
 
 
 }

@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.dp
 fun PinDots(
     count: Int,
     totalDots: Int = 6,
-    filledColor: Color = Color(0xFF191E3F),
+    filledColor: Color = Color(0xFF2EDCFF),
     unfilledColor: Color = Color(0xFFE0E0E0),
     dotSize: Dp = 15.dp,
-    spacing: Dp = 10.dp
+    spacing: Dp = 25.dp
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
         repeat(totalDots) {

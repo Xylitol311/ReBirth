@@ -16,20 +16,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Divider
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,6 +56,10 @@ import com.example.fe.data.model.auth.ReportWithPatternDTO
 import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
 import java.time.LocalDate
+ import androidx.compose.foundation.layout.WindowInsets
+ import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBarsPadding
+
 
 enum class CompleteScreenState {
     REGISTRATION_COMPLETE,
@@ -81,19 +84,18 @@ fun RegistrationCompleteScreen(navController: NavController, viewModel: Onboardi
                     val today = LocalDate.now()
                     val year = today.year
                     val month = today.monthValue
+                    val previousMonth = if (month == 1) 12 else month - 1
 
                     isLoading = true
                     viewModel.getUserPatternType(
-                        userId = "2",
                         year = year,
-                        month = month-1,
+                        month = previousMonth,
                         onSuccess = {
                             reportData = it
                             isLoading = false
                             screenState = CompleteScreenState.SPENDING_TYPE
                             Log.e("AuthReport","그 후 리포트 가져올 준비중")
                             viewModel.generateAllReportFromMyData(
-                                userId = 2,
                                 onSuccess={
                                     Log.d("AuthReport","그 후 리포트 가져옴!")
                                 },
@@ -147,90 +149,99 @@ fun RegistrationCompleteScreen(navController: NavController, viewModel: Onboardi
         }
     }
 }
-
 @Composable
 fun RegistrationCompleteContent(
     onCheckSpendingType: () -> Unit,
     onSkip: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        Column(
+
+
+    Scaffold(
+        // Make sure bottomBar respects navigation bar insets
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+            ) {
+                Button(
+                    onClick = onCheckSpendingType,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00D9FF), // 버튼 배경 색상 변경
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "내 소비 유형 확인하기",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onSkip,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    border = BorderStroke(1.dp, Color(0xFF00D9FF)),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFF00D9FF)
+                    )
+                ) {
+                    Text(
+                        text = "홈으로 가기",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        },
+        // Make the Scaffold content area respect navigation bars as well
+        contentWindowInsets = WindowInsets.navigationBars
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+                .padding(paddingValues)
+                .background(Color.White),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Spacer(modifier = Modifier.height(120.dp))
-
-            Text(
-                text = "등록이 완료됐어요!",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "내 소비 유형을 확인해보세요",
-                fontSize = 16.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // 채움 버튼
-            Button(
-                onClick = onCheckSpendingType,
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00D9FF),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
             ) {
+                Spacer(modifier = Modifier.height(240.dp))
+
                 Text(
-                    text = "내 소비 유형 확인하기",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "등록이 완료됐어요!",
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "내 소비 유형을 확인해보세요",
+                    fontSize = 18.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 테두리 버튼
-            OutlinedButton(
-                onClick = onSkip,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                border = BorderStroke(1.dp, Color(0xFF00D9FF)),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFF00D9FF)
-                )
-            ) {
-                Text(
-                    text = "홈으로 가기",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
-
 @Composable
 fun SpendingTypeContent(
     report: ReportWithPatternDTO,
@@ -251,21 +262,55 @@ fun SpendingTypeContent(
 
     Scaffold(
         containerColor = Color.Transparent,
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .statusBarsPadding() // 상단 시스템 UI 고려
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Transparent)
+                        .padding(vertical = 16.dp)
+                ) {
+                    Text(
+                        text = "내 소비 패턴 확인하기",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                Divider(
+                    color = Color.Gray.copy(alpha = 0.5f),
+                    thickness = 1.dp
+                )
+            }
+        },
         bottomBar = {
-            // 하단 버튼
-            Button(
-                onClick = onGoHome,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00D9FF),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp),
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding() // 하단 시스템 UI 고려
                     .padding(horizontal = 24.dp, vertical = 16.dp)
-                    .navigationBarsPadding() // ← 소프트 내비게이션 바 대비
             ) {
-                Text("홈으로", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = onGoHome,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00D9FF),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "홈으로 가기",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -300,7 +345,7 @@ fun SpendingTypeContent(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = reportDesc,
+                    text = patternDesc,
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 14.sp,
                     lineHeight = 22.sp,
@@ -310,11 +355,11 @@ fun SpendingTypeContent(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    ScoreBar(title = "외향성", value = extrovert)
+                    ImprovedScoreBar(title = "외향성", value = extrovert)
                     Spacer(modifier = Modifier.height(16.dp))
-                    ScoreBar(title = "안정성", value = variation)
+                    ImprovedScoreBar(title = "안정성", value = variation)
                     Spacer(modifier = Modifier.height(16.dp))
-                    ScoreBar(title = "저축성", value = overConsumption)
+                    ImprovedScoreBar(title = "저축성", value = overConsumption)
                 }
 
                 Spacer(modifier = Modifier.height(48.dp)) // 하단 버튼 영역 확보
@@ -324,7 +369,7 @@ fun SpendingTypeContent(
 }
 
 @Composable
-fun ScoreBar(title: String, value: Int) {
+fun ImprovedScoreBar(title: String, value: Int) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -334,14 +379,21 @@ fun ScoreBar(title: String, value: Int) {
             Text("${value}/100", color = Color.White, fontSize = 14.sp)
         }
         Spacer(modifier = Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = (value / 100f).coerceIn(0f, 1f),
+
+        // 단일 바로 표시되는 ProgressIndicator
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
-                .clip(RoundedCornerShape(4.dp)),
-            color = Color(0xFF00D9FF),
-            trackColor = Color.Gray.copy(alpha = 0.3f)
-        )
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color.Gray.copy(alpha = 0.3f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth((value / 100f).coerceIn(0f, 1f))
+                    .height(8.dp)
+                    .background(Color(0xFF00D9FF))
+            )
+        }
     }
 }

@@ -23,6 +23,8 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.example.fe.ui.screens.home.HomeViewModel
 import kotlinx.coroutines.flow.StateFlow
 import com.example.fe.data.model.SpendingItem
+import java.text.NumberFormat
+import java.util.Locale
 
 // 임시 데이터 클래스
 data class TempSpendingItem(
@@ -55,7 +57,7 @@ fun HomeUsedMoney(
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(horizontal = 30.dp, vertical = 8.dp),
         cornerRadius = 16f
     ) {
         Column(
@@ -76,15 +78,15 @@ fun HomeUsedMoney(
                 ) {
                     Text(
                         text = "이번 달 소비",
-                        fontSize = 22.sp,
+                        fontSize = 20.sp,
                         color = Color.White
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "${spendingAmount}원", // 실제 API 데이터 사용
-                        fontSize = 40.sp,
+                        text = "${formatAmount(spendingAmount)}원",
+                        fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF00E1FF)
                     )
@@ -92,8 +94,8 @@ fun HomeUsedMoney(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "받은 혜택 ${benefitAmount}원", // 실제 API 데이터 사용
-                        fontSize = 26.sp,
+                        text = "받은 혜택 ${formatAmount(benefitAmount)}원",
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         modifier = Modifier.padding(bottom = 24.dp)
@@ -105,7 +107,7 @@ fun HomeUsedMoney(
                     onClick = onDetailClick,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .padding(end = 32.dp)
+                        .padding(end = 16.dp)
                         .offset(y = -10.dp)
                 ) {
                     Icon(
@@ -142,7 +144,7 @@ fun HomeUsedMoney(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "아쉬움",
+                        text = "Bad",
                         color = if (selectedTabIndex == 0) Color(0xFF2B3674) else Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium
@@ -164,7 +166,7 @@ fun HomeUsedMoney(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "잘받음",
+                        text = "Good",
                         color = if (selectedTabIndex == 1) Color(0xFF2B3674) else Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium
@@ -358,7 +360,7 @@ private fun CategoryRow(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "${amount}원",
+                text = "${formatAmount(amount)}원",
                 fontSize = 24.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Medium
@@ -369,7 +371,7 @@ private fun CategoryRow(
             val benefitPrefix = if (isGoodTab) "+" else "-"
             
             Text(
-                text = "$benefitPrefix${benefit}원 혜택",
+                text = "$benefitPrefix${formatAmount(benefit)}원 혜택",
                 fontSize = 18.sp,
                 color = benefitColor
             )
@@ -389,5 +391,10 @@ private fun getCategoryIcon(category: String): Int {
         "교육" -> R.drawable.ic_coffee
         else -> R.drawable.ic_shopping // 기본 아이콘
     }
+}
+
+// 금액 포맷팅 함수
+private fun formatAmount(amount: Int): String {
+    return NumberFormat.getNumberInstance(Locale.KOREA).format(amount)
 }
 
