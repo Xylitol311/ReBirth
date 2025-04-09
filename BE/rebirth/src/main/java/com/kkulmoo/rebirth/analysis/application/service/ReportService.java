@@ -282,8 +282,8 @@ public class ReportService {
                 reportCardsJpaRepository.save(reportCard);
 
                 if(i==1) {
-                    card.toBuilder().spendingTier(myTierForCard);
-                    cardsJpaRepository.save(card);
+                    CardEntity newCard = card.toBuilder().spendingTier(myTierForCard).build();
+                    cardsJpaRepository.save(newCard);
                 }
                 total[0] += count[0];
                 total[1] += count[1];
