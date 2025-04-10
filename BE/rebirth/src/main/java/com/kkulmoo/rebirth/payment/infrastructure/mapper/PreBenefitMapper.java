@@ -18,6 +18,8 @@ public class PreBenefitMapper {
                 .ifBenefitAmount(domain.getIfBenefitAmount())
                 .realBenefitType(domain.getRealBenefitType())
                 .realBenefitAmount(domain.getRealBenefitAmount())
+                .paymentCardImgUrl(domain.getPaymentCardImgUrl())
+                .recommendedCardImgUrl(domain.getRecommendedCardImgUrl())
                 .merchantName(domain.getMerchantName())
                 .build();
     }
@@ -33,6 +35,8 @@ public class PreBenefitMapper {
                 .ifBenefitAmount(entity.getIfBenefitAmount())
                 .realBenefitType(entity.getRealBenefitType())
                 .realBenefitAmount(entity.getRealBenefitAmount())
+                .paymentCardImgUrl(entity.getPaymentCardImgUrl())
+                .recommendedCardImgUrl(entity.getRecommendedCardImgUrl())
                 .merchantName(entity.getMerchantName())
                 .build();
     }

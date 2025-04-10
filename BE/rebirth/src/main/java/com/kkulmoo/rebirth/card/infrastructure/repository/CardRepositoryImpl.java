@@ -104,6 +104,12 @@ public class CardRepositoryImpl implements CardRepository {
     @Override
     public Optional<MyCard> findCardByPermanentTokenAndUserId(String permanentToken, Integer userId) {
         return cardJpaRepository.findByPermanentTokenAndUserId(permanentToken, userId)
-                .map(cardEntityMapper::toCard);    }
+                .map(cardEntityMapper::toCard);
+    }
 
+    @Override
+    public String getCardImgUrlByCardId(Integer cardId) {
+        return cardJpaRepository.findCardImgUrlByCardId(cardId)
+                .orElseThrow(() -> new RuntimeException("Card image URL not found for card id: " + cardId));
+    }
 }

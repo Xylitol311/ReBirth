@@ -14,6 +14,8 @@ public class PreBenefitDto {
     private Integer ifBenefitAmount;
     private String realBenefitType;
     private Integer realBenefitAmount;
+    private String paymentCardImgUrl;
+    private String recommendedCardImgUrl;
     private String merchantName;
     private boolean isGood;
 }
