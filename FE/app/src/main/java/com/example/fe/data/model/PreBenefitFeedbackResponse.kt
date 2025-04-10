@@ -16,5 +16,8 @@ data class PreBenefitFeedbackData(
     val realBenefitType: String,
     val realBenefitAmount: Int,
     val merchantName: String,
-    val isGood: Boolean
+    val recommendedCardImgUrl: String,
+    val paymentCardImgUrl: String,
+    val isGood: Boolean,
+
 ) 
