@@ -548,6 +548,13 @@ fun TransactionsContent(
         }
     }
 
+    // 글꼴
+    val big = 24
+    val title = 22
+    val middle = 18
+    val small = 16
+    val verysmall = 13
+
     if(transactions.isEmpty()){
         if (isRetrying) {
             // 재시도 중이면 로딩 표시

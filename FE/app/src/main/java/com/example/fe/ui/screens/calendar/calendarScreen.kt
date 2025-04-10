@@ -76,6 +76,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.fe.ui.components.categoryIcons.getCategoryIcon
 import com.example.fe.ui.screens.calendar.white
 import java.text.NumberFormat
 import kotlin.math.abs
@@ -113,10 +114,10 @@ data class DailySummary(
 
 // 폰트 사이즈 정의
 val big = 24
-val title = 22
-val middle = 18
-val small = 16
-val verysmall = 13
+val title = 20
+val middle = 19
+val small = 17
+val verysmall = 14
 
 
 // 색상 정의
@@ -208,7 +209,7 @@ fun CalendarScreen(
     ) {
         StarryBackground(
             scrollOffset = scrollOffset,
-            starCount = 150,
+            starCount = 50,
             modifier = Modifier.fillMaxSize()
         ) {
             LazyColumn(
@@ -492,6 +493,8 @@ fun CalendarScreen(
                                 }
                             }
                         }
+
+
                         
                         // 달력 그리드 (GlassSurface 안)
                         item {
@@ -692,9 +695,10 @@ fun CalendarScreen(
                                                 currentDate = transactionDate
                                                 
                                                 val date = LocalDate.parse(transactionDate)
+
                                                 Text(
                                                     text = "${date.monthValue}월 ${date.dayOfMonth}일",
-                                                    color = Color.White.copy(alpha = 0.6f),
+                                                    color = Color.White,
                                                     fontSize = small.sp,
                                                     modifier = Modifier.padding(vertical = 10.dp)
                                                 )
@@ -893,13 +897,28 @@ fun DailyTransactionItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 14.dp)
+            .padding(horizontal = 10.dp, vertical = 10.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 왼쪽: 카테고리
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .background(Color(0xFF00BCD4), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = getCategoryIcon(category)),
+                    contentDescription = category,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = category,
                 color = Color.White,
@@ -1052,7 +1071,7 @@ fun CalendarDay(
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .padding(2.dp)
+            .padding(1.dp)
             .clip(RoundedCornerShape(2.dp))
             .background(
                 if (isSelected) Color(0x33FFFFFF)
@@ -1085,16 +1104,16 @@ fun CalendarDay(
 
             // 수입/지출 요약 정보 표시 (더 넉넉한 영역 확보)
             if (isCurrentMonth && summary != null) {
-                Spacer(modifier = Modifier.height(1.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
                 // 수입
                 if (summary.income > 0) {
                     val incomeText = "+${formatAmount(summary.income)}"
                     val incomeFontSize = when {
-                        incomeText.length >= 13 -> (verysmall - 5.5).sp // 예: +1,000,000
-                        incomeText.length >= 10 -> (verysmall - 4).sp
-                        incomeText.length >= 8 -> (verysmall - 2).sp
-                        else -> (verysmall - 1).sp
+                        incomeText.length >= 13 -> (verysmall - 6).sp // 예: +1,000,000
+                        incomeText.length >= 10 -> (verysmall - 5).sp
+                        incomeText.length >= 8 -> (verysmall - 4).sp
+                        else -> (verysmall - 3).sp
                     }
 
                     Text(
@@ -1116,17 +1135,17 @@ fun CalendarDay(
 
                     val expenseText = "-${formatAmount(summary.expense)}"
                     val expenseFontSize = when {
-                        expenseText.length >= 13 -> (verysmall - 4).sp
-                        expenseText.length >= 10 -> (verysmall - 3).sp
-                        expenseText.length >= 8 -> (verysmall - 2).sp
-                        else -> (verysmall - 1).sp
+                        expenseText.length >= 13 -> (verysmall - 6).sp
+                        expenseText.length >= 10 -> (verysmall - 5).sp
+                        expenseText.length >= 8 -> (verysmall - 4).sp
+                        else -> (verysmall - 3).sp
                     }
 
                     Text(
                         text = expenseText,
                         fontSize = expenseFontSize,
                         fontWeight = FontWeight.Light,
-                        color = calenderGray,
+                        color = brightRed,
                         overflow = TextOverflow.Clip,
                         maxLines = 1, //
                         softWrap = false, //
@@ -1138,6 +1157,7 @@ fun CalendarDay(
         }
     }
 }
+
 // 큰 금액도 깨지지 않도록 축약형으로 표시하는 함수
 fun formatAmountCompact(amount: Int): String {
     return when {
@@ -1429,7 +1449,7 @@ fun CardReportPage(cardReports: List<CardReport>) {
                     .padding(bottom = 24.dp)
             )
 
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
 
             if (cardReports.isEmpty()) {
@@ -1501,7 +1521,7 @@ fun CardReportItemView(card: CardReport) {
                 modifier = Modifier
                     .size(200.dp)
                     .align(Alignment.CenterHorizontally)
-                    .padding(top = 8.dp, bottom = 4.dp),
+                    .padding(top = 4.dp, bottom = 4.dp),
                 contentScale = ContentScale.Fit
             )
 

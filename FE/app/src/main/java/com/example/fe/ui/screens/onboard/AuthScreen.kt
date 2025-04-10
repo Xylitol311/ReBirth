@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.graphics.Color.Companion.hsl
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.colorspace.ColorSpaces
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.fe.ui.theme.SkyBlue
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
@@ -249,73 +250,71 @@ fun AuthScreen(
                     Text("주민등록번호를 입력해주세요", fontSize = 25.sp,
                         modifier = Modifier.align(Alignment.CenterHorizontally))
                     Spacer(modifier = Modifier.height(24.dp))
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        // 중앙 "-" 배치
-                        Text(
-                            text = "-",
-                            fontSize = 20.sp,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                            color = Color.Black,
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(bottom = 5.dp)
-                        )
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Bottom  // 모든 요소를 하단에 맞춤
+                    ) {
+                        // 앞 6자리 입력 (왼쪽)
+                        Box(modifier = Modifier.weight(0.45f)) {
+                            UnderlineTextField(
+                                value = ssnFront,
+                                onValueChange = {
+                                    if (it.length <= 6) {
+                                        ssnFront = it
+                                        if (it.length == 6) focusManager.moveFocus(FocusDirection.Next)
+                                    }
+                                },
+                                label = "주민등록번호",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(ssnFrontFocusRequester),
+                                keyboardType = KeyboardType.Number
+                            )
+                        }
+
+                        // 하이픈
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .offset(y = (-8).dp)  // 위로 8dp 올림
+                        ) {
+                            Text(
+                                text = "-",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
+
+                        // 뒷 1자리 입력 (오른쪽) - 앞 필드와 동일한 스타일 적용
+                        Box(modifier = Modifier.weight(0.1f)) {
+                            // UnderlineSingleDigitField 대신 동일한 스타일의 커스텀 필드 사용
+                            UnderlineTextField(
+                                value = ssnBack,
+                                onValueChange = { if (it.length <= 1) ssnBack = it },
+                                label = "",  // 레이블 없음
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(ssnBackFocusRequester),
+                                keyboardType = KeyboardType.Number
+                            )
+                        }
+
+                        // 동그라미들
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .weight(0.35f)
+                                .padding(bottom = 8.dp),  // 밑줄과 동일한 위치에 표시되도록 패딩 조정
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // 앞 6자리 입력 (왼쪽)
-                            Box(modifier = Modifier.weight(0.45f)) {
-                                UnderlineTextField(
-                                    value = ssnFront,
-                                    onValueChange = {
-                                        if (it.length <= 6) {
-                                            ssnFront = it
-                                            if (it.length == 6) focusManager.moveFocus(FocusDirection.Next)
-                                        }
-                                    },
-                                    label = "주민등록번호",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .focusRequester(ssnFrontFocusRequester),
-                                    keyboardType = KeyboardType.Number
+                            repeat(6) {
+                                Text(
+                                    "●",
+                                    fontSize = 20.sp,
+                                    color = Color.DarkGray
                                 )
-                            }
-
-                            // 중앙 공간 (하이픈용)
-                            Spacer(modifier = Modifier.weight(0.1f))
-
-                            // 뒷 1자리 입력 (오른쪽)
-                            Box(modifier = Modifier.weight(0.1f)) {
-                                UnderlineSingleDigitField(
-                                    value = ssnBack,
-                                    onValueChange = { if (it.length <= 1) ssnBack = it },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .focusRequester(ssnBackFocusRequester),
-                                    keyboardType = KeyboardType.Number
-                                )
-                            }
-
-                            // 동그라미들 (화면 끝까지 균일하게)
-                            Box(
-                                modifier = Modifier.weight(0.35f).height(70.dp), // 높이 통일
-                                contentAlignment = Alignment.BottomCenter
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.Bottom // 기준선 맞추기
-                                ) {
-                                    repeat(6) {
-                                        Text(
-                                            "●",
-                                            fontSize = 20.sp,
-                                            color = Color.DarkGray
-                                        )
-                                    }
-                                }
                             }
                         }
                     }
@@ -648,7 +647,7 @@ fun UnderlineSingleDigitField(
                 modifier = modifier
                     .height(70.dp)
                     .width(50.dp)
-                    .padding(bottom = 3.dp),
+                    .padding(bottom = 2.5.dp),
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
