@@ -88,7 +88,6 @@ fun AppNavigation() {
 
     // 로그아웃을 위한 ViewModel
 
-// 박종원
     // 로그아웃 처리 함수
     val handleLogout = {
         viewModel.logout()
@@ -440,8 +439,10 @@ fun AppNavigation() {
                         },
                         onShowPaymentInfo = {
                             showPaymentInfo = true  // 결제 정보 화면 표시
+                        },
+                        onReturnFromCardOCRScan = {
+                            paymentViewModel.refreshCards()
                         }
-
                     )
                 }
 
@@ -580,7 +581,7 @@ fun AppNavigation() {
                     onComplete = {
                         showCardOCRScan = false
                         // 카드 추가 완료 후 처리
-                        paymentViewModel.refreshTokens()
+                        paymentViewModel.refreshCards() // refreshTokens() 대신 refreshCards() 호출
                     },
                     viewModel = paymentViewModel
                 )

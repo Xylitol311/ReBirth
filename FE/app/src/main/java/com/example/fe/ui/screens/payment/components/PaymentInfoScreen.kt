@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +50,7 @@ import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.cards.HorizontalCardLayout
 import com.example.fe.ui.screens.payment.PaymentCardInfo
 import com.example.fe.ui.screens.payment.PaymentViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun PaymentInfoScreen(
@@ -73,6 +75,13 @@ fun PaymentInfoScreen(
 
     // 결제 정보
     val paymentInfo by viewModel.paymentInfo.collectAsState()
+    val paymentState by viewModel.paymentState.collectAsState()
+
+    // 결제 진행 중 상태 추가
+    var isProcessing by remember { mutableStateOf(false) }
+
+    // 최소 표시 시간 경과 여부
+    var minimumTimeElapsed by remember { mutableStateOf(false) }
 
     // 선택된 카드
     var selectedCardIndex by remember { mutableStateOf(0) }
@@ -81,8 +90,29 @@ fun PaymentInfoScreen(
     // 결제 확인 팝업 표시 여부
     var showPaymentConfirmDialog by remember { mutableStateOf(false) }
 
-    // 결제 상태 관찰
-    val paymentState by viewModel.paymentState.collectAsState()
+    // 결제 상태 관찰 - 이 부분이 중요합니다
+    LaunchedEffect(paymentState) {
+        when (paymentState) {
+            is PaymentViewModel.PaymentState.Processing -> {
+                isProcessing = true
+            }
+            is PaymentViewModel.PaymentState.Completed -> {
+                if (minimumTimeElapsed) {
+                    isProcessing = false
+                    onPaymentComplete()
+                }
+            }
+            is PaymentViewModel.PaymentState.Failed -> {
+                if (minimumTimeElapsed) {
+                    isProcessing = false
+                    onPaymentComplete()
+                }
+            }
+            else -> {
+                // 다른 상태는 무시
+            }
+        }
+    }
 
     // 추천 카드가 있는지 확인하고 카드 목록 정렬
     val allCards = remember(cards) {
@@ -95,16 +125,79 @@ fun PaymentInfoScreen(
         }
     }
 
-    // 결제 상태에 따른 처리
-    LaunchedEffect(paymentState) {
-        when (paymentState) {
-            is PaymentViewModel.PaymentState.Completed -> {
-                // 결제 완료 시 콜백 호출
+    if (isProcessing) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            // 별자리 배경
+            StarryBackground(
+                modifier = Modifier.fillMaxSize(),
+                starCount = 100,
+                scrollOffset = 0f
+            ) {}
+
+            // 결제 진행 중 UI
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(60.dp),
+                    color = Color.White,
+                    strokeWidth = 4.dp
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "결제 진행 중",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "잠시만 기다려 주세요...",
+                    fontSize = 16.sp,
+                    color = Color.White.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // 최소 시간 경과 체크
+        LaunchedEffect(Unit) {
+            delay(3000)
+            minimumTimeElapsed = true
+            // 이미 결제 상태가 완료 또는 실패인 경우 결과 화면으로 전환
+            if (paymentState is PaymentViewModel.PaymentState.Completed ||
+                paymentState is PaymentViewModel.PaymentState.Failed) {
+                isProcessing = false
                 onPaymentComplete()
             }
-            else -> {}
         }
+
+        return
     }
+
+//    // 결제 상태에 따른 처리
+//    LaunchedEffect(paymentState) {
+//        when (paymentState) {
+//            is PaymentViewModel.PaymentState.Completed -> {
+//                // 결제 완료 시 콜백 호출
+//                onPaymentComplete()
+//            }
+//            else -> {}
+//        }
+//    }
 
 
     // 별자리 배경
@@ -151,7 +244,7 @@ fun PaymentInfoScreen(
         ) {
             // 가맹점 이름
             Text(
-                text = paymentInfo?.merchantName ?: "태인생일",
+                text = paymentInfo?.merchantName ?: "매장명",
                 color = Color.White,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
@@ -159,7 +252,7 @@ fun PaymentInfoScreen(
 
             // 결제 금액
             Text(
-                text = "${paymentInfo?.amount?.let { "%,d".format(it) } ?: "981006"}원",
+                text = "${paymentInfo?.amount?.let { "%,d".format(it) } ?: "0"}원",
                 color = Color(0xFF00CCFF), // 이미지의 청록색
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold

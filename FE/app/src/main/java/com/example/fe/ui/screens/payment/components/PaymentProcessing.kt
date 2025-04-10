@@ -70,7 +70,6 @@ fun PaymentProcessing(
             scrollOffset = 0f
         ) {}
 
-
         // 결제 진행 중 UI
         Column(
             modifier = Modifier
