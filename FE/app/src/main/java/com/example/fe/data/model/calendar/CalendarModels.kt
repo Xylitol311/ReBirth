@@ -80,6 +80,10 @@ data class ReportResponse(
  * 소비 리포트 데이터 모델
  */
 data class ReportData(
+
+    @SerializedName("over_consumption") val overConsumption: Int,
+    @SerializedName("variation") val variation: Int,
+    @SerializedName("extrovert") val extrovert: Int,
     @SerializedName("total_spending_amount") val totalSpendingAmount: Int,
     @SerializedName("pre_total_spending_amount") val preTotalSpendingAmount: Int,
     @SerializedName("total_benefit_amount") val totalBenefitAmount: Int,
@@ -93,6 +97,8 @@ data class ReportData(
  * 소비 패턴 데이터 모델
  */
 data class ConsumptionPattern(
+
+    @SerializedName("img_url") val imgUrl: String,
     @SerializedName("pattern_id") val patternId: String,
     @SerializedName("pattern_name") val patternName: String,
     @SerializedName("description") val description: String
@@ -111,6 +117,7 @@ data class ReportCardsResponse(
  * 카드 리포트 데이터 모델
  */
 data class CardReport(
+    val cardImg: String,
     @SerializedName("name") val name: String,
     @SerializedName("total_count") val totalCount: Int,
     @SerializedName("total_amount") val totalAmount: Int,

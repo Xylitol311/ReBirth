@@ -58,7 +58,8 @@ fun PatternLoginContent(
         Text(
             text = "패턴 로그인",
             fontSize = 24.sp,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(16.dp))

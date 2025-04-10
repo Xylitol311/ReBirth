@@ -189,18 +189,18 @@ fun StarryBackground(
 @Composable
 fun GlassSurface(
     modifier: Modifier = Modifier,
-    cornerRadius: Float = 16f,
+    cornerRadius: Float = 8f,
     isTopPanel: Boolean = false,
     blurRadius: Float = 10f,
     showBorder: Boolean = false,
     content: @Composable BoxScope.() -> Unit
 ) {
-    // 배경색 정의 - 더 눈에 띄는 색상으로 변경
+    // 배경색 정의 - 불투명도 증가
     val backgroundColor = if (isTopPanel) {
         Brush.linearGradient(
             colors = listOf(
-                Color(0xAA203F64), // 투명도 수정
-                Color(0xAA183050)  // 투명도 수정
+                Color(0xDD203F64), // 투명도 증가 (0xAA → 0xDD)
+                Color(0xDD183050)  // 투명도 증가 (0xAA → 0xDD)
             ),
             start = Offset(0f, 0f),
             end = Offset(0f, Float.POSITIVE_INFINITY)
@@ -208,8 +208,8 @@ fun GlassSurface(
     } else {
         Brush.linearGradient(
             colors = listOf(
-                Color(0xAA203F64), // 투명도 수정
-                Color(0xAA183050)  // 투명도 수정
+                Color(0xDD203F64), // 투명도 증가 (0xAA → 0xDD)
+                Color(0xDD183050)  // 투명도 증가 (0xAA → 0xDD)
             ),
             start = Offset(0f, 0f),
             end = Offset(0f, Float.POSITIVE_INFINITY)

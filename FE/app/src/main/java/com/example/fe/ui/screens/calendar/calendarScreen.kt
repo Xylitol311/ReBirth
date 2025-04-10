@@ -1,6 +1,8 @@
 package com.example.fe.ui.screens.calendar
 
+import android.R.color.white
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -68,6 +70,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.fe.ui.screens.calendar.white
+import java.text.NumberFormat
 import kotlin.math.abs
 
 // 컴포저블 외부에서 시간 파싱하는 함수
@@ -99,11 +109,23 @@ data class DailySummary(
     val expense: Int = 0
 )
 
+
+
+// 폰트 사이즈 정의
+val big = 24
+val title = 22
+val middle = 18
+val small = 16
+val verysmall = 13
+
+
 // 색상 정의
-val brightRed = Color(0xFFFF6B6B)
+val white = Color(0xFFFFFFFF)
+val brightRed = Color(0xD2FF7777)
 val brightGreen = Color(0xFF69F0AE)
-val calendarBlue = Color(0xFF00E1FF) // 네온 블루
-val glowingYellow = Color(0xFFFFC107) // 빛나는 노란색
+val calendarlightBlue = Color(0xFF72909A)
+val calendarBlue = Color(0xFF00BCD4) // 네온 블루
+val calenderGray = Color(0xFFA9A6A6) // 빛나는 노란색
 
 // 소비 리포트 페이지 탭
 enum class ReportPageType {
@@ -116,14 +138,14 @@ enum class ReportPageType {
 fun CalendarScreen(
     modifier: Modifier = Modifier,
     onScrollOffsetChange: (Float) -> Unit = {},
-    viewModel: CalendarViewModel = viewModel()
+    viewModel: CalendarViewModel = viewModel(factory = CalendarViewModelFactory(LocalContext.current))
 ) {
     // ViewModel에서 선택된 탭 인덱스를 가져옴
     var selectedTabIndex = viewModel.selectedTabIndex
     var scrollOffset by remember { mutableStateOf(0f) }
     val lazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    
+
     // ViewModel에서 상태 가져오기
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -131,24 +153,24 @@ fun CalendarScreen(
     val transactions by viewModel.transactions.collectAsState()
     val monthlyInfo by viewModel.monthlyInfo.collectAsState()
     val reportData by viewModel.reportData.collectAsState()
-    
+
     // 날짜별 데이터 그룹화 - monthlyData가 변경될 때마다 다시 계산
     val dailySummaries by remember(monthlyData) {
         mutableStateOf(viewModel.getDailySummaries())
     }
-    
+
     // 이번 달 전체 수입/지출 합계 - monthlyData가 변경될 때마다 다시 계산
     val monthlySummary by remember(monthlyData) {
         mutableStateOf(viewModel.getMonthlySummary())
     }
-    
+
     // 데이터가 로드되면 로그에 출력
     LaunchedEffect(monthlyData) {
         if (monthlyData.isNotEmpty()) {
             Log.d("CalendarScreen", "데이터 로드됨: ${monthlyData.size}일, 요약: ${dailySummaries.size}일")
         }
     }
-    
+
     // 위로 가기 버튼 표시 여부
     val showScrollToTopButton by remember {
         derivedStateOf {
@@ -208,7 +230,7 @@ fun CalendarScreen(
                         Column(
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable { 
+                                .clickable {
                                     viewModel.selectTab(0)
                                     selectedTabIndex = 0
                                 },
@@ -236,8 +258,8 @@ fun CalendarScreen(
                         Column(
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable { 
-                                    viewModel.selectTab(1) 
+                                .clickable {
+                                    viewModel.selectTab(1)
                                     selectedTabIndex = 1
                                 },
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -282,23 +304,24 @@ fun CalendarScreen(
                                     contentDescription = "이전 달",
                                     tint = Color.White,
                                     modifier = Modifier
-                                        .size(42.dp)
+                                        .size(30.dp)
                                         .clickable {
                                             viewModel.navigateToPreviousMonth()
                                         }
                                 )
+
                                 
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 
                                 // 월 표시
                                 Text(
                                     text = "${selectedYearMonth.monthValue}월",
                                     color = Color.White,
-                                    fontSize = 26.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Light
                                 )
                                         
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 
                                 // 오른쪽 화살표 (>)
                                 // 현재 월이면 비활성화된 스타일로 보여주기
@@ -309,27 +332,142 @@ fun CalendarScreen(
                                     tint = if (isCurrentMonth) Color.Gray else Color.White,
                                     modifier = Modifier
                                         .alpha(if (isCurrentMonth) 0.5f else 1f)
-                                        .size(42.dp)
+                                        .size(30.dp)
                                         .clickable(enabled = !isCurrentMonth) {
                                             if (!isCurrentMonth) {
                                                 viewModel.navigateToNextMonth()
                                             }
                                         }
                                 )
-                                
+
+
                                 Spacer(modifier = Modifier.weight(1f))
                                 
                                 // 연도 표시 (오른쪽 끝)
                                 Text(
                                     text = "${selectedYearMonth.year}",
                                     color = Color.Gray,
-                                    fontSize = 16.sp
+                                    fontSize = small.sp
                                 )
+
+                            }
+
+                        }
+
+                        // 당월 소비 현황
+                        item {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            monthlyInfo?.let { info ->
+                                Box(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    ) {
+//                                        Text(
+//                                            text = "당월 소비 현황",
+//                                            color = Color.White,
+//                                            fontSize = 20.sp,
+//                                            fontWeight = FontWeight.Bold,
+//                                            modifier = Modifier.padding(bottom = 16.dp)
+//                                        )
+                                        Text(
+                                            text = buildAnnotatedString {
+                                                withStyle(
+                                                    style = SpanStyle(
+                                                        color = calendarBlue,
+                                                        fontSize = title.sp,
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                ) {
+                                                    append("${formatAmount(abs(info.totalSpendingAmount))}원 ")
+                                                }
+                                                withStyle(
+                                                    style = SpanStyle(
+                                                        color = Color.White,
+                                                        fontSize =title.sp,
+                                                        fontWeight = FontWeight.Light
+                                                    )
+                                                ) {
+                                                    append("소비")
+                                                }
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Text(
+                                            text = buildAnnotatedString {
+                                                withStyle(
+                                                    style = SpanStyle(
+                                                        color = Color.White,
+                                                        fontSize = title.sp,
+                                                        fontWeight = FontWeight.Light
+                                                    )
+                                                ) {
+                                                    append("최다 소비 ")
+                                                }
+                                                withStyle(
+                                                    style = SpanStyle(
+                                                        color = Color.White,
+                                                        fontSize = title.sp,
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                ) {
+                                                    append("${info.categoryName}")
+                                                }
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+
+                                        Text(
+
+
+                                            text = buildAnnotatedString {
+                                                withStyle(
+                                                    style = SpanStyle(
+                                                        color = Color.White,
+                                                        fontSize = title.sp,
+                                                        fontWeight = FontWeight.Light
+                                                    )
+                                                ) {
+                                                    append("지난달보다 ")
+                                                }
+                                                withStyle(
+                                                    style = SpanStyle(
+                                                        color = Color.White,
+                                                        fontSize = title.sp,
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                ) {
+                                                    append("${formatAmount(abs(info.monthlyDifferenceAmount))}원")
+                                                }
+                                                withStyle(
+                                                    style = SpanStyle(
+                                                        color = Color.White,
+                                                        fontSize = title.sp,
+                                                        fontWeight = FontWeight.Light
+                                                    )
+                                                ) {
+                                                    if (info.monthlyDifferenceAmount > 0) {
+                                                        append(" 더 소비 중")
+                                                    } else {
+                                                        append(" 더 절약 중")
+                                                    }
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
+
                         
                         // 요일 헤더 (GlassSurface 바깥)
                         item {
+                            Spacer(modifier = Modifier.height(10.dp))
                             // 요일 표시
                             val daysOfWeek = listOf("일", "월", "화", "수", "목", "금", "토")
                             Row(
@@ -346,8 +484,8 @@ fun CalendarScreen(
                                     ) {
                                         Text(
                                             text = day,
-                                            color = Color.White,
-                                            fontSize = 16.sp,
+                                            color = calenderGray,
+                                            fontSize = 15.sp,
                                             fontWeight = FontWeight.Medium
                                         )
                                     }
@@ -360,8 +498,8 @@ fun CalendarScreen(
                             GlassSurface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                cornerRadius = 16f
+                                    .padding(vertical = 10.dp),
+                                cornerRadius = 10f
                             ) {
                                 // 달력 그리드만 표시
                                 Box(
@@ -401,69 +539,136 @@ fun CalendarScreen(
                         }
 
                         // 당월 소비 현황
-                        item {
-                            Spacer(modifier = Modifier.height(24.dp))
-                            monthlyInfo?.let { info ->
-                                GlassSurface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    cornerRadius = 16f
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
-                                    ) {
-                                        Text(
-                                            text = "당월 소비 현황",
-                                            color = Color.White,
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(bottom = 16.dp)
-                                        )
-                                        Text(
-                                            text = "${abs(info.totalSpendingAmount)}원 소비",
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontSize = 24.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = "최다 소비 ${info.categoryName}",
-                                            color = Color.White,
-                                            fontSize = 16.sp
-                                        )
-                                        Text(
-                                            text = if (info.monthlyDifferenceAmount > 0)
-                                                "지난달보다 ${info.monthlyDifferenceAmount}원 더 소비"
-                                            else
-                                                "지난달보다 ${abs(info.monthlyDifferenceAmount)}원 절약",
-                                            color = Color.White,
-                                            fontSize = 16.sp
-                                        )
-                                    }
-                                }
-                            }
-                        }
+//                        item {
+//                            Spacer(modifier = Modifier.height(20.dp))
+//                            monthlyInfo?.let { info ->
+//                                Box(
+//                                    modifier = Modifier.fillMaxWidth()
+//                                ) {
+//                                    Column(
+//                                        modifier = Modifier
+//                                            .fillMaxWidth()
+//                                            .padding(16.dp)
+//                                    ) {
+////                                        Text(
+////                                            text = "당월 소비 현황",
+////                                            color = Color.White,
+////                                            fontSize = 20.sp,
+////                                            fontWeight = FontWeight.Bold,
+////                                            modifier = Modifier.padding(bottom = 16.dp)
+////                                        )
+//                                        Text(
+//                                            text = buildAnnotatedString {
+//                                                withStyle(
+//                                                    style = SpanStyle(
+//                                                        color = calendarBlue,
+//                                                        fontSize = 18.sp,
+//                                                        fontWeight = FontWeight.ExtraBold
+//                                                    )
+//                                                ) {
+//                                                    append("${formatAmount(abs(info.totalSpendingAmount))}원 ")
+//                                                }
+//                                                withStyle(
+//                                                    style = SpanStyle(
+//                                                        color = Color.White,
+//                                                        fontSize = 18.sp,
+//                                                        fontWeight = FontWeight.Light
+//                                                    )
+//                                                ) {
+//                                                    append("소비")
+//                                                }
+//                                            }
+//                                        )
+//                                        Spacer(modifier = Modifier.height(8.dp))
+//
+//                                        Text(
+//                                            text = buildAnnotatedString {
+//                                                withStyle(
+//                                                    style = SpanStyle(
+//                                                        color = Color.White,
+//                                                        fontSize = 18.sp,
+//                                                        fontWeight = FontWeight.Light
+//                                                    )
+//                                                ) {
+//                                                    append("최다 소비 ")
+//                                                }
+//                                                withStyle(
+//                                                    style = SpanStyle(
+//                                                        color = Color.White,
+//                                                        fontSize = 18.sp,
+//                                                        fontWeight = FontWeight.ExtraBold
+//                                                    )
+//                                                ) {
+//                                                    append("${info.categoryName}")
+//                                                }
+//                                            }
+//                                        )
+//                                        Spacer(modifier = Modifier.height(8.dp))
+//
+//
+//                                        Text(
+//
+//
+//                                            text = buildAnnotatedString {
+//                                                withStyle(
+//                                                    style = SpanStyle(
+//                                                        color = Color.White,
+//                                                        fontSize = 18.sp,
+//                                                        fontWeight = FontWeight.Light
+//                                                    )
+//                                                ) {
+//                                                    append("지난달보다 ")
+//                                                }
+//                                                withStyle(
+//                                                    style = SpanStyle(
+//                                                        color = Color.White,
+//                                                        fontSize = 18.sp,
+//                                                        fontWeight = FontWeight.ExtraBold
+//                                                    )
+//                                                ) {
+//                                                    append("${formatAmount(abs(info.monthlyDifferenceAmount))}원")
+//                                                }
+//                                                withStyle(
+//                                                    style = SpanStyle(
+//                                                        color = Color.White,
+//                                                        fontSize = 20.sp,
+//                                                        fontWeight = FontWeight.Light
+//                                                    )
+//                                                ) {
+//                                                    if (info.monthlyDifferenceAmount > 0) {
+//                                                        append(" 더 소비 중")
+//                                                    } else {
+//                                                        append(" 더 절약 중")
+//                                                    }
+//                                                }
+//                                            }
+//                                        )
+//                                    }
+//                                }
+//                            }
+//                        }
 
                         // 월별 소비 기록
                         item {
-                            Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(5.dp))
                             GlassSurface(
-                                modifier = Modifier.fillMaxWidth(),
-                                cornerRadius = 16f
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                cornerRadius = 10f
                             ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp)
+                                        .padding(30.dp)
                                 ) {
-                                    Text(
-                                        text = "월별 소비 기록",
-                                        color = Color.White,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(bottom = 16.dp)
-                                    )
+//                                    Text(
+//                                        text = "월별 소비 기록",
+//                                        color = Color.White,
+//                                        fontSize = 20.sp,
+//                                        fontWeight = FontWeight.Bold,
+//                                        modifier = Modifier.padding(bottom = 16.dp)
+//                                    )
 
                                     if (transactions.isEmpty()) {
                                         Text(
@@ -481,7 +686,7 @@ fun CalendarScreen(
                                                 if (currentDate != null) {
                                                     Divider(
                                                         color = Color.White.copy(alpha = 0.2f),
-                                                        modifier = Modifier.padding(vertical = 8.dp)
+                                                        modifier = Modifier.padding(vertical = 10.dp)
                                                     )
                                                 }
                                                 currentDate = transactionDate
@@ -489,10 +694,9 @@ fun CalendarScreen(
                                                 val date = LocalDate.parse(transactionDate)
                                                 Text(
                                                     text = "${date.monthValue}월 ${date.dayOfMonth}일",
-                                                    color = Color.White,
-                                                    fontSize = 18.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    modifier = Modifier.padding(vertical = 8.dp)
+                                                    color = Color.White.copy(alpha = 0.6f),
+                                                    fontSize = small.sp,
+                                                    modifier = Modifier.padding(vertical = 10.dp)
                                                 )
                                             }
                                             
@@ -511,13 +715,13 @@ fun CalendarScreen(
                                         .fillMaxWidth()
                                         .padding(vertical = 8.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = Color(0x33FF0000)
+                                        containerColor = Color.White
                                     )
                                 ) {
                                     Text(
                                         text = "데이터 로드 중 오류가 발생했습니다: ${error}",
                                         color = Color.White,
-                                        fontSize = 14.sp,
+                                        fontSize = small.sp,
                                         modifier = Modifier.padding(16.dp)
                                     )
                                 }
@@ -526,7 +730,7 @@ fun CalendarScreen(
                         
                         // 하단 여백
                         item {
-                            Spacer(modifier = Modifier.height(80.dp))
+                            Spacer(modifier = Modifier.height(40.dp))
                         }
                     }
                     
@@ -545,81 +749,118 @@ fun CalendarScreen(
                                 ) {
                                     // 이전 월 버튼 (활성화 여부에 따라 스타일 변경)
                                     val canGoToPrevMonth = viewModel.canNavigateToPreviousReportMonth()
+                                    // 왼쪽 화살표 (<)
                                     Icon(
                                         imageVector = Icons.Filled.KeyboardArrowLeft,
-                                        contentDescription = "이전 월",
-                                        tint = if (canGoToPrevMonth) Color.White else Color.Gray,
+                                        contentDescription = "이전 달",
+                                        tint = Color.White,
                                         modifier = Modifier
-                                            .alpha(if (canGoToPrevMonth) 1f else 0.5f)
-                                            .size(42.dp)
-                                            .clickable(enabled = canGoToPrevMonth) {
-                                                viewModel.navigateToPreviousReportMonth()
+                                            .size(30.dp)
+                                            .clickable {
+                                                viewModel.navigateToPreviousMonth()
                                             }
                                     )
-                                    
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    
-                                    // 선택된 리포트 월 표시
+
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    // 월 표시
                                     Text(
-                                        text = "${viewModel.selectedReportYearMonth.monthValue}월",
+                                        text = "${selectedYearMonth.monthValue}월",
                                         color = Color.White,
-                                        fontSize = 26.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Light
                                     )
-                                    
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    
-                                    // 다음 월 버튼 (활성화 여부에 따라 스타일 변경)
-                                    val canGoToNextMonth = viewModel.canNavigateToNextReportMonth()
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    // 오른쪽 화살표 (>)
+                                    // 현재 월이면 비활성화된 스타일로 보여주기
+                                    val isCurrentMonth = selectedYearMonth == currentMonth
                                     Icon(
                                         imageVector = Icons.Filled.KeyboardArrowRight,
-                                        contentDescription = "다음 월",
-                                        tint = if (canGoToNextMonth) Color.White else Color.Gray,
+                                        contentDescription = "다음 달",
+                                        tint = if (isCurrentMonth) Color.Gray else Color.White,
                                         modifier = Modifier
-                                            .alpha(if (canGoToNextMonth) 1f else 0.5f)
-                                            .size(42.dp)
-                                            .clickable(enabled = canGoToNextMonth) {
-                                                viewModel.navigateToNextReportMonth()
+                                            .alpha(if (isCurrentMonth) 0.5f else 1f)
+                                            .size(30.dp)
+                                            .clickable(enabled = !isCurrentMonth) {
+                                                if (!isCurrentMonth) {
+                                                    viewModel.navigateToNextMonth()
+                                                }
                                             }
                                     )
-                                    
+
+
                                     Spacer(modifier = Modifier.weight(1f))
                                     
                                     // 연도 표시 (오른쪽 끝)
                                 Text(
-                                        text = "${viewModel.selectedReportYearMonth.year}",
+                                    text = "${viewModel.selectedReportYearMonth.year}",
                                     color = Color.Gray,
-                                        fontSize = 16.sp
+                                        fontSize =small.sp
                                     )
-                                }
 
-                                // 리포트 로딩 중 표시
-                                if (isLoading) {
-                                    Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                            .height(200.dp),
-                                        contentAlignment = Alignment.Center
+                                }
+                                val isCurrentMonth = selectedYearMonth == currentMonth
+
+                                // 현재 달인 경우 "말일에 리포트 생성 예정입니다" 메시지만 표시
+                                if (isCurrentMonth) {
+                                    GlassSurface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+                                            .padding(vertical = 8.dp),
+                                        cornerRadius = 15f
                                     ) {
-                                        CircularProgressIndicator(
-                                            color = calendarBlue,
-                                            modifier = Modifier.size(48.dp)
+                                        Column(
+                                            modifier = Modifier.fillMaxSize(),
+                                            verticalArrangement = Arrangement.Center,
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = "열심히 소비 패턴을 분석하고 있습니다",
+                                                color = Color.White,
+                                                fontSize = 18.sp,
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = "다음달 1일에 만나요",
+                                                color = Color.White,
+                                                fontSize = 18.sp,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
+                                }else {
+                                    // 리포트 로딩 중 표시
+                                    if (isLoading) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(200.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                color = calendarBlue,
+                                                modifier = Modifier.size(48.dp)
+                                            )
+                                        }
+                                    } else {
+                                        // 페이저로 변경된 리포트 UI
+                                        ReportPager(
+                                            reportData = reportData,
+                                            cardReports = viewModel.cardReports.collectAsState().value,
+                                            categoryReports = viewModel.categoryReports.collectAsState().value,
+                                            modifier = Modifier.height(730.dp)
                                         )
                                     }
-                                } else {
-                                    // 페이저로 변경된 리포트 UI
-                                    ReportPager(
-                                        reportData = reportData,
-                                        cardReports = viewModel.cardReports.collectAsState().value,
-                                        categoryReports = viewModel.categoryReports.collectAsState().value,
-                                        modifier = Modifier.height(730.dp)
-                                    )
                                 }
                             }
                         }
                     }
-                }
-            }
+            }}
             
             // 위로 가기 버튼
             AnimatedVisibility(
@@ -652,7 +893,7 @@ fun DailyTransactionItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .padding(horizontal = 14.dp, vertical = 14.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -662,8 +903,8 @@ fun DailyTransactionItem(
             Text(
                 text = category,
                 color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = small.sp,
+                fontWeight = FontWeight.Light,
                 modifier = Modifier.width(100.dp) // 카테고리 영역의 너비 증가
             )
             
@@ -679,8 +920,8 @@ fun DailyTransactionItem(
                     Text(
                         text = if (isIncome) "+${formatAmount(amount)}원"
                                else "-${formatAmount(-amount)}원",
-                        color = if (isIncome) calendarBlue else brightRed,
-                        fontSize = 18.sp,
+                        color = if (isIncome) calendarBlue else  brightRed,
+                        fontSize = small.sp,
                         fontWeight = FontWeight.Bold
                     )
                     
@@ -692,7 +933,7 @@ fun DailyTransactionItem(
                             Text(
                                 text = timeStr,
                                 color = Color.White.copy(alpha = 0.6f),
-                                fontSize = 14.sp,
+                                fontSize = 10.sp,
                                 modifier = Modifier.padding(start = 8.dp)
                             )
                         }
@@ -702,7 +943,7 @@ fun DailyTransactionItem(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 // 상점 이름과 카드 이름을 함께 표시 (있는 경우에만)
-                val placeText = if (place.isNotBlank() && place != " ") place else ""
+                val placeText = if (place.isNotBlank() && place != " "&& place !="입금") place else ""
                 val cardText = if (paymentMethod.isNotBlank() && paymentMethod != " ") paymentMethod else ""
                 
                 // 둘 다 있으면 "상점명/카드명", 하나만 있으면 해당 값만
@@ -717,14 +958,13 @@ fun DailyTransactionItem(
                     Text(
                         text = displayText,
                         color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 14.sp
+                        fontSize = verysmall.sp
                     )
                 }
             }
         }
     }
 }
-
 @Composable
 fun CalendarGrid(
     yearMonth: YearMonth,
@@ -736,22 +976,27 @@ fun CalendarGrid(
     val daysInMonth = remember(yearMonth) {
         val firstDay = yearMonth.atDay(1)
         val lastDay = yearMonth.atEndOfMonth()
-        
+
         // 첫 주의 시작일 (이전 달의 날짜 포함)
         val start = firstDay.minusDays(firstDay.dayOfWeek.value % 7L)
-        
-        // 마지막 주의 종료일 (다음 달의 날짜 포함)
-        val daysToAdd = 7 - lastDay.dayOfWeek.value % 7
-        val end = if (daysToAdd < 7) lastDay.plusDays(daysToAdd.toLong()) else lastDay
-        
+
+        // 마지막 주의 종료일 (다음 달의 날짜 포함하되 정확히 해당 월 마지막 주까지만)
+        val end = if (lastDay.dayOfWeek.value == 7) {
+            // 마지막 날이 토요일인 경우, 다음 주를 포함하지 않음
+            lastDay
+        } else {
+            // 마지막 주의 토요일까지만 포함
+            lastDay.plusDays((7 - lastDay.dayOfWeek.value).toLong())
+        }
+
         // 날짜 목록 생성
         (0..end.toEpochDay() - start.toEpochDay())
             .map { start.plusDays(it) }
     }
-    
+
     // 주의 개수 계산 (7일씩 표시)
     val numberOfWeeks = (daysInMonth.size + 6) / 7
-    
+
     // Grid 대신 Column과 Row로 구성하여 모든 날짜가 한 번에 표시되도록 함
     Column(
         modifier = Modifier
@@ -761,12 +1006,12 @@ fun CalendarGrid(
         for (weekIndex in 0 until numberOfWeeks) {
             val startIndex = weekIndex * 7
             val endIndex = minOf(startIndex + 6, daysInMonth.size - 1)
-            
+
             if (startIndex <= endIndex) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(vertical = 5.dp)
                 ) {
                     for (dayIndex in startIndex..endIndex) {
                         val date = daysInMonth[dayIndex]
@@ -779,7 +1024,7 @@ fun CalendarGrid(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    
+
                     // 마지막 주에서 빈 칸 채우기
                     if (endIndex - startIndex < 6) {
                         for (i in 0 until 6 - (endIndex - startIndex)) {
@@ -803,72 +1048,107 @@ fun CalendarDay(
 ) {
     val isCurrentMonth = date.month == yearMonth.month
     val isToday = date == LocalDate.now()
-    
-    // 디버깅 로그 추가
-    if (isCurrentMonth) {
-        if (summary != null) {
-            Log.d("CalendarDay", "데이터 있음: $date, Income: ${summary.income}, Expense: ${summary.expense}")
-        } else {
-            Log.d("CalendarDay", "데이터 없음: $date")
-        }
-    }
-    
+
     Box(
         modifier = modifier
             .aspectRatio(1f)
             .padding(2.dp)
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(2.dp))
             .background(
                 if (isSelected) Color(0x33FFFFFF)
                 else Color.Transparent
             )
             .clickable(enabled = isCurrentMonth) {
                 onDateSelected(date)
-            },
-        contentAlignment = Alignment.Center
+            }
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(2.dp)
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .fillMaxSize() // 전체적으로 약간 패딩
         ) {
-            // 날짜
-            Text(
-                text = date.dayOfMonth.toString(),
-                fontSize = 18.sp,
-                fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = when {
-                    !isCurrentMonth -> Color(0xFF555555) // 더 어두운 회색
-                    else -> Color.White
-                },
-                textAlign = TextAlign.Center
-            )
-            
-            // 수입/지출 표시 (현재 달의 날짜만)
-            if (summary != null && isCurrentMonth) {
-                // 수입이 있으면 표시 (+기호 포함)
+            // 날짜 표시 영역
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(17.dp), // 날짜 영역 살짝 줄임
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = date.dayOfMonth.toString(),
+                    fontSize = small.sp,
+                    fontWeight = if (isToday || isSelected) FontWeight.Light else FontWeight.Normal,
+                    color = if (!isCurrentMonth) calendarlightBlue else Color.White
+                )
+            }
+
+            // 수입/지출 요약 정보 표시 (더 넉넉한 영역 확보)
+            if (isCurrentMonth && summary != null) {
+                Spacer(modifier = Modifier.height(1.dp))
+
+                // 수입
                 if (summary.income > 0) {
+                    val incomeText = "+${formatAmount(summary.income)}"
+                    val incomeFontSize = when {
+                        incomeText.length >= 13 -> (verysmall - 5.5).sp // 예: +1,000,000
+                        incomeText.length >= 10 -> (verysmall - 4).sp
+                        incomeText.length >= 8 -> (verysmall - 2).sp
+                        else -> (verysmall - 1).sp
+                    }
+
                     Text(
-                        text = "+${formatAmount(summary.income)}",
-                        fontSize = 12.sp,
+                        text = incomeText,
+                        fontSize = incomeFontSize,
+                        fontWeight = FontWeight.Light,
                         color = calendarBlue,
-                        textAlign = TextAlign.Center
+                        overflow = TextOverflow.Clip,
+                        maxLines = 1, //
+                        softWrap = false, //
+                        modifier = Modifier
+                            .padding(horizontal = 1.dp)
+                            .fillMaxWidth()
                     )
                 }
-                
-                // 지출이 있으면 표시 (expense는 양수로 변환됨)
+
+                // 지출
                 if (summary.expense > 0) {
+
+                    val expenseText = "-${formatAmount(summary.expense)}"
+                    val expenseFontSize = when {
+                        expenseText.length >= 13 -> (verysmall - 4).sp
+                        expenseText.length >= 10 -> (verysmall - 3).sp
+                        expenseText.length >= 8 -> (verysmall - 2).sp
+                        else -> (verysmall - 1).sp
+                    }
+
                     Text(
-                        text = "-${formatAmount(summary.expense)}",
-                        fontSize = 12.sp,
-                        color = brightRed,
-                        textAlign = TextAlign.Center
+                        text = expenseText,
+                        fontSize = expenseFontSize,
+                        fontWeight = FontWeight.Light,
+                        color = calenderGray,
+                        overflow = TextOverflow.Clip,
+                        maxLines = 1, //
+                        softWrap = false, //
+                        modifier = Modifier
+                            .fillMaxWidth()
                     )
                 }
             }
         }
     }
 }
-
+// 큰 금액도 깨지지 않도록 축약형으로 표시하는 함수
+fun formatAmountCompact(amount: Int): String {
+    return when {
+        amount >= 100_000_000 -> String.format("%.1f억", amount / 100_000_000.0)
+        amount >= 10_000_000 -> String.format("%.1f천만", amount / 10_000_000.0)
+        amount >= 1_000_000 -> String.format("%.1f백만", amount / 1_000_000.0)
+        amount >= 100_000 -> String.format("%.1f십만", amount / 100_000.0)
+        amount >= 10_000 -> String.format("%d만", amount / 10_000)
+        else -> NumberFormat.getNumberInstance().format(amount)
+    }
+}
 // 금액 포맷팅 (예: 10000 -> 10,000)
 fun formatAmount(amount: Int): String {
     return String.format("%,d", amount)
@@ -903,6 +1183,8 @@ fun ReportPager(
             (reportData.totalSpendingAmount != 0 ||
                     reportData.preTotalSpendingAmount != 0)
 
+    val hasMyGroupComparisonData = reportData != null
+
     val hasConsumptionPattern = reportData?.consumptionPatterns != null
 
     // 수직 스크롤 가능한 Column으로 변경 (LazyListState 설정)
@@ -927,6 +1209,13 @@ fun ReportPager(
         if (hasComparisonData && reportData != null) {
             item {
                 MonthlyComparisonPage(reportData)
+            }
+        }
+
+        // 3-2. 내 소비 그룹 비교 페이지 (비교 데이터가 있는 경우에만 표시)
+        if (hasMyGroupComparisonData && reportData != null) {
+            item {
+                GroupBenefitComparisonPage(reportData)
             }
         }
 
@@ -965,30 +1254,31 @@ fun OverviewReportPage(reportData: ReportData?) {
     GlassSurface(
             modifier = Modifier
                 .fillMaxWidth()
-            .wrapContentHeight(align = Alignment.Top)
-            .heightIn(min = 400.dp)
-            .padding(vertical = 8.dp),
-        cornerRadius = 24f
+                .wrapContentHeight(align = Alignment.Top)
+                .padding(vertical = 8.dp),
+        cornerRadius = 15f
         ) {
         Column(
                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
+                    .fillMaxWidth()
+                    .padding(24.dp)
         ) {
             if (reportData == null) {
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(300.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                         text = "리포트 데이터가 없습니다",
                         color = Color.Gray,
-                        fontSize = 18.sp
+                        fontSize = title.sp
                     )
                 }
             } else {
                 // 총 소비 금액 (음수로 오면 양수로 변환)
-                val totalSpending = if (reportData.totalSpendingAmount < 0) 
+                val totalSpending = if (reportData.totalSpendingAmount < 0)
                     -reportData.totalSpendingAmount else reportData.totalSpendingAmount
                 
                 // 비율 계산 - 전체 범위에서 사용할 수 있도록 여기서 정의
@@ -1010,20 +1300,22 @@ fun OverviewReportPage(reportData: ReportData?) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
                 ) {
                     Text(
                         text = "총 소비 금액",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 18.sp
+                        color = Color.White,
+                        fontSize = middle.sp
                     )
                     
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     Text(
-                        text = if (totalSpending > 0) "-${formatAmount(totalSpending)}원" else "0원",
+                        text = if (totalSpending > 0) "${formatAmount(totalSpending)}원" else "0원",
                         color = brightRed,
-                        fontSize = 36.sp,
+                        fontSize = big.sp,
                         fontWeight = FontWeight.Bold
                     )
                     
@@ -1031,82 +1323,80 @@ fun OverviewReportPage(reportData: ReportData?) {
                     
                     Text(
                         text = "혜택 금액",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 18.sp
+                        color = Color.White,
+                        fontSize = middle.sp
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "+${formatAmount(reportData.totalBenefitAmount)}원",
+                        text = "${formatAmount(reportData.totalBenefitAmount)}원",
                         color = calendarBlue,
-                        fontSize = 28.sp,
+                        fontSize = big.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
             
-                Spacer(modifier = Modifier.height(24.dp))
-            
-                // 금액/혜택 비율 그래프 추가
-            Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                        text = "소비 대비 혜택 비율",
-                    color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                    
-                    // 그래프 컨테이너
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0x33FFFFFF))
-                    ) {
-                        // 혜택 부분 (최대 100%까지)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .fillMaxWidth(minOf(benefitRatio / 100f, 1f))
-                                .background(calendarBlue)
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // 비율 텍스트 표시 (소비금액이 0인 경우 처리)
-                    Text(
-                        text = if (totalSpending > 0) String.format("%.1f%%", benefitRatio) else "소비 없음",
-                        color = calendarBlue,
-                    fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                )
-                
-                    // 추가 설명 (소비금액이 0인 경우 처리)
-                    if (totalSpending > 0) {
-                Text(
-                            text = "100원 소비 시 ${String.format("%.1f", benefitRatio)}원 혜택",
-                    color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    } else {
-                        Text(
-                            text = "아직 소비 내역이 없습니다",
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
+
+//
+//                // 금액/혜택 비율 그래프 추가
+//            Column(
+//                    horizontalAlignment = Alignment.CenterHorizontally,
+//                    modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Text(
+//                        text = "소비 대비 혜택 비율",
+//                    color = Color.White,
+//                        fontSize = middle.sp,
+//                        modifier = Modifier.padding(bottom = 12.dp)
+//                    )
+//
+//                    // 그래프 컨테이너
+//                    Box(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(24.dp)
+//                            .clip(RoundedCornerShape(12.dp))
+//                            .background(Color(0x33FFFFFF))
+//                    ) {
+//                        // 혜택 부분 (최대 100%까지)
+//                        Box(
+//                            modifier = Modifier
+//                                .fillMaxHeight()
+//                                .fillMaxWidth(minOf(benefitRatio / 100f, 1f))
+//                                .background(calendarBlue)
+//                        )
+//                    }
+//
+//                    Spacer(modifier = Modifier.height(8.dp))
+//
+//                    // 비율 텍스트 표시 (소비금액이 0인 경우 처리)
+//                    Text(
+//                        text = if (totalSpending > 0) String.format("%.1f%%", benefitRatio) else "소비 없음",
+//                        color = calendarBlue,
+//                    fontSize = small.sp,
+//                        fontWeight = FontWeight.Bold
+//                )
+//
+//                    // 추가 설명 (소비금액이 0인 경우 처리)
+//                    if (totalSpending > 0) {
+//                Text(
+//                            text = "100원 소비 시 ${String.format("%.1f", benefitRatio)}원 혜택",
+//                    color = Color.White.copy(alpha = 0.7f),
+//                            fontSize = small.sp,
+//                            modifier = Modifier.padding(top = 4.dp)
+//                        )
+//                    } else {
+//                        Text(
+//                            text = "아직 소비 내역이 없습니다",
+//                            color = Color.White.copy(alpha = 0.7f),
+//                            fontSize = title.sp,
+//                            modifier = Modifier.padding(top = 4.dp)
+//                        )
+//                    }
+//                }
                 
                 // 하단 여백
-                    Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -1119,24 +1409,28 @@ fun CardReportPage(cardReports: List<CardReport>) {
             .fillMaxWidth()
             .wrapContentHeight(align = Alignment.Top)
             .padding(vertical = 8.dp), // heightIn(min = 400.dp) 제거
-        cornerRadius = 24f
+        cornerRadius = 15f
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
         ) {
+            Spacer(modifier = Modifier.height(15.dp))
             // 타이틀
             Text(
                 text = "카드별 소비 및 혜택",
                 color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = title.sp,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp)
             )
+
+            Spacer(modifier = Modifier.height(15.dp))
+
 
             if (cardReports.isEmpty()) {
                 Box(
@@ -1148,7 +1442,7 @@ fun CardReportPage(cardReports: List<CardReport>) {
                     Text(
                         text = "카드 사용 내역이 없습니다",
                         color = Color.Gray,
-                        fontSize = 18.sp
+                        fontSize = title.sp
                     )
                 }
             } else {
@@ -1158,20 +1452,20 @@ fun CardReportPage(cardReports: List<CardReport>) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // 최대 3개 카드만 표시
-                cardReports.take(3).forEach { card ->
+                cardReports.take(cardReports.size).forEach { card ->
                     CardReportItemView(card)
                 }
                 
                 // 추가 카드가 있는 경우 메시지 표시
-                if (cardReports.size > 3) {
-                    Text(
-                        text = "외 ${cardReports.size - 3}개 카드 사용",
-                        color = Color.Gray,
-                        fontSize = 16.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                    )
-                    }
+//                if (cardReports.size > 3) {
+//                    Text(
+//                        text = "외 ${cardReports.size - 3}개 카드 사용",
+//                        color = Color.Gray,
+//                        fontSize = 16.sp,
+//                            textAlign = TextAlign.Center,
+//                            modifier = Modifier.fillMaxWidth()
+//                    )
+//                    }
                 }
             }
         }
@@ -1188,18 +1482,34 @@ fun CardReportItemView(card: CardReport) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-            .background(
-                color = Color(0x33000000),
-                shape = RoundedCornerShape(16.dp)
-            )
+                .background(
+                    color = Color(0x33000000),
+                    shape = RoundedCornerShape(16.dp)
+                )
                 .padding(16.dp)
         ) {
         // 카드 이름 (중앙 정렬)
+
+            val imageUrl = card.cardImg
+
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "카드 이미지",
+                modifier = Modifier
+                    .size(200.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .padding(top = 8.dp, bottom = 4.dp),
+                contentScale = ContentScale.Fit
+            )
+
         Text(
             text = card.name,
             color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = middle.sp,
+            fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
@@ -1210,19 +1520,19 @@ fun CardReportItemView(card: CardReport) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                    .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                 text = "총소비",
                     color = Color.White,
-                fontSize = 18.sp
+                fontSize = middle.sp
             )
                     
             Text(
                 text = "${formatAmount(totalAmount)}원",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = middle.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -1237,13 +1547,13 @@ fun CardReportItemView(card: CardReport) {
                     Text(
                 text = "받은혜택",
                 color = calendarBlue,
-                fontSize = 18.sp
+                fontSize = middle.sp
             )
 
             Text(
                 text = "${formatAmount(totalBenefit)}원",
                 color = calendarBlue,
-                fontSize = 18.sp,
+                fontSize = middle.sp,
                 fontWeight = FontWeight.Bold
             )
             }
@@ -1270,7 +1580,7 @@ fun CardReportItemView(card: CardReport) {
                     Text(
                     text = "${category.category}(${category.count}회)",
                         color = Color.White,
-                    fontSize = 17.sp
+                    fontSize = small.sp
                     )
                     
                 // 소비금액과 혜택금액 (한 줄에 표시)
@@ -1286,7 +1596,7 @@ fun CardReportItemView(card: CardReport) {
                             append("(${formatAmount(category.benefit)}원)")
                         }
                     },
-                    fontSize = 17.sp,
+                    fontSize = small.sp,
                     // 기본 텍스트 색상도 흰색으로 명시
                     color = Color.White
                 )
@@ -1294,15 +1604,40 @@ fun CardReportItemView(card: CardReport) {
         }
     }
 }
-
 @Composable
 fun CategoryReportPage(categoryReports: List<CategoryReport>) {
+    // 금액이 큰 순서대로 카테고리 정렬
+    val sortedCategoryReports = categoryReports.sortedByDescending { it.getAbsoluteAmount() }
+
+    // 상위 5개 카테고리와 "그 외" 카테고리로 분리
+    val topCategories = sortedCategoryReports.take(5)
+    val otherCategories = sortedCategoryReports.drop(5)
+
+    // "그 외" 카테고리 생성 (나머지 카테고리들의 합계)
+    val otherCategory = if (otherCategories.isNotEmpty()) {
+        val totalAmount = otherCategories.sumOf { it.getAbsoluteAmount() }
+        val totalBenefit = otherCategories.sumOf { it.benefit }
+        // CategoryReport 클래스의 생성자에 맞게 수정해야 할 수 있습니다
+        CategoryReport(
+            category = "그 외",
+            amount = totalAmount,
+            benefit = totalBenefit
+        )
+    } else null
+
+    // 표시할 최종 카테고리 리스트 (상위 5개 + 그 외)
+    val displayCategories = if (otherCategory != null) {
+        topCategories + otherCategory
+    } else {
+        topCategories
+    }
+
     GlassSurface(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(align = Alignment.Top)
-            .padding(vertical = 8.dp), // heightIn(min = 400.dp) 제거
-        cornerRadius = 24f
+            .padding(vertical = 8.dp),
+        cornerRadius = 15f
     ) {
         Column(
             modifier = Modifier
@@ -1313,39 +1648,40 @@ fun CategoryReportPage(categoryReports: List<CategoryReport>) {
             Text(
                 text = "카테고리별 소비",
                 color = Color.White,
-                fontSize = 28.sp,
+                fontSize = title.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp)
             )
-            
-            if (categoryReports.isEmpty()) {
+
+            if (displayCategories.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp), // 높이 줄임 (300dp → 120dp)
+                        .height(120.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "카테고리 사용 내역이 없습니다",
                         color = Color.Gray,
-                        fontSize = 18.sp
+                        fontSize = title.sp
                     )
                 }
             } else {
-                // 카테고리별 색상 정의 (최대 5개 카테고리까지 고유 색상 사용)
+                // 카테고리별 색상 정의 (5개 주요 카테고리 + 그 외)
                 val categoryColors = listOf(
-                    Color(0xFF2196F3), // 전자상거래 - 파란색
-                    Color(0xFF00E676), // 외식 - 초록색
-                    Color(0xFFFFEB3B), // 교통 - 노란색
-                    Color(0xFFFF9800), // 쇼핑 - 주황색
-                    Color(0xFFE91E63)  // 기타 - 분홍색
+                    Color(0xFF2196F3), // 파란색
+                    Color(0xFF74C2FF), // 연한 파란색
+                    Color(0xFF00E676), // 초록색
+                    Color(0xBA00FFF7), // 청록색
+                    Color(0xFFFF93BA), // 분홍색
+                    Color(0xFFAAAAAA)  // 회색 (그 외 카테고리용)
                 )
 
                 // 카테고리별 금액 데이터 준비
-                val categoryAmounts = categoryReports.map {
+                val categoryAmounts = displayCategories.map {
                     it.getAbsoluteAmount().toFloat()
                 }
 
@@ -1365,8 +1701,8 @@ fun CategoryReportPage(categoryReports: List<CategoryReport>) {
                         contentAlignment = Alignment.Center
                     ) {
                         AccountBookGraph(
-                    modifier = Modifier.fillMaxSize(),
-                            colors = categoryColors.take(categoryReports.size),
+                            modifier = Modifier.fillMaxSize(),
+                            colors = categoryColors.take(displayCategories.size),
                             data = categoryAmounts,
                             graphHeight = 180
                         )
@@ -1376,47 +1712,38 @@ fun CategoryReportPage(categoryReports: List<CategoryReport>) {
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(start = 32.dp) // 시작 패딩 값 늘림
+                            .padding(start = 32.dp)
                     ) {
-                        categoryReports.forEachIndexed { index, category ->
-                            if (index < categoryColors.size) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(vertical = 8.dp) // 수직 패딩 늘림
-                                ) {
-                                    // 색상 표시
-                                    Box(
-                                        modifier = Modifier
-                                            .size(20.dp) // 색상 박스 크기 늘림
-                                            .background(
-                                                color = categoryColors[index],
-                                                shape = RoundedCornerShape(4.dp) // 모서리 반경 늘림
-                                            )
-                                    )
+                        displayCategories.forEachIndexed { index, category ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            ) {
+                                // 색상 표시
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            color = categoryColors[index],
+                                            shape = RoundedCornerShape(4.dp)
+                                        )
+                                )
 
-                                    Spacer(modifier = Modifier.width(16.dp)) // 간격 늘림
+                                Spacer(modifier = Modifier.width(16.dp))
 
-                                    // 카테고리 이름
-                                    Text(
-                                        text = category.category,
-                                        color = Color.White,
-                                        fontSize = 18.sp // 폰트 크기 늘림
-                                    )
-                                }
+                                // 카테고리 이름
+                                Text(
+                                    text = category.category,
+                                    color = Color.White,
+                                    fontSize = middle.sp
+                                )
                             }
                         }
                     }
                 }
 
-                // 구분선
-                HorizontalDivider(
-                    color = Color.White.copy(alpha = 0.2f),
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-
                 // 카테고리별 상세 내역
-                categoryReports.forEachIndexed { index, category ->
+                displayCategories.forEachIndexed { index, category ->
                     // 카테고리 행
                     Row(
                         modifier = Modifier
@@ -1429,7 +1756,7 @@ fun CategoryReportPage(categoryReports: List<CategoryReport>) {
                         Text(
                             text = category.category,
                             color = Color.White,
-                            fontSize = 18.sp,
+                            fontSize = middle.sp,
                             fontWeight = FontWeight.Medium
                         )
 
@@ -1441,7 +1768,7 @@ fun CategoryReportPage(categoryReports: List<CategoryReport>) {
                             Text(
                                 text = "${formatAmount(category.getAbsoluteAmount())}원",
                                 color = Color.White,
-                                fontSize = 18.sp,
+                                fontSize = middle.sp,
                                 fontWeight = FontWeight.Bold
                             )
 
@@ -1449,13 +1776,13 @@ fun CategoryReportPage(categoryReports: List<CategoryReport>) {
                             Text(
                                 text = "${formatAmount(category.benefit)}원 혜택",
                                 color = calendarBlue,
-                                fontSize = 16.sp
+                                fontSize = small.sp
                             )
                         }
                     }
 
                     // 마지막 항목이 아니면 구분선 추가
-                    if (index < categoryReports.size - 1) {
+                    if (index < displayCategories.size - 1) {
                         HorizontalDivider(
                             color = Color.White.copy(alpha = 0.2f),
                             thickness = 1.dp
@@ -1467,62 +1794,273 @@ fun CategoryReportPage(categoryReports: List<CategoryReport>) {
     }
 }
 
+// 소비 구간 대비 소비 비교 페이지
 @Composable
-fun CategoryReportItemView(category: CategoryReport, maxAmount: Int) {
-    Column(
+fun GroupBenefitComparisonPage(reportData: ReportData) {
+    // reportData가 null이거나 데이터가 없으면 표시하지 않음
+    if (reportData.totalSpendingAmount == 0 && reportData.preTotalSpendingAmount == 0) {
+        return
+    }
+
+    // 현재 선택된 년월 정보 가져오기
+    val viewModel: CalendarViewModel = viewModel()
+    val selectedYearMonth = viewModel.selectedReportYearMonth
+
+    // 현재 월과 이전 월 계산
+    val currentMonth = selectedYearMonth.monthValue
+    val previousMonth = if (currentMonth > 1) currentMonth - 1 else 12
+
+    GlassSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .wrapContentHeight(align = Alignment.Top)
+            .heightIn(min = 400.dp)
+            .padding(vertical = 8.dp),
+        cornerRadius = 15f
     ) {
-        // 카테고리명 및 금액
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
         ) {
+            Spacer(modifier = Modifier.height(15.dp))
+            // 타이틀 - 중앙정렬로 변경 및 크기 증가
             Text(
-                text = category.category,
+                text = "나의 소비그룹 혜택 비교",
                 color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
+                fontSize = title.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
             )
-            
-            Row {
-                // amount가 음수로 올 수 있으므로 절대값으로 표시
-                val displayAmount = category.getAbsoluteAmount()
-                
-                Text(
-                    text = "${formatAmount(displayAmount)}원",
-                    color = Color.White,
-                    fontSize = 16.sp
+
+            Spacer(modifier = Modifier.height(15.dp))
+
+            // 혜택 금액 (음수로 오면 양수로 변환)
+            val myMonthBenefit = if (reportData.totalBenefitAmount < 0)
+                -reportData.totalBenefitAmount else reportData.totalBenefitAmount
+            val otherAverageBenefit = if (reportData.totalGroupBenefitAverage < 0)
+                -reportData.totalGroupBenefitAverage else reportData.totalGroupBenefitAverage
+
+            // 금액 차이 계산
+            val diff = myMonthBenefit - otherAverageBenefit
+            val absDiff = kotlin.math.abs(diff)
+            val isLargeDiff = absDiff >= 10000 // 10만원 이상 차이
+            val isSameAmount = myMonthBenefit == otherAverageBenefit
+
+            // 그래프 높이 계산 (차이에 따라 다르게 적용)
+            val baseHeight = 120f // 기본 높이
+
+            // 그래프 높이 로직 수정:
+            // 1. 동일한 경우: 두 막대 모두 동일한 중간 높이
+            // 2. 10만원 이상 차이: 큰 쪽은 훨씬 크게, 작은 쪽은 작게
+            // 3. 10만원 미만 차이: 크기 차이를 적게
+            val (prevHeight, currHeight) = when {
+                // 두 금액이 같을 경우 (동일한 중간 높이)
+                isSameAmount -> Pair(baseHeight, baseHeight)
+
+                // 두 금액 모두 0인 경우
+                otherAverageBenefit == 0 && myMonthBenefit == 0 -> Pair(0f, 0f)
+
+                // 현재 달 금액이 0인 경우
+                myMonthBenefit == 0 -> Pair(baseHeight, 0f)
+
+                // 이전 달 금액이 0인 경우
+                otherAverageBenefit == 0 -> Pair(0f, baseHeight)
+
+                // 10만원 이상 차이가 날 경우
+                isLargeDiff -> {
+                    if (myMonthBenefit>otherAverageBenefit) {
+                        // 현재 달이 더 큰 경우
+                        val ratio = (myMonthBenefit.toFloat() / otherAverageBenefit.toFloat())
+                        val scale = if (ratio > 3f) 3f else ratio // 비율 제한
+                        Pair(baseHeight / scale, baseHeight * 1.8f)
+                    } else {
+                        // 이전 달이 더 큰 경우
+                        val ratio = (otherAverageBenefit.toFloat() / myMonthBenefit.toFloat())
+                        val scale = if (ratio > 3f) 3f else ratio // 비율 제한
+                        Pair(baseHeight * 1.8f, baseHeight / scale)
+                    }
+                }
+
+                // 10만원 미만 차이가 날 경우 (완만한 차이)
+                else -> {
+                    if (myMonthBenefit > otherAverageBenefit) {
+                        val diff = 1f + (absDiff.toFloat() / 10000f * 0.5f) // 최대 1.5배 차이
+                        Pair(baseHeight, baseHeight * diff)
+                    } else {
+                        val diff = 1f + (absDiff.toFloat() / 10000f * 0.5f) // 최대 1.5배 차이
+                        Pair(baseHeight * diff, baseHeight)
+                    }
+                }
+            }
+
+            // 비교 텍스트 계산 (미리 계산하지만 표시는 아래에서)
+            val diffPercentage = if (otherAverageBenefit > 0) {
+                diff.toFloat() / otherAverageBenefit.toFloat() * 100
+            } else if (myMonthBenefit > 0) {
+                100f  // 이전달이 0이고 현재달이 있으면 100% 증가
+            } else {
+                0f  // 두 달 모두 0이면 변화 없음
+            }
+
+            // 그래프 컨테이너
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // 그래프 영역
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    // 이전 달 컬럼
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.width(100.dp)
+                    ) {
+                        // 금액 텍스트 (바로 그래프 위에 - 한 줄로 표시)
+                        Text(
+                            text = "${formatAmount(otherAverageBenefit)}원",
+                            fontSize = 18.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        // 막대 그래프
+                        if (otherAverageBenefit > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .width(80.dp)
+                                    .height(prevHeight.dp)
+                                    .background(
+                                        color = Color.Gray,
+                                        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+                                    )
+                            )
+                        }
+                    }
+
+                    // 현재 달 컬럼
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.width(100.dp)
+                    ) {
+                        // 금액 텍스트 (바로 그래프 위에 - 한 줄로 표시)
+                        Text(
+                            text = "${formatAmount(myMonthBenefit)}원",
+                            fontSize = 18.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        // 막대 그래프
+                        if (myMonthBenefit > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .width(80.dp)
+                                    .height(currHeight.dp)
+                                    .background(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(
+                                                calendarBlue,  // 위쪽 색상
+                                                Color(0xFF5D9CEC)   // 아래쪽 색상
+                                            )
+                                        ),
+                                        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+                                    )
+                            )
+                        }
+                    }
+                }
+
+                // 구분선
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .height(1.dp)
+                        .background(Color.White.copy(alpha = 0.4f))
                 )
-                
-                if (category.benefit > 0) {
+
+                // 선과 월 표시 사이 간격 추가
+                Spacer(modifier = Modifier.height(15.dp))
+
+                // 월 표시 행
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // 이전 월 텍스트
                     Text(
-                        text = " (${formatAmount(category.benefit)}원)",
-                        color = Color(0xFF4CAF50),
-                        fontSize = 16.sp
+                        text = "${reportData.groupName} 소비 그룹",
+                        fontSize = 20.sp,
+                        color = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.width(100.dp),
+                        textAlign = TextAlign.Center
+                    )
+
+                    // 현재 월 텍스트
+                    Text(
+                        text = "나의 혜택",
+                        fontSize = 20.sp,
+                        color = calendarBlue,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.width(100.dp),
+                        textAlign = TextAlign.Center
                     )
                 }
             }
-        }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // 막대 그래프
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(16.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0x33FFFFFF))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(category.getAbsoluteAmount().toFloat() / maxAmount)
-                    .background(calendarBlue)
-            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // 이전 달 대비 소비 비교 - 2줄로 분리하여 하단에 표시
+            if (diff != 0) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // 첫 번째 줄: "이전 달 대비" (흰색)
+                    Text(
+                        text = "내 소비 구간 그룹 평균 대비",
+                        fontSize = 20.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Light
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // 두 번째 줄: 증가/감소 텍스트 (색상 변경)
+                    Text(
+                        text = if (diff > 0)
+                            "혜택을 ${formatAmount(diff)}원 더 받았습니다"
+                        else
+                            "헤택을 ${formatAmount(-diff)}원 덜 받았습니다",
+                        fontSize = 20.sp,
+                        color = calendarBlue,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            } else {
+                // 동일한 경우
+                Text(
+                    text = "이전 달과 소비가 동일합니다",
+                    fontSize = 20.sp,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // 하단 여백
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
@@ -1549,26 +2087,27 @@ fun MonthlyComparisonPage(reportData: ReportData) {
             .wrapContentHeight(align = Alignment.Top)
             .heightIn(min = 400.dp)
             .padding(vertical = 8.dp),
-        cornerRadius = 24f
+        cornerRadius = 15f
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp)
         ) {
+            Spacer(modifier = Modifier.height(15.dp))
             // 타이틀 - 중앙정렬로 변경 및 크기 증가
             Text(
                 text = "월별 소비 비교",
                 color = Color.White,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = title.sp,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp)
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             
             // 소비 금액 (음수로 오면 양수로 변환)
             val currentMonthSpending = if (reportData.totalSpendingAmount < 0) 
@@ -1668,8 +2207,8 @@ fun MonthlyComparisonPage(reportData: ReportData) {
                         if (previousMonthSpending > 0) {
                     Box(
                         modifier = Modifier
-                                    .width(80.dp)
-                                    .height(prevHeight.dp)
+                            .width(80.dp)
+                            .height(prevHeight.dp)
                             .background(
                                 color = Color.Gray,
                                 shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
@@ -1697,8 +2236,8 @@ fun MonthlyComparisonPage(reportData: ReportData) {
                         if (currentMonthSpending > 0) {
                         Box(
                             modifier = Modifier
-                                    .width(80.dp)
-                                    .height(currHeight.dp)
+                                .width(80.dp)
+                                .height(currHeight.dp)
                                 .background(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(
@@ -1716,10 +2255,10 @@ fun MonthlyComparisonPage(reportData: ReportData) {
                 // 구분선
                         Box(
                             modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .height(1.dp)
-                        .background(Color.White.copy(alpha = 0.4f))
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                                .height(1.dp)
+                                .background(Color.White.copy(alpha = 0.4f))
                 )
 
                 // 선과 월 표시 사이 간격 추가
@@ -1764,7 +2303,7 @@ fun MonthlyComparisonPage(reportData: ReportData) {
                         text = "이전 달 대비",
                         fontSize = 20.sp,
                                     color = Color.White,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Light
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -1775,9 +2314,9 @@ fun MonthlyComparisonPage(reportData: ReportData) {
                             "소비가 ${formatAmount(diff)}원 증가했습니다"
                         else
                             "소비가 ${formatAmount(-diff)}원 감소했습니다",
-                        fontSize = 22.sp,
-                        color = if (diff > 0) brightGreen else brightRed,
-                                    fontWeight = FontWeight.Bold
+                        fontSize = 20.sp,
+                        color = calendarBlue,
+                        fontWeight = FontWeight.ExtraBold
                                 )
                             }
             } else {
@@ -1806,7 +2345,7 @@ fun EmptyReportPage(message: String = "리포트 데이터가 없습니다") {
             .wrapContentHeight(align = Alignment.Top)
             .heightIn(min = 300.dp)
             .padding(vertical = 8.dp),
-        cornerRadius = 24f
+        cornerRadius = 15f
     ) {
         Box(
             modifier = Modifier
@@ -1824,13 +2363,22 @@ fun EmptyReportPage(message: String = "리포트 데이터가 없습니다") {
         }
     }
 }
-
+class CalendarViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(CalendarViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return CalendarViewModel(context) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
 // 소비 유형 페이지
 @Composable
 fun ConsumptionTypePage(reportData: ReportData) {
     // 현재 년월 정보 가져오기
-    val viewModel: CalendarViewModel = viewModel()
+    val viewModel: CalendarViewModel = viewModel(factory = CalendarViewModelFactory(LocalContext.current))
     val selectedYearMonth = viewModel.selectedReportYearMonth
+    val userName by viewModel.userName.collectAsState()
 
     // consumptionPatterns가 null이면 예외 발생할 수 있으므로 안전하게 처리
     val consumptionPattern = reportData.consumptionPatterns
@@ -1845,7 +2393,7 @@ fun ConsumptionTypePage(reportData: ReportData) {
             .wrapContentHeight(align = Alignment.Top)
             .heightIn(min = 500.dp)
             .padding(vertical = 8.dp),
-        cornerRadius = 24f
+        cornerRadius = 15f
     ) {
         Column(
             modifier = Modifier
@@ -1857,26 +2405,27 @@ fun ConsumptionTypePage(reportData: ReportData) {
             Text(
                 text = "${selectedYearMonth.year}년 ${selectedYearMonth.monthValue}월",
                 color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 6.dp)
             )
 
             // 사용자 이름 + 유형 (예: "박도하님의 유형은")
             Text(
-                text = "박도하님의 유형은",
+                text = "${userName}님의 유형은,",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
             )
 
             // 소비 유형 이름 (큰 글씨로 중앙에 표시)
             Text(
-                text = "\"${consumptionPattern.patternName}\"",
+                text = "${consumptionPattern.patternName}형 입니다",
                 color = calendarBlue,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
@@ -1884,14 +2433,29 @@ fun ConsumptionTypePage(reportData: ReportData) {
             Spacer(modifier = Modifier.height(6.dp))
 
             // 이미지 (earth.png 사용)
-            Image(
-                painter = painterResource(id = R.drawable.earth),
+
+
+            val imageUrl = consumptionPattern.imgUrl
+
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "소비 유형 이미지",
                 modifier = Modifier
                     .size(180.dp)
                     .padding(vertical = 4.dp),
                 contentScale = ContentScale.Fit
             )
+//            Image(
+//                painter = painterResource(id = R.drawable.earth),
+//                contentDescription = "소비 유형 이미지",
+//                modifier = Modifier
+//                    .size(180.dp)
+//                    .padding(vertical = 4.dp),
+//                contentScale = ContentScale.Fit
+//            )
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -1918,7 +2482,7 @@ fun ConsumptionTypePage(reportData: ReportData) {
             Text(
                 text = "유형별 수치",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = middle.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
@@ -1926,7 +2490,7 @@ fun ConsumptionTypePage(reportData: ReportData) {
             // 외향성 게이지
             GaugeBar(
                 label = "외향성",
-                value = 0,
+                value = reportData.extrovert,
                 maxValue = 100,
                 color = Color(0xFF2196F3)
             )
@@ -1936,9 +2500,9 @@ fun ConsumptionTypePage(reportData: ReportData) {
             // 안정성 게이지
             GaugeBar(
                 label = "안정성",
-                value = 0,
+                value = reportData.variation,
                 maxValue = 100,
-                color = Color(0xFF4CAF50)
+                color = Color(0xFF2196F3)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -1946,9 +2510,9 @@ fun ConsumptionTypePage(reportData: ReportData) {
             // 저축성 게이지
             GaugeBar(
                 label = "저축성",
-                value = 0,
+                value = reportData.overConsumption,
                 maxValue = 100,
-                color = Color(0xFFFF00FF)
+                color = Color(0xFF2196F3)
             )
         }
     }
@@ -1969,14 +2533,15 @@ fun GaugeBar(
         Text(
             text = label,
             color = Color.White,
-            fontSize = 16.sp,
-            modifier = Modifier.width(60.dp)
+            fontSize = small.sp,
+            modifier = Modifier.width(60.dp),
+            fontWeight = FontWeight.Light,
         )
 
         // 게이지 바
         Box(
             modifier = Modifier
-                .weight(1f)
+                .weight(0.9f)
                 .height(16.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color(0x33FFFFFF))
@@ -1993,8 +2558,10 @@ fun GaugeBar(
         Text(
             text = "$value/$maxValue",
             color = Color.White,
-            fontSize = 14.sp,
-            modifier = Modifier.width(60.dp).padding(start = 8.dp)
+            fontSize = verysmall.sp,
+            modifier = Modifier
+                .width(60.dp)
+                .padding(start = 8.dp)
         )
     }
 }
