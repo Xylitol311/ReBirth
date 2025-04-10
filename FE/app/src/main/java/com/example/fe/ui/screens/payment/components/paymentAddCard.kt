@@ -143,7 +143,9 @@ fun CardConfirmationScreen(
     viewModel: PaymentViewModel
 ) {
     // 입력 상태 관리
-    var cardNumberInput by remember { mutableStateOf(cardNumber) }
+    var cardNumberInput by remember {
+        mutableStateOf(formatCardNumber(cardNumber.replace(Regex("[^0-9]"), "")))
+    }
     var expiryDateInput by remember { mutableStateOf(expiryDate) }
     var cardPinPrefix by remember { mutableStateOf("") }
     var cvcInput by remember { mutableStateOf("") }
@@ -159,6 +161,7 @@ fun CardConfirmationScreen(
     var focusedField by remember { mutableStateOf("none") }
 
     var isLoading by remember { mutableStateOf(false) }
+
 
     Column(
         modifier = Modifier
@@ -242,7 +245,9 @@ fun CardConfirmationScreen(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2196F3),
-                        unfocusedBorderColor = if (focusedField == "pin") Color(0xFF2196F3) else Color.LightGray
+                        unfocusedBorderColor = if (focusedField == "pin") Color(0xFF2196F3) else Color.LightGray,
+                        focusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f), // 포커스 상태일 때 플레이스홀더 색상
+                        unfocusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f) // 포커스가 없을 때 플레이스홀더 색상
                     )
                 )
 
@@ -277,7 +282,9 @@ fun CardConfirmationScreen(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2196F3),
-                        unfocusedBorderColor = if (focusedField == "cvc") Color(0xFF2196F3) else Color.LightGray
+                        unfocusedBorderColor = if (focusedField == "cvc") Color(0xFF2196F3) else Color.LightGray,
+                        focusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f), // 포커스 상태일 때 플레이스홀더 색상
+                        unfocusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f) // 포커스가 없을 때 플레이스홀더 색상
                     )
                 )
 
@@ -323,7 +330,9 @@ fun CardConfirmationScreen(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2196F3),
-                        unfocusedBorderColor = if (focusedField == "expiry") Color(0xFF2196F3) else Color.LightGray
+                        unfocusedBorderColor = if (focusedField == "expiry") Color(0xFF2196F3) else Color.LightGray,
+                        focusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f), // 포커스 상태일 때 플레이스홀더 색상
+                        unfocusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f) // 포커스가 없을 때 플레이스홀더 색상
                     )
                 )
 
@@ -337,8 +346,12 @@ fun CardConfirmationScreen(
                 )
 
                 // 카드번호 입력 필드 - 수정된 부분
+                // TextFieldValue도 포매팅된 초기값으로 설정
                 var cardNumberTextFieldValue by remember {
-                    mutableStateOf(TextFieldValue(cardNumber))
+                    mutableStateOf(TextFieldValue(
+                        text = formatCardNumber(cardNumber.replace(Regex("[^0-9]"), "")),
+                        selection = TextRange(0)  // 커서를 처음 위치에 설정
+                    ))
                 }
 
                 OutlinedTextField(
@@ -395,7 +408,9 @@ fun CardConfirmationScreen(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2196F3),
-                        unfocusedBorderColor = if (focusedField == "cardNumber") Color(0xFF2196F3) else Color.LightGray
+                        unfocusedBorderColor = if (focusedField == "cardNumber") Color(0xFF2196F3) else Color.LightGray,
+                        focusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f), // 포커스 상태일 때 플레이스홀더 색상
+                        unfocusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f) // 포커스가 없을 때 플레이스홀더 색상
                     )
                 )
             }
@@ -451,45 +466,11 @@ fun CardConfirmationScreen(
     }
 }
 
-// 카드 정보 항목
-@Composable
-fun CardInfoItem(
-    label: String,
-    value: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            color = Color.White.copy(alpha = 0.7f),
-            fontSize = 16.sp
-        )
-
-        Text(
-            text = value,
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
 // 카드 번호 포맷팅 함수 수정
-internal fun formatCardNumber(cardNumber: String): String {
-    // 하이픈 제거 후 4자리씩 그룹화
-    val cleaned = cardNumber.replace("-", "")
-    val formatted = StringBuilder()
+internal fun formatCardNumber(number: String): String {
+    // 모든 하이픈 제거 후 숫자만 추출
+    val digitsOnly = number.replace(Regex("[^0-9]"), "")
 
-    for (i in cleaned.indices) {
-        if (i > 0 && i % 4 == 0) {
-            formatted.append("-")
-        }
-        formatted.append(cleaned[i])
-    }
-
-    return formatted.toString()
+    // 4자리씩 그룹화하여 하이픈으로 연결
+    return digitsOnly.chunked(4).joinToString("-")
 }

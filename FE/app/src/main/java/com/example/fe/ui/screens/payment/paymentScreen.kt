@@ -176,6 +176,7 @@ fun PaymentScreen(
     val cardWidth = 280.dp
     val horizontalPadding = (screenWidth - cardWidth) / 2
 
+    val hasNoCards = apiCards.isEmpty()
 
     // 바코드/QR 탭 선택 상태 (true: 바코드, false: QR)
     var isBarcodeSelected by remember { mutableStateOf(true) }
@@ -288,12 +289,12 @@ fun PaymentScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             GlassSurface(
                 modifier = Modifier
-                    .fillMaxHeight(0.15f)
+                    .fillMaxHeight(0.12f)
                     .fillMaxWidth(0.68f)
                     .height(48.dp),
                 cornerRadius = 12f
@@ -335,7 +336,7 @@ fun PaymentScreen(
                         // 바코드 탭
                         Box(
                             modifier = Modifier
-                                .weight(1f)
+                                .weight(0.8f)
                                 .fillMaxHeight()
                                 .clickable { onTabSelected(true) },
                             contentAlignment = Alignment.Center
@@ -350,7 +351,7 @@ fun PaymentScreen(
                         // QR 탭
                         Box(
                             modifier = Modifier
-                                .weight(1f)
+                                .weight(0.8f)
                                 .fillMaxHeight()
                                 .clickable { onTabSelected(false) },
                             contentAlignment = Alignment.Center
@@ -366,10 +367,18 @@ fun PaymentScreen(
             }
         }
     }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        if(!showInternalQRScanner){
+        if(hasNoCards) {
+            NoCardAvailableScreen(
+                onAddCardClick = {
+                    // 바로 OCR 스캔으로 이동
+                    onShowCardOCRScan()
+                }
+            )
+        } else if(!showInternalQRScanner){
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -377,7 +386,7 @@ fun PaymentScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(screenHeight * 0.37f)
+                        .height(screenHeight * 0.33f)
                 ) {
                     if (selectedCardIndex == -2 || (selectedCardIndex >= apiCards.size && selectedCardIndex <= apiCards.size + 1)) {
                         // 카드 추가 안내 문구
@@ -468,7 +477,7 @@ fun PaymentScreen(
                                             Text(
                                                 text = "${remainingTime}초",
                                                 color = if (remainingTime <= 10) Color.Red else Color.White,
-                                                fontSize = 14.sp,
+                                                fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
 
@@ -482,79 +491,18 @@ fun PaymentScreen(
                                                     remainingTime = 60
                                                     isTimerActive = true
                                                 },
-                                                modifier = Modifier.size(40.dp)
+                                                modifier = Modifier.size(30.dp)
                                             ) {
                                                 Icon(
                                                     painter = painterResource(id = R.drawable.ic_refresh),
                                                     contentDescription = "새로고침",
                                                     tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
+                                                    modifier = Modifier.size(14.dp)
                                                 )
                                             }
                                         }
                                     }
 
-                                } else {
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            modifier = Modifier.padding(16.dp)
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.card),
-                                                contentDescription = null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(48.dp)
-                                            )
-
-                                            Spacer(modifier = Modifier.height(16.dp))
-
-                                            Text(
-                                                text = "카드가 없습니다",
-                                                fontSize = 20.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White,
-                                                textAlign = TextAlign.Center
-                                            )
-
-                                            Spacer(modifier = Modifier.height(8.dp))
-
-                                            Text(
-                                                text = "새로운 결제 카드를 등록해주세요",
-                                                fontSize = 16.sp,
-                                                color = Color.White.copy(alpha = 0.7f),
-                                                textAlign = TextAlign.Center
-                                            )
-
-                                            Spacer(modifier = Modifier.height(16.dp))
-
-                                            Button(
-                                                onClick = {
-                                                    // 카드 슬라이더를 오른쪽 끝(카드 추가 슬라이더)으로 이동
-                                                    // apiCards.size는 실제 카드의 개수이고, 그 다음 인덱스가 카드 추가 슬라이더의 위치
-                                                    coroutineScope.launch {
-                                                        // 코루틴 내에서 애니메이션 실행
-                                                        lazyListState.animateScrollToItem(apiCards.size + 1)
-                                                    }
-
-                                                    // 카드 추가 모드로 상태 변경
-                                                    selectedCardIndex = -2
-                                                    showAutoCardMode = false
-                                                    showAddCardMode = false
-                                                    selectedCard = null
-                                                },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color(0xFF00BCD4)
-                                                ),
-                                                shape = RoundedCornerShape(8.dp)
-                                            ) {
-                                                Text("카드 등록하기")
-                                            }
-                                        }
-                                    }
                                 }
                             } else if (selectedCard != null) {
                                 val cardToken = viewModel.getTokenForCard(selectedCard!!.cardName)
@@ -698,7 +646,7 @@ fun PaymentScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(screenHeight * 0.18f)
+                        .height(screenHeight * 0.16f)
                 ) {
                     if (!showAutoCardMode && selectedCard != null) {
                         // 일반 카드 모드 - 카드별 별자리 표시
@@ -793,7 +741,7 @@ fun PaymentScreen(
                     onAddCardButtonClick = onAddCardButtonClick, // 카드 추가 버튼 클릭 핸들러 전달
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(screenHeight * 0.3f)
+                        .weight(1f)  // 남은 공간을 모두 차지하도록 weight 사용
                 )
             }
         }
@@ -972,6 +920,61 @@ fun PaymentScreen(
                         fontWeight = FontWeight.Medium
                     )
                 }
+            }
+        }
+    }
+}
+
+// 카드가 없을 때 표시할 컴포넌트 분리
+@Composable
+fun NoCardAvailableScreen(
+    onAddCardClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_error),
+                contentDescription = null,
+                tint = Color(0xFF00BCD4),
+                modifier = Modifier.size(90.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "카드가 없습니다",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "새로운 결제 카드를 등록해주세요",
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onAddCardClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00BCD4)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("카드 등록하기")
             }
         }
     }
