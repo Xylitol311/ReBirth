@@ -3,15 +3,14 @@ package com.example.fe.ui.components.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -20,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -27,10 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.example.fe.R
-
-// starry 배경 색상 정의
-private val StarryBackgroundColor = Color(0xFF0A0A1A)
 
 @Composable
 fun TopBar(
@@ -40,97 +38,98 @@ fun TopBar(
     onProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
-    Column(
+    // 투명한 상태바 아래 탑바 배치
+    Row(
         modifier = Modifier
-            .background(StarryBackgroundColor)
             .fillMaxWidth()
+            .statusBarsPadding() // 상태바 아래로 패딩 추가
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .zIndex(1000f), // 매우 높은 z-index로 별 배경 위에 표시
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // 상태바 영역 (starry 배경색과 동일하게)
-        Spacer(
-            modifier = Modifier
-                .statusBarsPadding()
-                .fillMaxWidth()
-                .background(StarryBackgroundColor)
-        )
-        
-        // 실제 탑바 컨텐츠
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .background(StarryBackgroundColor)
-                .padding(top = 8.dp) // 모든 컨텐츠를 아래로 내림
-        ) {
-            // 중앙에 제목 배치
+        // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
+        if (showBackButton) {
+            // 동그란 배경으로 감싸기
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xAA000000)) // 더 진한 반투명 배경
+                    .clickable { onBackClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        } else {
+            // 뒤로가기 버튼 없을 때 동일한 공간 유지
+            Spacer(modifier = Modifier.width(40.dp))
+        }
+
+        // 중앙에 제목 (필요한 경우에만)
+        if (title.isNotEmpty()) {
+            Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = title,
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.Center)
+                textAlign = TextAlign.Center
             )
-            
-            // 왼쪽 및 오른쪽 아이콘 배치
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
-                if (showBackButton) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "뒤로가기",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(26.dp)
-                            .clickable { onBackClick() }
-                    )
-                } else {
-                    // 뒤로가기 버튼 없을 때 동일한 공간 유지
-                    Spacer(modifier = Modifier.width(26.dp))
-                }
+        }
+        
+        // 남은 공간을 채워서 아이콘들이 오른쪽으로 이동
+        Spacer(modifier = Modifier.weight(1f))
 
-                // 중앙 영역
-                Spacer(modifier = Modifier.weight(1f))
+        // 로그아웃 버튼
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color(0xAA000000)) // 더 진한 반투명 배경
+                .clickable { onLogoutClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = "로그아웃",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+        }
 
-                // 로그아웃 버튼
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "로그아웃",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(26.dp)
-                        .clickable { onLogoutClick() }
-                )
+        Spacer(modifier = Modifier.width(16.dp))
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // 프로필 아이콘
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_person),
-                    contentDescription = "프로필",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(26.dp)
-                        .clickable { onProfileClick() }
-                )
-            }
+        // 프로필 아이콘
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color(0xAA000000)) // 더 진한 반투명 배경
+                .clickable { onProfileClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_person),
+                contentDescription = "프로필",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A1A)
 @Composable
 fun TopBarPreview() {
     TopBar()
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A1A)
 @Composable
 fun TopBarWithBackButtonPreview() {
     TopBar(

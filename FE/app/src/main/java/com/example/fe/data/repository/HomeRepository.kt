@@ -4,6 +4,8 @@ import android.util.Log
 import com.example.fe.data.model.PreBenefitFeedbackResponse
 import com.example.fe.data.model.SummaryResponse
 import com.example.fe.data.model.UserInfoResponse
+import com.example.fe.data.model.cardRecommend.ApiResponse
+import com.example.fe.data.model.cardRecommend.Top3ForAllResponse
 import com.example.fe.data.network.NetworkClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,6 +17,7 @@ import com.example.fe.ui.screens.onboard.viewmodel.dataStore
 class HomeRepository {
     private val TAG = "HomeRepository"
     private val apiService = NetworkClient.homeApiService
+    private val recommendApiService = NetworkClient.cardRecommendApiService
 
     suspend fun getSummary(): Result<SummaryResponse> = withContext(Dispatchers.IO) {
         try {
@@ -36,6 +39,18 @@ class HomeRepository {
             Result.success(response)
         } catch (e: Exception) {
             Log.e(TAG, "getPreBenefitFeedback 오류: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getTop3ForAll(): Result<ApiResponse<Top3ForAllResponse>> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "getTop3ForAll 호출")
+            val response = recommendApiService.getTop3ForAll()
+            Log.d(TAG, "getTop3ForAll 응답: $response")
+            Result.success(response)
+        } catch (e: Exception) {
+            Log.e(TAG, "getTop3ForAll 오류: ${e.message}")
             Result.failure(e)
         }
     }

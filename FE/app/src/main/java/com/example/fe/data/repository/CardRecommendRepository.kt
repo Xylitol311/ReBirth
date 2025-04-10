@@ -38,67 +38,88 @@ class CardRecommendRepository {
     /**
      * 전체 사용자에게 추천하는 TOP 3 카드 목록을 가져옵니다.
      *
-     * @param userId 사용자 ID
      * @param forceRefresh 강제로 새로고침할지 여부
      * @return 추천 카드 목록 응답
      */
-    suspend fun getTop3ForAll(userId: Int, forceRefresh: Boolean = false): Result<Top3ForAllResponse> {
-        Log.d(TAG, "getTop3ForAll 호출: userId=$userId, forceRefresh=$forceRefresh")
-        val cacheKey = "top3_for_all_$userId"
-
-        // 전체 API URL 로그 추가
-        val apiUrl = "${AppConfig.Server.BASE_URL}api/recommend/top3?userId=$userId"
-        Log.d(TAG, "API 엔드포인트 URL: $apiUrl")
-
-        return fetchData(
-            cacheKey = cacheKey,
-            forceRefresh = forceRefresh,
-            fetch = {
-                Log.d(TAG, "API 호출: getTop3ForAll")
-                val response = apiService.getTop3ForAll(userId)
-                if (response.success) {
-                    response.data ?: throw Exception("데이터가 null입니다")
-                } else {
-                    throw Exception(response.message)
-                }
+    suspend fun getTop3ForAll(forceRefresh: Boolean = false): Result<Top3ForAllResponse> = withContext(Dispatchers.IO) {
+        Log.d(TAG, "getTop3ForAll - forceRefresh: $forceRefresh")
+        
+        // 캐시가 유효하고 강제 새로고침이 아니면 캐시된 데이터 반환
+        val cacheKey = "top3ForAll"
+        if (!forceRefresh) {
+            val cachedResponse = cacheStore[cacheKey]
+            if (cachedResponse != null && System.currentTimeMillis() - cacheTimestamps.getOrDefault(cacheKey, 0L) < CACHE_EXPIRY_TIME) {
+                Log.d(TAG, "getTop3ForAll - Returning cached data")
+                @Suppress("UNCHECKED_CAST")
+                return@withContext Result.success(cachedResponse as Top3ForAllResponse)
             }
-        )
+        }
+        
+        try {
+            // API 호출
+            val response = apiService.getTop3ForAll()
+            Log.d(TAG, "getTop3ForAll - API response: $response")
+            
+            // 응답이 성공이면 캐시에 저장
+            if (response.success && response.data != null) {
+                cacheStore[cacheKey] = response.data
+                cacheTimestamps[cacheKey] = System.currentTimeMillis()
+                Log.d(TAG, "getTop3ForAll - Cached new data")
+                return@withContext Result.success(response.data)
+            } else {
+                Log.e(TAG, "getTop3ForAll - API error: ${response.message}")
+                return@withContext Result.failure(Exception(response.message))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "getTop3ForAll - Exception: ${e.message}", e)
+            return@withContext Result.failure(e)
+        }
     }
 
     /**
      * 카테고리별 추천 카드 목록을 가져옵니다.
      *
-     * @param userId 사용자 ID
      * @param forceRefresh 강제로 새로고침할지 여부
      * @return 카테고리별 추천 카드 목록 응답
      */
-    suspend fun getTop3ForCategory(userId: Int, forceRefresh: Boolean = false): Result<List<CategoryRecommendation>> {
-        Log.d(TAG, "getTop3ForCategory 호출: userId=$userId, forceRefresh=$forceRefresh")
-        val cacheKey = "top3_for_category_$userId"
-
-        // 전체 API URL 로그 추가
-        val apiUrl = "${AppConfig.Server.BASE_URL}api/recommend/category?userId=$userId"
-        Log.d(TAG, "API 엔드포인트 URL: $apiUrl")
-
-        return fetchData(
-            cacheKey = cacheKey,
-            forceRefresh = forceRefresh,
-            fetch = {
-                Log.d(TAG, "API 호출: getTop3ForCategory")
-                val response = apiService.getTop3ForCategory(userId)
-                if (response.success) {
-                    response.data ?: throw Exception("데이터가 null입니다")
-                } else {
-                    throw Exception(response.message)
-                }
+    suspend fun getTop3ForCategory(forceRefresh: Boolean = false): Result<List<CategoryRecommendation>> = withContext(Dispatchers.IO) {
+        Log.d(TAG, "getTop3ForCategory - forceRefresh: $forceRefresh")
+        
+        // 캐시가 유효하고 강제 새로고침이 아니면 캐시된 데이터 반환
+        val cacheKey = "top3ForCategory"
+        if (!forceRefresh) {
+            val cachedResponse = cacheStore[cacheKey]
+            if (cachedResponse != null && System.currentTimeMillis() - cacheTimestamps.getOrDefault(cacheKey, 0L) < CACHE_EXPIRY_TIME) {
+                Log.d(TAG, "getTop3ForCategory - Returning cached data")
+                @Suppress("UNCHECKED_CAST")
+                return@withContext Result.success(cachedResponse as List<CategoryRecommendation>)
             }
-        )
+        }
+        
+        try {
+            // API 호출
+            val response = apiService.getTop3ForCategory()
+            Log.d(TAG, "getTop3ForCategory - API response: $response")
+            
+            // 응답이 성공이면 캐시에 저장
+            if (response.success && response.data != null) {
+                cacheStore[cacheKey] = response.data
+                cacheTimestamps[cacheKey] = System.currentTimeMillis()
+                Log.d(TAG, "getTop3ForCategory - Cached new data")
+                return@withContext Result.success(response.data)
+            } else {
+                Log.e(TAG, "getTop3ForCategory - API error: ${response.message}")
+                return@withContext Result.failure(Exception(response.message))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "getTop3ForCategory - Exception: ${e.message}", e)
+            return@withContext Result.failure(e)
+        }
     }
 
     /**
      * 검색 매개변수에 따른 카드 목록을 가져옵니다.
      *
-     * @param userId 사용자 ID
      * @param parameters 검색 매개변수
      * @param forceRefresh 강제로 새로고침할지 여부
      * @return 검색된 카드 목록 응답
@@ -142,65 +163,7 @@ class CardRecommendRepository {
             }
         )
     }
-    /**
-     * 인증된 사용자를 위한 검색 매개변수에 따른 카드 목록을 가져옵니다.
-     *
-     * @param userId 사용자 ID
-     * @param token 사용자 인증 토큰
-     * @param parameters 검색 매개변수
-     * @param forceRefresh 강제로 새로고침할지 여부
-     * @return 검색된 카드 목록 응답
-     */
-    suspend fun searchByParameterWithAuth(
-        userId: Int,
-        token: String,
-        parameters: CardSearchParameters,
-        forceRefresh: Boolean = false
-    ): Result<SearchByParameterResponse> {
-        Log.d(TAG, "searchByParameterWithAuth 호출: userId=$userId, token=$token, parameters=$parameters, forceRefresh=$forceRefresh")
 
-        // 캐시 키 생성 (사용자 ID, 토큰과 매개변수를 포함)
-        val cacheKey = generateCacheKey(
-            "search_auth",
-            userId.toString(),
-            token,
-            parameters.benefitType?.joinToString(",") ?: "",
-            parameters.cardCompany?.joinToString(",") ?: "",
-            parameters.category?.joinToString(",") ?: "",
-            parameters.minPerformanceRange?.toString() ?: "",
-            parameters.maxPerformanceRange?.toString() ?: "",
-            parameters.minAnnualFee?.toString() ?: "",
-            parameters.maxAnnualFee?.toString() ?: ""
-        )
-
-        // 전체 API URL 로그 추가
-        val apiUrl = "${AppConfig.Server.BASE_URL}api/recommend/search?userId=$userId"
-        Log.d(TAG, "API 엔드포인트 URL: $apiUrl")
-
-        return fetchData(
-            cacheKey = cacheKey,
-            forceRefresh = forceRefresh,
-            fetch = {
-                Log.d(TAG, "API 호출: searchByParameterWithAuth")
-                val response = apiService.searchByParameterWithAuth(
-                    token = token,
-                    userId = userId,
-                    benefitType = parameters.benefitType,
-                    cardCompany = parameters.cardCompany,
-                    category = parameters.category,
-                    minPerformanceRange = parameters.minPerformanceRange,
-                    maxPerformanceRange = parameters.maxPerformanceRange,
-                    minAnnualFee = parameters.minAnnualFee,
-                    maxAnnualFee = parameters.maxAnnualFee
-                )
-                if (response.success) {
-                    response.data ?: throw Exception("데이터가 null입니다")
-                } else {
-                    throw Exception(response.message)
-                }
-            }
-        )
-    }
     /**
      * 캐시를 초기화합니다.
      */

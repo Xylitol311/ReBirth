@@ -10,6 +10,7 @@ import com.example.fe.data.network.api.MyCardApiService
 import com.example.fe.data.network.api.PaymentApiService
 import com.example.fe.data.network.api.SummaryService
 import com.example.fe.data.network.api.CalendarApiService
+import com.example.fe.data.network.api.CardRecommendApiService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -44,6 +45,7 @@ object NetworkClient {
         homeApiService = retrofit.create(HomeApiService::class.java)
         summaryService = retrofit.create(SummaryService::class.java)
         calendarApiService = retrofit.create(CalendarApiService::class.java)
+        cardRecommendApiService = retrofit.create(CardRecommendApiService::class.java)
     }
     private lateinit var retrofit: Retrofit
     lateinit var authApiService: AuthApiService
@@ -52,5 +54,6 @@ object NetworkClient {
     lateinit var homeApiService: HomeApiService
     lateinit var summaryService: SummaryService
     lateinit var calendarApiService: CalendarApiService
+    lateinit var cardRecommendApiService: CardRecommendApiService
 }
 

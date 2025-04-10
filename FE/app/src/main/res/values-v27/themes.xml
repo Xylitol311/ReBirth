@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <style name="Theme.FE" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- 시스템 바 설정 -->
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        
+        <!-- 상태바 아이콘 색상 설정 -->
         <item name="android:windowLightStatusBar">false</item>
+        
+        <!-- 추가 상태바 설정 -->
+        <item name="android:enforceStatusBarContrast">false</item>
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        
+        <!-- 안드로이드 11+ 설정 -->
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
-</resources>
+</resources> 

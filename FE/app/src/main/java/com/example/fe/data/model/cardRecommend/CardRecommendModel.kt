@@ -32,11 +32,7 @@ data class CardInfoApi(
     val performanceRange: List<Int>? = null
 )
 
-// top3ForAll 응답 구조
-data class Top3ForAllResponse(
-    val amount: Int,
-    val recommendCards: List<CardInfoApi>?
-)
+// top3ForAll 응답 구조는 Top3ForAllResponse.kt 파일에 정의되어 있습니다.
 
 // top3ForCategory 응답 구조
 data class CategoryRecommendation(
