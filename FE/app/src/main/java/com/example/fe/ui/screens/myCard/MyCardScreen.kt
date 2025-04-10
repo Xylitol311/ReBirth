@@ -254,24 +254,24 @@ fun MyCardScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
+                    .padding(top = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 헤더 줄 (제목과 관리 버튼)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // 왼쪽 여백용 투명 아이콘
-                    Spacer(modifier = Modifier.width(36.dp))
+                    Spacer(modifier = Modifier.width(30.dp))
                     
                     // 중앙 제목
                     Text(
                         text = "내 카드",
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE0E0E0)
                     )
@@ -290,7 +290,7 @@ fun MyCardScreen(
                             }
                         },
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(30.dp)
                             .graphicsLayer {
                                 alpha = uiAlpha
                             }
@@ -304,17 +304,18 @@ fun MyCardScreen(
                 }
 
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = "보유 중인 카드 목록",
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     color = Color(0xFFE0E0E0)
                 )
             }
             
             Spacer(modifier = Modifier.weight(1f))
         }
+
 
         // 로딩 인디케이터 추가
         if (isLoading) {
@@ -354,18 +355,20 @@ fun MyCardScreen(
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center // 중앙 정렬
+
         ) {
+            Spacer(modifier = Modifier.height(40.dp))
             // 카드 슬라이더 (화면 중앙에 배치)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp), // 카드 높이 고정
+                    .height(300.dp), // 카드 높이 고정
                 contentAlignment = Alignment.Center // 중앙 정렬
             ) {
                 // 중앙 정렬을 위한 Box
                 if (realCards.isNotEmpty()) {
                     // 카드 너비와 화면 너비 계산
-                    val cardWidth = 280.dp
+                    val cardWidth = 230.dp
                     val horizontalPadding = (screenWidth - cardWidth) / 2
 
                     HorizontalPager(
@@ -417,8 +420,8 @@ fun MyCardScreen(
                         // 카드 이미지
                         Box(
                             modifier = Modifier
-                                .width(280.dp)
-                                .height(400.dp)
+                                .width(230.dp)
+                                .height(300.dp)
                                 .zIndex(zIndex)
                                 .graphicsLayer(
                                     scaleX = selectedScale,
@@ -432,9 +435,9 @@ fun MyCardScreen(
                                 // URL이 있는 경우 URL 버전의 VerticalCardLayout 사용
                                 VerticalCardLayout(
                                     cardImageUrl = realCards[page].imageUrl,
-                                    width = 280.dp,
-                                    height = 400.dp,
-                                    cornerRadius = 16.dp,
+                                    width = 230.dp,
+                                    height = 300.dp,
+                                    cornerRadius = 13.dp,
                                     onClick = {
                                         if (page == pagerState.currentPage) {
                                             isNavigating = true
@@ -461,7 +464,7 @@ fun MyCardScreen(
                     Text(
                         text = "등록된 카드가 없습니다",
                         color = Color(0xFFE0E0E0),
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(16.dp)
                     )
@@ -475,9 +478,11 @@ fun MyCardScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Spacer(modifier = Modifier.height(40.dp))
+
                     Text(
                         text = realCards[currentCardIndex].name,
-                        fontSize = 28.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF00BCD4),
                         textAlign = TextAlign.Center,
@@ -485,16 +490,16 @@ fun MyCardScreen(
                         overflow = TextOverflow.Ellipsis,  // 넘치면 말줄임표로 표시
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)   // 양쪽 여백 추가
+                            .padding(horizontal = 12.dp)   // 양쪽 여백 추가
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
                     // 사용 금액 진행 상태
                     Column(
                         modifier = Modifier
-                            .width(300.dp)
-                            .padding(vertical = 8.dp),
+                            .width(260.dp)
+                            .padding(vertical = 6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Row(
@@ -504,12 +509,12 @@ fun MyCardScreen(
                             Row {
                                 Text(
                                     text = "사용 금액",
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     color = Color(0xFF00BCD4)
                                 )
                                 Text(
                                     text = " / 실적",
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     color = Color(0xFFE0E0E0)
                                 )
                             }
@@ -531,31 +536,31 @@ fun MyCardScreen(
                             Row {
                                 Text(
                                     text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(currentPerformanceAmount)}원",
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF00BCD4)
                                 )
                                 Text(
                                     text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(nextPerformanceTarget)}원",
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     color = Color.White
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         // 프로그레스 바 컨테이너
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(16.dp)
+                                .height(12.dp)
                         ) {
                             // 배경 바
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(16.dp)
+                                    .height(12.dp)
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(Color(0x33FFFFFF))
                             )
@@ -570,7 +575,7 @@ fun MyCardScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth(currentProgress)
-                                    .height(16.dp)
+                                    .height(12.dp)
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(Color(0xFF00BCD4))
                             )
@@ -600,7 +605,7 @@ fun MyCardScreen(
 
                                         Box(
                                             modifier = Modifier
-                                                .size(16.dp)
+                                                .size(12.dp)
                                                 .offset(x = xOffset)
                                                 .background(
                                                     if (realCards[currentCardIndex].totalSpending >= markerValue) Color(0xFF006064) else Color.Gray.copy(alpha = 0.5f),
@@ -611,7 +616,7 @@ fun MyCardScreen(
                                             Text(
                                                 text = (i + 1).toString(),
                                                 color = Color.White,
-                                                fontSize = 14.sp,
+                                                fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
@@ -621,13 +626,13 @@ fun MyCardScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     // 혜택 금액 진행 상태
                     Column(
                         modifier = Modifier
-                            .width(300.dp)
-                            .padding(vertical = 8.dp),
+                            .width(260.dp)
+                            .padding(vertical = 6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Row(
@@ -637,19 +642,19 @@ fun MyCardScreen(
                             Row {
                                 Text(
                                     text = "받은 혜택",
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     color = Color(0xFF00BCD4)
                                 )
                                 Text(
                                     text = " / 총 혜택",
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     color = Color(0xFFE0E0E0)
                                 )
                             }
                             Row {
                                 Text(
                                     text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].receivedBenefit)}원",
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF00BCD4)  // 금액 부분 청록색으로 변경
                                 )
@@ -659,12 +664,13 @@ fun MyCardScreen(
                                     } else {
                                         " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(realCards[currentCardIndex].maxBenefit)}원"
                                     },
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     color = Color.White
                                 )
-                            }                        }
+                            }
+                        }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         LinearProgressIndicator(
                             progress = {
@@ -680,8 +686,8 @@ fun MyCardScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(16.dp)
-                                .clip(RoundedCornerShape(4.dp)),  // 둥근 모서리 추가
+                                .height(12.dp)
+                                .clip(RoundedCornerShape(2.dp)),  // 둥근 모서리 추가
                             color = Color(0xFF00BCD4),
                             trackColor = Color(0x33FFFFFF)
                         )

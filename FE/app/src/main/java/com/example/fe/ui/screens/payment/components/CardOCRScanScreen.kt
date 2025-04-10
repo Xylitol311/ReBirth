@@ -1,16 +1,12 @@
 package com.example.fe.ui.screens.payment.components
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -71,7 +67,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.fe.ui.screens.payment.PaymentViewModel
-import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
@@ -457,7 +452,7 @@ fun CardOCRScanScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
-// 직접 입력 버튼 추가 (수정됨)
+            // 직접 입력 버튼 추가 (수정됨)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -596,7 +591,7 @@ fun CardOCRScanScreen(
                     }
                 }
             }
-// 하단 팝업 - 스캔 결과 표시 (수정됨)
+            // 하단 팝업 - 스캔 결과 표시 (수정됨)
             if (showBottomPopup) {
                 // 반투명 검정색 배경
                 Box(
