@@ -114,24 +114,27 @@ public class CardService {
             System.out.println(benefitTemplate);
             List<Integer> categoryId = benefitTemplate.getCategoryId();
             List<String> categoryString = categoryJpaRepository.findByCategoryIdInOrderByCategoryId(categoryId);
-            UserCardBenefit byUserIdAndBenefitId = userCardBenefitService.getUserCardBenefit(
+
+
+            UserCardBenefit userCardBenefitOptional = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
                     userId.getValue(),
                     benefitTemplate.getBenefitId(),
-                    cardId,
-                    LocalDateTime.of(year, month,1,0,0));
+                    year,
+                    month
+            ).get();
 
-               cardBenefits.add(
-                        CardBenefit.builder()
-                                .benefitCategory(categoryString)
-                                .receivedBenefitAmount(byUserIdAndBenefitId.getBenefitAmount())
-                                .maxBenefitAmount(
-                                        getMaxBenefit(
-                                                benefitTemplate,
-                                                lastMonthSpendingTier
-                                        )
-                                )
-                                .build());
-            }
+            cardBenefits.add(
+                    CardBenefit.builder()
+                            .benefitCategory(categoryString)
+                            .receivedBenefitAmount(userCardBenefitOptional.getBenefitAmount())
+                            .maxBenefitAmount(
+                                    getMaxBenefit(
+                                            benefitTemplate,
+                                            lastMonthSpendingTier
+                                    )
+                            )
+                            .build());
+        }
 
         return CardDetailResponse.builder()
                 .cardId(cardId)
@@ -152,9 +155,12 @@ public class CardService {
         try {
             // 총 혜택 금액 가져오기 (null이면 0 사용)
             List<Short> amounts = template.getBenefitUsageAmount();
-            Short totalAmount = (amounts != null && spendingTier < amounts.size() && amounts.get(spendingTier) != null)
-                    ? amounts.get(spendingTier)
-                    : 0;
+
+            Short totalAmount = 0;
+
+            if (spendingTier != 0) {
+                totalAmount = amounts.get(spendingTier - 1);
+            }
 
             return totalAmount;
 
