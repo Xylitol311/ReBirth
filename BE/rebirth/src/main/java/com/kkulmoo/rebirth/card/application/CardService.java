@@ -115,6 +115,10 @@ public class CardService {
             List<Integer> categoryId = benefitTemplate.getCategoryId();
             List<String> categoryString = categoryJpaRepository.findByCategoryIdInOrderByCategoryId(categoryId);
 
+            log.info("유저 혜택 조회: userId: {}, benefitTemplateId: {}, year: {}, month: {}", userId.getValue(),
+                    benefitTemplate.getBenefitId(),
+                    year,
+                    month);
 
             UserCardBenefit userCardBenefitOptional = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
                     userId.getValue(),

@@ -24,7 +24,7 @@ public class CardController {
     private final CardService cardService;
 
     @GetMapping("/detail/{cardId}/{year}/{month}")
-    public ResponseEntity<ApiResponseDTO<CardDetailResponse>> getMyCardInfo(@JwtUserId Integer userId,
+    public ResponseEntity<ApiResponseDTO<CardDetailResponse>> getMyCardInfo(@RequestParam Integer userId,
                                                                             @PathVariable Integer cardId,
                                                                             @PathVariable Integer year,
                                                                             @PathVariable Integer month) {
