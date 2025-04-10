@@ -4,7 +4,6 @@ package com.example.fe.ui.screens.splash
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -83,7 +82,7 @@ fun SplashScreen(
                 Box(
                     modifier = Modifier
                         .padding(start = 10.dp)
-                        .width(300.dp)
+                        .width(260.dp)
                         .height(150.dp)
                         .clip(RectangleShape) // 클리핑을 통해 영역 외는 잘림
                 ) {
