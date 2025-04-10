@@ -40,4 +40,10 @@ public class PreBenefitEntity {
 
     @Column(name = "merchant_name", length = 100)
     private String merchantName;
+
+    @Column(name = "payment_card_img_url")
+    private String paymentCardImgUrl;
+
+    @Column(name = "recommended_card_img_url")
+    private String recommendedCardImgUrl;
 }

@@ -93,6 +93,8 @@ public class MainPageService {
                         .realBenefitType(preBenefit.getRealBenefitType().name())
                         .realBenefitAmount(preBenefit.getRealBenefitAmount())
                         .merchantName(preBenefit.getMerchantName())
+                        .paymentCardImgUrl(preBenefit.getPaymentCardImgUrl())
+                        .recommendedCardImgUrl(preBenefit.getRecommendedCardImgUrl())
                         .isGood(preBenefit.getPaymentCardId().equals(preBenefit.getRecommendedCardId()))
                         .build())
                 .orElse(null);

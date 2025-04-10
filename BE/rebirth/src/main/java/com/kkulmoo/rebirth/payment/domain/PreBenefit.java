@@ -20,5 +20,7 @@ public class PreBenefit {
     private BenefitType realBenefitType;
     private Integer realBenefitAmount;
     private String merchantName;
+    private String paymentCardImgUrl;
+    private String recommendedCardImgUrl;
 
 }
