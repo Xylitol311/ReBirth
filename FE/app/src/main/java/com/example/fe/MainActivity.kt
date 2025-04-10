@@ -7,7 +7,6 @@ import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -23,9 +21,7 @@ import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.data.network.NetworkClient
 import com.example.fe.ui.navigation.AppNavigation
 import com.example.fe.ui.navigation.OnboardingNavHost
-
 import com.example.fe.ui.screens.splash.SplashScreen
-
 import com.example.fe.ui.navigation.LoginNavigation
 import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
 import com.example.fe.ui.screens.onboard.viewmodel.AppTokenProvider
@@ -36,29 +32,30 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // *** 상태바 설정을 가장 먼저 처리 ***
+        setupTransparentStatusBar()
+        
         val tokenProvider = AppTokenProvider(applicationContext)
         NetworkClient.init(tokenProvider)
-        // 상태바 색상 강제 설정
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-        window.statusBarColor = Color.BLACK
         
-        // 상태바 아이콘 색상 설정 (밝은 아이콘)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val flags = window.decorView.systemUiVisibility
-            window.decorView.systemUiVisibility = flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
-        }
-        
-        // 시스템 바 컨트롤러 설정
-        WindowCompat.setDecorFitsSystemWindows(window, true)
-        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
-        windowInsetsController.isAppearanceLightStatusBars = false
-        
-        // 엣지 투 엣지 활성화
-        enableEdgeToEdge()
         setContent {
             MainContent()
         }
+    }
+    
+    private fun setupTransparentStatusBar() {
+        // 상태바를 투명하게 만들기
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        window.statusBarColor = Color.TRANSPARENT
+        
+        // 상태바 아이콘을 흰색으로 설정
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window.decorView.systemUiVisibility = window.decorView.systemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+        }
+        
+        // 화면 확장 (상태바까지 콘텐츠 표시)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 }
 

@@ -7,24 +7,23 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.cardRecommend.*
-import com.example.fe.data.repository.CardRecommendRepository
+import com.example.fe.data.network.NetworkClient
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
  * 카드 추천 화면의 ViewModel
  */
 class CardRecommendViewModel : ViewModel() {
-    private val userId = 2
     private val TAG = "CardRecommendViewModel"
+    private val apiService = NetworkClient.cardRecommendApiService
 
-    // Repository 인스턴스
-    private val repository = CardRecommendRepository()
-
-    // UI 상태
+    // UI 상태 (데이터 클래스 방식)
     var uiState by mutableStateOf(CardRecommendUiState())
         private set
 
-    // 초기화
     init {
         loadRecommendations()
     }
@@ -46,27 +45,27 @@ class CardRecommendViewModel : ViewModel() {
             uiState = uiState.copy(isLoading = true)
 
             try {
-                val result = repository.getTop3ForAll(userId, forceRefresh)
-                result.onSuccess { response ->
+                val response = apiService.getTop3ForAll()
+                if (response.success) {
                     uiState = uiState.copy(
-                        top3ForAll = response,
+                        top3ForAll = response.data,
                         isLoading = false,
                         error = null
                     )
-                    Log.d(TAG, "TOP 3 카드 로드 성공: $response")
-                }.onFailure { error ->
+                    Log.d(TAG, "TOP 3 추천 카드 로드 성공: ${response.data}")
+                } else {
                     uiState = uiState.copy(
                         isLoading = false,
-                        error = error.message ?: "알 수 없는 오류가 발생했습니다."
+                        error = response.message
                     )
-                    Log.e(TAG, "TOP 3 카드 로드 실패", error)
+                    Log.e(TAG, "TOP 3 추천 카드 로드 실패: ${response.message}")
                 }
             } catch (e: Exception) {
                 uiState = uiState.copy(
                     isLoading = false,
                     error = e.message ?: "알 수 없는 오류가 발생했습니다."
                 )
-                Log.e(TAG, "TOP 3 카드 로드 중 예외 발생", e)
+                Log.e(TAG, "TOP 3 추천 카드 로드 중 예외 발생", e)
             }
         }
     }
@@ -79,20 +78,20 @@ class CardRecommendViewModel : ViewModel() {
             uiState = uiState.copy(isLoadingCategories = true)
 
             try {
-                val result = repository.getTop3ForCategory(userId, forceRefresh)
-                result.onSuccess { response ->
+                val response = apiService.getTop3ForCategory()
+                if (response.success) {
                     uiState = uiState.copy(
-                        categoryRecommendations = response,
+                        categoryRecommendations = response.data,
                         isLoadingCategories = false,
                         errorCategories = null
                     )
-                    Log.d(TAG, "카테고리별 추천 카드 로드 성공: $response")
-                }.onFailure { error ->
+                    Log.d(TAG, "카테고리별 추천 카드 로드 성공: ${response.data}")
+                } else {
                     uiState = uiState.copy(
                         isLoadingCategories = false,
-                        errorCategories = error.message ?: "알 수 없는 오류가 발생했습니다."
+                        errorCategories = response.message
                     )
-                    Log.e(TAG, "카테고리별 추천 카드 로드 실패", error)
+                    Log.e(TAG, "카테고리별 추천 카드 로드 실패: ${response.message}")
                 }
             } catch (e: Exception) {
                 uiState = uiState.copy(
@@ -128,20 +127,20 @@ class CardRecommendViewModel : ViewModel() {
             uiState = uiState.copy(isLoadingSearch = true)
 
             try {
-                val result = repository.searchByParameter(parameters)
-                result.onSuccess { response ->
+                val response = apiService.searchByParameter(parameters)
+                if (response.success) {
                     uiState = uiState.copy(
-                        searchResults = response,
+                        searchResults = response.data,
                         isLoadingSearch = false,
                         errorSearch = null
                     )
-                    Log.d(TAG, "카드 검색 성공: $response")
-                }.onFailure { error ->
+                    Log.d(TAG, "카드 검색 성공: ${response.data}")
+                } else {
                     uiState = uiState.copy(
                         isLoadingSearch = false,
-                        errorSearch = error.message ?: "알 수 없는 오류가 발생했습니다."
+                        errorSearch = response.message
                     )
-                    Log.e(TAG, "카드 검색 실패", error)
+                    Log.e(TAG, "카드 검색 실패: ${response.message}")
                 }
             } catch (e: Exception) {
                 uiState = uiState.copy(
@@ -344,6 +343,7 @@ class CardRecommendViewModel : ViewModel() {
             icons = extractIconsFromCardInfo(apiCard.cardInfo)
         )
     }
+
     /**
      * 카드사 ID를 이름으로 변환합니다.
      */
@@ -361,7 +361,6 @@ class CardRecommendViewModel : ViewModel() {
             else -> "기타 카드사"
         }
     }
-
 }
 
 /**
@@ -379,12 +378,12 @@ data class CardRecommendUiState(
     val errorCategories: String? = null,
 
     // 검색 결과
-    val searchResults: SearchByParameterResponse? = null,
+    val searchResults: List<CardInfoApi>? = null,
     val isLoadingSearch: Boolean = false,
     val errorSearch: String? = null,
 
     // 선택된 카드 상세 정보
-    val selectedCardDetail: com.example.fe.data.model.cardRecommend.CardInfoApi? = null,
+    val selectedCardDetail: CardInfoApi? = null,
     val isLoadingCardDetail: Boolean = false,
     val errorCardDetail: String? = null,
 
@@ -396,4 +395,23 @@ data class CardRecommendUiState(
         FilterTag("전월 실적", listOf("30만원 미만", "30~50만원"), "전체"),
         FilterTag("연회비", listOf("만원 미만", "1~2만원"), "전체")
     )
+)
+
+// 필터 태그 데이터 클래스 추가
+data class FilterTag(
+    val category: String,
+    val options: List<String>,
+    val selectedOption: String
+)
+
+// UI에서 사용할 카드 정보 데이터 클래스
+data class CardInfo(
+    val id: Int,
+    val name: String,
+    val company: String,
+    val benefits: List<String>,
+    val annualFee: String,
+    val minSpending: String,
+    val cardImage: String?,
+    val icons: List<String>
 )

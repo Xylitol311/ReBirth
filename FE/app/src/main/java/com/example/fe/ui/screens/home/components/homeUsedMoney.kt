@@ -63,7 +63,7 @@ fun HomeUsedMoney(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 32.dp, horizontal = 56.dp),
+                .padding(vertical = 32.dp, horizontal = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -78,7 +78,7 @@ fun HomeUsedMoney(
                 ) {
                     Text(
                         text = "이번 달 소비",
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         color = Color.White
                     )
                     
@@ -86,7 +86,7 @@ fun HomeUsedMoney(
                     
                     Text(
                         text = "${formatAmount(spendingAmount)}원",
-                        fontSize = 32.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF00E1FF)
                     )
@@ -95,7 +95,7 @@ fun HomeUsedMoney(
                     
                     Text(
                         text = "받은 혜택 ${formatAmount(benefitAmount)}원",
-                        fontSize = 22.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         modifier = Modifier.padding(bottom = 24.dp)
@@ -144,9 +144,9 @@ fun HomeUsedMoney(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Bad",
+                        text = "아쉬움",
                         color = if (selectedTabIndex == 0) Color(0xFF2B3674) else Color.White,
-                        fontSize = 20.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -166,9 +166,9 @@ fun HomeUsedMoney(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Good",
+                        text = "잘받음",
                         color = if (selectedTabIndex == 1) Color(0xFF2B3674) else Color.White,
-                        fontSize = 20.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -201,7 +201,7 @@ private fun TempCategorySpendingList(
         if (items.isEmpty()) {
             Text(
                 text = "기록이 없습니다",
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.6f),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -251,7 +251,7 @@ private fun TempCategoryRow(
             )
             Text(
                 text = category,
-                fontSize = 28.sp,
+                fontSize = 16.sp,
                 color = Color.White,
                 modifier = Modifier.padding(start = 8.dp)
             )
@@ -264,7 +264,7 @@ private fun TempCategoryRow(
         ) {
             Text(
                 text = "${amount}원",
-                fontSize = 24.sp,
+                fontSize = 14.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Medium
             )
@@ -275,7 +275,7 @@ private fun TempCategoryRow(
             
             Text(
                 text = "$benefitPrefix${benefit}원 혜택",
-                fontSize = 18.sp,
+                fontSize = 14.sp,
                 color = benefitColor
             )
         }
@@ -299,7 +299,7 @@ private fun CategorySpendingList(
         if (items.isEmpty()) {
             Text(
                 text = "기록이 없습니다",
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.6f),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -348,7 +348,7 @@ private fun CategoryRow(
             )
             Text(
                 text = category,
-                fontSize = 28.sp,
+                fontSize = 16.sp,
                 color = Color.White,
                 modifier = Modifier.padding(start = 8.dp)
             )
@@ -361,7 +361,7 @@ private fun CategoryRow(
         ) {
             Text(
                 text = "${formatAmount(amount)}원",
-                fontSize = 24.sp,
+                fontSize = 14.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Medium
             )
@@ -372,7 +372,7 @@ private fun CategoryRow(
             
             Text(
                 text = "$benefitPrefix${formatAmount(benefit)}원 혜택",
-                fontSize = 18.sp,
+                fontSize = 14.sp,
                 color = benefitColor
             )
         }
@@ -382,14 +382,14 @@ private fun CategoryRow(
 // 카테고리에 맞는 아이콘 리소스 ID 반환 함수
 private fun getCategoryIcon(category: String): Int {
     return when (category) {
-        "식비" -> R.drawable.ic_restaurant
+        "외식" -> R.drawable.ic_restaurant
         "쇼핑" -> R.drawable.ic_shopping
-        "교통" -> R.drawable.ic_coffee
-        "여가" -> R.drawable.ic_coffee
-        "의료" -> R.drawable.ic_coffee
-        "통신" -> R.drawable.ic_coffee
-        "교육" -> R.drawable.ic_coffee
-        else -> R.drawable.ic_shopping // 기본 아이콘
+        "교통" -> R.drawable.ic_traffic
+        "여가" -> R.drawable.ic_entertainment
+        "의료" -> R.drawable.ic_medical
+        "통신" -> R.drawable.ic_communication
+        "교육" -> R.drawable.ic_education
+        else -> R.drawable.ic_else
     }
 }
 

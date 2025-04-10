@@ -40,26 +40,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
 
-
-// 카드 데이터 클래스
-data class CardInfo(
-    val id: Int,
-    val name: String,
-    val company: String,
-    val benefits: List<String>,
-    val annualFee: String,
-    val minSpending: String,
-    val cardImage: String? = null,
-    val icons: List<String> = listOf() // 교통, 식당 등의 아이콘
-)
-
-// 필터 태그 데이터 클래스
-data class FilterTag(
-    val category: String,
-    val options: List<String>,
-    val selectedOption: String
-)
-
 @Composable
 fun CardRecommendScreen(
     viewModel: CardRecommendViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),

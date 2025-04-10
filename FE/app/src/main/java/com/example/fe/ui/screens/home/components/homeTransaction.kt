@@ -57,6 +57,8 @@ fun HomeTransaction(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
             }
