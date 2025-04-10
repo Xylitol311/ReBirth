@@ -17,6 +17,7 @@ public class CardDetailResponse {
     Integer currentPerformanceAmount;
     Short spendingMaxTier;
     Short currentSpendingTier;
+    Short lastMonthPerformance;
     Integer amountRemainingNext;
     List<Integer> performanceRange;
     List<CardBenefit> cardBenefits;

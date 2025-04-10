@@ -1,11 +1,9 @@
 package com.kkulmoo.rebirth.recommend.presentation;
 
 import com.kkulmoo.rebirth.analysis.domain.dto.response.ResponseDTO;
-import com.kkulmoo.rebirth.analysis.infrastructure.repository.ReportCardCategoriesJpaRepository;
 import com.kkulmoo.rebirth.common.annotation.JwtUserId;
 import com.kkulmoo.rebirth.recommend.application.RecommendService;
 import com.kkulmoo.rebirth.recommend.domain.dto.request.SearchParameterDTO;
-import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.RecommendCardForCategoryDTO;
 import com.kkulmoo.rebirth.recommend.domain.dto.response.Top3CardDTO;
 import com.kkulmoo.rebirth.shared.entity.CardTemplateEntity;
