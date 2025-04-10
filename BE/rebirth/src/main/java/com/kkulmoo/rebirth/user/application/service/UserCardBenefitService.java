@@ -125,6 +125,7 @@ public class UserCardBenefitService {
                 .benefitAmount(0)
                 .year(createdAt.getYear())
                 .month(createdAt.getMonthValue())
+                .updateDate(LocalDateTime.now())
                 .build();
     }
 }
