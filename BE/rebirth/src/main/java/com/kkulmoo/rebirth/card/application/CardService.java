@@ -127,6 +127,7 @@ public class CardService {
                 .amountRemainingNext(amountRemainingNext)
                 .performanceRange(cardTemplate.getPerformanceRange())
                 .cardBenefits(cardBenefits)
+                .lastMonthPerformance(card.getSpendingTier())
                 .build();
     }
 
