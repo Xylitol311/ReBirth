@@ -510,6 +510,7 @@ class OnboardingViewModel(
         userToken = ""
         userPin = ""
         userPattern = emptyList()
+        hasCompletedTutorial = false
 
         tokenProvider.invalidateToken()
 
@@ -533,6 +534,7 @@ class OnboardingViewModel(
                 preferences[USER_NAME] = ""
                 preferences[USER_PIN] = ""
                 preferences[USER_PATTERN] = "[]"
+                preferences[HAS_COMPLETED_TUTORIAL] = false
             }
         }
     }
