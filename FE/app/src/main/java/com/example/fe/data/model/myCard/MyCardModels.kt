@@ -16,13 +16,14 @@ data class MyCardInfoData(
     val currentSpendingTier: Int,
     val amountRemainingNext: Int,
     val performanceRange: List<Int>,  // 추가된 필드
-    val cardBenefits: List<CardBenefit>
+    val cardBenefits: List<CardBenefit>,
+    val lastMonthPerformance: Int
 )
 
 data class CardBenefit(
     val benefitCategory: List<String>,  // String에서 List<String>으로 변경
     val receivedBenefitAmount: Int,
-    val remainingBenefitAmount: Int
+    val maxBenefitAmount : Int
 )
 
 data class CardTransactionHistoryResponse(
@@ -64,7 +65,8 @@ data class MyCardData(
     val totalSpending: Int,
     val maxSpending: Int,
     val receivedBenefitAmount: Int,
-    val maxBenefitAmount: Int
+    val maxBenefitAmount: Int,
+    val performanceRange: List<Int>
 )
 
 data class SetMyCardsOrderResponse(

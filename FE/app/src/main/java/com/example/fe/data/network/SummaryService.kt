@@ -7,16 +7,16 @@ import retrofit2.http.Query
 
 interface SummaryService {
     @GET("api/main/summary")
-    suspend fun getSummary(@Query("userId") userId: Int): SummaryResponse
+    suspend fun getSummary(): SummaryResponse
 
     @GET("api/main/summary/card")
-    suspend fun getSummaryCard(@Query("userId") userId: Int): SummaryCardResponse
+    suspend fun getSummaryCard(): SummaryCardResponse
 
     @GET("api/main/summary/category")
-    suspend fun getSummaryCategory(@Query("userId") userId: Int): SummaryCategoryResponse
+    suspend fun getSummaryCategory(): SummaryCategoryResponse
     
     @GET("api/main/prebenefit")
-    suspend fun getPreBenefitFeedback(@Query("userId") userId: Int): PreBenefitFeedbackResponse
+    suspend fun getPreBenefitFeedback(): PreBenefitFeedbackResponse
 }
 
 data class SummaryCardResponse(

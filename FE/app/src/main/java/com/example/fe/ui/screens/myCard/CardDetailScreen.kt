@@ -86,6 +86,14 @@ fun CardDetailScreen(
     var showTabs by remember { mutableStateOf(false) }
     var showContent by remember { mutableStateOf(false) }
 
+    // 배경 전환 애니메이션
+    var showSolidBackground by remember { mutableStateOf(false) }
+    val backgroundAlpha by animateFloatAsState(
+        targetValue = if (showSolidBackground) 1f else 0f,
+        animationSpec = tween(700),
+        label = "backgroundAlpha"
+    )
+
     // 카드 정보 상태 수집
     val cardInfoState by viewModel.cardInfoState.collectAsState()
     val transactionHistoryState by viewModel.transactionHistoryState.collectAsState()
@@ -120,7 +128,7 @@ fun CardDetailScreen(
         if (monthChanged || cardChanged) {
             viewModel.resetTransactionPagination()
             // 거래 내역 데이터 로드 (탭에 상관없이)
-            viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 10)
+            viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
         }
         // 탭이 내역이고 데이터가 없는 경우에만 추가 로드
         else if (selectedTab == 0) {
@@ -128,7 +136,7 @@ fun CardDetailScreen(
             if (currentState !is MyCardViewModel.TransactionHistoryState.Success ||
                 currentState.allTransactions.isEmpty()) {
                 viewModel.resetTransactionPagination()
-                viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 10)
+                viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
             }
         }
     }
@@ -184,13 +192,6 @@ fun CardDetailScreen(
         label = "cardRotation"
     )
 
-    // 배경 투명도 효과
-    val backgroundAlpha by animateFloatAsState(
-        targetValue = if (animationStarted) 1f else 0.7f,
-        animationSpec = tween(700),
-        label = "backgroundAlpha"
-    )
-
     // 거래 내역 가져오기
     val transactions = when (transactionHistoryState) {
         is MyCardViewModel.TransactionHistoryState.Success -> (transactionHistoryState as MyCardViewModel.TransactionHistoryState.Success).transactions
@@ -207,10 +208,21 @@ fun CardDetailScreen(
         else -> null
     }
 
+    val currentMonth = remember { Calendar.getInstance().get(Calendar.MONTH) + 1 }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF0A1931))
+                .graphicsLayer {
+                    alpha = backgroundAlpha
+                }
+        )
+
         when {
             cardInfoState is MyCardViewModel.CardInfoState.Loading && cardInfo == null -> LoadingContent()
             cardInfoState is MyCardViewModel.CardInfoState.Error && cardInfo == null -> ErrorContent(
@@ -259,16 +271,27 @@ fun CardDetailScreen(
                                 )
                             }
 
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowRight,
-                                contentDescription = "다음 달",
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .clickable {
-                                        if (selectedMonth < 12) selectedMonth++
-                                    }
-                                    .size(30.dp)
-                            )
+                            // 현재 월 이후로는 이동 불가능하도록 수정
+                            if (selectedMonth < currentMonth) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowRight,
+                                    contentDescription = "다음 달",
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .clickable {
+                                            if (selectedMonth < currentMonth) selectedMonth++
+                                        }
+                                        .size(30.dp)
+                                )
+                            } else {
+                                // 현재 월일 때는 비활성화된 아이콘 표시
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    tint = Color.Gray.copy(alpha = 0.2f),
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
                         }
                     }
 
@@ -314,8 +337,8 @@ fun CardDetailScreen(
                             ) {
                                 Text(
                                     text = "내역",
-                                    color = if (selectedTab == 0) Color.White else Color.Gray,
-                                    fontSize = 26.sp,
+                                    color = if (selectedTab == 0) Color(0xFF00BCD4) else Color.Gray,
+                                    fontSize = 18.sp,
                                     fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
                                     modifier = Modifier.padding(vertical = 8.dp)
                                 )
@@ -327,7 +350,7 @@ fun CardDetailScreen(
                                         .height(2.dp)
                                         .align(Alignment.CenterHorizontally)
                                         .background(
-                                            color = if (selectedTab == 0) Color.White else Color.Transparent
+                                            color = if (selectedTab == 0) Color(0xFF00BCD4) else Color.Transparent
                                         )
                                 )
                             }
@@ -341,8 +364,8 @@ fun CardDetailScreen(
                             ) {
                                 Text(
                                     text = "혜택",
-                                    color = if (selectedTab == 1) Color.White else Color.Gray,
-                                    fontSize = 26.sp,
+                                    color = if (selectedTab == 1) Color(0xFF00BCD4) else Color.Gray,
+                                    fontSize = 18.sp,
                                     fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
                                     modifier = Modifier.padding(vertical = 8.dp)
                                 )
@@ -350,11 +373,11 @@ fun CardDetailScreen(
                                 // 인디케이터
                                 Box(
                                     modifier = Modifier
-                                        .width(40.dp)
+                                        .width(30.dp)
                                         .height(2.dp)
                                         .align(Alignment.CenterHorizontally)
                                         .background(
-                                            color = if (selectedTab == 1) Color.White else Color.Transparent
+                                            color = if (selectedTab == 1) Color(0xFF00BCD4) else Color.Transparent
                                         )
                                 )
                             }
@@ -378,7 +401,7 @@ fun CardDetailScreen(
                                     transactions = transactions,
                                     isLoadingMore = isLoadingMoreTransactions,
                                     canLoadMore = canLoadMoreTransactions,
-                                    onLoadMore = { viewModel.loadMoreTransactions(cardId, selectedMonth) }
+                                    onLoadMore = { viewModel.loadMoreTransactions() }
                                 )
                                 1 -> cardInfo?.let { BenefitsContent(it) } ?: EmptyBenefitsContent()
                             }
@@ -424,7 +447,7 @@ fun TransactionsContent(
     transactions: List<MyCardViewModel.TransactionInfo>,
     isLoadingMore: Boolean,
     canLoadMore: Boolean,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit  // 이 파라미터는 더 이상 사용하지 않지만 호환성을 위해 유지
 ) {
     // 날짜별로 거래 내역 그룹화
     val transactionsByDate = transactions.groupBy { it.date.substring(0, 10) }
@@ -432,233 +455,204 @@ fun TransactionsContent(
     // 스크롤 상태 관찰
     val listState = rememberLazyListState()
 
-    // 스크롤이 끝에 도달했는지 확인하고 더 로드
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastVisibleIndex ->
-                if (lastVisibleIndex != null &&
-                    lastVisibleIndex >= listState.layoutInfo.totalItemsCount - 3 &&
-                    canLoadMore &&
-                    !isLoadingMore) {
-                    onLoadMore()
-                }
-            }
-    }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
-        // 총 소비 및 혜택 금액 헤더
-        item {
-            GlassSurface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                cornerRadius = 16f,
-            ) {
+    if(transactions.isEmpty()){
+        EmptyTransactionsContent()
+    } else{
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            state = listState
+        ) {
+            // 총 소비 및 혜택 금액 헤더
+            item {
                 Column(
-                    modifier = Modifier.padding(24.dp)  // 패딩 값 키움 (16.dp -> 24.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 20.dp), // 양 옆에 패딩 추가
                 ) {
                     // 총액 정보
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "총 소비",
                             color = Color.White,
-                            fontSize = 26.sp  // 폰트 크기 더 증가
+                            fontSize = 24.sp,  // 폰트 크기 더 증가
+                            fontWeight = FontWeight.Bold
                         )
-                        
+
                         Text(
                             text = formatAmount(transactions.sumOf { it.amount }),
                             color = Color.White,
-                            fontSize = 26.sp,  // 폰트 크기 더 증가
+                            fontSize = 24.sp,  // 폰트 크기 더 증가
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    
-                    Spacer(modifier = Modifier.height(12.dp))  // 간격 약간 증가
-                    
+
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "혜택 받은 금액",
-                            color = Color.White,
-                            fontSize = 24.sp  // 폰트 크기 더 증가
+                            color = Color(0xFF00BCD4),
+                            fontSize = 24.sp,  // 폰트 크기 더 증가
+                            fontWeight = FontWeight.Bold
                         )
-                        
+
                         Text(
                             text = formatAmount(transactions.sumOf { it.benefitAmount }),
-                            color = Color(0xFFCCFF00), // 연두색
+                            color = Color(0xFF00BCD4),
                             fontSize = 24.sp,  // 폰트 크기 더 증가
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
-            }
-        }
-        
-        // 날짜별로 거래 내역 표시
-        transactionsByDate.forEach { (date, dateTransactions) ->
-            item {
-                // 날짜별 패널
-                GlassSurface(
+
+                // 구분선
+                HorizontalDivider(
+                    color = Color(0xFF00BCD4).copy(alpha = 0.4f),
+                    thickness = 1.dp,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    cornerRadius = 16f,
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp)  // 패딩 값 키움 (16.dp -> 24.dp)
+                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 18.dp)
+                )
+            }
+
+            // 날짜별로 거래 내역 표시
+            transactionsByDate.forEach { (date, dailyTransactions) ->
+                item {
+                    // 날짜 헤더와 해당 날짜 총 소비액
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp, horizontal = 28.dp), // 양 옆에 더 많은 패딩 추가
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val formattedDate = formatDate(date)
-                        // 날짜 헤더
+                        // 날짜
                         Text(
-                            text = formattedDate,
+                            text = formatDate(date),
                             color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Normal
                         )
-                        
-                        // 날짜에 해당하는 모든 거래 내역
-                        dateTransactions.forEach { transaction ->
+
+                        // 해당 날짜 총 소비액
+                        Text(
+                            text = "${formatAmount(dailyTransactions.sumOf { it.amount })}원",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
+
+                //해당 날짜의 거래 내역
+                items(dailyTransactions.size) { index ->
+                    val transaction = dailyTransactions[index]
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp, horizontal = 28.dp) // 양 옆에 더 많은 패딩 추가
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // 왼쪽: 카테고리 아이콘 및 상점명
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // 왼쪽: 시간
-                                val time = formatTime(transaction.date)
-                                Text(
-                                    text = time,
-                                    color = Color.White,
-                                    fontSize = 18.sp,  // 폰트 크기 증가
-                                    modifier = Modifier.width(60.dp)
-                                )
-                                
-                                // 중앙: 아이콘과 장소 (좌측 정렬)
-                                Row(
-                                    modifier = Modifier.weight(1f),
-                                    verticalAlignment = Alignment.CenterVertically
+                                // 카테고리 아이콘
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(getCategoryColor(transaction.category), CircleShape),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    // 아이콘
+                                    Text(
+                                        text = transaction.category.first().toString(),
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
 
-                                    val iconColor = getCategoryColor(transaction.category)
+                                Spacer(modifier = Modifier.width(12.dp))
 
-                                    Box(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .background(iconColor, CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = transaction.category.take(1),
-                                            color = Color.Black,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    
-                                    // 장소
+                                Column {
+                                    // 상점명
                                     Text(
                                         text = transaction.merchantName,
                                         color = Color.White,
-                                        fontSize = 20.sp,  // 폰트 크기 증가
-                                        fontWeight = FontWeight.Bold
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Normal
                                     )
-                                }
 
-                                // 오른쪽: 금액
-                                Column(
-                                    modifier = Modifier.width(90.dp),
-                                    horizontalAlignment = Alignment.End
-                                ) {
+                                    // 시간
                                     Text(
-                                        text = formatAmount(transaction.amount),
-                                        color = Color.White,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold
+                                        text = formatTime(transaction.date),
+                                        color = Color.Gray,
+                                        fontSize = 14.sp
                                     )
-
-                                    if (transaction.benefitAmount > 0) {
-                                        Text(
-                                            text = "혜택 ${formatAmount(transaction.benefitAmount)}",
-                                            color = Color(0xFFCCFF00),
-                                            fontSize = 18.sp
-                                        )
-                                    }
                                 }
                             }
-                            
-                            // 마지막 항목이 아니면 구분선 추가
-                            if (transaction != dateTransactions.last()) {
-                                HorizontalDivider(
-                                    color = Color.Gray.copy(alpha = 0.2f),
-                                    thickness = 1.dp,
-                                    modifier = Modifier.padding(vertical = 4.dp)
+
+                            // 오른쪽: 금액 및 혜택
+                            Column(
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                // 금액
+                                Text(
+                                    text = "${formatAmount(transaction.amount)}원",
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Light
                                 )
+
+                                // 혜택 금액 (있는 경우만)
+                                if (transaction.benefitAmount > 0) {
+                                    Text(
+                                        text = "할인 ${formatAmount(transaction.benefitAmount)}원",
+                                        color = Color(0xFF00BCD4),
+                                        fontSize = 14.sp
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-        }
 
-        // 로딩 인디케이터
-        if (isLoadingMore) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
+                // 날짜 구분선 (마지막 날짜가 아니면)
+                if (date != transactionsByDate.keys.last()) {
+                    item {
+                        HorizontalDivider(
+                            color = Color.Gray.copy(alpha = 0.3f),
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 28.dp)
+                        )
+                    }
                 }
             }
         }
-
-        // 더 이상 로드할 내역이 없을 때 메시지
-        if (!canLoadMore && transactions.isNotEmpty()) {
-            item {
-                Text(
-                    text = "더 이상 거래 내역이 없습니다",
-                    color = Color.Gray,
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
-            }
-        }
-
-        // 거래 내역이 없을 때
-        if (transactions.isEmpty() && !isLoadingMore) {
-            item {
-                EmptyTransactionsContent()
-            }
-        }
-
-
     }
 }
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
+
+    // lastMonthPerformance가 0이거나 혜택 목록이 비어있는 경우 혜택 없음으로 처리
+    val hasNoBenefits = cardInfo.lastMonthPerformance == 0 || cardInfo.benefits.isEmpty()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -666,268 +660,317 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
     ) {
         // 실적 구간 표시
         item {
-            GlassSurface(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                cornerRadius = 16f,
+                    .padding(vertical = 8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 실적 구간 프로그레스 바
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .padding(horizontal = 12.dp)
                 ) {
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-// 실적 구간 프로그레스 바
+                    // 배경 바
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(16.dp)
-                            .padding(horizontal = 12.dp)
-                    ) {
-                        // 배경 바
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(16.dp)
-                                .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                        )
+                            .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                    )
 
-                        // 현재 진행률 계산 (0.0 ~ 1.0)
-                        val currentAmount = cardInfo.currentPerformanceAmount.toFloat()
-                        val maxAmount = cardInfo.maxPerformanceAmount.toFloat()
-                        val currentProgress = (currentAmount / maxAmount).coerceIn(0f, 1f)
+                    // 현재 진행률 계산 (0.0 ~ 1.0)
+                    val currentAmount = cardInfo.currentPerformanceAmount.toFloat()
+                    val maxAmount = cardInfo.performanceRange.lastOrNull()?.toFloat() ?: cardInfo.maxPerformanceAmount.toFloat()
+                    val currentProgress = (currentAmount / maxAmount).coerceIn(0f, 1f)
 
-                        // 현재 실적 바
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(currentProgress)
-                                .height(16.dp)
-                                .background(Color(0xFF00BCD4), RoundedCornerShape(8.dp))
-                        )
+                    // 현재 실적 바
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(currentProgress)
+                            .height(16.dp)
+                            .background(Color(0xFF00BCD4), RoundedCornerShape(8.dp))
+                    )
 
-                        // 구간 마커 배치
-                        val maxTier = cardInfo.spendingMaxTier
+                    // 구간 마커 배치
+                    val performanceRanges = cardInfo.performanceRange
 
-                        // 구간이 1개 이상일 때만 마커 표시 (0구간만 있으면 마커 없음)
-                        if (maxTier > 0) {
-                            // 레이아웃 내에서 마커 위치 계산을 위한 BoxWithConstraints 사용
-                            BoxWithConstraints(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                val barWidth = maxWidth
+                    // 구간이 1개 이상일 때만 마커 표시 (마지막 인덱스는 제외)
+                    if (performanceRanges.size > 1) {
+                        // 레이아웃 내에서 마커 위치 계산을 위한 BoxWithConstraints 사용
+                        BoxWithConstraints(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            val barWidth = maxWidth
 
-                                // 1부터 maxTier까지의 마커 표시
-                                for (tier in 1..maxTier) {
-                                    // 각 구간 마커의 위치 계산 (균등 분할)
-                                    // 예: maxTier가 2면, 1번 마커는 1/2 지점에 위치
-                                    val position = tier.toFloat() / (maxTier + 1).toFloat()
-                                    val xOffset = barWidth * position - 12.dp // 마커 중앙이 위치에 오도록 조정
+                            // 마커 개수 (마지막 인덱스 제외)
+                            val markerCount = performanceRanges.size - 1
 
-                                    Box(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .offset(x = xOffset)
-                                            .background(
-                                                if (cardInfo.currentSpendingTier >= tier) Color(0xFF00BCD4) else Color.Gray.copy(alpha = 0.5f),
-                                                CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = tier.toString(),
-                                            color = Color.White,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
+                            // 각 구간별 마커 표시 (마지막 인덱스 제외)
+                            for (i in 0 until markerCount) {
+                                // 마커 위치는 균등 분할 (예: 마커가 2개면 33%, 66% 위치)
+                                val position = (i + 1).toFloat() / (markerCount + 1).toFloat()
+                                val xOffset = barWidth * position - 12.dp // 마커 중앙이 위치에 오도록 조정
+
+                                // 현재 마커가 나타내는 실적 값
+                                val markerValue = performanceRanges[i]
+
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .offset(x = xOffset)
+                                        .background(
+                                            if (cardInfo.currentPerformanceAmount >= markerValue) Color(0xFF006064) else Color.Gray.copy(alpha = 0.5f),
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = (i + 1).toString(),
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    // 실적 정보 표시
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // 왼쪽: 실적/사용금액 정보
-                        Column {
+                // 실적 정보 표시
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // 왼쪽: 실적/사용금액 정보
+                    Column {
+                        Text(
+                            text = "사용금액 / 실적",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "다음 구간까지",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    // 오른쪽: 금액 정보
+                    Column(horizontalAlignment = Alignment.End) {
+                        // 현재 사용 금액에 따른 실적 구간 계산
+                        val currentPerformanceAmount = cardInfo.currentPerformanceAmount
+
+                        // 다음 실적 구간 찾기
+                        val nextPerformanceTarget = cardInfo.performanceRange.find { range ->
+                            range > currentPerformanceAmount
+                        } ?: cardInfo.performanceRange.lastOrNull() ?: 0
+
+                        Row {
                             Text(
-                                text = "사용금액 / 실적",
+                                text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(currentPerformanceAmount)}원",
+                                color = Color(0xFF00BCD4),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(nextPerformanceTarget)}원",
                                 color = Color.White,
-                                fontSize = 14.sp
-                            )
-                            Text(
-                                text = "다음 구간까지",
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 14.sp
+                                fontSize = 16.sp
                             )
                         }
 
-                        // 오른쪽: 금액 정보
-                        Column(horizontalAlignment = Alignment.End) {
-                            Row {
-                                Text(
-                                    text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(cardInfo.currentPerformanceAmount)}원",
-                                    color = Color(0xFF00BCD4),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = " / ${NumberFormat.getNumberInstance(Locale.KOREA).format(cardInfo.maxPerformanceAmount)}원",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                            }
-
-                            // 다음 구간까지 남은 금액 계산 부분 수정
-                            val nextTierAmount = if (cardInfo.currentSpendingTier < cardInfo.spendingMaxTier) {
-                                // 다음 구간의 금액 계산 (구간별로 균등하게 나눈다고 가정)
-                                val amountPerTier = cardInfo.maxPerformanceAmount / cardInfo.spendingMaxTier
-                                val nextTierThreshold = amountPerTier * (cardInfo.currentSpendingTier + 1) // 다음 구간 임계값
-
-                                // 사용금액 - 실적 으로 계산
-                                nextTierThreshold - cardInfo.currentPerformanceAmount
-                            } else {
-                                0 // 이미 최대 구간
-                            }
-
-                            Text(
-                                text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(nextTierAmount)}원 남음",
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 14.sp
-                            )
+                        // 다음 구간까지 남은 금액 계산
+                        val remainingAmount = if (nextPerformanceTarget > currentPerformanceAmount) {
+                            nextPerformanceTarget - currentPerformanceAmount
+                        } else {
+                            0 // 이미 최대 구간
                         }
+
+                        Text(
+                            text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(remainingAmount)}원 남음",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }
+            // 구분선
+            HorizontalDivider(
+                color = Color(0xFF00BCD4).copy(alpha = 0.4f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)
+            )
         }
 
         // 현재 구간 혜택 정보
         item {
-            GlassSurface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                cornerRadius = 16f,
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp)
+            if(hasNoBenefits){
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // 구간 혜택 헤더
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "${cardInfo.currentSpendingTier}구간 혜택",
+                            text = "이번 달 혜택이 없습니다",
                             color = Color.White,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold
                         )
+
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "${formatAmount(cardInfo.benefits.sumOf { it.receivedBenefitAmount })}원",
-                            color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
+                            text = "전월 실적이 없어 이번 달에는 혜택을 받을 수 없습니다.",
+                            color = Color.Gray,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "이번 달 실적을 쌓아 다음 달 혜택을 받아보세요!",
+                            color = Color(0xFF00BCD4),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
                         )
                     }
+                }
+            } else {
+                // 구간 혜택 헤더
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "${cardInfo.lastMonthPerformance}구간 혜택",
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "${formatAmount(cardInfo.benefits.sumOf { it.receivedBenefitAmount })}원",
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
-                    // 혜택 목록
-                    cardInfo.benefits.forEach { benefit ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 혜택 목록
+                cardInfo.benefits.forEachIndexed { index, benefit ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp, horizontal = 28.dp)
+                    ) {
+                        // 혜택 카테고리 및 퍼센트
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // 혜택 카테고리 및 퍼센트
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = benefit.categories.joinToString(", "),
-                                    color = Color.White,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                            Text(
+                                text = benefit.categories.joinToString(", "),
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
 
-                                // 혜택 비율 (카테고리에 따라 다르게 표시)
-                                val benefitPercentage = when {
-                                    benefit.categories.any { it.contains("롯데리아") || it.contains("외식") } -> "1.2% 할인"
-                                    benefit.categories.any { it.contains("쇼핑") || it.contains("소핑") } -> "2% 할인"
-                                    else -> "1% 할인"
-                                }
-
-                                Text(
-                                    text = benefitPercentage,
-                                    color = Color.White,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            // 혜택 비율 (카테고리에 따라 다르게 표시)
+                            val benefitPercentage = when {
+                                benefit.categories.any { it.contains("롯데리아") || it.contains("외식") } -> "1.2% 할인"
+                                benefit.categories.any { it.contains("쇼핑") || it.contains("소핑") } -> "2% 할인"
+                                else -> "1% 할인"
                             }
 
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // 혜택 프로그레스 바
-                            val totalAmount = benefit.receivedBenefitAmount + benefit.remainingBenefitAmount
-                            val progress = if (totalAmount > 0) benefit.receivedBenefitAmount.toFloat() / totalAmount else 0f
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(10.dp)
-                                    .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(progress)
-                                        .height(10.dp)
-                                        .background(Color(0xFF5F77F5), RoundedCornerShape(4.dp))
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // 혜택 상세 금액
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                // 사용한 혜택 금액
-                                Text(
-                                    text = formatAmount(benefit.receivedBenefitAmount) + " 원",
-                                    color = Color.White,
-                                    fontSize = 18.sp
-                                )
-
-                                // 잔여 혜택 금액
-                                Text(
-                                    text = "잔여 : " + formatAmount(benefit.remainingBenefitAmount) + "원",
-                                    color = Color.White,
-                                    fontSize = 18.sp
-                                )
-                            }
-                        }
-
-                        // 구분선 추가
-                        if (benefit != cardInfo.benefits.last()) {
-                            HorizontalDivider(
-                                color = Color.Gray.copy(alpha = 0.2f),
-                                thickness = 1.dp,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                            Text(
+                                text = benefitPercentage,
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // 혜택 프로그레스 바
+                        val totalAmount = benefit.receivedBenefitAmount + benefit.maxBenefitAmount
+                        val progress = if (benefit.maxBenefitAmount == 0) {
+                            1f // 무제한일 경우 프로그레스 바 100% 채움
+                        } else if (totalAmount > 0) {
+                            benefit.receivedBenefitAmount.toFloat() / totalAmount
+                        } else {
+                            0f
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(10.dp)
+                                .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(progress)
+                                    .height(10.dp)
+                                    .background(Color(0xFF5F77F5), RoundedCornerShape(4.dp))
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // 혜택 상세 금액
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // 사용한 혜택 금액
+                            Text(
+                                text = formatAmount(benefit.receivedBenefitAmount) + " 원",
+                                color = Color.White,
+                                fontSize = 18.sp
+                            )
+
+                            // 잔여 혜택 금액
+                            Text(
+                                text = if (benefit.maxBenefitAmount == 0) {
+                                    "무제한"
+                                } else {
+                                    "잔여 : " + formatAmount(benefit.maxBenefitAmount) + "원"
+                                },
+                                color = Color.White,
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
+
+                    // 구분선 추가 (마지막 항목이 아닌 경우)
+                    if (index < cardInfo.benefits.size - 1) {
+                        HorizontalDivider(
+                            color = Color.Gray.copy(alpha = 0.3f),
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
                     }
                 }
             }
@@ -1115,14 +1158,14 @@ fun formatTime(date: String): String {
 // 카테고리별 색상 반환 함수
 fun getCategoryColor(category: String): Color {
     return when (category.lowercase()) {
-        "카페" -> Color(0xFFFFD700) // 금색
-        "쇼핑" -> Color(0xFFFFA500) // 주황색
-        "음식점" -> Color(0xFFFF6347) // 토마토색
-        "편의점" -> Color(0xFF00CED1) // 청록색
-        "마트" -> Color(0xFF32CD32) // 라임색
-        "교통" -> Color(0xFF1E90FF) // 도지블루
-        "의료" -> Color(0xFFFF69B4) // 핫핑크
-        "문화" -> Color(0xFF9370DB) // 보라색
-        else -> Color(0xFFFFD700) // 기본 금색
+        "카페" -> Color(0xFF00BCD4) // 금색
+        "쇼핑" -> Color(0xFF00BCD4) // 주황색
+        "음식점" -> Color(0xFF00BCD4) // 토마토색
+        "편의점" -> Color(0xFF00BCD4) // 청록색
+        "마트" -> Color(0xFF00BCD4) // 라임색
+        "교통" -> Color(0xFF00BCD4) // 도지블루
+        "의료" -> Color(0xFF00BCD4) // 핫핑크
+        "문화" -> Color(0xFF00BCD4) // 보라색
+        else -> Color(0xFF00BCD4) // 기본 금색
     }
 }

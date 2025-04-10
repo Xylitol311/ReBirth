@@ -53,7 +53,9 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
-                .padding(16.dp))  {
+                .navigationBarsPadding()
+                .padding(16.dp)
+            )  {
                 Button(
                     onClick = {
                         navController.navigate("additional_security_setup")
@@ -62,7 +64,6 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
                             viewModel.loadAllMyData(
                                 onSuccess = {
                                     viewModel.generateReportFromMyData(
-                                        userId = 2,
                                         onSuccess = {
                                             Log.e("AuthAPI", "리포트 받아오기 완료!")
                                         },
@@ -80,7 +81,7 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
                     enabled = selectedCards.isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .height(60.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SkyBlue,
@@ -99,13 +100,14 @@ fun CardSelectScreen(navController: NavController, viewModel: OnboardingViewMode
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal =30.dp)
                 .fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("연결할 카드사를 선택해주세요", fontSize = 22.sp)
+            Spacer(modifier = Modifier.height(40.dp))
+            Text("연결할 카드사를 선택해주세요",  fontSize = 24.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -40,6 +40,7 @@ class OnboardingViewModel(
     private val context: Context
 ) : ViewModel() {
     private val authApiService = NetworkClient.authApiService
+
     private val gson = Gson()
 
     companion object {
@@ -181,7 +182,7 @@ class OnboardingViewModel(
                 )
 
                 if (!response.isSuccessful) {
-                    throw Exception("인증번호 확인 실패: ${response.message()}")
+                    throw Exception("인증번호를 다시 확인해주세요")
                 }
 
                 onSuccess()
@@ -209,7 +210,6 @@ class OnboardingViewModel(
     fun getUserPattern(): List<Int> = userPattern
 
     fun getUserPatternType(
-        userId: String,
         year: Int,
         month: Int,
         onSuccess: (ReportWithPatternDTO) -> Unit,
@@ -221,7 +221,6 @@ class OnboardingViewModel(
                 errorMessage = ""
 
                 val response = authApiService.getReportWithPattern(
-                    userId = userId,
                     year = year,
                     month = month
                 )
@@ -294,7 +293,7 @@ class OnboardingViewModel(
                 // 토큰 저장 및 Interceptor 초기화
                 userToken = token
                 userName = name
-
+                tokenProvider.setToken(token)
 
                 context.dataStore.edit { preferences ->
                     preferences[USER_NAME] = name
@@ -336,20 +335,22 @@ class OnboardingViewModel(
                     Log.d("Login", "로그인 실패: ${response}")
                     throw Exception("로그인 실패: ${response.message()}")
                 }
+
+
                 // 헤더에서 토큰 꺼내기
                 val token = response.headers()["Authorization"]?: throw Exception("토큰이 없습니다.")
 
-                Log.d("AuthToken","${token}")
-                Log.d("AuthToken","${response.headers()}")
+                Log.d("AuthToken","로그인 시 ${token}")
 
                 // 토큰 저장 및 Interceptor 초기화
                 userToken = token
-
+                tokenProvider.setToken(token)
 
                 context.dataStore.edit { preferences ->
                     preferences[USER_TOKEN] = token
                 }
-
+                // PIN 로컬 저장도 동시에
+                setUserPin(true)
 
                 // JWT 토큰 저장 등 필요한 후처리 작업이 있다면 여기에
                 onSuccess()
@@ -449,7 +450,6 @@ class OnboardingViewModel(
 
     // 젤 최근 한달치 리포트 생성 함수
     fun generateReportFromMyData(
-        userId: Int,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
@@ -458,7 +458,7 @@ class OnboardingViewModel(
                 isLoading = true
                 errorMessage = ""
 
-                val result = authApiService.generateReportFromMyData(userId)
+                val result = authApiService.generateReportFromMyData()
                 if (result.isSuccessful) {
                     onSuccess()
                 } else {
@@ -475,7 +475,6 @@ class OnboardingViewModel(
     //이후 리포트 생성
     // 리포트 생성 함수
     fun generateAllReportFromMyData(
-        userId: Int,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
@@ -484,7 +483,7 @@ class OnboardingViewModel(
                 isLoading = true
                 errorMessage = ""
 
-                val result = authApiService.createReportAfterStart(userId)
+                val result = authApiService.createReportAfterStart()
                 if (result.isSuccessful) {
                     onSuccess()
                 } else {

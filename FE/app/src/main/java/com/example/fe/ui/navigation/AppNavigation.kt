@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -272,242 +274,250 @@ fun AppNavigation() {
         else -> ""
     }
 
-    Scaffold(
-        topBar = {
-            if (shouldShowUI) {
-                TopBar(
-                    title = screenTitle,
-                    showBackButton = !isMainTabScreen,
-                    onBackClick = {
-                        // 뒤로가기 시 배경 이동 방향 설정 (아래로 이동)
-                        if (currentRoute.startsWith("card_detail")) {
-                            backgroundVerticalDirection = 0
-                        } else if (currentRoute == NavRoutes.HOME_DETAIL) {
-                            // 홈 상세에서 뒤로가기 시 배경 이동 방향 설정 (왼쪽으로 이동)
-                            transitionDirection = -1
-                            // 누적 오프셋 업데이트
-                            cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
-                            // 애니메이션 트리거
-                            animationCounter++
-                        }
-                        
-                        // 뒤로가기
-                        navController.popBackStack()
-                    },
-                    onProfileClick = {
-                    navController.navigate(NavRoutes.MY_PAGE)
-                    },
-                    onLogoutClick = handleLogout
-                )
-            }
-        },
-        bottomBar = {
-            if (shouldShowUI) {
-                BottomNavBar(
-                    navController = navController,
-                    onTabSelected = { item ->
-                        // 현재 선택된 탭과 다른 탭을 선택했을 때만 처리
-                        if (item.route != currentRoute) {
-                            // 탭 선택 시 전환 방향 계산
-                            val newIndex = tabIndices[item.route] ?: 0
-                
-                            // 이전 인덱스 저장
-                            previousTabIndex = currentTabIndex
-                
-                            // 전환 방향 계산 (새 인덱스가 현재보다 크면 오른쪽, 작으면 왼쪽)
-                            transitionDirection = if (newIndex > currentTabIndex) 1 else -1
-                
-                            // 현재 인덱스 업데이트
-                            currentTabIndex = newIndex
-                
-                            // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
-                            cumulativeOffset += transitionDirection * backgroundMovementMultiplier
-                
-                            // 애니메이션 카운터 증가 (애니메이션 트리거)
-                            animationCounter++
-                            
-                            // 네비게이션
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    }
-                )
-            }
-        },
-
-        // 동적 패딩 적용
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+    // 전체 화면 구성
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 1. 별 배경 (가장 밑에 깔림)
+        StarryBackground(
+            scrollOffset = animatedVerticalOffset,
+            horizontalOffset = animatedHorizontalOffset,
+            animationCounter = animationCounter
         ) {
-            StarryBackground(
-                scrollOffset = animatedVerticalOffset,
-                horizontalOffset = animatedHorizontalOffset,
-                animationCounter = animationCounter
-            ) {
-                val cardRecommendViewModel = remember { CardRecommendViewModel() }
-
-                NavHost(
-                    navController = navController,
-                    startDestination = BottomNavItem.Home.route,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-
-                    composable(BottomNavItem.Home.route) {
-                        HomeScreen(
-                            navController = navController,
-                            onScrollOffsetChange = updateScrollOffset  // 콜백 전달
-                        )
-                    }
-
-                    composable(BottomNavItem.MyCard.route) {
-                        MyCardScreen(
-                            navController = navController,
-                            onScrollOffsetChange = updateScrollOffset,
-                            onHorizontalOffsetChange = updateHorizontalOffset,  // 가로 스크롤 오프셋 콜백 추가
-                            onCardClick = { cardItem ->
+            // 별 배경만 그리기
+        }
+        
+        // 2. 메인 UI 콘텐츠
+        Scaffold(
+            // 상단바 설정
+            topBar = {
+                if (shouldShowUI) {
+                    TopBar(
+                        title = screenTitle,
+                        showBackButton = !isMainTabScreen,
+                        onBackClick = {
+                            // 뒤로가기 시 배경 이동 방향 설정 (아래로 이동)
+                            if (currentRoute.startsWith("card_detail")) {
                                 backgroundVerticalDirection = 0
-                                navController.navigate("card_detail/${cardItem.id}")
-                            },
-                            onManageCardsClick = {
-                                navController.navigate(NavRoutes.CARD_MANAGEMENT)
+                            } else if (currentRoute == NavRoutes.HOME_DETAIL) {
+                                // 홈 상세에서 뒤로가기 시 배경 이동 방향 설정 (왼쪽으로 이동)
+                                transitionDirection = -1
+                                // 누적 오프셋 업데이트
+                                cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
+                                // 애니메이션 트리거
+                                animationCounter++
                             }
-                        )
-                    }
-
-                    // 온보딩/로그인 화면 추가
-                    composable(NavRoutes.ONBOARDING) {
-                        OnboardingScreen(
-                            navController = navController,
-                            viewModel = viewModel
-                        )
-                    }
-
-                    composable(BottomNavItem.Payment.route) {
-
-                        PaymentScreen(
-                            onScrollOffsetChange = { offset ->
-                                currentScreenHorizontalOffset = offset
-                            },
-                            viewModel = paymentViewModel,
-                            onNavigateToHome = {
-                                navController.navigate("home") {
-                                    popUpTo("home") { inclusive = true }
+                            
+                            // 뒤로가기
+                            navController.popBackStack()
+                        },
+                        onProfileClick = {
+                            navController.navigate(NavRoutes.MY_PAGE)
+                        },
+                        onLogoutClick = handleLogout
+                    )
+                }
+            },
+            
+            // 하단바 설정
+            bottomBar = {
+                if (shouldShowUI) {
+                    BottomNavBar(
+                        navController = navController,
+                        onTabSelected = { item ->
+                            // 현재 선택된 탭과 다른 탭을 선택했을 때만 처리
+                            if (item.route != currentRoute) {
+                                // 탭 선택 시 전환 방향 계산
+                                val newIndex = tabIndices[item.route] ?: 0
+                    
+                                // 이전 인덱스 저장
+                                previousTabIndex = currentTabIndex
+                    
+                                // 전환 방향 계산 (새 인덱스가 현재보다 크면 오른쪽, 작으면 왼쪽)
+                                transitionDirection = if (newIndex > currentTabIndex) 1 else -1
+                    
+                                // 현재 인덱스 업데이트
+                                currentTabIndex = newIndex
+                    
+                                // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                                cumulativeOffset += transitionDirection * backgroundMovementMultiplier
+                    
+                                // 애니메이션 카운터 증가 (애니메이션 트리거)
+                                animationCounter++
+                                
+                                // 네비게이션
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                            },
-                            onShowQRScanner = {
-                                showQRScanner = true  // QR 스캐너 화면 표시
-                            },
-                            onShowCardOCRScan = {
-                                showCardOCRScan = true  // 카드 OCR 스캔 화면 표시
-                            },
-                            // QR 스캔 모드 상태 콜백 추가
-                            onQRScanModeChange = { isInQRScanMode ->
-                                isQRScanMode = isInQRScanMode
-                            },
-                            onShowPaymentInfo = {
-                                showPaymentInfo = true  // 결제 정보 화면 표시
                             }
+                        }
+                    )
+                }
+            },
+            
+            // 스캐폴드 설정
+            containerColor = Color.Transparent, // 배경을 투명하게 설정
+            contentColor = Color.White, // 내용물 색상을 흰색으로 설정
+            contentWindowInsets = WindowInsets(0, 0, 0, 0), // 인셋 없음
+            modifier = Modifier.fillMaxSize()
+        ) { paddingValues ->
+            // NavHost 설정
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavItem.Home.route,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                composable(BottomNavItem.Home.route) {
+                    HomeScreen(
+                        navController = navController,
+                        onScrollOffsetChange = updateScrollOffset  // 콜백 전달
+                    )
+                }
 
-                        )
-                    }
+                composable(BottomNavItem.MyCard.route) {
+                    MyCardScreen(
+                        navController = navController,
+                        onScrollOffsetChange = updateScrollOffset,
+                        onHorizontalOffsetChange = updateHorizontalOffset,  // 가로 스크롤 오프셋 콜백 추가
+                        onCardClick = { cardItem ->
+                            backgroundVerticalDirection = 0
+                            navController.navigate("card_detail/${cardItem.id}")
+                        },
+                        onManageCardsClick = {
+                            navController.navigate(NavRoutes.CARD_MANAGEMENT)
+                        }
+                    )
+                }
 
-                    composable(BottomNavItem.Calendar.route) {
-                        CalendarScreen()
-                    }
-                    composable(BottomNavItem.CardRecommend.route) {
-                        CardRecommendScreen(
-                            onCardClick = { cardId ->
-                                navController.navigate("card_detail_info/$cardId")
+                // 온보딩/로그인 화면 추가
+                composable(NavRoutes.ONBOARDING) {
+                    OnboardingScreen(
+                        navController = navController,
+                        viewModel = viewModel
+                    )
+                }
+
+                composable(BottomNavItem.Payment.route) {
+
+                    PaymentScreen(
+                        onScrollOffsetChange = { offset ->
+                            currentScreenHorizontalOffset = offset
+                        },
+                        viewModel = paymentViewModel,
+                        onNavigateToHome = {
+                            navController.navigate("home") {
+                                popUpTo("home") { inclusive = true }
                             }
-                        )
-                    }
-
-                    composable(NavRoutes.HOME_DETAIL) {
-                        LaunchedEffect(Unit) {
-                            // 방향을 1로 설정 (오른쪽으로 이동)
-                            transitionDirection = 1
-                            // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
-                            cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
-                            // 애니메이션 트리거
-                            animationCounter++
+                        },
+                        onShowQRScanner = {
+                            showQRScanner = true  // QR 스캐너 화면 표시
+                        },
+                        onShowCardOCRScan = {
+                            showCardOCRScan = true  // 카드 OCR 스캔 화면 표시
+                        },
+                        // QR 스캔 모드 상태 콜백 추가
+                        onQRScanModeChange = { isInQRScanMode ->
+                            isQRScanMode = isInQRScanMode
+                        },
+                        onShowPaymentInfo = {
+                            showPaymentInfo = true  // 결제 정보 화면 표시
                         }
 
-                        HomeDetailScreen(
-                            onBackClick = {
-                                // 뒤로가기 시 애니메이션 방향 설정
-                                transitionDirection = -1
-                                // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
-                                cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
-                                animationCounter++
-                                navController.popBackStack()
-                            }
-                        )
+                    )
+                }
+
+                composable(BottomNavItem.Calendar.route) {
+                    CalendarScreen()
+                }
+                composable(BottomNavItem.CardRecommend.route) {
+                    CardRecommendScreen(
+                        onCardClick = { cardId ->
+                            navController.navigate("card_detail_info/$cardId")
+                        }
+                    )
+                }
+
+                composable(NavRoutes.HOME_DETAIL) {
+                    LaunchedEffect(Unit) {
+                        // 방향을 1로 설정 (오른쪽으로 이동)
+                        transitionDirection = 1
+                        // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                        cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
+                        // 애니메이션 트리거
+                        animationCounter++
                     }
 
-                    composable(
-                        route = "card_detail/{cardId}",
-                        arguments = listOf(
-                            navArgument("cardId") { type = NavType.IntType }
-                        )
-                    ) { backStackEntry ->
-                        val cardId = backStackEntry.arguments?.getInt("cardId") ?: 1
+                    HomeDetailScreen(
+                        onBackClick = {
+                            // 뒤로가기 시 애니메이션 방향 설정
+                            transitionDirection = -1
+                            // 누적 오프셋 업데이트 (별들이 반대 방향으로 이동)
+                            cumulativeOffset += transitionDirection * detailBackgroundMovementMultiplier
+                            animationCounter++
+                            navController.popBackStack()
+                        }
+                    )
+                }
 
-                        CardDetailScreen(
-                            cardId = getCardById(cardId)?.card?.id ?:0,
-                            onBackClick = {
-                                // 뒤로가기 시 배경 이동 방향 설정 (아래로 이동)
-                                backgroundVerticalDirection = 0
-                                // 뒤로가기
-                                navController.popBackStack()
-                            }
-                        )
-                    }
+                composable(
+                    route = "card_detail/{cardId}",
+                    arguments = listOf(
+                        navArgument("cardId") { type = NavType.IntType }
+                    )
+                ) { backStackEntry ->
+                    val cardId = backStackEntry.arguments?.getInt("cardId") ?: 1
 
-                    composable(NavRoutes.CARD_MANAGEMENT) {
-                        CardManagementScreen(
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
+                    CardDetailScreen(
+                        cardId = getCardById(cardId)?.card?.id ?:0,
+                        onBackClick = {
+                            // 뒤로가기 시 배경 이동 방향 설정 (아래로 이동)
+                            backgroundVerticalDirection = 0
+                            // 뒤로가기
+                            navController.popBackStack()
+                        }
+                    )
+                }
 
-                    composable(
-                        route = NavRoutes.CARD_DETAIL_INFO,
-                        arguments = listOf(navArgument("cardId") { type = NavType.IntType })
-                    ) { backStackEntry ->
-                        val cardId = backStackEntry.arguments?.getInt("cardId") ?: 0
-                        val cardRecommendViewModel: CardRecommendViewModel = viewModel()
-                        
-                        CardDetailInfoScreen(
-                            viewModel = cardRecommendViewModel,
-                            cardId = cardId,
-                            onBackClick = {
-                                navController.popBackStack()
-                            },
-                            navController = navController
-                        )
-                    }
+                composable(NavRoutes.CARD_MANAGEMENT) {
+                    CardManagementScreen(
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
 
-                    composable(NavRoutes.MY_PAGE) {
-                        MyPageScreen(
-                            onBackClick = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
+                composable(
+                    route = NavRoutes.CARD_DETAIL_INFO,
+                    arguments = listOf(navArgument("cardId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val cardId = backStackEntry.arguments?.getInt("cardId") ?: 0
+                    val cardRecommendViewModel: CardRecommendViewModel = viewModel()
+                    
+                    CardDetailInfoScreen(
+                        viewModel = cardRecommendViewModel,
+                        cardId = cardId,
+                        onBackClick = {
+                            navController.popBackStack()
+                        },
+                        navController = navController
+                    )
+                }
+
+                composable(NavRoutes.MY_PAGE) {
+                    MyPageScreen(
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
                 }
             }
         }
-
+        
+        // 3. 오버레이 UI (가장 위에 표시)
         // 카드 OCR 스캔 화면 (오버레이로 표시)
         if (showCardOCRScan) {
             Box(
@@ -529,7 +539,7 @@ fun AppNavigation() {
             }
         }
 
-// 결제 정보 화면 (오버레이로 표시)
+        // 결제 정보 화면 (오버레이로 표시)
         if (showPaymentInfo) {
             val cards by paymentViewModel.cards.collectAsState()
             val paymentState by paymentViewModel.paymentState.collectAsState()
@@ -549,13 +559,5 @@ fun AppNavigation() {
                 viewModel = paymentViewModel
             )
         }
-
-//        // 결제 결과 팝업 표시
-//        if (showPaymentResultPopup && paymentResult != null) {
-//            PaymentResultPopup(
-//                paymentResult = paymentResult!!,
-//                onDismiss = { showPaymentResultPopup = false }
-//            )
-//        }
     }
 }

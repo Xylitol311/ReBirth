@@ -8,14 +8,19 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.fe.data.model.payment.PaymentResult
 import com.example.fe.data.model.payment.TokenInfo
+import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.data.network.api.QRTokenRequest
 import com.example.fe.data.repository.PaymentRepository
 import com.example.fe.ui.screens.onboard.viewmodel.AppTokenProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class PaymentViewModel(private val context: Context) : ViewModel() {
@@ -33,8 +38,9 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
             throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
-
-    private val paymentRepository = PaymentRepository()
+    private val paymentRepository = PaymentRepository(
+        tokenProvider = AppTokenProvider(context)
+    )
     
     // 결제 상태 Flow
     private val _paymentState = MutableStateFlow<PaymentState>(PaymentState.Idle)
@@ -62,6 +68,16 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
     // 결제 결과 저장
     private val _paymentResult = MutableStateFlow<PaymentResult?>(null)
     val paymentResult: StateFlow<PaymentResult?> = _paymentResult
+
+    // 카드 등록 상태 클래스
+    sealed class CardRegistrationState {
+        object Initial : CardRegistrationState()
+        object Loading : CardRegistrationState()
+        data class Success(val message: String) : CardRegistrationState()
+        data class Error(val message: String) : CardRegistrationState()
+    }
+    private val _cardRegistrationState = MutableStateFlow<CardRegistrationState>(CardRegistrationState.Initial)
+    val cardRegistrationState: StateFlow<CardRegistrationState> = _cardRegistrationState.asStateFlow()
 
     private var isReconnecting = false
     private val reconnectDelay = 1000L // 1초 후 재연결
@@ -109,8 +125,8 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
                     // 토큰을 받은 후 바로 SSE 연결 시작
                     if (tokens.isNotEmpty()) {
                         // SSE 연결 시작 (userId 사용)
-                         Log.e("PaymentViewModel", "Starting SSE connection with userId: $userId")
-                         connectToPaymentEvents(userId)
+                         Log.e("PaymentViewModel", "Starting SSE connection with userId:")
+                         connectToPaymentEvents()
                     }
                 }
                 .onFailure { error ->
@@ -127,9 +143,9 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
     }
     
     // SSE 연결 시작
-    private fun connectToPaymentEvents(userId: String) {
+    private fun connectToPaymentEvents() {
         viewModelScope.launch {
-            paymentRepository.connectToPaymentEvents(userId)
+            paymentRepository.connectToPaymentEvents()
                 .catch { e ->
                     Log.e("PaymentViewModel", "Error in SSE connection: ${e.message}")
                     _paymentState.value = PaymentState.Error("SSE 연결 오류: ${e.message}")
@@ -140,7 +156,7 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
                         Log.d("PaymentViewModel", "타임아웃으로 인한 SSE 재연결 시도 ($reconnectDelay ms 후)")
                         delay(reconnectDelay)
                         isReconnecting = false
-                        connectToPaymentEvents(userId)
+                        connectToPaymentEvents()
                     }
 
                 }
@@ -153,7 +169,7 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
                         Log.d("PaymentViewModel", "타임아웃 이벤트 감지, SSE 재연결 시도 ($reconnectDelay ms 후)")
                         delay(reconnectDelay)
                         isReconnecting = false
-                        connectToPaymentEvents(userId)
+                        connectToPaymentEvents()
                         return@collect
                     }
 
@@ -310,9 +326,30 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
     
     // 토큰 갱신 요청
     fun refreshTokens() {
-        initializePaymentProcess()
+        viewModelScope.launch {
+            try {
+                Log.d("PaymentViewModel", "토큰 새로고침 시작")
+                _paymentState.value = PaymentState.Loading
+
+                // 토큰 가져오기
+                val result = paymentRepository.getPaymentTokens()
+
+                result.fold(
+                    onSuccess = { tokens ->
+                        Log.d("PaymentViewModel", "토큰 새로고침 성공: ${tokens.size}개")
+                        _paymentState.value = PaymentState.TokensReceived(tokens)
+                    },
+                    onFailure = { error ->
+                        Log.e("PaymentViewModel", "토큰 새로고침 실패: ${error.message}")
+                        _paymentState.value = PaymentState.Error("토큰을 가져오는데 실패했습니다: ${error.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e("PaymentViewModel", "토큰 새로고침 예외 발생: ${e.message}")
+                _paymentState.value = PaymentState.Error("토큰을 가져오는데 실패했습니다: ${e.message}")
+            }
+        }
     }
-    
     // 결제 프로세스 종료
     fun stopPaymentProcess() {
         paymentRepository.disconnectFromPaymentEvents()
@@ -358,8 +395,8 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
     }
 
     // 사용자 ID 가져오기 (현재는 하드코딩된 값 반환)
-    private fun getUserId(): Int {
-        return 2  // 임시로 고정된 사용자 ID 반환
+    private fun getUserId(): String {
+        return userId  // 임시로 고정된 사용자 ID 반환
     }
 
     // QR 토큰 전송
@@ -478,13 +515,13 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
         return try {
             // ISO 8601 형식의 날짜 문자열을 파싱
             val inputFormat = if (dateTimeStr.contains("T")) {
-                java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", java.util.Locale.getDefault())
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
             } else {
-                java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             }
 
             // 출력 형식 지정 (예: 2025-03-31 15:30)
-            val outputFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+            val outputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
             val date = inputFormat.parse(dateTimeStr)
             date?.let { outputFormat.format(it) } ?: dateTimeStr
@@ -496,40 +533,57 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
 
     // 현재 날짜/시간 가져오기
     private fun getCurrentDateTime(): String {
-        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
-        return dateFormat.format(java.util.Date())
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        return dateFormat.format(Date())
     }
 
-    // 카드 추가 함수s
-    fun addCard(cardName: String, cardNumber: String, expiryDate: String, cvv: String) {
+    fun registCard(cardNumber: String, password: String, cvc: String) {
         viewModelScope.launch {
             try {
-                _paymentState.value = PaymentState.Loading
-                
-                // 카드 추가 API 호출 (실제 구현 필요)
-                // 예시: paymentRepository.addCard(userId, cardName, cardNumber, expiryDate, cvv)
-                
-                // 임시 구현: 로컬에서만 카드 추가 (실제로는 API 호출 후 응답 처리 필요)
-                val newCard = PaymentCardInfo(
-                    cardName = cardName,
-                    cardImageUrl = "", // 기본 이미지 사용
-                    constellationInfo = "{}" // 기본 별자리 정보
+                // 상태 업데이트: 로딩 중
+                _cardRegistrationState.value = CardRegistrationState.Loading
+
+                Log.d("PaymentViewModel", "카드 등록 시작: $cardNumber")
+
+                // 실제 API 호출
+                val result = paymentRepository.registerPaymentCard(
+                    cardNumber = cardNumber,
+                    password = password,
+                    cvc = cvc
                 )
-                
-                // 카드 목록에 추가 (임시 구현)
-                val currentCards = _cards.value.toMutableList()
-                currentCards.add(newCard)
-                _cards.value = currentCards
-                
-                // 상태 업데이트
-                _paymentState.value = PaymentState.Ready
-                
-                // 토스트 메시지 표시 (실제 앱에서는 Context 필요)
-                // Toast.makeText(context, "카드가 추가되었습니다", Toast.LENGTH_SHORT).show()
-                
+
+                result.fold(
+                    onSuccess = {
+                        Log.d("PaymentViewModel", "카드 등록 성공")
+
+                        // 성공 상태로 업데이트
+                        _cardRegistrationState.value = CardRegistrationState.Success("카드가 성공적으로 등록되었습니다")
+
+                        // 토큰 새로고침 (카드 목록 갱신)
+                        refreshTokens()
+                    },
+                    onFailure = { error ->
+                        Log.e("PaymentViewModel", "카드 등록 실패: ${error.message}")
+
+                        // 실패 상태로 업데이트
+                        _cardRegistrationState.value = CardRegistrationState.Error(
+                            error.message ?: "카드 등록에 실패했습니다"
+                        )
+                    }
+                )
             } catch (e: Exception) {
-                _paymentState.value = PaymentState.Error("카드 추가 실패: ${e.message}")
+                Log.e("PaymentViewModel", "카드 등록 예외 발생: ${e.message}")
+
+                // 예외 발생 시 실패 상태로 업데이트
+                _cardRegistrationState.value = CardRegistrationState.Error(
+                    e.message ?: "카드 등록 중 오류가 발생했습니다"
+                )
             }
         }
     }
-} 
+
+    // 카드 등록 상태 초기화
+    fun resetCardRegistrationState() {
+        _cardRegistrationState.value = CardRegistrationState.Initial
+    }
+}

@@ -30,6 +30,8 @@ import com.example.fe.data.model.PreBenefitFeedbackData
 import com.example.fe.ui.components.cards.HorizontalCardLayout
 import com.example.fe.ui.components.backgrounds.GlassSurface
 import com.example.fe.ui.screens.home.HomeViewModel
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun HomeTransaction(
@@ -38,13 +40,36 @@ fun HomeTransaction(
 ) {
     val preBenefitFeedback by viewModel.preBenefitFeedback.collectAsState()
     
-    // API 응답이 아직 없는 경우 아무것도 표시하지 않음
-    if (preBenefitFeedback == null) return
+    // API 응답이 아직 없는 경우 기본 UI 표시
+    if (preBenefitFeedback == null) {
+        GlassSurface(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 30.dp, vertical = 8.dp),
+            cornerRadius = 16f
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "최근 거래 내역이 없습니다",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        return
+    }
     
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(horizontal = 30.dp, vertical = 8.dp),
         cornerRadius = 16f
     ) {
         Column(
@@ -114,7 +139,7 @@ private fun GoodTransactionFeedback(
         )
         
         Text(
-            text = "${data.amount}원 결제",
+            text = "${formatAmount(data.amount)}원 결제",
             fontSize = 22.sp,
             color = Color.White,
             textAlign = TextAlign.Center,
@@ -123,7 +148,7 @@ private fun GoodTransactionFeedback(
         
         // 혜택 정보
         Text(
-            text = "${data.realBenefitAmount}원의 혜택을 받았어요",
+            text = "${formatAmount(data.realBenefitAmount)}원의 혜택을 받았어요",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
@@ -190,7 +215,7 @@ private fun BadTransactionFeedback(
                 )
                 
                 Text(
-                text = "${data.amount}원 결제",
+                text = "${formatAmount(data.amount)}원 결제",
                     fontSize = 22.sp,
                     color = Color.White,
                     textAlign = TextAlign.Center,
@@ -242,7 +267,7 @@ private fun BadTransactionFeedback(
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
                     Text(
-                    text = "${data.ifBenefitAmount}원",
+                    text = "${formatAmount(data.ifBenefitAmount)}원",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -256,5 +281,10 @@ private fun BadTransactionFeedback(
             }
         }
     }
+}
+
+// 금액 포맷팅 함수
+private fun formatAmount(amount: Int): String {
+    return NumberFormat.getNumberInstance(Locale.KOREA).format(amount)
 }
 

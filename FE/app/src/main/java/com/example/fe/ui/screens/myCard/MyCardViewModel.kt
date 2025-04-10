@@ -369,37 +369,14 @@ class MyCardViewModel() : ViewModel() {
     private val _canLoadMoreTransactions = MutableStateFlow(true)
     val canLoadMoreTransactions = _canLoadMoreTransactions.asStateFlow()
 
-    private var currentPage = 0
-    private val pageSize = 10
-
     // 거래 내역 더 로드하기
-    fun loadMoreTransactions(cardId: Int, month: Int = selectedMonth.value) {
-        if (_isLoadingMoreTransactions.value || !_canLoadMoreTransactions.value) return
-
-        viewModelScope.launch {
-            _isLoadingMoreTransactions.value = true
-
-            try {
-                currentPage++
-                getCardTransactionHistory(cardId, month, currentPage, pageSize)
-            } catch (e: Exception) {
-                Log.e(TAG, "추가 거래 내역 로드 중 오류 발생", e)
-            } finally {
-                _isLoadingMoreTransactions.value = false
-            }
-        }
+    fun loadMoreTransactions() {
     }
 
     // 거래 내역 초기화 (탭 변경이나 월 변경 시 호출)
     fun resetTransactionPagination() {
-        currentPage = 0
-        _canLoadMoreTransactions.value = true
-
-        // 기존 거래 내역 상태 초기화
-        _transactionHistoryState.value = when (val currentState = _transactionHistoryState.value) {
-            is TransactionHistoryState.Success -> TransactionHistoryState.Loading(emptyList())
-            else -> TransactionHistoryState.Loading(emptyList())
-        }
+        _isLoadingMoreTransactions.value = false
+        _canLoadMoreTransactions.value = false
     }
 
     /**
@@ -490,7 +467,8 @@ class MyCardViewModel() : ViewModel() {
                 totalSpending = data.totalSpending,
                 maxSpending = data.maxSpending,
                 receivedBenefit = data.receivedBenefitAmount,
-                maxBenefit = data.maxBenefitAmount
+                maxBenefit = data.maxBenefitAmount,
+                performanceRange = data.performanceRange
             )
         }.also {
             Log.d(TAG, "카드 매핑 결과: ${it.size}개의 카드")
@@ -508,12 +486,13 @@ class MyCardViewModel() : ViewModel() {
             spendingMaxTier = data.spendingMaxTier,
             currentSpendingTier = data.currentSpendingTier,
             amountRemainingNext = data.amountRemainingNext,
+            lastMonthPerformance = data.lastMonthPerformance,
             performanceRange = data.performanceRange, // 추가된 필드
             benefits = data.cardBenefits.map { benefit ->
                 BenefitInfo(
                     categories = benefit.benefitCategory, // category에서 benefitCategory로 변경, String에서 List<String>으로 변경
                     receivedBenefitAmount = benefit.receivedBenefitAmount,
-                    remainingBenefitAmount = benefit.remainingBenefitAmount
+                    maxBenefitAmount = benefit.maxBenefitAmount
                 )
             }
         )
@@ -543,7 +522,8 @@ class MyCardViewModel() : ViewModel() {
         val totalSpending: Int = 0,
         val maxSpending: Int = 0,
         val receivedBenefit: Int = 0,
-        val maxBenefit: Int = 0
+        val maxBenefit: Int = 0,
+        val performanceRange: List<Int>
     )
 
     // CardInfo 클래스 수정
@@ -556,6 +536,7 @@ class MyCardViewModel() : ViewModel() {
         val spendingMaxTier: Int,
         val currentSpendingTier: Int,
         val amountRemainingNext: Int,
+        val lastMonthPerformance: Int,
         val performanceRange: List<Int>, // 추가된 필드
         val benefits: List<BenefitInfo>
     )
@@ -564,7 +545,7 @@ class MyCardViewModel() : ViewModel() {
     data class BenefitInfo(
         val categories: List<String>, // String에서 List<String>으로 변경
         val receivedBenefitAmount: Int,
-        val remainingBenefitAmount: Int
+        val maxBenefitAmount: Int
     )
 
     data class TransactionInfo(

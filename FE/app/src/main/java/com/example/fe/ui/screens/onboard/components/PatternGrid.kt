@@ -32,8 +32,8 @@ fun PatternGrid(
 ) {
     val rows = 3
     val columns = 3
-    val pointRadius = 20.dp
-    val spacing = 100.dp // 점 간 간격을 넉넉하게
+    val pointRadius = 13.dp
+    val spacing = 110.dp // 점 간 간격을 넉넉하게
     val pointColor = Color(0xFF00D9FF)
     val touchSlop = 35f
 
