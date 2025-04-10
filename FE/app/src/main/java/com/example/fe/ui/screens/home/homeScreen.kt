@@ -55,7 +55,7 @@ fun HomeHeader(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 16.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
         // 행성 이미지를 오른쪽 상단에 배치하고 위로 올림
         Image(
@@ -174,7 +174,7 @@ fun HomeScreen(
                     HomeRecCard(
                         viewModel = viewModel,
                         onCardClick = { cardId ->
-                            navController.navigate("${NavRoutes.CARD_DETAIL}/$cardId")
+                            navController.navigate("card_detail_info/$cardId")
                         }
                     )
                 }
