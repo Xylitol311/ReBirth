@@ -27,18 +27,18 @@ fun TutorialNavHost(onboardingViewModel: OnboardingViewModel) {
             val tutorialPages = listOf(
                 TutorialPage(
                     title = "당신의 소비는 조화로운 지구형입니다.",
-                    description = "당신의 소비 유형을 분석하고 나만의 행성을 가져보세요",
+                    description = "당신의 소비 유형을 분석하고\n나만의 행성을 가져보세요",
                     imageRes = R.drawable.earth
                 ),
                 TutorialPage(
-                    title = "당신에게 필요한 별자리는 삼성카드 taptap O",
-                    description = "특별한 별자리로 내 카드를 표현하세요",
-                    imageRes = R.drawable.card_samsung
+                    title = "당신에게 필요한 별자리는 바로 이것!",
+                    description = "특별한 별자리로\n내 카드를 표현하세요",
+                    imageRes = R.drawable.shinhan_card
                 ),
                 TutorialPage(
-                    title = "REBIRTH 슈퍼 카드로 가장 최적의 별자리를 제안해드립니다.",
-                    description = "별자리의 힘을 받아 최고 혜택 카드로 자동 결제하세요.",
-                    imageRes = R.drawable.constellation
+                    title = "REBIRTH 슈퍼 카드로 가장\n최적의 별자리를 제안해드립니다.",
+                    description = "별자리의 힘을 받아\n최고 혜택 카드로 자동 결제하세요.",
+                    imageRes = R.drawable.constellation2
                 )
             )
 
