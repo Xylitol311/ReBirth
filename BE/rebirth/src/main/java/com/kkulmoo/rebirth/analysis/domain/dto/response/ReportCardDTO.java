@@ -15,6 +15,8 @@ public class ReportCardDTO {
 
     String name;
 
+    String cardImg;
+
     @JsonProperty("total_count")
     int totalCount;
 
