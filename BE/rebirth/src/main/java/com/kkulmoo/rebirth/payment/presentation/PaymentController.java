@@ -63,17 +63,19 @@ public class PaymentController {
 
     // 온라인 일회용 토큰 생성 엔드포인트
     @PostMapping("/onlinedisposabletoken")
-    public ResponseEntity<?> generateOnlineDisposableToken(@RequestBody OnlinePayDTO onlinePay) throws Exception {
+    public ResponseEntity<?> generateOnlineDisposableToken(
+            @JwtUserId Integer userId,
+            @RequestBody OnlinePayDTO onlinePay) throws Exception {
         // QR 토큰 검증을 통해 가맹점 정보 추출
         String[] merchantInfo = paymentTokenService.validateQRToken(onlinePay.getToken());
         // 사용자 보유 카드 정보 조회
-        List<String[]> cardInfo = paymentTokenService.getAllUsersPermanentTokenAndTemplateId(onlinePay.getUserId());
+        List<String[]> cardInfo = paymentTokenService.getAllUsersPermanentTokenAndTemplateId(userId);
         // 온라인 일회용 토큰 생성 및 DB 저장
         List<PaymentTokenResponseDTO> disposableTokens = paymentTokenService.createOnlineDisposableToken(
                 cardInfo,
                 merchantInfo[0],
                 Integer.parseInt(merchantInfo[1]),
-                onlinePay.getUserId()
+                userId
         );
         // 온라인 결제 응답 DTO 구성
         OnlinePayResponseDTO onlineResponse = OnlinePayResponseDTO.builder()
@@ -100,8 +102,4 @@ public class PaymentController {
         ApiResponseDTO apiResponseDTO = new ApiResponseDTO(true, "결제 응답", cardTransactionDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }
-
-
-
-
 }
