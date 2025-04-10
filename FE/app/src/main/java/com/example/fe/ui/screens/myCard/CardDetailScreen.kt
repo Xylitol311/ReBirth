@@ -105,6 +105,10 @@ fun CardDetailScreen(
     val isLoadingMoreTransactions by viewModel.isLoadingMoreTransactions.collectAsState()
     val canLoadMoreTransactions by viewModel.canLoadMoreTransactions.collectAsState()
 
+    // 거래 내역 로딩 재시도 상태 추가
+    var retryCount by remember { mutableIntStateOf(0) }
+    val maxRetries = 3
+
     LaunchedEffect(key1 = cardId, key2 = selectedMonth, key3 = selectedTab) {
         // 초기 설정
         viewModel.setSelectedCard(cardId)
@@ -132,6 +136,7 @@ fun CardDetailScreen(
             viewModel.resetTransactionPagination()
             // 거래 내역 데이터 로드 (탭에 상관없이)
             viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
+            retryCount = 0 // 재시도 카운트 초기화
         }
         // 탭이 내역이고 데이터가 없는 경우에만 추가 로드
         else if (selectedTab == 0) {
@@ -140,9 +145,34 @@ fun CardDetailScreen(
                 currentState.allTransactions.isEmpty()) {
                 viewModel.resetTransactionPagination()
                 viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
+                retryCount = 0 // 재시도 카운트 초기화
             }
         }
     }
+
+    // 거래 내역 상태 변경 감지 및 자동 재시도
+    LaunchedEffect(transactionHistoryState) {
+        when (val state = transactionHistoryState) {
+            is MyCardViewModel.TransactionHistoryState.Error -> {
+                // 오류 발생 시 최대 3회까지 자동 재시도
+                if (retryCount < maxRetries && selectedTab == 0) {
+                    delay(1000) // 1초 대기 후 재시도
+                    retryCount++
+                    viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
+                }
+            }
+            is MyCardViewModel.TransactionHistoryState.Success -> {
+                // 성공했지만 데이터가 비어있는 경우 재시도
+                if (state.allTransactions.isEmpty() && retryCount < maxRetries && selectedTab == 0) {
+                    delay(1000) // 1초 대기 후 재시도
+                    retryCount++
+                    viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
+                }
+            }
+            else -> { /* 다른 상태는 처리하지 않음 */ }
+        }
+    }
+
 
     // 애니메이션 시작 - 지연 적용
     LaunchedEffect(key1 = true) {
@@ -399,14 +429,64 @@ fun CardDetailScreen(
                                 .weight(1f) // 남은 공간 모두 차지
                                 .padding(top = 8.dp) // 상단 여백 추가
                         ) {
-                            when (selectedTab) {
-                                0 -> TransactionsContent(
-                                    transactions = transactions,
-                                    isLoadingMore = isLoadingMoreTransactions,
-                                    canLoadMore = canLoadMoreTransactions,
-                                    onLoadMore = { viewModel.loadMoreTransactions() }
-                                )
-                                1 -> cardInfo?.let { BenefitsContent(it) } ?: EmptyBenefitsContent()
+                            if (selectedTab == 0) {
+                                when (val state = transactionHistoryState) {
+                                    is MyCardViewModel.TransactionHistoryState.Loading -> {
+                                        LoadingContent()
+                                    }
+                                    is MyCardViewModel.TransactionHistoryState.Success -> {
+                                        TransactionsContent(
+                                            transactions = state.allTransactions,
+                                            isLoadingMore = isLoadingMoreTransactions,
+                                            canLoadMore = canLoadMoreTransactions,
+                                            onLoadMore = {
+                                                viewModel.loadMoreTransactions()
+                                            },
+                                            isRetrying = retryCount < maxRetries && state.allTransactions.isEmpty(),
+                                            onRetry = {
+                                                retryCount = 0
+                                                viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
+                                            }
+                                        )
+                                    }
+                                    is MyCardViewModel.TransactionHistoryState.Error -> {
+                                        // 이전 데이터가 있으면 표시
+                                        if (state.previousTransactions != null && state.previousTransactions.isNotEmpty()) {
+                                            TransactionsContent(
+                                                transactions = state.previousTransactions,
+                                                isLoadingMore = false,
+                                                canLoadMore = false,
+                                                onLoadMore = {},
+                                                isRetrying = retryCount < maxRetries,
+                                                onRetry = {
+                                                    retryCount = 0
+                                                    viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
+                                                }
+                                            )
+                                        } else {
+                                            // 재시도 중이면 로딩 표시
+                                            if (retryCount < maxRetries) {
+                                                LoadingContent()
+                                            } else {
+                                                // 최대 재시도 후에도 오류면 오류 화면
+                                                ErrorContent(
+                                                    message = state.message,
+                                                    onRetry = {
+                                                        retryCount = 0
+                                                        viewModel.getCardTransactionHistory(cardId, selectedMonth, 0, 50)
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                    else -> {
+                                        LoadingContent()
+                                    }
+                                }
+                            } else {
+                                // 혜택 탭 내용
+                                cardInfo?.let { BenefitsContent(it) } ?: EmptyBenefitsContent()
+
                             }
                         }
                     }
@@ -450,7 +530,9 @@ fun TransactionsContent(
     transactions: List<MyCardViewModel.TransactionInfo>,
     isLoadingMore: Boolean,
     canLoadMore: Boolean,
-    onLoadMore: () -> Unit  // 이 파라미터는 더 이상 사용하지 않지만 호환성을 위해 유지
+    onLoadMore: () -> Unit,
+    isRetrying: Boolean = false,
+    onRetry: () -> Unit = {}
 ) {
     // 날짜별로 거래 내역 그룹화
     val transactionsByDate = transactions.groupBy { it.date.substring(0, 10) }
@@ -458,9 +540,23 @@ fun TransactionsContent(
     // 스크롤 상태 관찰
     val listState = rememberLazyListState()
 
+    // 자동 재시도 로직
+    LaunchedEffect(isRetrying) {
+        if (isRetrying && transactions.isEmpty()) {
+            delay(1000) // 1초 대기
+            onRetry() // 재시도
+        }
+    }
+
     if(transactions.isEmpty()){
-        EmptyTransactionsContent()
-    } else{
+        if (isRetrying) {
+            // 재시도 중이면 로딩 표시
+            LoadingContent()
+        } else {
+            // 최종적으로 데이터가 없으면 빈 화면
+            EmptyTransactionsContent()
+        }
+    } else {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -1043,10 +1139,10 @@ fun LoadingContent() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 간단한 로딩 인디케이터
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(Color(0xFF5F77F5), CircleShape)
+            CircularProgressIndicator(
+                modifier = Modifier.size(30.dp),
+                color = Color.White,
+                strokeWidth = 4.dp
             )
 
             Spacer(modifier = Modifier.height(16.dp))

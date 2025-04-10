@@ -30,5 +30,4 @@ interface PaymentApiService {
 // QR 토큰 요청 데이터 클래스
 data class QRTokenRequest(
     val token: String,
-    val userId: String
 )
