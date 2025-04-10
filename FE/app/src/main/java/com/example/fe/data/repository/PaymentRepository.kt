@@ -1,23 +1,25 @@
 package com.example.fe.data.repository
 
 import android.util.Log
-import com.example.fe.config.AppConfig
-import com.example.fe.data.model.payment.*
+import com.example.fe.data.model.payment.ApiResponse
+import com.example.fe.data.model.payment.CardRegistrationRequest
+import com.example.fe.data.model.payment.PaymentEvent
+import com.example.fe.data.model.payment.PaymentResult
+import com.example.fe.data.model.payment.QRPaymentResponse
+import com.example.fe.data.model.payment.TokenInfo
+import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.data.network.NetworkClient
-import com.example.fe.data.network.api.PaymentApiService
 import com.example.fe.data.network.api.QRTokenRequest
 import com.example.fe.data.network.client.PaymentSseClient
 import kotlinx.coroutines.flow.Flow
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.Response
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.Response
 
-class PaymentRepository {
+class PaymentRepository(private val tokenProvider: TokenProvider) {
 
     private val paymentApiService = NetworkClient.paymentApiService
-    private val paymentSseClient = PaymentSseClient()
+    private val paymentSseClient = PaymentSseClient(tokenProvider = tokenProvider)
     
     // 결제 토큰 요청
     suspend fun getPaymentTokens(): Result<List<TokenInfo>> {
@@ -55,9 +57,9 @@ class PaymentRepository {
     }
 
     // SSE 연결 및 이벤트 수신
-    fun connectToPaymentEvents(userId: String): Flow<PaymentEvent> {
-        Log.e("PaymentRepository", "Connecting to payment events. UserId: $userId")
-        return paymentSseClient.connectToPaymentEvents(userId)
+    fun connectToPaymentEvents(): Flow<PaymentEvent> {
+        Log.e("PaymentRepository", "Connecting to payment events.")
+        return paymentSseClient.connectToPaymentEvents()
     }
     
     // SSE 연결 종료
@@ -79,6 +81,28 @@ class PaymentRepository {
         } catch (e: Exception) {
             Log.e("PaymentRepository", "QR 토큰 전송 실패", e)
             throw Exception("Failed to send QR token", e)
+        }
+    }
+
+    suspend fun registerPaymentCard(cardNumber: String, password: String, cvc: String): Result<Unit> {
+        return try {
+            val request = CardRegistrationRequest(
+                userCI = null, // 요청에 따라 null로 보내기
+                cardNumber = cardNumber,
+                password = password,
+                cvc = cvc
+            )
+
+            val response = paymentApiService.registerPaymentCard(request)
+
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "카드 등록에 실패했습니다"))
+            }
+        } catch (e: Exception) {
+            Log.e("PaymentRepository", "카드 등록 중 오류 발생", e)
+            Result.failure(e)
         }
     }
 

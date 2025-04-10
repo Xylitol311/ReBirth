@@ -14,16 +14,24 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -93,16 +101,34 @@ fun PaymentScreen(
     var screenState by remember { mutableStateOf(PaymentScreenState.CARD_SELECTION) }
 
     var showResult by remember { mutableStateOf(false) }
-// 결제 상태 관찰 부분 수정
+    // 결제 상태 관찰 부분 수정
     val paymentState by viewModel.paymentState.collectAsState()
-// 결제 처리 중 화면 표시 여부
-    val isProcessing = paymentState is PaymentViewModel.PaymentState.Processing
-// 결제 결과 화면 표시 여부 - 별도 상태로 관리
-    var showPaymentResult by remember { mutableStateOf(false) }
+
+    // 카드 등록 결과 상태 관찰
+    val cardRegistrationState by viewModel.cardRegistrationState.collectAsState()
+    // 결과 팝업 표시 여부
+    var showResultPopup by remember { mutableStateOf(false) }
+
     // 스크롤 오프셋 추적 (우주 배경 효과용)
     var scrollOffset by remember { mutableFloatStateOf(0f) }
     val lazyListState = rememberLazyListState()
-    
+
+    // 카드 등록 결과 변경 감지 및 팝업 표시
+    LaunchedEffect(cardRegistrationState) {
+        if (cardRegistrationState is PaymentViewModel.CardRegistrationState.Success ||
+            cardRegistrationState is PaymentViewModel.CardRegistrationState.Error) {
+            // 초기 상태가 아닌 경우에만 팝업 표시
+            if (cardRegistrationState !is PaymentViewModel.CardRegistrationState.Initial) {
+                showResultPopup = true
+                // 5초 후 팝업 자동 닫기
+                delay(5000)
+                showResultPopup = false
+                // 상태 초기화
+                viewModel.resetCardRegistrationState()
+            }
+        }
+    }
+
     // 스크롤 오프셋 변경 감지 및 콜백 호출
     LaunchedEffect(lazyListState) {
         snapshotFlow { 
@@ -334,7 +360,6 @@ fun PaymentScreen(
             }
         }
     }
-// 990806 박종원
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -799,5 +824,56 @@ fun PaymentScreen(
             viewModel = viewModel
         )
     }
-    
+
+    // 화면 하단에 결과 팝업 표시
+    if (showResultPopup && cardRegistrationState !is PaymentViewModel.CardRegistrationState.Initial &&
+        cardRegistrationState !is PaymentViewModel.CardRegistrationState.Loading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (cardRegistrationState is PaymentViewModel.CardRegistrationState.Success)
+                        Color(0xFF4CAF50) else Color(0xFFE53935)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (cardRegistrationState is PaymentViewModel.CardRegistrationState.Success)
+                            Icons.Default.CheckCircle else Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Text(
+                        text = when (cardRegistrationState) {
+                            is PaymentViewModel.CardRegistrationState.Success ->
+                                (cardRegistrationState as PaymentViewModel.CardRegistrationState.Success).message
+                            is PaymentViewModel.CardRegistrationState.Error ->
+                                "카드 등록 실패: ${(cardRegistrationState as PaymentViewModel.CardRegistrationState.Error).message}"
+                            else -> ""
+                        },
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
 }

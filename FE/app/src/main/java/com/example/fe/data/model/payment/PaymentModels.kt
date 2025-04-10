@@ -32,3 +32,11 @@ data class PaymentResult(
     val createdAt: String,
     val approvalCode: String
 )
+
+// 카드 등록 요청 데이터 클래스
+data class CardRegistrationRequest(
+    val userCI: String? = null,  // 요청에 따라 null로 보내기
+    val cardNumber: String,
+    val password: String,
+    val cvc: String
+)
