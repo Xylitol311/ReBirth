@@ -126,14 +126,14 @@ private fun GoodTransactionFeedback(
         // 가게 정보 및 결제 금액
         Text(
             text = data.merchantName,
-            fontSize = 22.sp,
+            fontSize = 18.sp,
             color = Color.White,
             textAlign = TextAlign.Center
         )
         
         Text(
             text = "${formatAmount(data.amount)}원 결제",
-            fontSize = 22.sp,
+            fontSize = 16.sp,
             color = Color.White,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
@@ -142,7 +142,7 @@ private fun GoodTransactionFeedback(
         // 혜택 정보
         Text(
             text = "${formatAmount(data.realBenefitAmount)}원의 혜택을 받았어요",
-            fontSize = 22.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
             textAlign = TextAlign.Center,

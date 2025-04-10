@@ -36,6 +36,7 @@ import com.example.fe.ui.components.backgrounds.GlassSurface
 import com.example.fe.ui.components.backgrounds.StarryBackground
 import com.example.fe.ui.components.navigation.TopBar
 import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
 
 @Composable
 fun CardDetailInfoScreen(
@@ -205,13 +206,13 @@ fun CardDetailInfoScreen(
                                 modifier = Modifier.height(240.dp)
                             )
                         } else {
-                            // 네트워크 이미지 로드 (Coil 등의 라이브러리 사용)
-                            // 여기서는 기본 이미지로 대체
-                            Image(
-                                painter = painterResource(id = R.drawable.card),
+                            // AsyncImage를 사용하여 네트워크 이미지 로드
+                            AsyncImage(
+                                model = cardDetail.cardImage,
                                 contentDescription = cardDetail.name,
                                 contentScale = ContentScale.FillWidth,
-                                modifier = Modifier.height(240.dp)
+                                modifier = Modifier.height(240.dp),
+                                fallback = painterResource(id = R.drawable.card)
                             )
                         }
                     }

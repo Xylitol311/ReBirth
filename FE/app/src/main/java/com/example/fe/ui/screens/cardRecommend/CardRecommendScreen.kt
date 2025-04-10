@@ -359,15 +359,15 @@ fun PersonalizedRecommendations(
                 Text(
                     text = "카테고리별 추천 카드",
                     color = Color.White,
-                    fontSize = 24.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
                     text = "이전 3개월 소비를 바탕으로 AI가 추천해요",
                     color = Color.Gray,
                     fontSize = 14.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
             }
             
@@ -382,7 +382,7 @@ fun PersonalizedRecommendations(
                     cornerRadius = 16f,
                     blurRadius = 10f
                 ) {
-                    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+                    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
                         categoriesWithCards.forEachIndexed { index, category ->
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 Text(
@@ -410,7 +410,7 @@ fun PersonalizedRecommendations(
                                         color = Color(0xAA87CEEB),
                                         thickness = 1.dp,
                                         modifier = Modifier
-                                            .padding(vertical = 4.dp)
+                                            .padding(vertical = 16.dp)
                                             .fillMaxWidth()
                                     )
                                 }
@@ -478,10 +478,10 @@ fun CardFinder(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 35.dp, vertical = 8.dp)
+                .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
             // 필터 버튼들
-            LazyRow(
+            /* LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(end = 8.dp)
@@ -492,7 +492,7 @@ fun CardFinder(
                         "타입" -> "혜택 타입"
                         else -> tag.category
                     }
-                    
+
                     // 선택된 옵션 개수
                     val count = filterCounts[tag.category] ?: 0
                     val displayNameWithCount = if (count > 0) "$displayName $count" else displayName
@@ -509,37 +509,36 @@ fun CardFinder(
                         }
                     )
                 }
-            }
-            
+            } */
+
             // 정렬 및 필터 옵션
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 8.dp),
+                    .padding(top = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "인기순",
                     color = Color.White,
-                    fontSize = 18.sp
+                    fontSize = 16.sp
                 )
 
                 Text(
                     text = "이벤트 카드 제외",
                     color = Color.White,
                     fontSize = 16.sp,
-                    modifier = Modifier.padding(end = 8.dp)
                 )
             }
         }
-        
+
         // 카드 목록 (그리드 형태로 표시)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
             if (isLoading) {
                     Box(
@@ -585,16 +584,21 @@ fun CardFinder(
                         contentPadding = PaddingValues(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 16.dp),
                     ) {
-                items(cards) { card ->
-                            CardGridItem(card = card, onClick = { onCardClick(card.id) })
+                        items(cards) { card ->
+                            CardGridItem(card = card, onClick = {
+                                // onCardClick(card.id) - 클릭 이벤트 비활성화
+                            })
+                        }
+                    }
                 }
             }
-            }
         }
-        }
-        
+
+
         // 하단 공간 추가
         Spacer(modifier = Modifier.height(80.dp))
     }
@@ -686,7 +690,7 @@ fun CardCarousel(
     
     // 카드 크기 계산 (화면 크기에 비례하도록)
     val cardWidth = screenWidth * 0.4f // 너비 비율 증가
-    val cardHeight = screenHeight * 0.38f // 높이 비율 증가
+    val cardHeight = screenHeight * 0.3f // 높이 비율 증가
 
     Column(
         verticalArrangement = Arrangement.Top,
@@ -739,9 +743,7 @@ fun CardCarousel(
                                     coroutineScope.launch {
                                         pagerState.animateScrollToPage(page)
                                     }
-                                } else {
-                                    onCardClick(cardId)
-                                }
+                                } 
                             },
                     ) {
                         // 실제 API에서 받아온 카드 정보 가져오기 (cardId 기반)
@@ -817,6 +819,8 @@ fun CardCarousel(
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         // 카드 정보 (현재 선택된 카드)
         if (cards.isNotEmpty() && pagerState.currentPage < cards.size) {
             // 선택된 카드의 ID
@@ -844,7 +848,6 @@ fun CardCarousel(
                         color = Color.White,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
-                        fontWeight = FontWeight.Bold
                     )
                     
                     // 첫 번째 혜택 표시 (말줄임표 제거)
@@ -860,7 +863,7 @@ fun CardCarousel(
                                 .fillMaxWidth(0.8f)  // 패딩 최소화
                         )
                     }
-                    
+
                     // 추가 혜택이 있다면 "외 n개 혜택" 형식으로 표시
                     if (benefits.size > 1) {
                         Text(
@@ -886,7 +889,6 @@ fun CardGridItem(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.8f) // 카드 비율 조정
-            .clickable(onClick = onClick)
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -921,7 +923,7 @@ fun CardGridItem(
             }
         }
         
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(26.dp))
         
         // 카드 이름
         Text(
