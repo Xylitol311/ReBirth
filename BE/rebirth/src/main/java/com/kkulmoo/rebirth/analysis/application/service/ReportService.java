@@ -707,6 +707,7 @@ public class ReportService {
             ReportCardDTO reportCardDTO = ReportCardDTO
                     .builder()
                     .name(card.getCardName())
+                    .cardImg(card.getCardImgUrl())
                     .totalCount(totalCount)
                     .totalAmount(reportCard.getMonthSpendingAmount())
                     .totalBenefit(reportCard.getMonthBenefitAmount())
