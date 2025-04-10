@@ -57,7 +57,7 @@ fun HomeUsedMoney(
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 30.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         cornerRadius = 16f
     ) {
         Column(

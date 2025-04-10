@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -59,6 +60,10 @@ import java.text.NumberFormat
 import java.util.Locale
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalConfiguration
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import android.util.Log
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -70,6 +75,9 @@ fun HomeRecCard(
     val top3Cards by viewModel.top3Cards.collectAsState()
     val recommendAmount by viewModel.recommendAmount.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
+    
+    // coroutineScope 추가 - 최상위 레벨에서 한 번만 선언
+    val coroutineScope = rememberCoroutineScope()
     
     // 추천 카드가 없는 경우 검색 결과에서 카드 표시
     val cardsToShow = if (top3Cards.isEmpty()) {
@@ -83,7 +91,7 @@ fun HomeRecCard(
         GlassSurface(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 30.dp, vertical = 8.dp),
+                .padding(horizontal = 20.dp, vertical = 8.dp),
             cornerRadius = 16f
         ) {
             Column(
@@ -108,13 +116,24 @@ fun HomeRecCard(
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     // 카드 너비 지정
     val cardWidth = 170.dp
-    // 화면 중앙에 배치하기 위한 양쪽 패딩 계산
+    
+    // 화면 중앙에 배치하기 위한 양쪽 패딩 계산 (MyCardScreen 방식 적용)
     val horizontalPadding = (screenWidth - cardWidth) / 2
+    
+    // 현재 화면 밀도 가져오기
+    val density = LocalDensity.current.density
+    
+    // 디버깅을 위한 로그
+    LaunchedEffect(Unit) {
+        Log.d("HomeRecCard", "screenWidth: $screenWidth")
+        Log.d("HomeRecCard", "cardWidth: $cardWidth")
+        Log.d("HomeRecCard", "horizontalPadding: $horizontalPadding")
+    }
     
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 30.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         cornerRadius = 16f
     ) {
         Column(
@@ -146,9 +165,9 @@ fun HomeRecCard(
                     )
                 }
             }
-
-            // 현재 화면 밀도 가져오기
-            val density = LocalDensity.current
+            
+            // 상단 텍스트와 카드 슬라이더 사이에 간격 추가
+            Spacer(modifier = Modifier.height(24.dp))
             
             // 페이저 상태
             val pagerState = rememberPagerState(
@@ -166,68 +185,74 @@ fun HomeRecCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),  // 300dp에서 200dp로 줄임
-                contentAlignment = Alignment.Center
+                    .height(160.dp)
             ) {
                 HorizontalPager(
                     state = pagerState,
-                    pageSpacing = 20.dp,
+                    pageSpacing = (-10).dp,  // 카드가 약간 붙도록 조정
+                    contentPadding = PaddingValues(horizontal = 70.dp), // CardCarousel 방식 적용
+                    modifier = Modifier.fillMaxWidth(),
                     flingBehavior = flingBehavior,
-                    contentPadding = PaddingValues(
-                        start = horizontalPadding,
-                        end = horizontalPadding
-                    ),
-                    pageSize = PageSize.Fixed(cardWidth),
-                    key = { it }
+                    key = { index -> cardsToShow[index].cardId }
                 ) { page ->
-                    val pageOffset = abs(
-                        (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                    )
-
-                    // 현재 카드는 더 크게, 다른 카드는 작게
-                    val scale = if (page == pagerState.currentPage) 1.3f else 0.85f
-                    
                     Box(
-                        modifier = Modifier
-                            .width(170.dp)
-                            .height(110.dp)
-                            .graphicsLayer(
-                                scaleX = scale,
-                                scaleY = scale,
-                                alpha = lerp(0.7f, 1f, 1f - pageOffset.coerceIn(0f, 1f)),
-                                clip = false,
-                                cameraDistance = 12f * density.density
-                            )
-                            .clickable {
-                                val card = cardsToShow[page]
-                                onCardClick(card.cardId)
-                            },
+                        modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        // 카드 이미지
-                        val card = cardsToShow[page]
-                        val hasImageUrl = !card.imageUrl.isNullOrEmpty()
+                        val pageOffset = (
+                                (pagerState.currentPage - page) + pagerState
+                                    .currentPageOffsetFraction
+                                ).absoluteValue
+
+                        // 카드 스케일 및 투명도를 CardCarousel 방식으로 조정
+                        val scale = 1.2f - (pageOffset * 0.3f).coerceIn(0f, 0.3f)
+                        val alpha = 1f - (pageOffset * 0.4f).coerceIn(0f, 0.4f)
                         
-                        if (hasImageUrl) {
-                            // Coil을 사용하여 API로부터 받은 이미지 URL을 로드
-                            AsyncImage(
-                                model = card.imageUrl,
-                                contentDescription = card.cardName,
-                                modifier = Modifier
-                                    .width(170.dp)
-                                    .height(110.dp),
-                                alignment = Alignment.Center
-                            )
-                        } else {
-                            // 기본 카드 이미지 사용
-                            HorizontalCardLayout(
-                                cardImage = R.drawable.card,
-                                modifier = Modifier
-                                    .width(170.dp)
-                                    .height(110.dp),
-                                cardName = card.cardName,
-                                cardImageUrl = ""
-                            )
+                        Box(
+                            modifier = Modifier
+                                .graphicsLayer(
+                                    scaleX = scale,
+                                    scaleY = scale,
+                                    alpha = alpha,
+                                    clip = false,
+                                    cameraDistance = 12f * density
+                                )
+                                .clickable {
+                                    if (page != pagerState.currentPage) {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(page)
+                                        }
+                                    } else {
+                                        val card = cardsToShow[page]
+                                        onCardClick(card.cardId)
+                                    }
+                                },
+                        ) {
+                            // 카드 이미지
+                            val card = cardsToShow[page]
+                            val hasImageUrl = !card.imageUrl.isNullOrEmpty()
+                            
+                            if (hasImageUrl) {
+                                // Coil을 사용하여 API로부터 받은 이미지 URL을 로드
+                                AsyncImage(
+                                    model = card.imageUrl,
+                                    contentDescription = card.cardName,
+                                    modifier = Modifier
+                                        .width(cardWidth)
+                                        .height(110.dp),
+                                    alignment = Alignment.Center
+                                )
+                            } else {
+                                // 기본 카드 이미지 사용
+                                HorizontalCardLayout(
+                                    cardImage = R.drawable.card,
+                                    modifier = Modifier
+                                        .width(cardWidth)
+                                        .height(110.dp),
+                                    cardName = card.cardName,
+                                    cardImageUrl = ""
+                                )
+                            }
                         }
                     }
                 }
@@ -239,6 +264,9 @@ fun HomeRecCard(
                 
                 // 카드 혜택 정보 추출
                 val benefits = currentCard.cardInfo.split(",")
+                
+                // 슬라이더와 카드 정보 사이 간격 최소화
+                Spacer(modifier = Modifier.height(2.dp))
                 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -254,33 +282,48 @@ fun HomeRecCard(
                     
                     // 혜택 목록 표시
                     benefits.forEachIndexed { index, benefit ->
-                        if (index < 2) { // 최대 2개 혜택만 표시
+                        if (index == 0) { // 첫 번째 혜택
                             Text(
                                 text = benefit.trim(),
-                                fontSize = if (index == 0) 18.sp else 16.sp,
-                                fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = Color.White,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(top = if (index == 0) 4.dp else 2.dp)
+                                modifier = Modifier.padding(top = 2.dp)
                             )
+                        } else if (index == 1) { // 두 번째 혜택
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 2.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = benefit.trim(),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                                
+                                // 혜택이 더 있는 경우 같은 줄에 표시
+                                if (benefits.size > 2) {
+                                    Text(
+                                        text = " 외 ${benefits.size - 2}개 혜택",
+                                        fontSize = 14.sp,
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
                         }
-                    }
-                    
-                    // 혜택이 더 있는 경우 표시
-                    if (benefits.size > 2) {
-                        Text(
-                            text = "외 ${benefits.size - 2}개 혜택",
-                            fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
                     }
                 }
             }
 
             // 페이지 인디케이터
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()

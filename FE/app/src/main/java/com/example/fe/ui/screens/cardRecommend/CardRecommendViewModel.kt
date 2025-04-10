@@ -24,6 +24,9 @@ class CardRecommendViewModel : ViewModel() {
     var uiState by mutableStateOf(CardRecommendUiState())
         private set
 
+    // 선택된 탭 인덱스를 저장하는 변수
+    var selectedTabIndex = 0
+
     init {
         loadRecommendations()
     }

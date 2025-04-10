@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -55,6 +58,7 @@ import com.example.fe.ui.screens.payment.PaymentScreen
 import com.example.fe.ui.screens.payment.PaymentViewModel
 import com.example.fe.ui.screens.payment.components.CardOCRScanScreen
 import com.example.fe.ui.screens.payment.components.PaymentInfoScreen
+import com.example.fe.ui.screens.filter.FilterSelectionScreen
 
 // 네비게이션 경로 상수 추가
 object NavRoutes {
@@ -64,6 +68,7 @@ object NavRoutes {
     const val CARD_MANAGEMENT = "card_management"
     const val CARD_DETAIL_INFO = "card_detail_info/{cardId}"
     const val MY_PAGE = "my_page"
+    const val FILTER_SELECTION = "filter_selection/{category}" // 필터 선택 화면 경로 추가
 }
 
 @Composable
@@ -199,8 +204,12 @@ fun AppNavigation() {
     var showPaymentInfo by remember { mutableStateOf(false) }
 
     // 네비게이션 바와 상단 바 표시 여부 결정
-    val shouldShowUI = remember(showQRScanner, showCardOCRScan, isQRScanMode, showPaymentInfo) {
-        !showQRScanner && !showCardOCRScan && !isQRScanMode && !showPaymentInfo
+    val shouldShowUI = remember(showQRScanner, showCardOCRScan, isQRScanMode, showPaymentInfo, currentRoute) {
+        !showQRScanner && 
+        !showCardOCRScan && 
+        !isQRScanMode && 
+        !showPaymentInfo &&
+        !currentRoute.startsWith("filter_selection")
     }
 
     // 스캔된 QR 코드
@@ -437,7 +446,8 @@ fun AppNavigation() {
                     CardRecommendScreen(
                         onCardClick = { cardId ->
                             navController.navigate("card_detail_info/$cardId")
-                        }
+                        },
+                        navController = navController
                     )
                 }
 
@@ -510,6 +520,38 @@ fun AppNavigation() {
                 composable(NavRoutes.MY_PAGE) {
                     MyPageScreen(
                         onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                // 필터 선택 화면 추가
+                composable(
+                    route = NavRoutes.FILTER_SELECTION,
+                    arguments = listOf(
+                        navArgument("category") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    // 탑바와 하단 네비바를 숨깁니다
+                    LaunchedEffect(Unit) {
+                        bottomBarVisible = false
+                    }
+                    
+                    // 화면이 종료될 때 다시 보이게 합니다
+                    DisposableEffect(key1 = Unit) {
+                        onDispose {
+                            bottomBarVisible = true
+                        }
+                    }
+                    
+                    val category = backStackEntry.arguments?.getString("category") ?: ""
+                    FilterSelectionScreen(
+                        category = category,
+                        onClose = {
+                            navController.popBackStack()
+                        },
+                        onOptionSelected = { category, option ->
+                            // ViewModel로 옵션 선택 정보 전달하는 로직 여기에 추가
                             navController.popBackStack()
                         }
                     )
