@@ -70,7 +70,7 @@ class OnboardingViewModel(
     var errorMessage by mutableStateOf("")
         internal set
     var hasCompletedTutorial by mutableStateOf(false)
-        private set
+        internal set
 
     // 로컬 인증 정보 (메모리 캐싱)
     private var userPin: String = "000000"

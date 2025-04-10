@@ -75,6 +75,7 @@ fun MainContent() {
         SplashScreen(
             onSplashComplete = { isUserLoggedIn ->
                 showSplash = false
+                viewModel.hasCompletedTutorial = false
             },
             isLoggedIn = viewModel.isLoggedIn
         )

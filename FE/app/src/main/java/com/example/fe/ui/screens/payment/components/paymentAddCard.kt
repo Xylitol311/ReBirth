@@ -26,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fe.ui.screens.payment.PaymentViewModel
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -36,6 +35,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.res.painterResource
+import com.example.fe.ui.theme.SkyBlue
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognizer
@@ -47,14 +48,16 @@ fun PaymentAddCardSection(
     onAddCardComplete: () -> Unit,
     viewModel: PaymentViewModel
 ) {
+
+    val SkyBlue = Color(0xFF21CDFD)
     // OCR 스캔 화면 표시 여부
     var showOCRScreen by remember { mutableStateOf(true) }
-    
+
     // 전체 화면 모드로 설정하여 네비게이션 바와 상단 바가 보이지 않도록 함
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)  // 배경색을 완전 검정으로 변경
+            .background(Color(0xFFF5F6FA))  // 배경색을 이미지와 동일하게 변경
     ) {
         // OCR 스캔 화면 표시
         if (showOCRScreen) {
@@ -162,19 +165,18 @@ fun CardConfirmationScreen(
 
     var isLoading by remember { mutableStateOf(false) }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp)
-            .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+            .background(Color(0xFFF5F6FA)) // 배경색을 이미지와 동일하게 변경
+            .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()) // 상단바 아래에 위치하도록 조정
+            .padding(horizontal = 16.dp)
     ) {
         // 상단 바
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .padding(vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onCancel) {
@@ -198,228 +200,344 @@ fun CardConfirmationScreen(
             Spacer(modifier = Modifier.width(48.dp))
         }
 
-        // 카드 정보 입력 폼
+        // 카드 정보 입력 폼 - 디자인 변경
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(
-                defaultElevation = 2.dp
+                defaultElevation = 0.dp
             )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
             ) {
-                // 카드 비밀번호 앞 두자리
+
+                // 레이블
                 Text(
                     text = "카드 비밀번호",
-                    fontSize = 14.sp,
-                    color = Color.Gray
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
                 )
-
-                // 비밀번호 입력 필드 - 수정된 부분
-                OutlinedTextField(
-                    value = cardPinPrefix,
-                    onValueChange = {
-                        if (it.length <= 2 && it.all { char -> char.isDigit() }) {
-                            cardPinPrefix = it
-                            // 2자리 입력 완료 시 다음 필드로 포커스 이동
-                            if (it.length == 2) {
-                                cvcFocusRequester.requestFocus()
-                            }
-                        }
-                    },
+                // 카드 비밀번호 필드
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .focusRequester(cardPinFocusRequester)
-                        .onFocusChanged { focusedField = if (it.isFocused) "pin" else focusedField },
-                    placeholder = { Text("앞 2자리") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2196F3),
-                        unfocusedBorderColor = if (focusedField == "pin") Color(0xFF2196F3) else Color.LightGray,
-                        focusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f), // 포커스 상태일 때 플레이스홀더 색상
-                        unfocusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f) // 포커스가 없을 때 플레이스홀더 색상
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // CVC
-                Text(
-                    text = "CVC",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-
-                // CVC 입력 필드 - 수정된 부분
-                OutlinedTextField(
-                    value = cvcInput,
-                    onValueChange = {
-                        if (it.length <= 3 && it.all { char -> char.isDigit() }) {
-                            cvcInput = it
-                            // 3자리 입력 완료 시 다음 필드로 포커스 이동
-                            if (it.length == 3) {
-                                expiryDateFocusRequester.requestFocus()
+                ) {
+                    // 카드 비밀번호 입력 필드
+                    BasicTextField(
+                        value = cardPinPrefix,
+                        onValueChange = {
+                            if (it.length <= 2 && it.all { char -> char.isDigit() }) {
+                                cardPinPrefix = it
+                                // 2자리 입력 완료 시 다음 필드로 포커스 이동
+                                if (it.length == 2) {
+                                    cvcFocusRequester.requestFocus()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .focusRequester(cardPinFocusRequester)
+                            .onFocusChanged { focusedField = if (it.isFocused) "pin" else focusedField },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        ),
+                        decorationBox = { innerTextField ->
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        if (cardPinPrefix.isEmpty()) {
+                                            Text(
+                                                text = "12••",
+                                                fontSize = 18.sp,
+                                                color = Color.LightGray
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                }
                             }
                         }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(cvcFocusRequester)
-                        .onFocusChanged { focusedField = if (it.isFocused) "cvc" else focusedField },
-                    placeholder = { Text("뒷면 3자리") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2196F3),
-                        unfocusedBorderColor = if (focusedField == "cvc") Color(0xFF2196F3) else Color.LightGray,
-                        focusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f), // 포커스 상태일 때 플레이스홀더 색상
-                        unfocusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f) // 포커스가 없을 때 플레이스홀더 색상
                     )
-                )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 유효기간
-                Text(
-                    text = "유효기간",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-
-                // 유효기간 입력 필드 - 수정된 부분
-                OutlinedTextField(
-                    value = expiryDateInput,
-                    onValueChange = { input ->
-                        // 숫자만 허용
-                        val filtered = input.replace(Regex("[^0-9/]"), "")
-
-                        // 자동으로 슬래시 추가
-                        if (filtered.replace("/", "").length <= 4) {
-                            if (filtered.replace("/", "").length >= 2 && !filtered.contains("/")) {
-                                // MM/YY 형식으로 변환
-                                val month = filtered.take(2)
-                                val year = filtered.drop(2)
-                                expiryDateInput = if (year.isNotEmpty()) "$month/$year" else month
-                            } else {
-                                expiryDateInput = filtered
-                            }
-
-                            // 유효기간 입력 완료 시 다음 필드로 포커스 이동
-                            if (filtered.replace("/", "").length == 4) {
-                                cardNumberFocusRequester.requestFocus()
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(expiryDateFocusRequester)
-                        .onFocusChanged { focusedField = if (it.isFocused) "expiry" else focusedField },
-                    placeholder = { Text("MM/YY") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2196F3),
-                        unfocusedBorderColor = if (focusedField == "expiry") Color(0xFF2196F3) else Color.LightGray,
-                        focusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f), // 포커스 상태일 때 플레이스홀더 색상
-                        unfocusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f) // 포커스가 없을 때 플레이스홀더 색상
+                    // 구분선
+                    Divider(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.LightGray,
+                        thickness = 1.dp
                     )
-                )
 
-                Spacer(modifier = Modifier.height(16.dp))
 
-                // 카드번호
-                Text(
-                    text = "카드번호",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-
-                // 카드번호 입력 필드 - 수정된 부분
-                // TextFieldValue도 포매팅된 초기값으로 설정
-                var cardNumberTextFieldValue by remember {
-                    mutableStateOf(TextFieldValue(
-                        text = formatCardNumber(cardNumber.replace(Regex("[^0-9]"), "")),
-                        selection = TextRange(0)  // 커서를 처음 위치에 설정
-                    ))
                 }
 
-                OutlinedTextField(
-                    value = cardNumberTextFieldValue,
-                    onValueChange = { newValue ->
-                        // 현재 커서 위치 저장
-                        val cursorPosition = newValue.selection.start
-
-                        // 숫자만 허용
-                        val digitsOnly = newValue.text.replace(Regex("[^0-9]"), "")
-
-                        // 최대 16자리까지만 허용
-                        if (digitsOnly.length <= 16) {
-                            // 포맷팅된 텍스트
-                            val formatted = formatCardNumber(digitsOnly)
-
-                            // 새 커서 위치 계산 (하이픈 추가 고려)
-                            val newCursorPosition = when {
-                                // 삭제 중인 경우
-                                formatted.length < cardNumberTextFieldValue.text.length -> cursorPosition.coerceAtMost(formatted.length)
-                                // 입력 중인 경우
-                                else -> {
-                                    // 하이픈이 추가된 위치 이후라면 커서 위치 조정
-                                    val hyphensBefore = formatted.substring(0, minOf(cursorPosition, formatted.length))
-                                        .count { it == '-' }
-                                    val oldHyphensBefore = cardNumberTextFieldValue.text
-                                        .substring(0, minOf(cursorPosition, cardNumberTextFieldValue.text.length))
-                                        .count { it == '-' }
-                                    cursorPosition + (hyphensBefore - oldHyphensBefore)
-                                }
-                            }.coerceIn(0, formatted.length)
-
-                            // TextFieldValue 업데이트 (텍스트와 커서 위치)
-                            cardNumberTextFieldValue = TextFieldValue(
-                                text = formatted,
-                                selection = TextRange(newCursorPosition)
-                            )
-
-                            // 내부 상태 업데이트 (제출용)
-                            cardNumberInput = formatted
-
-                            // 카드번호 입력 완료 시 키보드 숨기기
-                            if (digitsOnly.length == 16) {
-                                focusManager.clearFocus()
-                            }
-                        }
-                    },
+                // CVC 필드
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .focusRequester(cardNumberFocusRequester)
-                        .onFocusChanged { focusedField = if (it.isFocused) "cardNumber" else focusedField },
-                    placeholder = { Text("0000-0000-0000-0000") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2196F3),
-                        unfocusedBorderColor = if (focusedField == "cardNumber") Color(0xFF2196F3) else Color.LightGray,
-                        focusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f), // 포커스 상태일 때 플레이스홀더 색상
-                        unfocusedPlaceholderColor = Color.Gray.copy(alpha = 0.3f) // 포커스가 없을 때 플레이스홀더 색상
+                ) {
+                    // 레이블
+                    Text(
+                        text = "CVC",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 8.dp)
                     )
-                )
+                    // CVC 입력 필드
+                    BasicTextField(
+                        value = cvcInput,
+                        onValueChange = {
+                            if (it.length <= 3 && it.all { char -> char.isDigit() }) {
+                                cvcInput = it
+                                // 3자리 입력 완료 시 다음 필드로 포커스 이동
+                                if (it.length == 3) {
+                                    expiryDateFocusRequester.requestFocus()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .focusRequester(cvcFocusRequester)
+                            .onFocusChanged { focusedField = if (it.isFocused) "cvc" else focusedField },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        ),
+                        decorationBox = { innerTextField ->
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        if (cvcInput.isEmpty()) {
+                                            Text(
+                                                text = "뒷면 3자리",
+                                                fontSize = 18.sp,
+                                                color = Color.LightGray
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                }
+                            }
+                        }
+                    )
+
+                    // 구분선
+                    Divider(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.LightGray,
+                        thickness = 1.dp
+                    )
+
+
+                }
+
+                // 유효기간 필드
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+
+                    // 레이블
+                    Text(
+                        text = "유효기간",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 8.dp)
+                    )
+                    // 유효기간 입력 필드
+                    BasicTextField(
+                        value = expiryDateInput,
+                        onValueChange = { input ->
+                            // 숫자만 허용
+                            val filtered = input.replace(Regex("[^0-9/]"), "")
+
+                            // 자동으로 슬래시 추가
+                            if (filtered.replace("/", "").length <= 4) {
+                                if (filtered.replace("/", "").length >= 2 && !filtered.contains("/")) {
+                                    // MM/YY 형식으로 변환
+                                    val month = filtered.take(2)
+                                    val year = filtered.drop(2)
+                                    expiryDateInput = if (year.isNotEmpty()) "$month/$year" else month
+                                } else {
+                                    expiryDateInput = filtered
+                                }
+
+                                // 유효기간 입력 완료 시 다음 필드로 포커스 이동
+                                if (filtered.replace("/", "").length == 4) {
+                                    cardNumberFocusRequester.requestFocus()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .focusRequester(expiryDateFocusRequester)
+                            .onFocusChanged { focusedField = if (it.isFocused) "expiry" else focusedField },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        ),
+                        decorationBox = { innerTextField ->
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        if (expiryDateInput.isEmpty()) {
+                                            Text(
+                                                text = "00/00",
+                                                fontSize = 18.sp,
+                                                color = Color.LightGray
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                }
+                            }
+                        }
+                    )
+
+                    // 구분선
+                    Divider(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.LightGray,
+                        thickness = 1.dp
+                    )
+
+
+                }
+
+                // 카드번호 필드
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+
+                    // 레이블
+                    Text(
+                        text = "카드번호",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 8.dp)
+                    )
+                    // TextFieldValue도 포매팅된 초기값으로 설정
+                    var cardNumberTextFieldValue by remember {
+                        mutableStateOf(TextFieldValue(
+                            text = formatCardNumber(cardNumber.replace(Regex("[^0-9]"), "")),
+                            selection = TextRange(0)  // 커서를 처음 위치에 설정
+                        ))
+                    }
+
+
+                    // 카드번호 입력 필드
+                    BasicTextField(
+                        value = cardNumberTextFieldValue,
+                        onValueChange = { newValue ->
+                            // 현재 커서 위치 저장
+                            val cursorPosition = newValue.selection.start
+
+                            // 숫자만 허용
+                            val digitsOnly = newValue.text.replace(Regex("[^0-9]"), "")
+
+                            // 최대 16자리까지만 허용
+                            if (digitsOnly.length <= 16) {
+                                // 포맷팅된 텍스트
+                                val formatted = formatCardNumber(digitsOnly)
+
+                                // 새 커서 위치 계산 (하이픈 추가 고려)
+                                val newCursorPosition = when {
+                                    // 삭제 중인 경우
+                                    formatted.length < cardNumberTextFieldValue.text.length -> cursorPosition.coerceAtMost(formatted.length)
+                                    // 입력 중인 경우
+                                    else -> {
+                                        // 하이픈이 추가된 위치 이후라면 커서 위치 조정
+                                        val hyphensBefore = formatted.substring(0, minOf(cursorPosition, formatted.length))
+                                            .count { it == '-' }
+                                        val oldHyphensBefore = cardNumberTextFieldValue.text
+                                            .substring(0, minOf(cursorPosition, cardNumberTextFieldValue.text.length))
+                                            .count { it == '-' }
+                                        cursorPosition + (hyphensBefore - oldHyphensBefore)
+                                    }
+                                }.coerceIn(0, formatted.length)
+
+                                // TextFieldValue 업데이트 (텍스트와 커서 위치)
+                                cardNumberTextFieldValue = TextFieldValue(
+                                    text = formatted,
+                                    selection = TextRange(newCursorPosition)
+                                )
+
+                                // 내부 상태 업데이트 (제출용)
+                                cardNumberInput = formatted
+
+                                // 카드번호 입력 완료 시 키보드 숨기기
+                                if (digitsOnly.length == 16) {
+                                    focusManager.clearFocus()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .focusRequester(cardNumberFocusRequester)
+                            .onFocusChanged { focusedField = if (it.isFocused) "cardNumber" else focusedField },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        ),
+                        decorationBox = { innerTextField ->
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        if (cardNumberInput.isEmpty()) {
+                                            Text(
+                                                text = "0000-0000-0000-0000",
+                                                fontSize = 18.sp,
+                                                color = Color.LightGray
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                    // 우리카드 아이콘 추가
+                                    Icon(
+                                        painter = painterResource(id = com.example.fe.R.drawable.card_woori),
+                                        contentDescription = "우리카드",
+                                        modifier = Modifier.size(32.dp),
+                                        tint = Color.Unspecified
+                                    )
+                                }
+                            }
+                        }
+                    )
+
+                    // 구분선
+
+
+                }
             }
         }
 
         // 여백
         Spacer(modifier = Modifier.weight(1f))
 
-        // 확인 버튼
+        // 확인 버튼 - 디자인 변경
+
         Button(
             onClick = {
                 // 로딩 상태 활성화
@@ -440,9 +558,15 @@ fun CardConfirmationScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 16.dp
+                )
+                .padding(WindowInsets.navigationBars.asPaddingValues())
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF2196F3)
+                containerColor = SkyBlue
             ),
             shape = RoundedCornerShape(8.dp),
             enabled = !isLoading && cardPinPrefix.length == 2 && cvcInput.length == 3 &&
@@ -466,7 +590,7 @@ fun CardConfirmationScreen(
     }
 }
 
-// 카드 번호 포맷팅 함수 수정
+// 카드 번호 포맷팅 함수
 internal fun formatCardNumber(number: String): String {
     // 모든 하이픈 제거 후 숫자만 추출
     val digitsOnly = number.replace(Regex("[^0-9]"), "")

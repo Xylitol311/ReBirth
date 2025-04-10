@@ -59,6 +59,9 @@ import java.time.LocalDate
  import androidx.compose.foundation.layout.WindowInsets
  import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.layout.ContentScale
+import coil.request.ImageRequest
 
 
 enum class CompleteScreenState {
@@ -113,6 +116,35 @@ fun RegistrationCompleteScreen(navController: NavController, viewModel: Onboardi
                 },
                 onSkip = {
                     viewModel.setLoggedInState(true)
+                    val today = LocalDate.now()
+                    val year = today.year
+                    val month = today.monthValue
+                    val previousMonth = if (month == 1) 12 else month - 1
+
+                    isLoading = true
+                    viewModel.getUserPatternType(
+                        year = year,
+                        month = previousMonth,
+                        onSuccess = {
+                            reportData = it
+                            isLoading = false
+                            screenState = CompleteScreenState.SPENDING_TYPE
+                            Log.e("AuthReport","그 후 리포트 가져올 준비중")
+                            viewModel.generateAllReportFromMyData(
+                                onSuccess={
+                                    Log.d("AuthReport","그 후 리포트 가져옴!")
+                                },
+                                onFailure={
+                                    Log.e("AuthReport","그 후 리포트 못 가져옴")
+                                }
+                            )
+
+                        },
+                        onFailure = {
+                            errorMessage = it
+                            isLoading = false
+                        }
+                    )
                 }
             )
         }
@@ -263,29 +295,7 @@ fun SpendingTypeContent(
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            Column(
-                modifier = Modifier
-                    .statusBarsPadding() // 상단 시스템 UI 고려
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.Transparent)
-                        .padding(vertical = 16.dp)
-                ) {
-                    Text(
-                        text = "내 소비 패턴 확인하기",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                Divider(
-                    color = Color.Gray.copy(alpha = 0.5f),
-                    thickness = 1.dp
-                )
-            }
+
         },
         bottomBar = {
             Column(
@@ -300,7 +310,7 @@ fun SpendingTypeContent(
                         .fillMaxWidth()
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00D9FF),
+                        containerColor = Color(0xFF00C4E8),
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(12.dp)
@@ -318,51 +328,91 @@ fun SpendingTypeContent(
             Column(
                 modifier = Modifier
                     .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(scrollState)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(70.dp))
 
                 Text(
-                    text = "당신의 소비는\n$patternName 입니다.",
-                    fontSize = 22.sp,
+                    text = "당신에게 딱맞는\n소비 행성은 $patternName 입니다.",
+                    fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 32.sp
+                    textAlign = TextAlign.Start,
+                    lineHeight = 32.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 50.dp)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Image(
-                    painter = painterResource(id = R.drawable.earth),
-                    contentDescription = null,
-                    modifier = Modifier.size(180.dp)
+
+                val imageUrl = imgUrl
+
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "소비 유형 이미지",
+                    modifier = Modifier
+                        .size(180.dp)
+                        .padding(vertical = 4.dp),
+                    contentScale = ContentScale.Fit
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // 유형별 수치 제목
                 Text(
-                    text = patternDesc,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 14.sp,
-                    lineHeight = 22.sp,
+                    text = "유형별 수치",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                Column(modifier = Modifier.fillMaxWidth()) {
+                // Score bars 영역 (패딩 적용)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 40.dp)
+                ) {
                     ImprovedScoreBar(title = "외향성", value = extrovert)
                     Spacer(modifier = Modifier.height(16.dp))
                     ImprovedScoreBar(title = "안정성", value = variation)
                     Spacer(modifier = Modifier.height(16.dp))
                     ImprovedScoreBar(title = "저축성", value = overConsumption)
                 }
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(48.dp)) // 하단 버튼 영역 확보
+                Divider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 40.dp),
+                    color = Color(0xFF00C6E3),
+                    thickness = 0.5.dp
+                )            // 구분선 추가
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = patternDesc,
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    lineHeight = 25.sp,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 40.dp)
+                )
+
+
+                Spacer(modifier = Modifier.height(40.dp)) // 하단 버튼 영역 확보
             }
         }
     }
@@ -370,30 +420,41 @@ fun SpendingTypeContent(
 
 @Composable
 fun ImprovedScoreBar(title: String, value: Int) {
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(title, color = Color.White, fontSize = 14.sp)
-            Text("${value}/100", color = Color.White, fontSize = 14.sp)
-        }
-        Spacer(modifier = Modifier.height(4.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 왼쪽에 타이틀
+        Text(
+            text = title,
+            color = Color.White,
+            fontSize = 15.sp,
+            modifier = Modifier.width(60.dp)
+        )
 
-        // 단일 바로 표시되는 ProgressIndicator
+        // 중간에 프로그레스 바
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
+                .weight(0.7f)
+                .height(20.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(Color.Gray.copy(alpha = 0.3f))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth((value / 100f).coerceIn(0f, 1f))
-                    .height(8.dp)
-                    .background(Color(0xFF00D9FF))
+                    .height(20.dp)
+                    .background(Color(0xFF00C4E8))
             )
         }
+
+        // 오른쪽에 수치
+        Text(
+            text = "${value}/100",
+            color = Color.White,
+            fontSize = 14.sp,
+            modifier = Modifier.width(50.dp),
+            textAlign = TextAlign.End
+        )
     }
 }

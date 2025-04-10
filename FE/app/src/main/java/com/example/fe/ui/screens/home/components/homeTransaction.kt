@@ -38,6 +38,8 @@ fun HomeTransaction(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel
 ) {
+
+
     val preBenefitFeedback by viewModel.preBenefitFeedback.collectAsState()
     
     // API 응답이 아직 없는 경우 기본 UI 표시
@@ -75,7 +77,7 @@ fun HomeTransaction(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            if (preBenefitFeedback?.isGood == true) {
+            if (preBenefitFeedback?.paymentCardId == preBenefitFeedback?.recommendedCardId) {
                 // 추천 카드로 결제한 경우 - 좋은 피드백
                 GoodTransactionFeedback(data = preBenefitFeedback!!)
             } else {

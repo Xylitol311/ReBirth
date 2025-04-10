@@ -38,7 +38,7 @@ fun TutorialNavHost(onboardingViewModel: OnboardingViewModel) {
                 TutorialPage(
                     title = "REBIRTH 슈퍼 카드로 가장\n최적의 별자리를 제안해드립니다.",
                     description = "별자리의 힘을 받아\n최고 혜택 카드로 자동 결제하세요.",
-                    imageRes = R.drawable.constellation2
+                    imageRes = R.drawable.starlight
                 )
             )
 

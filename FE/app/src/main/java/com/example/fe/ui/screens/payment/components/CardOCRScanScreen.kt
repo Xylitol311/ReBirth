@@ -13,6 +13,8 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -60,13 +63,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.example.fe.R
 import com.example.fe.ui.screens.payment.PaymentViewModel
+import com.example.fe.ui.theme.SkyBlue
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
@@ -118,7 +124,8 @@ fun CardOCRScanScreen(
     var cameraController by remember { mutableStateOf<ProcessCameraProvider?>(null) }
     var camera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
     // 텍스트 인식기
-    val textRecognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+    val textRecognizer =
+        remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
     // 카메라 권한 요청 런처
     val requestPermissionLauncher = rememberLauncherForActivityResult(
@@ -211,7 +218,8 @@ fun CardOCRScanScreen(
                                         if (!showCardConfirmation) {
                                             // 에러 메시지 표시
                                             hasError = true
-                                            errorMessage = "카드를 인식하기 어렵습니다.\n카드를 프레임 안에 잘 위치시키고 다시 시도해주세요."
+                                            errorMessage =
+                                                "카드를 인식하기 어렵습니다.\n카드를 프레임 안에 잘 위치시키고 다시 시도해주세요."
                                             // 인식 초기화
                                             recognitionAttempts = 0
                                             cardNumberCache.clear()
@@ -233,7 +241,8 @@ fun CardOCRScanScreen(
                                 cardNumberCache.removeAt(0)
                             }
                             // 진행 상태 업데이트
-                            recognitionProgress = (cardNumberCache.size.toFloat() / 10f).coerceAtMost(1f)
+                            recognitionProgress =
+                                (cardNumberCache.size.toFloat() / 10f).coerceAtMost(1f)
                         }
 
                         if (expiry.isNotEmpty()) {
@@ -302,7 +311,7 @@ fun CardOCRScanScreen(
 
         // 인식 상태 초기화
         isCardDetected = false
-        
+
         // 에러 상태 초기화
         hasError = false
         errorMessage = ""
@@ -332,7 +341,6 @@ fun CardOCRScanScreen(
             Log.e("CardOCRScanScreen", "카메라 재설정 실패", e)
         }
     }
-
 
 
     // 카메라 설정
@@ -420,7 +428,7 @@ fun CardOCRScanScreen(
                     )
                 }
             }
-                // 상단 바
+            // 상단 바
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -446,10 +454,13 @@ fun CardOCRScanScreen(
                 // 제목
                 Text(
                     text = "카드 스캔",
-                    color = Color.White,
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center)
+                    color = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center
                 )
             }
             // 직접 입력 버튼 추가 (수정됨)
@@ -467,7 +478,7 @@ fun CardOCRScanScreen(
                         showCardConfirmation = true
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2196F3)
+                        containerColor = SkyBlue
                     ),
                     modifier = Modifier
                         .align(Alignment.Center) // 가운데 정렬
@@ -497,7 +508,7 @@ fun CardOCRScanScreen(
                         .fillMaxSize()
                         .border(
                             width = 2.dp,
-                            color = if (isCardDetected) Color(0xFF4CAF50) else Color.White,
+                            color = if (isCardDetected) SkyBlue else Color.White,
                             shape = RoundedCornerShape(16.dp)
                         )
                 )
@@ -505,9 +516,9 @@ fun CardOCRScanScreen(
                 // 안내 메시지 - 카드 감지 시 메시지 변경
                 Text(
                     text = if (isCardDetected)
-                           "카드가 감지되었습니다. 조금만 기다려주세요..."
-                           else "박스 안에 카드가 들어오도록 맞춰주세요",
-                    color = if (isCardDetected) Color(0xFF4CAF50) else Color.White,
+                        "카드가 감지되었습니다. 조금만 기다려주세요..."
+                    else "박스 안에 카드가 들어오도록 맞춰주세요",
+                    color = if (isCardDetected) SkyBlue else Color.White,
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -520,7 +531,7 @@ fun CardOCRScanScreen(
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = "카드 감지됨",
-                        tint = Color(0xFF4CAF50),
+                        tint = SkyBlue,
                         modifier = Modifier
                             .size(48.dp)
                             .align(Alignment.Center)
@@ -534,10 +545,10 @@ fun CardOCRScanScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 8.dp)
-                        .background(
-                            color = Color(0xFF4CAF50).copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(8.dp)
-                        )
+//                        .background(
+//                            color = Color(0xFF4CAF50).copy(alpha = 0.2f),
+//                            shape = RoundedCornerShape(8.dp)
+//                        )
                         .padding(8.dp)
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 120.dp)
@@ -555,34 +566,34 @@ fun CardOCRScanScreen(
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = "인식 완료",
-                                    tint = Color(0xFF4CAF50),
+                                    tint = SkyBlue,
                                     modifier = Modifier.size(16.dp)
                                 )
                             } else {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(16.dp),
-                                    color = Color(0xFF4CAF50),
+                                    color = SkyBlue,
                                     strokeWidth = 2.dp,
                                     progress = recognitionProgress
                                 )
                             }
-                            
+
                             Spacer(modifier = Modifier.width(8.dp))
-                            
+
                             Text(
-                                text = if (isRecognitionComplete) "인식 완료! 잠시만 기다려주세요." 
-                                       else "카드 정보 인식 중... ${(recognitionProgress * 100).toInt()}%",
-                                color = Color(0xFF4CAF50),
+                                text = if (isRecognitionComplete) "인식 완료! 잠시만 기다려주세요."
+                                else "카드 정보 인식 중... ${(recognitionProgress * 100).toInt()}%",
+                                color = SkyBlue,
                                 fontSize = 14.sp
                             )
                         }
-                        
+
                         // 진행 바 추가
                         if (!isRecognitionComplete) {
                             Spacer(modifier = Modifier.height(8.dp))
                             LinearProgressIndicator(
                                 progress = recognitionProgress,
-                                color = Color(0xFF4CAF50),
+                                color = SkyBlue,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(4.dp)
@@ -605,7 +616,6 @@ fun CardOCRScanScreen(
                         )
                 )
 
-                // 하단 팝업
                 Box(
                     modifier = Modifier
                         .fillMaxSize(),
@@ -622,66 +632,88 @@ fun CardOCRScanScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.White, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                                .padding(16.dp)
+                                .background(
+                                    Color.White,
+                                    RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+                                )
+                                .padding(horizontal = 24.dp, vertical = 20.dp)
                                 .padding(bottom = navigationBarPadding.calculateBottomPadding()) // 네이티브 하단 바 고려
                         ) {
+                            // 닫기 아이콘 (X 버튼)
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.TopEnd
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "닫기",
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clickable {
+                                            showBottomPopup = false
+                                            resetScan()
+                                        }
+                                )
+                            }
+
                             Text(
                                 text = "스캔한 정보를 확인해주세요",
                                 color = Color.Black,
-                                fontSize = 18.sp,
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 16.dp)
+                                modifier = Modifier.padding(bottom = 24.dp)
                             )
 
-                            // 카드 번호
+                            // 카드 번호 영역
+                            Text(
+                                text = "카드번호",
+                                color = Color.Gray,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
+
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .padding(bottom = 20.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "카드 번호",
-                                    color = Color.Gray,
-                                    fontSize = 16.sp
-                                )
-
                                 Text(
                                     text = formatCardNumber(cardNumber),
                                     color = Color.Black,
-                                    fontSize = 16.sp,
+                                    fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
+                                )
+
+                                // 신한카드 아이콘
+                                Image(
+                                    painter = painterResource(id = R.drawable.card_shinhan),
+                                    contentDescription = "신한카드",
+                                    modifier = Modifier.size(36.dp)
                                 )
                             }
 
-                            // 만료일
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "유효기간",
-                                    color = Color.Gray,
-                                    fontSize = 16.sp
-                                )
+                            // 유효기간 영역
+                            Text(
+                                text = "유효기간",
+                                color = Color.Gray,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
 
-                                Text(
-                                    text = expiryDate,
-                                    color = Color.Black,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "12/25",
+                                color = Color.Black,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 24.dp)
+                            )
 
                             // 버튼 영역
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 // 재촬영 버튼
                                 Button(
@@ -690,13 +722,20 @@ fun CardOCRScanScreen(
                                         resetScan()
                                     },
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.LightGray
+                                        containerColor = Color.White,
+                                        contentColor = SkyBlue // Sky Blue
                                     ),
+                                    border = BorderStroke(1.dp, SkyBlue),
+                                    shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(end = 8.dp)
+                                        .height(56.dp)
                                 ) {
-                                    Text("재촬영")
+                                    Text(
+                                        "재촬영",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 }
 
                                 // 확인 버튼
@@ -709,95 +748,101 @@ fun CardOCRScanScreen(
                                         showCardConfirmation = true
                                     },
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF4CAF50)
+                                        containerColor = SkyBlue // Sky Blue
                                     ),
+                                    shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(start = 8.dp)
+                                        .height(56.dp)
                                 ) {
-                                    Text("확인")
+                                    Text(
+                                        "확인",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 }
                             }
                         }
                     }
                 }
-            }
-        }
-    }
 
-    // 스캔 중 로딩 표시
-    if (isScanning) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.7f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator(
-                    color = Color.White
-                )
+                // 스캔 중 로딩 표시
+                if (isScanning) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.7f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color.White
+                            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "카드 정보 인식 중...",
-                    color = Color.White,
-                    fontSize = 16.sp
-                )
-            }
-        }
-    }
-
-    // 에러 발생 시 UI 표시
-    if (hasError) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.7f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .padding(24.dp)
-                    .background(
-                        color = Color.DarkGray,
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .padding(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = "에러",
-                    tint = Color.Red,
-                    modifier = Modifier.size(48.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = errorMessage,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = {
-                        hasError = false
-                        resetScan()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
-                    )
-                ) {
-                    Text("다시 시도")
+                            Text(
+                                text = "카드 정보 인식 중...",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
                 }
+
+                // 에러 발생 시 UI 표시
+                if (hasError) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.7f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .padding(24.dp)
+                                .background(
+                                    color = Color.DarkGray,
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "에러",
+                                tint = Color.Red,
+                                modifier = Modifier.size(48.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = errorMessage,
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Button(
+                                onClick = {
+                                    hasError = false
+                                    resetScan()
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF4CAF50)
+                                )
+                            ) {
+                                Text("다시 시도")
+                            }
+                        }
+                    }
+                }
+
             }
         }
     }
