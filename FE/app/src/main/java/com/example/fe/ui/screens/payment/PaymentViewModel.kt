@@ -404,7 +404,7 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
         viewModelScope.launch {
             try {
                 val userId = getUserId() // 사용자 ID 가져오기
-                val response = paymentRepository.sendQRToken(QRTokenRequest(qrToken, userId))
+                val response = paymentRepository.sendQRToken(QRTokenRequest(qrToken))
 
                 if (response.isSuccessful && response.body()?.success == true) {
                     val paymentResponse = response.body()?.data
@@ -578,6 +578,19 @@ class PaymentViewModel(private val context: Context) : ViewModel() {
                 _cardRegistrationState.value = CardRegistrationState.Error(
                     e.message ?: "카드 등록 중 오류가 발생했습니다"
                 )
+            }
+        }
+    }
+
+    fun refreshCards() {
+        viewModelScope.launch {
+            try {
+                // 기존 초기화 메서드를 호출하여 카드 목록과 토큰을 새로고침
+                initializePaymentProcess()
+
+                Log.d("PaymentViewModel", "카드 목록 새로고침 완료: ${_cards.value.size}개 카드")
+            } catch (e: Exception) {
+                Log.e("PaymentViewModel", "카드 목록 새로고침 실패", e)
             }
         }
     }

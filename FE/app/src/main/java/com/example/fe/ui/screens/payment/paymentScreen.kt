@@ -98,7 +98,9 @@ fun PaymentScreen(
     onShowQRScanner: () -> Unit = {},
     onShowCardOCRScan: () -> Unit = {},
     onQRScanModeChange: (Boolean) -> Unit = {},
-    onShowPaymentInfo: () -> Unit = {} // 결제 정보 화면 표시 콜백 추가
+    onShowPaymentInfo: () -> Unit = {}, // 결제 정보 화면 표시 콜백 추가
+    onReturnFromCardOCRScan: () -> Unit = {}, // 새 콜백 추가
+
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -119,20 +121,8 @@ fun PaymentScreen(
     var scrollOffset by remember { mutableFloatStateOf(0f) }
     val lazyListState = rememberLazyListState()
 
-    // 카드 등록 결과 변경 감지 및 팝업 표시
-    LaunchedEffect(cardRegistrationState) {
-        if (cardRegistrationState is PaymentViewModel.CardRegistrationState.Success ||
-            cardRegistrationState is PaymentViewModel.CardRegistrationState.Error) {
-            // 초기 상태가 아닌 경우에만 팝업 표시
-            if (cardRegistrationState !is PaymentViewModel.CardRegistrationState.Initial) {
-                showResultPopup = true
-                // 5초 후 팝업 자동 닫기
-                delay(5000)
-                showResultPopup = false
-                // 상태 초기화
-                viewModel.resetCardRegistrationState()
-            }
-        }
+    LaunchedEffect(Unit) {
+        onReturnFromCardOCRScan()
     }
 
     // 스크롤 오프셋 변경 감지 및 콜백 호출
@@ -185,6 +175,33 @@ fun PaymentScreen(
 
     val paymentResult by viewModel.paymentResult.collectAsState()
 
+
+// 카드 등록 결과 변경 감지 및 팝업 표시
+    LaunchedEffect(cardRegistrationState) {
+        if (cardRegistrationState is PaymentViewModel.CardRegistrationState.Success ||
+            cardRegistrationState is PaymentViewModel.CardRegistrationState.Error) {
+            // 초기 상태가 아닌 경우에만 팝업 표시
+            if (cardRegistrationState !is PaymentViewModel.CardRegistrationState.Initial) {
+                // 성공적으로 카드가 등록된 경우 카드 목록 즉시 새로고침
+                if (cardRegistrationState is PaymentViewModel.CardRegistrationState.Success) {
+                    viewModel.refreshCards() // 카드 목록 새로고침 메서드 호출
+
+                    // 자동 카드 모드로 설정하여 새로 등록된 카드가 보이도록 함
+                    selectedCardIndex = -1
+                    showAutoCardMode = true
+                    showAddCardMode = false
+                    selectedCard = null
+                }
+
+                showResultPopup = true
+                // 5초 후 팝업 자동 닫기
+                delay(5000)
+                showResultPopup = false
+                // 상태 초기화
+                viewModel.resetCardRegistrationState()
+            }
+        }
+    }
 // 결제 상태 변경 감지 및 화면 상태 업데이트
     LaunchedEffect(paymentState) {
         Log.d("PaymentScreen", "결제 상태 변경: $paymentState")
@@ -646,7 +663,7 @@ fun PaymentScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(screenHeight * 0.16f)
+                        .height(screenHeight * 0.18f)
                 ) {
                     if (!showAutoCardMode && selectedCard != null) {
                         // 일반 카드 모드 - 카드별 별자리 표시
@@ -844,12 +861,12 @@ fun PaymentScreen(
     // 카드 추가 모드 오버레이
     if (showAddCardMode) {
         PaymentAddCardSection(
-            onClose = { 
+            onClose = {
                 // 카드 추가 모드 종료 시 이전 상태로 돌아감
                 showAddCardMode = false
-                
+
                 // 이전에 카드 추가 영역이었다면 그대로 유지
-                if (previousCardIndex == -2 || 
+                if (previousCardIndex == -2 ||
                     (previousCardIndex >= apiCards.size && previousCardIndex <= apiCards.size + 1)) {
                     selectedCardIndex = -2
                     showAutoCardMode = false
@@ -866,7 +883,7 @@ fun PaymentScreen(
                 showAutoCardMode = true
                 showAddCardMode = false
                 // 카드 목록 새로고침
-                viewModel.refreshTokens()
+                viewModel.refreshCards() // 여기서 즉시 새로고침
             },
             viewModel = viewModel
         )

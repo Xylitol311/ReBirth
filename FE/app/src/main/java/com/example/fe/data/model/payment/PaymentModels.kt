@@ -1,7 +1,5 @@
 package com.example.fe.data.model.payment
 
-import java.util.Date
-
 // SSE 이벤트 데이터 클래스
 data class PaymentEvent(
     val message: String? = null,

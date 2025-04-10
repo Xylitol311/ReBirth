@@ -13,7 +13,7 @@ fun getCategoryIcon(category: String): Int {
         "교육" -> R.drawable.ic_education
         "교통" -> R.drawable.ic_bus
         "금융" -> R.drawable.ic_money
-        "기타" -> R.drawable.ic_taxi
+        "기타" -> R.drawable.ic_all
         "대형마트" -> R.drawable.ic_bigmart
         "드럭스토어" -> R.drawable.ic_drugstore
         "디지털컨텐츠" -> R.drawable.ic_digital
