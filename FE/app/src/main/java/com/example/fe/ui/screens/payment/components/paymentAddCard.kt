@@ -412,7 +412,7 @@ fun CardConfirmationScreen(
 
                 // 카드 등록 함수 호출
                 viewModel.registCard(
-                    cardNumber = cardNumberInput.replace("-", ""),
+                    cardNumber = cardNumberInput,
                     password = cardPinPrefix,
                     cvc = cvcInput
                 )
@@ -450,6 +450,7 @@ fun CardConfirmationScreen(
         }
     }
 }
+
 // 카드 정보 항목
 @Composable
 fun CardInfoItem(
