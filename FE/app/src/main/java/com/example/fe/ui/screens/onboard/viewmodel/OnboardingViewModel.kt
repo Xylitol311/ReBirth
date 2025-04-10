@@ -31,7 +31,9 @@ import kotlinx.coroutines.runBlocking
 import kotlin.String
 
 
+// DataStore 설정
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
+
 
 class OnboardingViewModel(
     private val deviceInfoManager: DeviceInfoManager,
@@ -49,6 +51,7 @@ class OnboardingViewModel(
         private val USER_NAME = stringPreferencesKey("user_name")
         private val USER_PIN = stringPreferencesKey("user_pin")
         private val USER_PATTERN = stringPreferencesKey("user_pattern")
+        private val HAS_COMPLETED_TUTORIAL = booleanPreferencesKey("has_completed_tutorial")
     }
 
     // 상태 변수
@@ -65,6 +68,8 @@ class OnboardingViewModel(
         private set
     var errorMessage by mutableStateOf("")
         internal set
+    var hasCompletedTutorial by mutableStateOf(false)
+        private set
 
     // 로컬 인증 정보 (메모리 캐싱)
     private var userPin: String = "000000"
@@ -76,12 +81,14 @@ class OnboardingViewModel(
         loadUserPreferences()
     }
 
+    // DataStore에서 Preference 값들을 불러와 상태 변수 초기화
     private fun loadUserPreferences() {
         viewModelScope.launch {
             context.dataStore.data.first().let { preferences ->
                 userToken = preferences[USER_TOKEN] ?: ""
                 tokenProvider.setToken(userToken)
             }
+            // collect로 지속적으로 업데이트될 경우 값을 반영
             context.dataStore.data.collect { preferences ->
                 isLoggedIn = preferences[IS_LOGGED_IN] ?: false
                 hasBiometricAuth = preferences[HAS_BIOMETRIC_AUTH] ?: false
@@ -93,6 +100,17 @@ class OnboardingViewModel(
                 userPattern = preferences[USER_PATTERN]?.let {
                     gson.fromJson(it, Array<Int>::class.java).toList()
                 } ?: emptyList()
+                hasCompletedTutorial = preferences[HAS_COMPLETED_TUTORIAL] ?: false
+            }
+        }
+    }
+
+    // 튜토리얼 완료 후 호출하는 함수
+    fun setTutorialCompleted() {
+        hasCompletedTutorial = true
+        viewModelScope.launch {
+            context.dataStore.edit { preferences ->
+                preferences[HAS_COMPLETED_TUTORIAL] = true
             }
         }
     }
@@ -535,12 +553,6 @@ class AppTokenProvider(private val context: Context) : TokenProvider {
     }
 
     override fun getToken(): String {
-        // 캐시된 토큰이 있으면 그것을 반환
-//        if (cachedToken.isNotEmpty()) {
-//            return cachedToken
-//        }
-
-        // 없으면 DataStore에서 가져옴
         return runBlocking {
             val preferences = context.dataStore.data.first()
             val token = preferences[OnboardingViewModel.USER_TOKEN] ?: ""

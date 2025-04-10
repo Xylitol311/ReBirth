@@ -1,53 +1,29 @@
-package com.example.fe.ui.screens.onboard
+package com.example.fe.ui.navigation
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.fe.R
-import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
+import com.example.fe.ui.screens.onboard.AuthScreen
+import com.example.fe.ui.screens.onboard.TutorialPage
+import com.example.fe.ui.screens.onboard.TutorialScreen
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
-import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModelFactory
 
 /**
- * TutorialActivity.kt (수정된 Compose 버전)
+ * TutorialNavHost.kt (수정된 Compose 버전)
  *
  * - 처음 실행 시 튜토리얼 화면(TutorialScreen)을 표시합니다.
  * - 마지막 페이지의 회원가입 버튼 클릭 시 navController를 통해 "auth" 경로로 이동하여 AuthScreen을 호출합니다.
  */
-class TutorialActivity : ComponentActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            TutorialNavHost()
-        }
-    }
-}
-
 @Composable
-fun TutorialNavHost() {
-    // Context 및 온보딩 관련 ViewModel 설정
-    val context = LocalContext.current
-    val deviceInfoManager = AndroidDeviceInfoManager(context)
-    val onboardingViewModel: OnboardingViewModel = viewModel(
-        factory = OnboardingViewModelFactory(deviceInfoManager, context)
-    )
-    // NavController 생성
+fun TutorialNavHost(onboardingViewModel: OnboardingViewModel) {
     val navController = rememberNavController()
 
-    // NavHost 구성: startDestination를 "tutorial"로 지정
-    androidx.navigation.compose.NavHost(
-        navController = navController,
-        startDestination = "tutorial"
-    ) {
-        // "tutorial" 경로: 튜토리얼 화면 표시
+    NavHost(navController = navController, startDestination = "tutorial") {
+        // 튜토리얼 경로: 튜토리얼 페이지를 보여줌
         composable("tutorial") {
-            // 튜토리얼 페이지 리스트 생성 (이미지 리소스는 기존 R.drawable.xxx 사용)
+            // 튜토리얼 페이지 데이터 정의
             val tutorialPages = listOf(
                 TutorialPage(
                     title = "당신의 소비는 조화로운 지구형입니다.",
@@ -65,23 +41,27 @@ fun TutorialNavHost() {
                     imageRes = R.drawable.constellation
                 )
             )
+
+            // TutorialScreen에서 회원가입 버튼 클릭 시 처리:
+            // 1. OnboardingViewModel의 튜토리얼 완료 상태 업데이트
+            // 2. "auth" 경로로 네비게이션 (회원가입/인증 플로우로 전환)
             TutorialScreen(
                 tutorialPages = tutorialPages,
                 onSignUpClick = {
-                    // 회원가입 버튼 클릭 시 "auth" 경로로 이동
-                    navController.navigate("auth")
+                    onboardingViewModel.setTutorialCompleted() // 튜토리얼 완료 처리
+                    navController.navigate("auth") {
+                        // 튜토리얼 화면을 스택에서 제거하여 뒤로 가기 시 튜토리얼로 돌아가지 않도록 함
+                        popUpTo("tutorial") { inclusive = true }
+                    }
                 }
             )
         }
-        // "auth" 경로: AuthScreen 호출 (이미 제공된 AuthScreen 파일 사용)
+        // "auth" 경로: 회원가입(혹은 인증) 화면 호출
         composable("auth") {
             AuthScreen(
                 navController = navController,
                 viewModel = onboardingViewModel
             )
         }
-
-        // 온보딩 플로우 내 다른 화면이 필요하다면 OnboardingNavHost에 등록된 경로와 유사하게 추가 가능합니다.
-        // 예) composable("onboarding") { OnboardingScreen(navController, onboardingViewModel) }
     }
 }
