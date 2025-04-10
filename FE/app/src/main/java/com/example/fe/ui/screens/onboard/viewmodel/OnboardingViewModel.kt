@@ -299,6 +299,7 @@ class OnboardingViewModel(
                     preferences[USER_NAME] = name
                     preferences[USER_TOKEN] = token
                 }
+
                 // PIN 로컬 저장도 동시에
                 setUserPin(true)
 

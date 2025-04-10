@@ -1,9 +1,11 @@
 package com.example.fe.ui.screens.calendar
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fe.config.AppConfig
@@ -14,9 +16,11 @@ import com.example.fe.data.model.calendar.ReportData
 import com.example.fe.data.model.calendar.CardReport
 import com.example.fe.data.model.calendar.CategoryReport
 import com.example.fe.data.repository.CalendarRepository
+import com.example.fe.ui.screens.onboard.viewmodel.dataStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -26,18 +30,40 @@ import java.time.format.DateTimeFormatter
 /**
  * 캘린더 화면의 상태를 관리하는 ViewModel
  */
-class CalendarViewModel : ViewModel() {
+class CalendarViewModel(private val context: Context) : ViewModel() {
     private val TAG = "CalendarViewModel"
     private val repository = CalendarRepository()
-    
+
     // 현재 선택된 연월 (달력 탭용)
     var selectedYearMonth by mutableStateOf(YearMonth.now())
         private set
-    
+
     // 선택된 리포트 연월 (리포트 탭용)
     var selectedReportYearMonth by mutableStateOf(getPreviousMonth(YearMonth.now()))
-        private set
-    
+
+
+    private val _userName = MutableStateFlow("")
+    val userName: StateFlow<String> = _userName.asStateFlow()
+
+    init {
+
+        loadUserName()
+    }
+
+    private fun loadUserName() {
+        viewModelScope.launch {
+            try {
+                val preferences = context.dataStore.data.first()
+                val userName = preferences[stringPreferencesKey("user_name")] ?: "사용자"
+                _userName.value = userName
+                Log.d(TAG, "사용자 이름 로드 성공: $userName")
+            } catch (e: Exception) {
+                Log.e(TAG, "사용자 이름 로드 실패", e)
+                _userName.value = "사용자"
+            }
+        }
+    }
+
     // 현재 선택된 날짜
     var selectedDate by mutableStateOf(LocalDate.now())
         private set
@@ -100,6 +126,7 @@ class CalendarViewModel : ViewModel() {
         // 제한 없이 항상 이전 월로 이동 가능
         return true
     }
+
     
     /**
      * 리포트 탭에서 다음 월로 이동 가능한지 여부
