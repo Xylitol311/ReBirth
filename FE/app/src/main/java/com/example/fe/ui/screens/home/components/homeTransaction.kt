@@ -45,7 +45,7 @@ fun HomeTransaction(
         GlassSurface(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
+                .padding(horizontal = 5.dp, vertical = 8.dp),
             cornerRadius = 16f
         ) {
             Column(
@@ -69,11 +69,11 @@ fun HomeTransaction(
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 5.dp, vertical = 8.dp),
         cornerRadius = 16f
     ) {
         Column(
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
             if (preBenefitFeedback?.isGood == true) {
                 // 추천 카드로 결제한 경우 - 좋은 피드백
@@ -97,18 +97,9 @@ private fun GoodTransactionFeedback(
         // 카드 이미지와 이모지
         Box(
             modifier = Modifier
-                .size(width = 200.dp, height = 120.dp)
+                .size(width = 200.dp, height = 80.dp)
                 .padding(vertical = 8.dp)
         ) {
-            // 카드 이미지
-            HorizontalCardLayout(
-                cardName = "사용한 카드",
-                cardImageUrl = "",
-                cardImage = R.drawable.card,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp),
-            )
             
             // 기쁜 이모지
             Image(
@@ -123,7 +114,7 @@ private fun GoodTransactionFeedback(
         // 혜택을 잘 받았어요 텍스트
         Text(
             text = "혜택을 잘 받았어요!",
-            fontSize = 28.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF4CAF50),
             textAlign = TextAlign.Center,
@@ -143,7 +134,7 @@ private fun GoodTransactionFeedback(
             fontSize = 22.sp,
             color = Color.White,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
         )
         
         // 혜택 정보
@@ -173,18 +164,9 @@ private fun BadTransactionFeedback(
                 // 카드 이미지와 이모지
                 Box(
                     modifier = Modifier
-                        .size(width = 200.dp, height = 120.dp)
+                        .size(width = 200.dp, height = 80.dp)
                         .padding(vertical = 8.dp)
                 ) {
-                // 실제 사용한 카드 이미지
-                    HorizontalCardLayout(
-                    cardName = "사용한 카드",
-                        cardImageUrl = "",
-                        cardImage = R.drawable.card,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                    )
                     
                     // 슬픈 이모지
                     Image(
@@ -199,7 +181,7 @@ private fun BadTransactionFeedback(
                 // 혜택을 놓쳤어요 텍스트
                 Text(
                     text = "혜택을 놓쳤어요",
-                    fontSize = 28.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFF4444),
                     textAlign = TextAlign.Center,
@@ -209,17 +191,17 @@ private fun BadTransactionFeedback(
                 // 가게 정보 및 결제 금액
                 Text(
                 text = data.merchantName,
-                    fontSize = 22.sp,
+                    fontSize = 18.sp,
                     color = Color.White,
                     textAlign = TextAlign.Center
                 )
                 
                 Text(
                 text = "${formatAmount(data.amount)}원 결제",
-                    fontSize = 22.sp,
+                    fontSize = 16.sp,
                     color = Color.White,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
                 )
             }
             
@@ -238,7 +220,7 @@ private fun BadTransactionFeedback(
             // 추천 카드 이미지
                 Box(
                     modifier = Modifier
-                        .size(width = 200.dp, height = 100.dp)
+                        .size(width = 200.dp, height = 120.dp)
                         .padding(vertical = 8.dp)
                 ) {
                     HorizontalCardLayout(
@@ -249,13 +231,13 @@ private fun BadTransactionFeedback(
                             .fillMaxWidth()
                             .height(100.dp),
                     )
+
                 }
                 
                 // 다른 카드 사용 시 혜택 정보
                 Text(
                 text = "추천 카드를 사용했다면",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
                     color = Color.White,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 16.dp)
@@ -268,14 +250,14 @@ private fun BadTransactionFeedback(
                 ) {
                     Text(
                     text = "${formatAmount(data.ifBenefitAmount)}원",
-                        fontSize = 22.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     
                     Text(
                         text = "의 혜택을 볼 수도 있었어요",
-                        fontSize = 22.sp,
+                        fontSize = 18.sp,
                         color = Color.White
                     )
             }

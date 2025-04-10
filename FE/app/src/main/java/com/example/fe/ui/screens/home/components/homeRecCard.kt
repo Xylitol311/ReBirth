@@ -91,7 +91,7 @@ fun HomeRecCard(
         GlassSurface(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
+                .padding(horizontal = 5.dp, vertical = 8.dp),
             cornerRadius = 16f
         ) {
             Column(
@@ -133,7 +133,7 @@ fun HomeRecCard(
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 5.dp, vertical = 8.dp),
         cornerRadius = 16f
     ) {
         Column(
@@ -189,7 +189,7 @@ fun HomeRecCard(
             ) {
                 HorizontalPager(
                     state = pagerState,
-                    pageSpacing = (-10).dp,  // 카드가 약간 붙도록 조정
+                    pageSpacing = 10.dp,  // 카드가 약간 붙도록 조정
                     contentPadding = PaddingValues(horizontal = 70.dp), // CardCarousel 방식 적용
                     modifier = Modifier.fillMaxWidth(),
                     flingBehavior = flingBehavior,
@@ -258,6 +258,27 @@ fun HomeRecCard(
                 }
             }
 
+            // 페이지 인디케이터
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                repeat(cardsToShow.size) { index ->
+                    val isSelected = index == pagerState.currentPage
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(if (isSelected) 10.dp else 8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isSelected) Color.White else Color.White.copy(alpha = 0.5f)
+                            )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             // 카드 정보 (현재 선택된 카드)
             if (cardsToShow.isNotEmpty() && pagerState.currentPage < cardsToShow.size) {
                 val currentCard = cardsToShow[pagerState.currentPage]
@@ -285,23 +306,22 @@ fun HomeRecCard(
                         if (index == 0) { // 첫 번째 혜택
                             Text(
                                 text = benefit.trim(),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
                                 color = Color.White,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(top = 2.dp)
+                                modifier = Modifier.padding(top = 4.dp)
                             )
                         } else if (index == 1) { // 두 번째 혜택
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 2.dp),
+                                    .padding(top = 4.dp),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
                                     text = benefit.trim(),
-                                    fontSize = 16.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Normal,
                                     color = Color.White,
                                     textAlign = TextAlign.Center
@@ -311,7 +331,7 @@ fun HomeRecCard(
                                 if (benefits.size > 2) {
                                     Text(
                                         text = " 외 ${benefits.size - 2}개 혜택",
-                                        fontSize = 14.sp,
+                                        fontSize = 12.sp,
                                         color = Color.White.copy(alpha = 0.7f),
                                         textAlign = TextAlign.Center
                                     )
@@ -319,26 +339,6 @@ fun HomeRecCard(
                             }
                         }
                     }
-                }
-            }
-
-            // 페이지 인디케이터
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                repeat(cardsToShow.size) { index ->
-                    val isSelected = index == pagerState.currentPage
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(if (isSelected) 10.dp else 8.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isSelected) Color.White else Color.White.copy(alpha = 0.5f)
-                            )
-                    )
                 }
             }
         }

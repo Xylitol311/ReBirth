@@ -136,6 +136,17 @@ class HomeViewModel(private val context: Context) : ViewModel() {
                         // Feedback 데이터 처리
                         feedbackResult.getOrNull()?.data?.let { data ->
                             _preBenefitFeedback.value = data
+                            Log.d(TAG, "홈스크린 - PreBenefitFeedback 응답 상세: " +
+                                    "userId=${data.userId}, " +
+                                    "paymentCardId=${data.paymentCardId}, " +
+                                    "recommendedCardId=${data.recommendedCardId}, " +
+                                    "amount=${data.amount}, " +
+                                    "ifBenefitType=${data.ifBenefitType}, " +
+                                    "ifBenefitAmount=${data.ifBenefitAmount}, " +
+                                    "realBenefitType=${data.realBenefitType}, " +
+                                    "realBenefitAmount=${data.realBenefitAmount}, " +
+                                    "merchantName=${data.merchantName}, " +
+                                    "isGood=${data.isGood}")
                         }
 
                         _uiState.value = HomeUiState.Success

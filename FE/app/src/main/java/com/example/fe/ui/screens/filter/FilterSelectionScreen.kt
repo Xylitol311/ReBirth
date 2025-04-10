@@ -32,6 +32,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
 import java.text.NumberFormat
 import java.util.Locale
+import android.util.Log
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // 필터 선택 화면 컴포넌트
 @Composable
@@ -49,6 +53,11 @@ fun FilterSelectionScreen(
     // 선택된 필터 옵션을 추적하기 위한 상태
     val selectedOptions = remember { mutableStateMapOf<String, Boolean>() }
     
+    // 혜택 타입, 카드사, 카테고리 선택 상태
+    val selectedBenefitTypes = remember { mutableStateListOf<String>() }
+    val selectedCardCompanies = remember { mutableStateListOf<String>() }
+    val selectedCategories = remember { mutableStateListOf<String>() }
+    
     // 슬라이더 범위 상태
     val performanceRange = remember { mutableStateOf(0f..1000000f) }
     val annualFeeRange = remember { mutableStateOf(0f..20000f) }
@@ -59,6 +68,48 @@ fun FilterSelectionScreen(
         "카드사" -> listOf("농협", "IBK", "신한", "우리", "삼성")
         "카테고리" -> listOf("외식", "쇼핑", "교통", "여가", "의료", "통신", "교육")
         else -> emptyList()
+    }
+    
+    // API 요청용 혜택 타입 매핑
+    val benefitTypeMapping = mapOf(
+        "할인" to "DISCOUNT",
+        "적립" to "MILEAGE",
+        "쿠폰" to "COUPON"
+    )
+
+    // 현재 탭에 대한 ViewModel 인스턴스를 가져옵니다
+    val viewModel: com.example.fe.ui.screens.cardRecommend.CardRecommendViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    
+    // 화면이 처음 로드될 때 초기 상태 설정
+    LaunchedEffect(Unit) {
+        // 현재 설정된 필터 값을 초기화
+        val filterTags = viewModel.uiState.filterTags
+        
+        // 현재 카테고리에 해당하는 필터 태그 찾기
+        val currentFilter = filterTags.find { 
+            when (category) {
+                "타입" -> it.category == "타입"
+                "카드사" -> it.category == "카드사"
+                "카테고리" -> it.category == "카테고리"
+                else -> false
+            }
+        }
+        
+        // 현재 선택된 옵션이 있다면 UI에 반영
+        if (currentFilter != null && currentFilter.selectedOption != "전체") {
+            selectedOptions["$categoryDisplayName:${currentFilter.selectedOption}"] = true
+            
+            when (category) {
+                "타입" -> {
+                    val apiValue = benefitTypeMapping[currentFilter.selectedOption]
+                    if (apiValue != null) {
+                        selectedBenefitTypes.add(apiValue)
+                    }
+                }
+                "카드사" -> selectedCardCompanies.add(currentFilter.selectedOption)
+                "카테고리" -> selectedCategories.add(currentFilter.selectedOption)
+            }
+        }
     }
     
     Box(
@@ -101,7 +152,7 @@ fun FilterSelectionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 110.dp, start = 16.dp, end = 16.dp, bottom = 80.dp)  // 상단 여백도 증가
+                .padding(top = 110.dp, start = 32.dp, end = 32.dp, bottom = 80.dp)  // 상단 여백도 증가
                 .verticalScroll(rememberScrollState())
         ) {
             // 혜택 타입 섹션
@@ -111,6 +162,11 @@ fun FilterSelectionScreen(
                 selectedOptions = selectedOptions,
                 onOptionClick = { option, isSelected ->
                     selectedOptions["혜택 타입:$option"] = isSelected
+                    if (isSelected) {
+                        selectedBenefitTypes.add(benefitTypeMapping[option] ?: option)
+                    } else {
+                        selectedBenefitTypes.remove(benefitTypeMapping[option] ?: option)
+                    }
                 }
             )
             
@@ -123,6 +179,11 @@ fun FilterSelectionScreen(
                 selectedOptions = selectedOptions,
                 onOptionClick = { option, isSelected ->
                     selectedOptions["카드사:$option"] = isSelected
+                    if (isSelected) {
+                        selectedCardCompanies.add(option)
+                    } else {
+                        selectedCardCompanies.remove(option)
+                    }
                 }
             )
             
@@ -135,6 +196,11 @@ fun FilterSelectionScreen(
                 selectedOptions = selectedOptions,
                 onOptionClick = { option, isSelected ->
                     selectedOptions["카테고리:$option"] = isSelected
+                    if (isSelected) {
+                        selectedCategories.add(option)
+                    } else {
+                        selectedCategories.remove(option)
+                    }
                 }
             )
             
@@ -171,7 +237,7 @@ fun FilterSelectionScreen(
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .background(Color(0xFF1E2649))
-                .padding(16.dp)
+                .padding(32.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -182,42 +248,86 @@ fun FilterSelectionScreen(
                     onClick = {
                         // 모든 선택 옵션 초기화
                         selectedOptions.clear()
+                        selectedBenefitTypes.clear()
+                        selectedCardCompanies.clear()
+                        selectedCategories.clear()
                         
-                        // 슬라이더 값 초기화
+                        // 슬라이더 초기화
                         performanceRange.value = 0f..1000000f
                         annualFeeRange.value = 0f..20000f
                     },
-                    modifier = Modifier
-                        .weight(4f)
-                        .height(56.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color(0xFF1E2649)
+                        containerColor = Color(0xAA87CEEB),
+                        contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
                 ) {
                     Text(
                         text = "초기화",
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
                 
-                // 확인 버튼
+                // 결과 보기 버튼
                 Button(
-                    onClick = onClose,
-                    modifier = Modifier
-                        .weight(6f)
-                        .height(56.dp),
+                    onClick = {
+                        // 선택된 필터를 API 요청 형식으로 변환
+                        val benefitType = selectedBenefitTypes.toList()
+                        val cardCompany = selectedCardCompanies.toList()
+                        val categories = selectedCategories.toList()
+                        val performanceMin = performanceRange.value.start.roundToInt()
+                        val performanceMax = performanceRange.value.endInclusive.roundToInt()
+                        val annualFeeMin = annualFeeRange.value.start.roundToInt()
+                        val annualFeeMax = annualFeeRange.value.endInclusive.roundToInt()
+                        
+                        // 로그 출력
+                        Log.d("FilterSelectionScreen", "결과 보기 버튼 클릭됨")
+                        Log.d("FilterSelectionScreen", "혜택 타입: $benefitType")
+                        Log.d("FilterSelectionScreen", "카드사: $cardCompany")
+                        Log.d("FilterSelectionScreen", "카테고리: $categories")
+                        Log.d("FilterSelectionScreen", "전월실적 범위: $performanceMin ~ $performanceMax")
+                        Log.d("FilterSelectionScreen", "연회비 범위: $annualFeeMin ~ $annualFeeMax")
+                        
+                        // 모든 필터를 한 번에 설정하여 중복 API 호출 방지
+                        viewModel.setFiltersAtOnce(
+                            benefitType = benefitType,
+                            cardCompany = cardCompany,
+                            categories = categories,
+                            performanceMin = performanceMin,
+                            performanceMax = performanceMax,
+                            annualFeeMin = annualFeeMin,
+                            annualFeeMax = annualFeeMax
+                        )
+                        
+                        // 먼저 API 요청을 시작
+                        Log.d("FilterSelectionScreen", "viewModel.applyFilters() 호출 - API 요청 시작")
+                        viewModel.applyFilters()
+                        
+                        // 잠시 지연 후 화면 닫기 (API 요청이 시작되도록)
+                        MainScope().launch {
+                            delay(100)
+                            // 결과 보기 버튼이 눌리면 화면을 닫고 필터를 적용
+                            Log.d("FilterSelectionScreen", "화면 닫기")
+                            onClose()
+                            Log.d("FilterSelectionScreen", "필터 적용 완료 - API 호출 후 결과 페이지로 이동")
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00D1FF),
+                        containerColor = Color(0xFF87CEEB),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
                 ) {
                     Text(
-                        text = "확인",
-                        fontSize = 18.sp,
+                        text = "결과 보기",
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }

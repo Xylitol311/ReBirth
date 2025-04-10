@@ -57,7 +57,7 @@ fun HomeUsedMoney(
     GlassSurface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 5.dp, vertical = 8.dp),
         cornerRadius = 16f
     ) {
         Column(
@@ -86,7 +86,7 @@ fun HomeUsedMoney(
                     
                     Text(
                         text = "${formatAmount(spendingAmount)}원",
-                        fontSize = 20.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF00E1FF)
                     )
@@ -95,7 +95,7 @@ fun HomeUsedMoney(
                     
                     Text(
                         text = "받은 혜택 ${formatAmount(benefitAmount)}원",
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         modifier = Modifier.padding(bottom = 24.dp)
@@ -124,7 +124,7 @@ fun HomeUsedMoney(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .height(48.dp)
+                    .height(40.dp)
                     .clip(RoundedCornerShape(24.dp))
                     .background(Color(0xFF2B3674)),
                 horizontalArrangement = Arrangement.SpaceEvenly

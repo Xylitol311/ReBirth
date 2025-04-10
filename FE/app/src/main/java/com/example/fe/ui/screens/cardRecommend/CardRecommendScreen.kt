@@ -49,6 +49,12 @@ import java.text.NumberFormat
 import java.util.Locale
 import com.example.fe.ui.components.navigation.BottomNavItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.flow.collectLatest
+import androidx.compose.runtime.snapshotFlow
 
 @Composable
 fun CardRecommendScreen(
@@ -56,7 +62,19 @@ fun CardRecommendScreen(
     onCardClick: (Int) -> Unit,
     navController: NavHostController
 ) {
+    // 매 프레임마다 ViewModel 상태를 직접 참조
     val uiState = viewModel.uiState
+    
+    // ViewModel 상태 변화를 실시간으로 감지하는 효과
+    LaunchedEffect(true) {
+        snapshotFlow { viewModel.uiState.searchResultVersion }
+            .collectLatest { version ->
+                Log.d("CardRecommendScreen", "실시간 상태 감지 - 검색 결과 버전: $version")
+            }
+    }
+    
+    // 상태 갱신 강제 트리거 (화면 갱신 보장)
+    val stateRefreshTrigger = remember { mutableStateOf(0) }
     
     // 탭 인덱스를 ViewModel로 관리하여 화면이 재구성되어도 유지되도록 합니다
     var selectedTabIndex = remember { mutableStateOf(viewModel.selectedTabIndex) }
@@ -64,10 +82,20 @@ fun CardRecommendScreen(
     // 선택된 탭이 변경될 때 ViewModel에 저장
     LaunchedEffect(selectedTabIndex.value) {
         viewModel.selectedTabIndex = selectedTabIndex.value
+        
+        // 직접 찾기 탭으로 전환될 때 API 요청을 하지 않음
+        // 필터 선택 화면에서 이미 API 요청이 수행되었으므로 여기서는 호출하지 않음
+        // if (selectedTabIndex.value == 1) {
+        //     viewModel.searchCards(viewModel.searchParameters)
+        // }
+        Log.d("CardRecommendScreen", "탭 전환 - 인덱스: ${selectedTabIndex.value}")
     }
     
     // 네비게이션 백스택 이벤트 감지
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+    // 검색 결과 버전을 추적하여 화면 재구성을 트리거하는 상태
+    val searchResultUpdateTrigger = remember { mutableStateOf(0) }
     
     // 필터 선택 화면에서 돌아올 때 직접 찾기 탭이 선택되도록 합니다
     LaunchedEffect(navBackStackEntry) {
@@ -75,7 +103,21 @@ fun CardRecommendScreen(
         if (currentRoute == BottomNavItem.CardRecommend.route) {
             val prevRoute = navController.previousBackStackEntry?.destination?.route
             if (prevRoute?.startsWith("filter_selection") == true) {
+                Log.d("CardRecommendScreen", "필터 선택 화면에서 돌아옴, 직접 찾기 탭으로 전환")
                 selectedTabIndex.value = 1
+                
+                // 필터 선택 화면에서 돌아온 직후 ViewModel의 최신 상태를 강제로 가져오도록 함
+                Log.d("CardRecommendScreen", "최신 검색 결과 상태 확인 - 버전: ${viewModel.uiState.searchResultVersion}, 카드 수: ${viewModel.uiState.searchResults?.size ?: 0}개")
+                
+                // 최신 검색 결과로 UI를 강제 갱신하는 함수 호출
+                viewModel.forceRefreshUIWithLatestResults()
+                
+                // 화면 갱신 강제 트리거 증가
+                stateRefreshTrigger.value += 1
+                Log.d("CardRecommendScreen", "상태 갱신 트리거 증가: ${stateRefreshTrigger.value}, 현재 검색 결과 버전: ${viewModel.uiState.searchResultVersion}")
+                
+                // 현재 UI 상태 로깅
+                Log.d("CardRecommendScreen", "현재 UI 상태 - 검색 결과: ${viewModel.uiState.searchResults?.size ?: 0}개, 로딩 중: ${viewModel.uiState.isLoadingSearch}, 에러: ${viewModel.uiState.errorSearch}")
             }
         }
     }
@@ -160,23 +202,53 @@ fun CardRecommendScreen(
                 onRefresh = { viewModel.loadRecommendations() },
                 onCardClick = handleCardClick
             )
-            1 -> CardFinder(
-                filterTags = uiState.filterTags,
-                onFilterChange = { category, option ->
-                    viewModel.updateFilterAndSearch(category, option)
-                },
-                cards = uiState.searchResults?.mapNotNull { apiCard ->
-                    try {
-                        viewModel.mapApiCardToUiCard(apiCard)
-                    } catch (e: Exception) {
-                        null
+            1 -> {
+                // uiState의 searchResults와 searchResultVersion 변경을 감지하여 화면 갱신 확인
+                val searchResultsVersion = viewModel.uiState.searchResultVersion
+                val searchResultsSize = viewModel.uiState.searchResults?.size ?: 0
+                
+                // 중요: 항상 ViewModel에서 최신 상태를 직접 가져와서 사용
+                val cardList = remember(searchResultsVersion, stateRefreshTrigger.value) {
+                    viewModel.uiState.searchResults?.mapNotNull { apiCard ->
+                        try {
+                            viewModel.mapApiCardToUiCard(apiCard)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    } ?: emptyList()
+                }
+
+                // 검색 결과 변경 감지 이펙트
+                LaunchedEffect(searchResultsVersion, stateRefreshTrigger.value) {
+                    Log.d("CardRecommendScreen", "★★★ 검색 결과 업데이트 ★★★ - 버전: $searchResultsVersion, 트리거: ${stateRefreshTrigger.value}, 카드 수: $searchResultsSize")
+                    Log.d("CardRecommendScreen", "변환된 cardList 크기: ${cardList.size}")
+                    
+                    if (searchResultsVersion > 0) {
+                        Log.d("CardRecommendScreen", "새로운 검색 결과 로드됨 - 이 메시지가 보이면 UI 업데이트 성공!")
+                        viewModel.uiState.searchResults?.forEach { apiCard -> 
+                            Log.d("CardRecommendScreen", "  - 카드: ${apiCard.cardId}, ${apiCard.cardName}")
+                        }
                     }
-                } ?: emptyList(),
-                isLoading = uiState.isLoadingSearch,
-                error = uiState.errorSearch,
-                onCardClick = handleCardClick,
-                navController = navController
-            )
+                }
+                
+                // key 매개변수 추가하여 cardList가 변경될 때마다 CardFinder가 다시 구성되도록 함
+                key(cardList.hashCode(), stateRefreshTrigger.value) {
+                    CardFinder(
+                        // 중요: 모든 필드에서 viewModel 직접 참조
+                        filterTags = viewModel.uiState.filterTags,
+                        filterCounts = viewModel.filterCounts,
+                        onFilterChange = { category, option ->
+                            viewModel.updateFilterAndSearch(category, option)
+                        },
+                        // 미리 계산된 cardList 사용
+                        cards = cardList,
+                        isLoading = viewModel.uiState.isLoadingSearch,
+                        error = viewModel.uiState.errorSearch,
+                        onCardClick = handleCardClick,
+                        navController = navController
+                    )
+                }
+            }
         }
     }
 }
@@ -194,7 +266,7 @@ fun PersonalizedRecommendations(
     
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 35.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(horizontal = 23.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
@@ -226,7 +298,7 @@ fun PersonalizedRecommendations(
                 cornerRadius = 16f,
                 blurRadius = 10f
             ) {
-                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
                     Text(
                         text = "추천 TOP 3",
                         color = Color.White,
@@ -391,6 +463,7 @@ fun PersonalizedRecommendations(
 @Composable
 fun CardFinder(
     filterTags: List<FilterTag>,
+    filterCounts: Map<String, Int>,
     onFilterChange: (String, String) -> Unit,
     cards: List<CardInfo>,
     isLoading: Boolean,
@@ -420,8 +493,12 @@ fun CardFinder(
                         else -> tag.category
                     }
                     
+                    // 선택된 옵션 개수
+                    val count = filterCounts[tag.category] ?: 0
+                    val displayNameWithCount = if (count > 0) "$displayName $count" else displayName
+                    
                     FilterCategoryButton(
-                        displayName = displayName,
+                        displayName = displayNameWithCount,
                         tag = tag,
                         onClick = {
                             // 필터 선택 페이지로 이동
@@ -457,30 +534,23 @@ fun CardFinder(
             }
         }
         
-        // 카드 목록 (스크롤 부분)
-        LazyColumn(
+        // 카드 목록 (그리드 형태로 표시)
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 35.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             if (isLoading) {
-                item {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
+                    modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(color = Color.White)
-                    }
                 }
             } else if (error != null) {
-                item {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
+                    modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -489,17 +559,44 @@ fun CardFinder(
                             textAlign = TextAlign.Center
                         )
                     }
+            } else if (cards.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "조건에 맞는 카드가 없습니다",
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             } else {
+                // 하나의 GlassSurface로 모든 카드 감싸기
+                GlassSurface(
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 16f,
+                    blurRadius = 10f
+                ) {
+                    // 카드 그리드 표시
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2), // 한 줄에 2개의 카드 표시
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
                 items(cards) { card ->
-                    CardListItem(card = card, onClick = { onCardClick(card.id) })
+                            CardGridItem(card = card, onClick = { onCardClick(card.id) })
                 }
             }
-
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
             }
         }
+        }
+        
+        // 하단 공간 추가
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }
 
@@ -750,24 +847,24 @@ fun CardCarousel(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    // 혜택 목록 표시 - 항상 최소 첫 번째 혜택은 표시
+                    // 첫 번째 혜택 표시 (말줄임표 제거)
                     if (benefits.isNotEmpty()) {
                         Text(
                             text = benefits[0].trim(),
                             fontSize = 16.sp,
                             color = Color.White,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 1.dp)  // 패딩 최소화
+                            maxLines = 1,
+                            modifier = Modifier
+                                .padding(top = 1.dp)
+                                .fillMaxWidth(0.8f)  // 패딩 최소화
                         )
                     }
                     
-                    // 두 번째 혜택이 있다면 간략하게 표시
+                    // 추가 혜택이 있다면 "외 n개 혜택" 형식으로 표시
                     if (benefits.size > 1) {
                         Text(
-                            text = if (benefits.size > 2) 
-                                "${benefits[1].trim()} 외 ${benefits.size - 2}개 혜택" 
-                            else 
-                                benefits[1].trim(),
+                            text = "외 ${benefits.size - 1}개 혜택",
                             fontSize = 14.sp,
                             color = Color.White.copy(alpha = 0.8f),
                             textAlign = TextAlign.Center,
@@ -781,64 +878,86 @@ fun CardCarousel(
 }
 
 @Composable
-fun CardListItem(
+fun CardGridItem(
     card: CardInfo,
-    onClick: (Int) -> Unit
+    onClick: () -> Unit
 ) {
-    GlassSurface(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        cornerRadius = 12f
+            .aspectRatio(0.8f) // 카드 비율 조정
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
+        // 카드 이미지
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = { onClick(card.id) })
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .weight(1f)
         ) {
-            // 카드 이미지: 비율 유지하며 조정
-            Image(
-                painter = painterResource(id = R.drawable.card), // ← 네 카드 이미지
-                contentDescription = card.name,
-                contentScale = ContentScale.Fit, // 비율 유지
-                modifier = Modifier
-                    .width(72.dp)
-                    .height(48.dp) // 가로로 긴 카드 형태 반영
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(
-                        width = 0.5.dp,
-                        color = Color.White.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-            )
-
-            // 카드 정보
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp)
-            ) {
-                Text(
-                    text = card.name,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Row(
-                    modifier = Modifier.padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    card.icons.forEach { icon ->
-                        Text(
-                            text = icon,
-                            color = Color.White,
-                            fontSize = 14.sp
+            if (card.cardImage != null && card.cardImage.isNotEmpty()) {
+                AsyncImage(
+                    model = card.cardImage,
+                    contentDescription = card.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            rotationZ = 90f // 시계방향으로 90도 회전
                         )
-                    }
-                }
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.card),
+                    contentDescription = "카드 기본 이미지",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            rotationZ = 90f // 시계방향으로 90도 회전
+                        )
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // 카드 이름
+        Text(
+            text = card.name,
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        // 카드 혜택 표시 (말줄임표 제거)
+        if (card.benefits.isNotEmpty()) {
+            // 첫 번째 혜택 표시
+            Text(
+                text = card.benefits[0],
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            // 혜택이 2개 이상이면 "외 n개 혜택" 표시
+            if (card.benefits.size > 1) {
+                Text(
+                    text = "외 ${card.benefits.size - 1}개 혜택",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 10.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

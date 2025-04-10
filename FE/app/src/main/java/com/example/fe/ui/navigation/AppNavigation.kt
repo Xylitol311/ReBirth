@@ -552,14 +552,24 @@ fun AppNavigation() {
                     }
                     
                     val category = backStackEntry.arguments?.getString("category") ?: ""
+                    // CardRecommendViewModel 인스턴스화
+                    val cardRecommendViewModel: CardRecommendViewModel = viewModel()
+                    
                     FilterSelectionScreen(
                         category = category,
                         onClose = {
                             navController.popBackStack()
                         },
                         onOptionSelected = { category, option ->
-                            // ViewModel로 옵션 선택 정보 전달하는 로직 여기에 추가
-                            navController.popBackStack()
+                            // 로그 추가
+                            android.util.Log.d("AppNavigation", "FilterSelection에서 옵션 선택됨: $category, $option")
+                            
+                            // 직접 찾기 화면으로 이동 (필터 적용은 FilterSelectionScreen에서 이미 처리함)
+                            navController.navigate(BottomNavItem.CardRecommend.route) {
+                                popUpTo(BottomNavItem.CardRecommend.route) {
+                                    inclusive = false
+                                }
+                            }
                         }
                     )
                 }
