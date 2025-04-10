@@ -17,12 +17,12 @@ import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.example.fe.data.network.Interceptor.TokenProvider
 import com.example.fe.data.network.NetworkClient
 import com.example.fe.ui.navigation.AppNavigation
 import com.example.fe.ui.navigation.OnboardingNavHost
 import com.example.fe.ui.screens.splash.SplashScreen
 import com.example.fe.ui.navigation.LoginNavigation
+import com.example.fe.ui.navigation.TutorialNavHost
 import com.example.fe.ui.screens.onboard.components.device.AndroidDeviceInfoManager
 import com.example.fe.ui.screens.onboard.viewmodel.AppTokenProvider
 import com.example.fe.ui.screens.onboard.viewmodel.OnboardingViewModel
@@ -79,12 +79,21 @@ fun MainContent() {
             isLoggedIn = viewModel.isLoggedIn
         )
     } else {
-        // 스플래시 화면 이후 적절한 화면으로 이동
-        Log.d("PinInputTest","로그인 여부 : ${viewModel.isLoggedIn}")
-        if (!viewModel.isLoggedIn) {
-            OnboardingNavHost(viewModel)
-        } else {
+        // 스플래시 후 화면 분기 처리
+        Log.d("MainContent", "로그인 여부 : ${viewModel.isLoggedIn}")
 
+        if (!viewModel.isLoggedIn) {
+            // 로그인되어 있지 않은 경우:
+            // 튜토리얼 미완료 시 -> 튜토리얼 플로우 호출
+            // 튜토리얼 완료 시 -> 기존 Onboarding(회원가입) 플로우 호출
+            if (!viewModel.hasCompletedTutorial) {
+                // 튜토리얼 플로우 호출 (TutorialNavHost)
+                TutorialNavHost(onboardingViewModel = viewModel)
+            } else {
+                // 튜토리얼 완료 후 온보딩 플로우 호출
+                OnboardingNavHost(viewModel)
+            }
+        } else {
             // 로그인된 경우 인증 수단에 따라 분기
             val navController = rememberNavController()
             val startDestination = when {
