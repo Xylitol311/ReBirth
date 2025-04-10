@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -45,8 +46,10 @@ fun TopBar(
     title: String = "",
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {}, // 로고 클릭 시 홈으로 이동하는 콜백
     onProfileClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
+    showLogout: Boolean = false
 ) {
     // 별 데이터 생성
     val stars = remember {
@@ -114,7 +117,7 @@ fun TopBar(
                 // 동그란 배경으로 감싸기
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(50.dp)
                         .clip(CircleShape)
                         .background(Color(0xFF000000)) // 완전 불투명한 배경
                         .clickable { onBackClick() },
@@ -124,12 +127,15 @@ fun TopBar(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "뒤로가기",
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(25.dp)
                     )
                 }
             } else {
-                // 뒤로가기 버튼 없을 때 동일한 공간 유지
-                Spacer(modifier = Modifier.width(40.dp))
+                // 백 버튼이 없는 경우, 좌측에 AnimatedLogo를 표시하고 클릭 시 onLogoClick 호출
+                AnimatedLogo(
+                    modifier = Modifier.size(45.dp),
+                    onClick = { onLogoClick() }
+                )
             }
 
             // 중앙에 제목 (필요한 경우에만)
@@ -138,7 +144,7 @@ fun TopBar(
                 Text(
                     text = title,
                     color = Color.White,
-                    fontSize = 18.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
@@ -147,31 +153,33 @@ fun TopBar(
             // 남은 공간을 채워서 아이콘들이 오른쪽으로 이동
             Spacer(modifier = Modifier.weight(1f))
 
-            // 로그아웃 버튼
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF000000)) // 완전 불투명한 배경
-                    .clickable { onLogoutClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "로그아웃",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
+            // 로그아웃 버튼 (홈 화면일 때만 표시, 투명하게 처리)
+            if (showLogout) {
+                Box(
+                    modifier = Modifier
+                        .size(45.dp)
+                        .alpha(0.3f) // 투명하게 처리
+                        .clip(CircleShape)
+                        .background(Color(0xFF000000))
+                        .clickable { onLogoutClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = "로그아웃",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
 
             // 프로필 아이콘
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(45.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF000000)) // 완전 불투명한 배경
+                    .background(Color.Transparent)
                     .clickable { onProfileClick() },
                 contentAlignment = Alignment.Center
             ) {
@@ -179,7 +187,9 @@ fun TopBar(
                     painter = painterResource(id = R.drawable.ic_person),
                     contentDescription = "프로필",
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(28.dp)
+                        .align(Alignment.Center)
                 )
             }
         }
