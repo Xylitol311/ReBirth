@@ -128,7 +128,9 @@ public class CardService {
                     , cardId
                     , dateTime);
             if (userCardBenefit.getUpdateDate() == null) {
-                userCardBenefitRepository.save(userCardBenefit);
+                userCardBenefitRepository.save(userCardBenefit.toBuilder()
+                        .updateDate(dateTime)
+                        .build());
             }
 
             cardBenefits.add(
