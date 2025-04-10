@@ -45,8 +45,6 @@ import com.example.fe.ui.screens.home.components.HomeTransaction
 import com.example.fe.ui.screens.home.components.HomeUsedMoney
 import androidx.compose.ui.platform.LocalContext
 
-val LightBlue = Color(0xFFADD8E6)
-
 @Composable
 fun HomeHeader(
     userName: String,
@@ -55,7 +53,7 @@ fun HomeHeader(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(horizontal = 5.dp, vertical = 16.dp)
     ) {
         // 행성 이미지를 오른쪽 상단에 배치하고 위로 올림
         Image(
@@ -74,15 +72,15 @@ fun HomeHeader(
                 .align(Alignment.BottomStart)
         ) {
             Text(
-                text = "${userName}님",
-                fontSize = 20.sp,
+                text = "${userName}님,",
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = LightBlue
+                color = Color(0xFF00E1FF)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "당신의 행성에서는\n어떤 소비가 있었을까요?",
-                fontSize = 18.sp,
+                fontSize = 22.sp,
                 color = Color.White,
                 lineHeight = 32.sp
             )

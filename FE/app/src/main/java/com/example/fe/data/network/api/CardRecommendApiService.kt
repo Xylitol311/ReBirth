@@ -29,6 +29,20 @@ interface CardRecommendApiService {
 
     /**
      * 검색 매개변수에 따른 카드 목록을 가져옵니다.
+     * API 경로: api/recommend/search (POST 방식)
+     * 
+     * 요청 예시:
+     * ```json
+     * {
+     *   "benefitType": ["DISCOUNT"],
+     *   "cardCompany": ["농협", "신한"],
+     *   "category": [],
+     *   "minPerformanceRange": 0,
+     *   "maxPerformanceRange": 500000,
+     *   "minAnnualFee": 0,
+     *   "maxAnnualFee": 100000
+     * }
+     * ```
      *
      * @param parameters 검색 매개변수
      * @return 검색된 카드 목록 응답

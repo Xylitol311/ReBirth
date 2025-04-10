@@ -58,4 +58,15 @@ data class CardSearchParameters(
     val maxPerformanceRange: Int = Int.MAX_VALUE,
     val minAnnualFee: Int = 0,
     val maxAnnualFee: Int = Int.MAX_VALUE
-)
+) {
+    override fun toString(): String {
+        return "CardSearchParameters(" +
+                "benefitType=$benefitType, " +
+                "cardCompany=$cardCompany, " +
+                "category=$category, " +
+                "minPerformanceRange=$minPerformanceRange, " +
+                "maxPerformanceRange=$maxPerformanceRange, " +
+                "minAnnualFee=$minAnnualFee, " +
+                "maxAnnualFee=$maxAnnualFee)"
+    }
+}
