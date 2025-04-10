@@ -35,6 +35,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -52,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.fe.R
 import com.example.fe.ui.components.backgrounds.GlassSurface
+import com.example.fe.ui.components.categoryIcons.getCategoryIcon
 import kotlinx.coroutines.delay
 import java.text.NumberFormat
 import java.util.Calendar
@@ -575,35 +578,26 @@ fun TransactionsContent(
                                 // 카테고리 아이콘
                                 Box(
                                     modifier = Modifier
-                                        .size(40.dp)
-                                        .background(getCategoryColor(transaction.category), CircleShape),
+                                        .size(30.dp)
+                                        .background(Color(0xFF00BCD4), CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = transaction.category.first().toString(),
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
+                                    Icon(
+                                        painter = painterResource(id = getCategoryIcon(transaction.category)),
+                                        contentDescription = transaction.category,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
 
                                 Spacer(modifier = Modifier.width(12.dp))
 
-                                Column {
-                                    // 상점명
-                                    Text(
-                                        text = transaction.merchantName,
-                                        color = Color.White,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Normal
-                                    )
-
-                                    // 시간
-                                    Text(
-                                        text = formatTime(transaction.date),
-                                        color = Color.Gray,
-                                        fontSize = 14.sp
-                                    )
-                                }
+                                // 상점명
+                                Text(
+                                    text = transaction.merchantName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
                             }
 
                             // 오른쪽: 금액 및 혜택
@@ -651,7 +645,7 @@ fun TransactionsContent(
 fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
 
     // lastMonthPerformance가 0이거나 혜택 목록이 비어있는 경우 혜택 없음으로 처리
-    val hasNoBenefits = cardInfo.lastMonthPerformance == 0 || cardInfo.benefits.isEmpty()
+    val hasNoBenefits = cardInfo.lastMonthPerformance == 0
 
     LazyColumn(
         modifier = Modifier
@@ -1152,20 +1146,5 @@ fun formatTime(date: String): String {
         return timePart.substring(0, 5)
     } catch (e: Exception) {
         return ""
-    }
-}
-
-// 카테고리별 색상 반환 함수
-fun getCategoryColor(category: String): Color {
-    return when (category.lowercase()) {
-        "카페" -> Color(0xFF00BCD4) // 금색
-        "쇼핑" -> Color(0xFF00BCD4) // 주황색
-        "음식점" -> Color(0xFF00BCD4) // 토마토색
-        "편의점" -> Color(0xFF00BCD4) // 청록색
-        "마트" -> Color(0xFF00BCD4) // 라임색
-        "교통" -> Color(0xFF00BCD4) // 도지블루
-        "의료" -> Color(0xFF00BCD4) // 핫핑크
-        "문화" -> Color(0xFF00BCD4) // 보라색
-        else -> Color(0xFF00BCD4) // 기본 금색
     }
 }

@@ -275,8 +275,8 @@ fun PaymentAddCardItem(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "어떤 카드가 등장할까요?",
-            fontSize = 16.sp,
+            text = "RE:BIRTH",
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White.copy(alpha = lerp(0.8f, 1f, centeredness)),
             textAlign = TextAlign.Center
@@ -302,12 +302,12 @@ fun AddCardButton(
             .border(
                 width = 2.dp,
                 color = Color(0xFF00BCD4).copy(alpha = lerp(0.5f, 0.8f, centeredness)),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(8.dp)
             )
             // 배경색 추가 (약간 투명하게)
             .background(
                 color = Color(0xFF1A1A2E).copy(alpha = lerp(0.3f, 0.5f, centeredness)),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(8.dp)
             )
             .graphicsLayer {
                 val scale = lerp(0.85f, 1f, centeredness)

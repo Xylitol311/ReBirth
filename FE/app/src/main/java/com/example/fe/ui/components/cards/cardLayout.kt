@@ -55,7 +55,7 @@ fun HorizontalCardLayout(
         modifier = modifier
             .width(width)
             .height(height)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
@@ -105,22 +105,6 @@ fun HorizontalCardLayout(
                     fontWeight = FontWeight.Bold
                 )
             }
-        }
-
-        // 카드 정보 오버레이
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // 카드 이름
-            Text(
-                text = "RE: BIRTH",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
         }
     }
 }
