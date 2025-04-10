@@ -30,4 +30,6 @@ public interface CardRepository {
 
     Optional<MyCard> findCardByPermanentTokenAndUserId(String permanentToken, Integer userId);
 
+    String getCardImgUrlByCardId(Integer cardId);
+
 }

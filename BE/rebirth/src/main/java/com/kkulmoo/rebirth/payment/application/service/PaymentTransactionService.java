@@ -144,12 +144,23 @@ public class PaymentTransactionService {
         }
 
         // 결제 피드백 정보 업데이트
+        Integer paymentCardId = realBenefit != null
+                ? realBenefit.getMyCardId()
+                : (recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null);
+        Integer recommendedCardId = recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null;
+
+        // 카드 이미지 URL 조회시, 카드 ID가 null인 경우 null 또는 기본값 처리
+        String paymentCardImgUrl = (paymentCardId != null)
+                ? safeGetCardImgUrl(paymentCardId)
+                : "";
+        String recommendedCardImgUrl = (recommendedCardId != null)
+                ? safeGetCardImgUrl(recommendedCardId)
+                : "";
+
         PreBenefit preBenefit = PreBenefit.builder()
                 .userId(userId)
-                .paymentCardId(realBenefit != null
-                        ? realBenefit.getMyCardId()
-                        : (recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null))
-                .recommendedCardId(recommendedBenefit != null ? recommendedBenefit.getMyCardId() : null)
+                .paymentCardId(paymentCardId)
+                .recommendedCardId(recommendedCardId)
                 .amount(amount)
                 .ifBenefitType(recommendedBenefit != null ? recommendedBenefit.getBenefitType() : BenefitType.DISCOUNT)
                 .ifBenefitAmount(recommendedBenefit != null ? recommendedBenefit.getBenefitAmount() : 0)
@@ -160,6 +171,8 @@ public class PaymentTransactionService {
                         ? realBenefit.getBenefitAmount()
                         : (recommendedBenefit != null ? recommendedBenefit.getBenefitAmount() : 0))
                 .merchantName(merchantName)
+                .paymentCardImgUrl(paymentCardImgUrl)
+                .recommendedCardImgUrl(recommendedCardImgUrl)
                 .build();
         savePreBenefit(preBenefit);
 
@@ -306,5 +319,15 @@ public class PaymentTransactionService {
         return cardTransactionDTO;
     }
 
+    private String safeGetCardImgUrl(Integer cardId) {
+        try {
+            // repository 메서드는 카드 이미지가 없으면 예외를 발생시킴.
+            return cardRepository.getCardImgUrlByCardId(cardId);
+        } catch (RuntimeException ex) {
+            log.error("Card image URL 조회 실패 - cardId: {}", cardId, ex);
+            // 예외를 발생시키지 않고 빈 문자열 반환하거나 기본값 처리
+            return "";
+        }
+    }
 
 }
