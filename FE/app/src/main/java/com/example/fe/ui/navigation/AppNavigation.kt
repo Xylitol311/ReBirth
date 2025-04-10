@@ -318,6 +318,12 @@ fun AppNavigation() {
                             // 뒤로가기
                             navController.popBackStack()
                         },
+                        onLogoClick = {
+                            // 홈 화면으로 이동 (예: BottomNavItem.Home.route)
+                            navController.navigate(BottomNavItem.Home.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                            }
+                        },
                         onProfileClick = {
                             navController.navigate(NavRoutes.MY_PAGE)
                         },

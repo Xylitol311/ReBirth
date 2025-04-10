@@ -45,6 +45,7 @@ fun TopBar(
     title: String = "",
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {}, // 로고 클릭 시 홈으로 이동하는 콜백
     onProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
@@ -128,8 +129,11 @@ fun TopBar(
                     )
                 }
             } else {
-                // 뒤로가기 버튼 없을 때 동일한 공간 유지
-                Spacer(modifier = Modifier.width(40.dp))
+                // 백 버튼이 없는 경우, 좌측에 AnimatedLogo를 표시하고 클릭 시 onLogoClick 호출
+                AnimatedLogo(
+                    modifier = Modifier.size(40.dp),
+                    onClick = { onLogoClick() }
+                )
             }
 
             // 중앙에 제목 (필요한 경우에만)
