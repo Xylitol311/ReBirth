@@ -138,7 +138,7 @@ fun TopBar(
                 Text(
                     text = title,
                     color = Color.White,
-                    fontSize = 26.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )

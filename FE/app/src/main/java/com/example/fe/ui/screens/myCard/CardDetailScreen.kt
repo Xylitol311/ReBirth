@@ -341,7 +341,7 @@ fun CardDetailScreen(
                             text = cardInfo?.name ?: "카드 정보 없음",
                             color = Color.White,
                             fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Normal,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 45.dp, bottom = 4.dp),
@@ -358,7 +358,7 @@ fun CardDetailScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                                .padding(horizontal = 28.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             // 왼쪽 탭 (내역)
@@ -568,7 +568,7 @@ fun TransactionsContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 20.dp), // 양 옆에 패딩 추가
+                        .padding(vertical = 8.dp, horizontal = 24.dp), // 양 옆에 패딩 추가
                 ) {
                     // 총액 정보
                     Row(
@@ -580,14 +580,14 @@ fun TransactionsContent(
                         Text(
                             text = "총 소비",
                             color = Color.White,
-                            fontSize = 24.sp,  // 폰트 크기 더 증가
+                            fontSize = 16.sp,  // 폰트 크기 더 증가
                             fontWeight = FontWeight.Bold
                         )
 
                         Text(
                             text = formatAmount(transactions.sumOf { it.amount }),
                             color = Color.White,
-                            fontSize = 24.sp,  // 폰트 크기 더 증가
+                            fontSize = 16.sp,  // 폰트 크기 더 증가
                             fontWeight = FontWeight.Bold
                         )
                     }

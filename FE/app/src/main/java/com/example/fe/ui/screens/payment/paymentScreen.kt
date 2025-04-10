@@ -663,7 +663,7 @@ fun PaymentScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(screenHeight * 0.16f)
+                        .height(screenHeight * 0.18f)
                 ) {
                     if (!showAutoCardMode && selectedCard != null) {
                         // 일반 카드 모드 - 카드별 별자리 표시
