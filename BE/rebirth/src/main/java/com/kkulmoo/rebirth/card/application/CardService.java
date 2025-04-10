@@ -120,17 +120,21 @@ public class CardService {
                     year,
                     month);
 
-            UserCardBenefit userCardBenefitOptional = userCardBenefitRepository.findByUserIdAndBenefitTemplateIdAndYearAndMonth(
-                    userId.getValue(),
-                    benefitTemplate.getBenefitId(),
-                    year,
-                    month
-            ).get();
+            // 혜택 현황 조회용 날짜 생성
+            LocalDateTime dateTime = LocalDateTime.of(year, month, 1, 0, 0, 0);
+            UserCardBenefit userCardBenefit = userCardBenefitService.getUserCardBenefit(
+                    userId.getValue()
+                    , benefitTemplate.getBenefitId()
+                    , cardId
+                    , dateTime);
+            if (userCardBenefit.getUpdateDate() == null) {
+                userCardBenefitRepository.save(userCardBenefit);
+            }
 
             cardBenefits.add(
                     CardBenefit.builder()
                             .benefitCategory(categoryString)
-                            .receivedBenefitAmount(userCardBenefitOptional.getBenefitAmount())
+                            .receivedBenefitAmount(userCardBenefit.getBenefitAmount())
                             .maxBenefitAmount(
                                     getMaxBenefit(
                                             benefitTemplate,

@@ -66,6 +66,7 @@ public class UserCardBenefitService {
                 temp = temp.toBuilder()
                         .benefitCount((short) (temp.getBenefitCount() + 1))
                         .benefitAmount(temp.getBenefitAmount() + cardTransactionResponse.getBenefitAmount())
+                        .updateDate(cardTransactionResponse.getCreatedAt())
                         .build();
             }
 
