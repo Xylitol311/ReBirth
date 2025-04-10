@@ -211,6 +211,8 @@ public class PaymentTransactionService {
                         .realBenefitType(preBenefit.getRealBenefitType())
                         .realBenefitAmount(preBenefit.getRealBenefitAmount())
                         .merchantName(preBenefit.getMerchantName())
+                        .paymentCardImgUrl(preBenefit.getPaymentCardImgUrl())
+                        .recommendedCardImgUrl(preBenefit.getRecommendedCardImgUrl())
                         .build())
                 .map(updated -> preBenefitRepository.save(updated))
                 .orElseGet(() -> preBenefitRepository.save(preBenefit));
