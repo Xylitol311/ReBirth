@@ -99,7 +99,7 @@ public class CardService {
             thisMonthSpendingTier = 0;  // 기본값 설정
         }
 
-        if (thisMonthSpendingTier == null) {
+        if (lastMonthSpendingTier == null) {
             lastMonthSpendingTier = 0;
         }
 
@@ -143,6 +143,8 @@ public class CardService {
                             )
                             .build());
         }
+
+
 
         return CardDetailResponse.builder()
                 .cardId(cardId)
