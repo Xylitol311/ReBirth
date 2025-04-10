@@ -222,9 +222,6 @@ fun HomeRecCard(
                                         coroutineScope.launch {
                                             pagerState.animateScrollToPage(page)
                                         }
-                                    } else {
-                                        val card = cardsToShow[page]
-                                        onCardClick(card.cardId)
                                     }
                                 },
                         ) {

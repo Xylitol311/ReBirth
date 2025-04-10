@@ -313,14 +313,14 @@ fun TempCategoryUsageItem(categoryUsage: TempCategorySummary) {
         ) {
             Text(
                 text = categoryUsage.category,
-                fontSize = 28.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E1FF)
             )
             
             Text(
                 text = "${categoryUsage.percentage}%",
-                fontSize = 28.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00E1FF)
             )
