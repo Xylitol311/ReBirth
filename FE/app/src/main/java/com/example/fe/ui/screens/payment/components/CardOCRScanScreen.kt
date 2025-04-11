@@ -688,8 +688,8 @@ fun CardOCRScanScreen(
 
                                 // 신한카드 아이콘
                                 Image(
-                                    painter = painterResource(id = R.drawable.card_shinhan),
-                                    contentDescription = "신한카드",
+                                    painter = painterResource(id = R.drawable.card_woori),
+                                    contentDescription = "우리카드",
                                     modifier = Modifier.size(36.dp)
                                 )
                             }
@@ -703,7 +703,7 @@ fun CardOCRScanScreen(
                             )
 
                             Text(
-                                text = "12/25",
+                                text = "09/26",
                                 color = Color.Black,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,

@@ -64,12 +64,39 @@ fun PaymentInfoScreen(
     // 스크롤 상태
     val lazyListState = rememberLazyListState()
 
-    // 스크롤 오프셋 변경 감지 및 콜백 호출
+
+    // 현재 선택된 카드 인덱스 (스크롤 위치에 따라 업데이트)
+    var selectedCardIndex by remember { mutableStateOf(0) }
+
+    // 추천 카드가 있는지 확인하고 카드 목록 정렬
+    val allCards = remember(cards) {
+        val hasRecommendCard = cards.any { it.cardName == "추천카드" }
+        if (hasRecommendCard) {
+            // 추천 카드를 첫 번째로 정렬
+            cards.sortedBy { it.cardName != "추천카드" }
+        } else {
+            cards
+        }
+    }
+
+    // 선택된 카드 업데이트 로직 수정
+    var selectedCard by remember(selectedCardIndex, allCards) {
+        mutableStateOf(allCards.getOrNull(selectedCardIndex))
+    }
+
+    // 스크롤 상태에 따라 선택된 카드 인덱스 업데이트
     LaunchedEffect(lazyListState) {
         snapshotFlow {
-            lazyListState.firstVisibleItemIndex * 1000f + lazyListState.firstVisibleItemScrollOffset
-        }.collect { offset ->
-            onScrollOffsetChange(offset)
+            // 현재 보이는 첫 번째 아이템의 인덱스
+            lazyListState.firstVisibleItemIndex
+        }.collect { index ->
+            // 인덱스가 유효한 범위 내에 있는지 확인
+            if (index >= 0 && index < cards.size) {
+                selectedCardIndex = index
+            }
+
+            // 스크롤 오프셋 변경 콜백 호출
+            onScrollOffsetChange(index * 1000f + lazyListState.firstVisibleItemScrollOffset)
         }
     }
 
@@ -83,14 +110,11 @@ fun PaymentInfoScreen(
     // 최소 표시 시간 경과 여부
     var minimumTimeElapsed by remember { mutableStateOf(false) }
 
-    // 선택된 카드
-    var selectedCardIndex by remember { mutableStateOf(0) }
-    var selectedCard by remember { mutableStateOf(cards.firstOrNull()) }
 
     // 결제 확인 팝업 표시 여부
     var showPaymentConfirmDialog by remember { mutableStateOf(false) }
 
-    // 결제 상태 관찰 - 이 부분이 중요합니다
+    // 결제 상태 관찰
     LaunchedEffect(paymentState) {
         when (paymentState) {
             is PaymentViewModel.PaymentState.Processing -> {
@@ -114,16 +138,9 @@ fun PaymentInfoScreen(
         }
     }
 
-    // 추천 카드가 있는지 확인하고 카드 목록 정렬
-    val allCards = remember(cards) {
-        val hasRecommendCard = cards.any { it.cardName == "추천카드" }
-        if (hasRecommendCard) {
-            // 추천 카드를 첫 번째로 정렬
-            cards.sortedBy { it.cardName != "추천카드" }
-        } else {
-            cards
-        }
-    }
+
+    // 카드 스냅 효과를 위한 설정
+    val flingBehavior = androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior(lazyListState)
 
     if (isProcessing) {
         Box(
@@ -188,18 +205,6 @@ fun PaymentInfoScreen(
         return
     }
 
-//    // 결제 상태에 따른 처리
-//    LaunchedEffect(paymentState) {
-//        when (paymentState) {
-//            is PaymentViewModel.PaymentState.Completed -> {
-//                // 결제 완료 시 콜백 호출
-//                onPaymentComplete()
-//            }
-//            else -> {}
-//        }
-//    }
-
-
     // 별자리 배경
     Box(
         modifier = Modifier
@@ -238,33 +243,36 @@ fun PaymentInfoScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 70.dp, bottom = 16.dp)
-                .padding(horizontal = 16.dp),
+                .padding(top = 120.dp, bottom = 16.dp)
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.Start
         ) {
+
             // 가맹점 이름
             Text(
                 text = paymentInfo?.merchantName ?: "매장명",
                 color = Color.White,
                 fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Normal,
+                modifier = Modifier.padding(start = 20.dp) // 오른쪽으로 이동
             )
 
             // 결제 금액
             Text(
                 text = "${paymentInfo?.amount?.let { "%,d".format(it) } ?: "0"}원",
-                color = Color(0xFF00CCFF), // 이미지의 청록색
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold
+                color = Color(0xFF00BCD4),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 20.dp) // 오른쪽으로 이동
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp)) // 간격 증가
 
             // 카드 선택 영역 (GlassSurface)
             GlassSurface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp),
+                    .height(320.dp),
                 cornerRadius = 16f
             ) {
                 Column(
@@ -284,7 +292,7 @@ fun PaymentInfoScreen(
                                     .padding(horizontal = 4.dp)
                                     .size(8.dp)
                                     .background(
-                                        color = if (index == selectedCardIndex) Color.White else Color.Gray,
+                                        color = if (index == selectedCardIndex) Color(0xFF00BCD4) else Color.White,
                                         shape = CircleShape
                                     )
                             )
@@ -297,28 +305,45 @@ fun PaymentInfoScreen(
                     LazyRow(
                         state = lazyListState,
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        flingBehavior = flingBehavior // 스냅 효과 적용
                     ) {
                         items(allCards.size) { index ->
                             val card = allCards[index]
                             PaymentCardItem(
                                 card = card,
                                 isSelected = index == selectedCardIndex,
-                                isRecommended = card.cardName == "추천카드",
-                                onClick = {
-                                    selectedCardIndex = index
-                                    selectedCard = card
-                                    // 카드 클릭 시 결제 확인 팝업 표시
-                                    showPaymentConfirmDialog = true
-                                }
+                                isRecommended = card.cardName == "추천카드"
                             )
                         }
                     }
-
                     Spacer(modifier = Modifier.weight(1f))
-
                 }
             }
+            Spacer(modifier = Modifier.weight(1f))
+
+            // 결제하기 버튼
+            Button(
+                onClick = {
+                    // 결제 확인 팝업 표시
+                    showPaymentConfirmDialog = true
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00BCD4)
+                )
+            ) {
+                Text(
+                    text = "결제하기",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 
@@ -387,24 +412,36 @@ fun PaymentCardItem(
     card: PaymentCardInfo,
     isSelected: Boolean,
     isRecommended: Boolean = false,
-    onClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
-            .width(280.dp)
-            .clickable(onClick = onClick),
+            .width(280.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 카드 이미지 - HorizontalCardLayout 사용
-        HorizontalCardLayout(
-            cardName = card.cardName,
-            cardImageUrl = card.cardImageUrl,
-            cardImage = R.drawable.card,
-            isSelected = isSelected,
-            isRecommended = isRecommended,
-            width = 280.dp,
-            height = 180.dp
-        )
+        if (isRecommended) {
+            // 추천 카드는 card.png 사용
+            HorizontalCardLayout(
+                cardName = "리버스 추천 카드",
+                cardImageUrl = "", // URL 대신 로컬 이미지 사용
+                cardImage = R.drawable.card, // 로컬 이미지 리소스
+                isSelected = isSelected,
+                isRecommended = true,
+                width = 280.dp,
+                height = 180.dp
+            )
+        } else {
+            // 일반 카드는 기존 방식 사용
+            HorizontalCardLayout(
+                cardName = card.cardName,
+                cardImageUrl = card.cardImageUrl,
+                cardImage = R.drawable.card, // 기본 이미지
+                isSelected = isSelected,
+                isRecommended = false,
+                width = 280.dp,
+                height = 180.dp
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 

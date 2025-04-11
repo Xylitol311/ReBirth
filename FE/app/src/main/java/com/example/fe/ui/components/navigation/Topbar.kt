@@ -1,5 +1,8 @@
 package com.example.fe.ui.components.navigation
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,8 +52,19 @@ fun TopBar(
     onLogoClick: () -> Unit = {}, // 로고 클릭 시 홈으로 이동하는 콜백
     onProfileClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
-    showLogout: Boolean = false
+    showLogout: Boolean = false,
+    backgroundColor: Color = Color(0xFF0A0A1A) // 기본 배경색 매개변수 추가
 ) {
+    // 애니메이션 적용된 배경색
+    val animatedBackgroundColor by animateColorAsState(
+        targetValue = backgroundColor,
+        animationSpec = tween(
+            durationMillis = 500, // 애니메이션 지속 시간
+            easing = EaseInOut // 부드러운 애니메이션 효과
+        ),
+        label = "backgroundColor"
+    )
+
     // 별 데이터 생성
     val stars = remember {
         List(25) {  // 별 개수 증가
@@ -65,10 +79,7 @@ fun TopBar(
     
     // 시간 값 (별 깜빡임에 사용)
     var time by remember { mutableStateOf(0f) }
-    
-    // 배경 색상
-    val backgroundColor = Color(0xFF0A0A1A)  // 완전 불투명 어두운 파란색
-    
+
     // 상태바 높이 계산 
     val statusBarHeightPx = with(LocalDensity.current) {
         24.dp.toPx()  // 일반적인 상태바 높이 (추정값)
@@ -89,7 +100,7 @@ fun TopBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(topBarHeight)
-                .background(backgroundColor)
+                .background(animatedBackgroundColor)
         ) {
             val canvasWidth = size.width
             val canvasHeight = size.height
@@ -103,7 +114,18 @@ fun TopBar(
                 )
             }
         }
-        
+
+        // 하단 경계선 추가 (배경색이 기본색이 아닐 때만 표시)
+        if (backgroundColor != Color(0xFF0A0A1A)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color.White.copy(alpha = 0.2f))
+                    .align(Alignment.BottomCenter)
+            )
+        }
+
         // 탑바 내용 (상태바 패딩 적용)
         Row(
             modifier = Modifier
@@ -114,12 +136,8 @@ fun TopBar(
         ) {
             // 뒤로가기 버튼 (showBackButton이 true일 때만 표시)
             if (showBackButton) {
-                // 동그란 배경으로 감싸기
                 Box(
                     modifier = Modifier
-                        .size(50.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF000000)) // 완전 불투명한 배경
                         .clickable { onBackClick() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -144,12 +162,12 @@ fun TopBar(
                 Text(
                     text = title,
                     color = Color.White,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Normal,
                     textAlign = TextAlign.Center
                 )
             }
-            
+
             // 남은 공간을 채워서 아이콘들이 오른쪽으로 이동
             Spacer(modifier = Modifier.weight(1f))
 
@@ -158,7 +176,7 @@ fun TopBar(
                 Box(
                     modifier = Modifier
                         .size(45.dp)
-                        .alpha(0.3f) // 투명하게 처리
+                        .alpha(0f) // 투명하게 처리
                         .clip(CircleShape)
                         .background(Color(0xFF000000))
                         .clickable { onLogoutClick() },

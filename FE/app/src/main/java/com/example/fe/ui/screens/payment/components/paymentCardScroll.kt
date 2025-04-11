@@ -242,11 +242,9 @@ fun PaymentAddCardItem(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
         modifier = Modifier
             .width(cardWidth)
             .padding(horizontal = 12.dp)
-            .height(180.dp)
             .graphicsLayer {
                 // 중앙에 있을수록 점진적으로 크기가 커지고 선명해짐
                 val scale = lerp(0.85f, 1f, centeredness)
@@ -256,29 +254,35 @@ fun PaymentAddCardItem(
             }
             .clickable { onClick() }
     ) {
-        // 카드 추가 UI
-        Box(
+        // HorizontalCardLayout 사용하여 card.png 표시
+        HorizontalCardLayout(
+            cardName = "리버스 추천 카드",
+            cardImageUrl = "", // URL 대신 로컬 이미지 사용
+            cardImage = R.drawable.card, // 로컬 이미지 리소스
+            isRecommended = true,
             modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF2D2A57).copy(alpha = lerp(0.5f, 0.7f, centeredness))),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Star,
-                contentDescription = "자동 카드 추천",
-                tint = Color.White,
-                modifier = Modifier.size(40.dp)
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
+                .fillMaxWidth()
+                .height(180.dp),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 카드 이름
         Text(
-            text = "RE:BIRTH",
-            fontSize = 24.sp,
+            text = "리버스 추천 카드",
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White.copy(alpha = lerp(0.8f, 1f, centeredness)),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // 설명 텍스트
+        Text(
+            text = "가장 혜택이 좋은 카드로 자동 결제됩니다",
+            fontSize = 14.sp,
+            color = Color.White.copy(alpha = lerp(0.7f, 0.9f, centeredness)),
             textAlign = TextAlign.Center
         )
     }
@@ -332,26 +336,20 @@ fun AddCardButton(
             Box(
                 modifier = Modifier
                     .size(40.dp)  // 아이콘 크기만큼만 영역 지정
-                    .clickable { /* 카드 추가 화면으로 이동하는 코드 */ },
+                    .clickable {
+                        onClick() // 스크롤 이동
+                        onAddCardClick() // 카드 추가 화면 열기
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
                     contentDescription = "카드 추가",
-                    tint = Color(0xFF3F51B5),  // 아이콘 색상을 0xFF3F51B5로 설정
-                    modifier = Modifier.size(40.dp)
+                    tint = Color(0xFF00BCD4),
+                    modifier = Modifier.size(56.dp)
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            
-            // 텍스트
-            Text(
-                text = "새 카드 추가",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White.copy(alpha = lerp(0.8f, 1f, centeredness)),
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
