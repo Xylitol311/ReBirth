@@ -790,14 +790,14 @@ fun PaymentScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(screenHeight * 0.44f) // 원래 상단 영역과 동일한 높이
+                        .height(screenHeight * 0.40f) // 원래 상단 영역과 동일한 높이
                         .padding(top = 8.dp)
                 ) {
                     // 원래 레이아웃과 동일한 구조 사용
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 80.dp), // 원래와 동일한 패딩
+                            .padding(top = 70.dp), // 원래와 동일한 패딩
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // 원래와 동일한 AnimatedTabRow 사용

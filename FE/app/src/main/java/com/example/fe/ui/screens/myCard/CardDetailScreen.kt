@@ -300,7 +300,7 @@ fun CardDetailScreen(
                                     text = "${selectedMonth}월",
                                     color = Color.White,
                                     fontSize = 22.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Normal
                                 )
                             }
 
@@ -575,26 +575,26 @@ fun TransactionsContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 24.dp), // 양 옆에 패딩 추가
+                        .padding(vertical = 4.dp, horizontal = 24.dp), // 양 옆에 패딩 추가
                 ) {
                     // 총액 정보
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "총 소비",
                             color = Color.White,
-                            fontSize = 16.sp,  // 폰트 크기 더 증가
+                            fontSize = 20.sp,  // 폰트 크기 더 증가
                             fontWeight = FontWeight.Bold
                         )
 
                         Text(
-                            text = formatAmount(transactions.sumOf { it.amount }),
+                            text = "${formatAmount(transactions.sumOf { it.amount })}원",
                             color = Color.White,
-                            fontSize = 16.sp,  // 폰트 크기 더 증가
+                            fontSize = 20.sp,  // 폰트 크기 더 증가
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -602,20 +602,20 @@ fun TransactionsContent(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "혜택 받은 금액",
                             color = Color(0xFF00BCD4),
-                            fontSize = 24.sp,  // 폰트 크기 더 증가
+                            fontSize = 20.sp,  // 폰트 크기 더 증가
                             fontWeight = FontWeight.Bold
                         )
 
                         Text(
-                            text = formatAmount(transactions.sumOf { it.benefitAmount }),
+                            text = "${formatAmount(transactions.sumOf { it.benefitAmount })}원",
                             color = Color(0xFF00BCD4),
-                            fontSize = 24.sp,  // 폰트 크기 더 증가
+                            fontSize = 20.sp,  // 폰트 크기 더 증가
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -638,7 +638,7 @@ fun TransactionsContent(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp, horizontal = 28.dp), // 양 옆에 더 많은 패딩 추가
+                            .padding(vertical = 12.dp, horizontal = 36.dp), // 양 옆에 더 많은 패딩 추가
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -654,7 +654,7 @@ fun TransactionsContent(
                         Text(
                             text = "${formatAmount(dailyTransactions.sumOf { it.amount })}원",
                             color = Color.White,
-                            fontSize = 16.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Normal
                         )
                     }
@@ -663,11 +663,11 @@ fun TransactionsContent(
                 //해당 날짜의 거래 내역
                 items(dailyTransactions.size) { index ->
                     val transaction = dailyTransactions[index]
-
+                    val transactionTime = formatTime(transaction.date)
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp, horizontal = 28.dp) // 양 옆에 더 많은 패딩 추가
+                            .padding(vertical = 8.dp, horizontal = 36.dp) // 양 옆에 더 많은 패딩 추가
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -695,12 +695,25 @@ fun TransactionsContent(
 
                                 Spacer(modifier = Modifier.width(12.dp))
 
-                                // 상점명
-                                Text(
-                                    text = transaction.merchantName,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                // 상점명과 시간을 포함하는 Column
+                                Column {
+                                    // 상점명 (길면 ... 처리)
+                                    Text(
+                                        text = transaction.merchantName,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Light,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    // 거래 시간
+                                    Text(
+                                        text = transactionTime,
+                                        color = Color.Gray.copy(alpha = 0.7f),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Light
+                                    )
+                                }
                             }
 
                             // 오른쪽: 금액 및 혜택
@@ -734,7 +747,7 @@ fun TransactionsContent(
                         HorizontalDivider(
                             color = Color.Gray.copy(alpha = 0.3f),
                             thickness = 1.dp,
-                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 28.dp)
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 32.dp)
                         )
                     }
                 }
@@ -770,7 +783,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(16.dp)
-                        .padding(horizontal = 12.dp)
+                        .padding(horizontal = 16.dp)
                 ) {
                     // 배경 바
                     Box(
@@ -844,7 +857,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                        .padding(vertical = 8.dp, horizontal = 24.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     // 왼쪽: 실적/사용금액 정보
@@ -852,12 +865,14 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                         Text(
                             text = "사용금액 / 실적",
                             color = Color.White,
-                            fontSize = 14.sp
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "다음 구간까지",
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 14.sp
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
@@ -894,8 +909,8 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
 
                         Text(
                             text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(remainingAmount)}원 남음",
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 14.sp
+                            color = Color.White,
+                            fontSize = 16.sp
                         )
                     }
                 }
@@ -904,7 +919,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
             HorizontalDivider(
                 color = Color(0xFF00BCD4).copy(alpha = 0.4f),
                 thickness = 1.dp,
-                modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp, horizontal = 24.dp)
             )
         }
 
@@ -952,20 +967,20 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 20.dp),
+                        .padding(vertical = 8.dp, horizontal = 28.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "${cardInfo.lastMonthPerformance}구간 혜택",
                         color = Color.White,
-                        fontSize = 22.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
 
                     Text(
                         text = "${formatAmount(cardInfo.benefits.sumOf { it.receivedBenefitAmount })}원",
                         color = Color.White,
-                        fontSize = 22.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -977,21 +992,24 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp, horizontal = 28.dp)
+                            .padding(vertical = 8.dp, horizontal = 36.dp)
                     ) {
                         // 혜택 카테고리 및 퍼센트
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = benefit.categories.joinToString(", "),
                                 color = Color.White,
-                                fontSize = 20.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
                             )
+
+                            Spacer(modifier = Modifier.width(8.dp))
 
                             // 혜택 비율 (카테고리에 따라 다르게 표시)
                             val benefitPercentage = when {
@@ -1003,8 +1021,8 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                             Text(
                                 text = benefitPercentage,
                                 color = Color.White,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Normal
                             )
                         }
 
@@ -1030,7 +1048,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                                 modifier = Modifier
                                     .fillMaxWidth(progress)
                                     .height(10.dp)
-                                    .background(Color(0xFF5F77F5), RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF00BCD4), RoundedCornerShape(4.dp))
                             )
                         }
 
@@ -1045,7 +1063,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                             Text(
                                 text = formatAmount(benefit.receivedBenefitAmount) + " 원",
                                 color = Color.White,
-                                fontSize = 18.sp
+                                fontSize = 14.sp
                             )
 
                             // 잔여 혜택 금액
@@ -1056,7 +1074,7 @@ fun BenefitsContent(cardInfo: MyCardViewModel.CardInfo) {
                                     "잔여 : " + formatAmount(benefit.maxBenefitAmount) + "원"
                                 },
                                 color = Color.White,
-                                fontSize = 18.sp
+                                fontSize = 14.sp
                             )
                         }
                     }

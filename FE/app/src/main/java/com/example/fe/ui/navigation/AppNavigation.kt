@@ -169,7 +169,7 @@ fun AppNavigation() {
         // 누적 오프셋 + 현재 전환에 의한 오프셋 + 현재 화면의 가로 스크롤 오프셋
         targetValue = cumulativeOffset + currentScreenHorizontalOffset * transitionDirection,
         // 애니메이션 속도 증가 (300ms에서 200ms로 감소)
-        animationSpec = tween(700, easing = EaseInOut),
+        animationSpec = tween(800, easing = EaseInOut),
         label = "horizontalOffset",
         finishedListener = {
             // 애니메이션이 끝나면 방향 초기화 (다음 애니메이션을 위해)
@@ -211,9 +211,6 @@ fun AppNavigation() {
         !currentRoute.startsWith("filter_selection")
     }
 
-    // 스캔된 QR 코드
-    var scannedQRCode by remember { mutableStateOf("") }
-
     val shouldShowBottomBar = remember(bottomBarVisible, currentRoute, isQRScanMode) {
         bottomBarVisible &&
                 currentRoute != NavRoutes.HOME_DETAIL &&
@@ -224,30 +221,6 @@ fun AppNavigation() {
                 !currentRoute.contains("card_ocr_scan")
 
     }
-
-    // TopBar 표시 여부 결정
-    val shouldShowTopBar by remember(currentRoute, isQRScanMode) {
-        mutableStateOf(
-                    !currentRoute.contains("payment_info") &&
-                    !currentRoute.contains("payment_result") &&
-                    !isQRScanMode &&
-                    !currentRoute.contains("card_ocr_scan")
-        )
-    }
-
-    // 네비게이션 바 애니메이션 값
-    val bottomBarAlpha by animateFloatAsState(
-        targetValue = if (shouldShowBottomBar) 1f else 0f,
-        animationSpec = tween(300, easing = EaseInOut),
-        label = "bottomBarAlpha"
-    )
-
-    // 네비게이션 바 슬라이드 애니메이션 값
-    val bottomBarOffset by animateFloatAsState(
-        targetValue = if (shouldShowBottomBar) 0f else 100f,
-        animationSpec = tween(300, easing = EaseInOut),
-        label = "bottomBarOffset"
-    )
 
     // 네비게이션 바 높이 (일반적으로 80dp)
     val bottomBarHeight = 80.dp
@@ -282,6 +255,17 @@ fun AppNavigation() {
         else -> ""
     }
 
+    val isHomeScreen = currentRoute == BottomNavItem.Home.route
+
+    //TopBar 배경색 설정
+    val topBarBackgroundColor = when {
+        currentRoute == NavRoutes.HOME_DETAIL ||
+                currentRoute.startsWith("card_detail") ||
+                currentRoute.startsWith("card_detail_info") // 이 부분이 수정됨
+            -> Color(0xFF0A1931)
+        else -> Color(0xFF0A0A1A) // 기본 배경색
+    }
+
     // 전체 화면 구성
     Box(modifier = Modifier.fillMaxSize()) {
         // 1. 별 배경 (가장 밑에 깔림)
@@ -301,6 +285,7 @@ fun AppNavigation() {
                     TopBar(
                         title = screenTitle,
                         showBackButton = !isMainTabScreen,
+                        backgroundColor = topBarBackgroundColor, // 배경색 전달
                         onBackClick = {
                             // 뒤로가기 시 배경 이동 방향 설정 (아래로 이동)
                             if (currentRoute.startsWith("card_detail")) {
@@ -326,7 +311,8 @@ fun AppNavigation() {
                         onProfileClick = {
                             navController.navigate(NavRoutes.MY_PAGE)
                         },
-                        onLogoutClick = handleLogout
+                        onLogoutClick = handleLogout,
+                        showLogout = isHomeScreen
                     )
                 }
             },
@@ -337,8 +323,15 @@ fun AppNavigation() {
                     BottomNavBar(
                         navController = navController,
                         onTabSelected = { item ->
+                            val mainRoute = when (currentRoute) {
+                                NavRoutes.HOME_DETAIL -> BottomNavItem.Home.route
+                                NavRoutes.CARD_DETAIL, NavRoutes.CARD_DETAIL.replace("/{cardId}", "") -> BottomNavItem.MyCard.route
+                                NavRoutes.CARD_DETAIL_INFO, NavRoutes.CARD_DETAIL_INFO.replace("/{cardId}", "") -> BottomNavItem.CardRecommend.route
+                                else -> currentRoute
+                            }
+
                             // 현재 선택된 탭과 다른 탭을 선택했을 때만 처리
-                            if (item.route != currentRoute) {
+                            if (item.route != mainRoute) {
                                 // 탭 선택 시 전환 방향 계산
                                 val newIndex = tabIndices[item.route] ?: 0
                     
@@ -356,14 +349,14 @@ fun AppNavigation() {
                     
                                 // 애니메이션 카운터 증가 (애니메이션 트리거)
                                 animationCounter++
-                                
-                                // 네비게이션
+
+                                // 네비게이션 - 항상 메인 스크린으로 이동하도록 수정
                                 navController.navigate(item.route) {
+                                    // 백스택에서 해당 루트까지의 모든 항목을 제거하고 새로 시작
                                     popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                        inclusive = true
                                     }
                                     launchSingleTop = true
-                                    restoreState = true
                                 }
                             }
                         }

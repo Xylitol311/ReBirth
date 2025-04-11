@@ -106,6 +106,23 @@ fun BottomNavBar(
         containerColor = Color(0xFF0F1425),
         tonalElevation = 0.dp
     ) {
+
+        // 현재 경로에 따라 어떤 메인 탭이 선택되었는지 결정
+        val selectedMainRoute = when {
+            // Home 관련 경로
+            currentRoute == "home" || currentRoute == "home_detail" -> BottomNavItem.Home.route
+
+            // MyCard 관련 경로
+            currentRoute == "mycard" || currentRoute?.startsWith("card_detail") == true ||
+                    currentRoute == "card_management" -> BottomNavItem.MyCard.route
+
+            // CardRecommend 관련 경로
+            currentRoute == "cardrecommend" || currentRoute?.startsWith("card_detail_info") == true -> BottomNavItem.CardRecommend.route
+
+            // 그 외 경로는 그대로 사용
+            else -> currentRoute
+        }
+
         // 1) NavigationBar의 자식으로 Row를 하나 만든다.
         // 2) Row 안에서 5개의 NavigationBarItem을 중첩해서 배치한다.
         Row(
