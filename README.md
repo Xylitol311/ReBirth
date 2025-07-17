@@ -34,32 +34,7 @@ Re:birth는 **마이크로서비스 기반의 핀테크 결제 생태계**로, �
 - 📊 **데이터 분석**: 소비 패턴 분석 및 월별 리포트
 
 ## 🏗️ 시스템 아키텍처
-
-```mermaid
-graph TB
-    subgraph "Frontend"
-        A[Android App<br/>Jetpack Compose]
-    end
-    
-    subgraph "Backend Services"
-        B[rebirth:8081<br/>Main Payment Service]
-        C[cardissuer:8082<br/>Card Issuing Service]
-        D[bank:8083<br/>Banking Service]
-    end
-    
-    subgraph "Infrastructure"
-        E[(PostgreSQL<br/>Database)]
-        F[(Redis<br/>Cache)]
-    end
-    
-    A --> B
-    B --> C
-    C --> D
-    B --> E
-    C --> E
-    D --> E
-    B --> F
-```
+![시스템 아키텍처](<doc/ReBirth 시스템 아키텍쳐.jpg>)
 
 ### 서비스별 역할
 
